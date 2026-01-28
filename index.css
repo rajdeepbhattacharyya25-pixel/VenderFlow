@@ -1,0 +1,104 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --font-display: 'Cormorant', serif;
+  --font-body: 'Montserrat', sans-serif;
+  --color-luxury-bg: #FAFAF9;
+  --color-luxury-text: #0C0A09;
+  --color-luxury-primary: #1C1917;
+  --color-luxury-accent: #CA8A04;
+}
+
+/* Global Styles */
+body {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: var(--font-body);
+  background-color: var(--color-luxury-bg);
+  color: var(--color-luxury-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-body {
+  font-family: var(--font-body);
+}
+
+.login-box {
+  max-width: 350px;
+  margin: 100px auto;
+  padding: 20px;
+  background: #111;
+  border-radius: 10px;
+  color: white;
+  text-align: center;
+}
+
+.login-box input,
+.login-box button {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 5px;
+  border: none;
+}
+
+.login-box button {
+  background: #4f46e5;
+  color: white;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.login-box button:hover {
+  opacity: 0.9;
+}
+
+.google-btn {
+  background: white !important;
+  color: black !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+/* Animations */
+@keyframes heart-pulse {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.3);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-heart-pulse {
+  animation: heart-pulse 0.4s ease-out;
+}
+
+@keyframes cart-bounce {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.animate-cart-bounce {
+  animation: cart-bounce 0.4s ease-out;
+}

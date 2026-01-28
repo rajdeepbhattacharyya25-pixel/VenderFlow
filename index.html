@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VenderFlow</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#023d29",
+            "primary-light": "#4ade80",
+            secondary: "#f9f7f2",
+            accent: "#d4a373",
+            "background-light": "#ffffff",
+            "background-dark": "#0B1120", // Richer dark blue-black
+            "surface-light": "#fcfbf9",
+            "surface-dark": "#151F32", // Lighter rich dark blue for panels
+            "border-light": "#ebe5dc",
+            "border-dark": "#2D3B55", // Subtle border for dark mode
+            // Dashboard Colors
+            bg: 'var(--bg)',
+            panel: 'var(--panel)',
+            muted: 'var(--muted)',
+            text: 'var(--text)',
+            'accent-1': 'var(--accent-1)',
+            'accent-2': 'var(--accent-2)',
+            'accent-3': 'var(--accent-3)',
+            'chart-line': 'var(--chart-line)',
+            'donut-online': 'var(--donut-online)',
+            'donut-store': 'var(--donut-store)',
+          },
+          fontFamily: {
+            display: ["Playfair Display", "serif"],
+            body: ["Inter", "sans-serif"],
+          },
+          boxShadow: {
+            'soft': '0 4px 20px var(--shadow)',
+            'glow': '0 0 15px var(--accent-1)',
+          }
+        },
+      },
+    };
+  </script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5 {
+      font-family: 'Playfair Display', serif;
+    }
+
+    .hide-scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    .hide-scroll {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    @keyframes zoomFade {
+      0% {
+        opacity: 0;
+        transform: scale(0.5);
+      }
+
+      50% {
+        opacity: 1;
+        transform: scale(1.1);
+      }
+
+      100% {
+        opacity: 0;
+        transform: scale(1.2);
+      }
+    }
+
+    .animate-zoom-fade {
+      animation: zoomFade 0.6s ease-out forwards;
+    }
+
+
+    /* Smooth Theme Transition */
+    body,
+    body * {
+      transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+      transition-duration: 300ms;
+    }
+  </style>
+  <style>
+    :root {
+
+      /* LIGHT THEME DEFAULT (Dashboard) */
+      --bg: #F5F7FA;
+      --panel: #FFFFFF;
+      --muted: #6B7280;
+      /* Neutral 500 */
+      --text: #111827;
+      /* Gray 900 */
+
+      /* KPI Accents (Pastels for Light Mode) */
+      --accent-1: #DFF8FF;
+      /* Cyan */
+      --accent-2: #F1FFC8;
+      /* Lime */
+      --accent-3: #F3E9FF;
+      /* Mauve */
+
+      --chart-line: #A7D129;
+      --donut-online: #38BDF8;
+      --donut-store: #1F2937;
+      --shadow: rgba(16, 24, 40, 0.06);
+    }
+
+    .dark {
+      /* DARK THEME OVERRIDES (Dashboard) */
+      --bg: #0B0C0E;
+      /* Deep almost-black */
+      --panel: #151619;
+      /* Slightly lighter panel */
+      --muted: #9CA3AF;
+      /* Gray 400 - distinct from bg */
+      --text: #F9FAFB;
+      /* Gray 50 - bright white text */
+
+      /* KPI Accents (Rich/Saturated for Dark Mode) */
+      --accent-1: #164E63;
+      /* Cyan 900 */
+      --accent-2: #365314;
+      /* Lime 900 */
+      --accent-3: #581C87;
+      /* Purple 900 */
+
+      --chart-line: #D9F99D;
+      /* Lime 200 - pops against dark bg */
+      --donut-online: #38BDF8;
+      /* Sky 400 */
+      --donut-store: #334155;
+      /* Slate 700 */
+      --shadow: rgba(0, 0, 0, 0.5);
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+
+    /* Dashboard Specific Body Overrides when in dashboard mode (handled by classes or reset) */
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5 {
+      font-family: 'Playfair Display', serif;
+    }
+
+    .hide-scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    .hide-scroll {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    @keyframes zoomFade {
+      0% {
+        opacity: 0;
+        transform: scale(0.5);
+      }
+
+      50% {
+        opacity: 1;
+        transform: scale(1.1);
+      }
+
+      100% {
+        opacity: 0;
+        transform: scale(1.2);
+      }
+    }
+
+    .animate-zoom-fade {
+      animation: zoomFade 0.6s ease-out forwards;
+    }
+
+    /* Smooth Theme Transition */
+    body,
+    body * {
+      transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+      transition-duration: 300ms;
+    }
+  </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react-dom": "https://esm.sh/react-dom@^19.2.3",
+    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
+    "recharts": "https://esm.sh/recharts@^3.6.0",
+    "clsx": "https://esm.sh/clsx@^2.1.1",
+    "tailwind-merge": "https://esm.sh/tailwind-merge@^3.0.1",
+    "framer-motion": "https://esm.sh/framer-motion@^11.0.3",
+    "class-variance-authority": "https://esm.sh/class-variance-authority@^0.7.0",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@^2.39.3",
+    "react-router-dom": "https://esm.sh/react-router-dom@^6.22.0",
+    "browser-image-compression": "https://esm.sh/browser-image-compression@^2.0.2"
+  }
+}
+</script>
+  <link rel="stylesheet" href="/index.css">
+</head>
+
+<body class="bg-surface-light text-gray-800 antialiased dark:bg-background-dark dark:text-gray-100">
+  <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+
+</html>
