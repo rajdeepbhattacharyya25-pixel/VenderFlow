@@ -1,0 +1,131 @@
+export interface Product {
+  id: string;
+  name: string;
+  price: number;
+  originalPrice?: number;
+  image: string;
+  images?: string[];
+  description?: string;
+  badge?: {
+    text: string;
+    color: string; // Tailwind color class or hex
+    bg: string;
+  };
+  rating: number;
+  reviews: number;
+  sizes: string[];
+  category: string;
+  seller_id?: string;
+  stock?: number;
+  stock_quantity?: number;
+}
+
+export interface NavLink {
+  label: string;
+  href: string;
+}
+
+export interface Address {
+  name: string;
+  phone: string;
+  street: string;
+  building?: string;
+  city: string;
+  state?: string;
+  zip: string;
+}
+
+export interface Order {
+  id: string;
+  seller_id: string;
+  customer_id: string;
+  total: number;
+  status: 'pending' | 'processing' | 'packed' | 'shipped' | 'out_for_delivery' | 'delivered' | 'cancelled' | 'refunded';
+  items: Array<{
+    product_id: string;
+    name: string;
+    price: number;
+    size: string;
+    quantity: number;
+    image: string;
+  }>;
+  shipping_address: Address;
+  payment_method: string;
+  created_at: string;
+}
+
+export interface ThemeConfig {
+  colors: {
+    primary: string;
+    secondary: string;
+    background: string;
+    text: string;
+  };
+  fonts: {
+    heading: string;
+    body: string;
+  };
+  borderRadius: string;
+  layout: {
+    show_reviews: boolean;
+    show_featured: boolean;
+    show_hero: boolean;
+  };
+  hero: {
+    badge_text?: string;
+    headline_1?: string;
+    headline_2?: string;
+    headline_3?: string;
+    description?: string;
+    image_url?: string;
+    button_text?: string;
+    overlayOpacity?: number; // Keeping for backward compat if needed, though likely unused
+    // Deprecated fields
+    title?: string;
+    subtitle?: string;
+    image?: string;
+  };
+}
+
+export interface StoreSettings {
+  id?: number;
+  store_name: string;
+  business_type: string;
+  address: string;
+  phone: string;
+  currency: string;
+  tax_id: string;
+  bank_details: string;
+  invoice_footer: string;
+  tax_percentage: number;
+  socials: {
+    instagram: string;
+    facebook: string;
+    twitter: string;
+  };
+  hero: {
+    badge_text: string;
+    headline_1: string;
+    headline_2: string;
+    headline_3: string;
+    description: string;
+    image_url: string;
+    button_text: string;
+  };
+  policies: {
+    [key: string]: string;
+  };
+  notifications: {
+    low_stock_email: boolean;
+    low_stock_push: boolean;
+    payment_received_email: boolean;
+    payment_received_push: boolean;
+    daily_summary_email: boolean;
+    daily_summary_push: boolean;
+    overdue_bills_email: boolean;
+    overdue_bills_push: boolean;
+  };
+  shipping_fee: number;
+  free_shipping_threshold: number;
+  theme_config?: ThemeConfig;
+}

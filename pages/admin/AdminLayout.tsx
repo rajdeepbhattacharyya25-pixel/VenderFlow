@@ -1,0 +1,164 @@
+import React, { useState, useEffect } from 'react';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import {
+    BarChart3,
+    Users,
+    ShoppingBag,
+    ShoppingCart,
+    Mail,
+    Settings,
+    FileText,
+    LogOut,
+    Shield,
+    Search,
+    Bell,
+    PlusCircle,
+    Menu,
+    Command
+} from 'lucide-react';
+import { supabase } from '../../lib/supabase';
+import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
+import CommandPalette from './components/CommandPalette';
+import NotificationCenter from './components/NotificationCenter';
+
+const AdminLayout: React.FC = () => {
+    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+    const navigate = useNavigate();
+
+    // Set page title for admin section
+    useEffect(() => {
+        document.title = 'Rajdeep Admin';
+    }, []);
+
+    // Keyboard shortcuts
+    useKeyboardShortcuts({
+        onCommandPalette: () => setIsCommandPaletteOpen(true),
+        onShowHelp: () => {
+            // Could show a help modal here
+            console.log('Shortcuts: G+D (Dashboard), G+S (Sellers), G+O (Orders), Ctrl+K (Search)');
+        }
+    });
+
+    const handleLogout = async () => {
+        await supabase.auth.signOut();
+        navigate('/?mode=seller');
+    };
+
+    const navItems = [
+        { icon: BarChart3, label: 'Dashboard', path: '/admin', shortcut: 'R D' },
+        { icon: Users, label: 'Sellers', path: '/admin/sellers', shortcut: 'R S' },
+        { icon: ShoppingBag, label: 'Products', path: '/admin/products', shortcut: 'R P' },
+        { icon: ShoppingCart, label: 'Orders', path: '/admin/orders', shortcut: 'R O' },
+        { icon: Mail, label: 'Invites', path: '/admin/invites', shortcut: 'R I' },
+        { icon: FileText, label: 'Audit Logs', path: '/admin/logs', shortcut: 'R L' },
+        { icon: Settings, label: 'Settings', path: '/admin/settings' },
+    ];
+
+    return (
+        <div className="min-h-screen bg-neutral-950 text-neutral-200 font-sans selection:bg-indigo-500/30">
+            {/* Command Palette */}
+            <CommandPalette
+                isOpen={isCommandPaletteOpen}
+                onClose={() => setIsCommandPaletteOpen(false)}
+            />
+
+            {/* Sidebar */}
+            <aside
+                className={`fixed top-0 left-0 h-full bg-neutral-900 border-r border-neutral-800 transition-all duration-300 z-50 ${isSidebarOpen ? 'w-64' : 'w-20'}`}
+            >
+                <div className="h-16 flex items-center px-6 border-b border-neutral-800">
+                    <Shield className="w-8 h-8 text-indigo-500 min-w-[32px]" />
+                    {isSidebarOpen && <span className="ml-3 font-bold text-xl tracking-tight text-white">Rajdeep <span className="text-indigo-500 font-medium text-sm">ADMIN</span></span>}
+                </div>
+
+                <nav className="p-4 space-y-2">
+                    {navItems.map((item) => (
+                        <NavLink
+                            key={item.path}
+                            to={item.path}
+                            end={item.path === '/admin'}
+                            className={({ isActive }) => `
+                                flex items-center p-3 rounded-xl transition-all duration-200 group relative
+                                ${isActive ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white'}
+                            `}
+                        >
+                            <item.icon size={20} className="min-w-[20px]" />
+                            {isSidebarOpen && (
+                                <>
+                                    <span className="ml-3 font-medium text-sm">{item.label}</span>
+                                    {item.shortcut && (
+                                        <kbd className="ml-auto text-[9px] bg-black/20 px-1.5 py-0.5 rounded opacity-50">
+                                            {item.shortcut}
+                                        </kbd>
+                                    )}
+                                </>
+                            )}
+                            {!isSidebarOpen && (
+                                <div className="absolute left-16 px-2 py-1 bg-neutral-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 border border-neutral-700">
+                                    {item.label}
+                                </div>
+                            )}
+                        </NavLink>
+                    ))}
+
+                    <div className="pt-4 mt-4 border-t border-neutral-800">
+                        <button
+                            onClick={handleLogout}
+                            className="w-full flex items-center p-3 rounded-xl text-neutral-400 hover:bg-red-500/10 hover:text-red-500 transition-all duration-200"
+                        >
+                            <LogOut size={20} className="min-w-[20px]" />
+                            {isSidebarOpen && <span className="ml-3 font-medium text-sm">Logout</span>}
+                        </button>
+                    </div>
+                </nav>
+            </aside>
+
+            {/* Main Content */}
+            <div className={`transition-all duration-300 ${isSidebarOpen ? 'pl-64' : 'pl-20'}`}>
+                {/* Header */}
+                <header className="h-16 bg-neutral-900/50 backdrop-blur-xl border-b border-neutral-800 flex items-center justify-between px-8 sticky top-0 z-40">
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                            className="p-2 hover:bg-neutral-800 rounded-lg transition-colors text-neutral-400"
+                            title={isSidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+                        >
+                            <Menu size={20} />
+                        </button>
+                        {/* Search Trigger - Opens Command Palette */}
+                        <button
+                            onClick={() => setIsCommandPaletteOpen(true)}
+                            className="hidden md:flex items-center gap-2 bg-neutral-800 hover:bg-neutral-700 border-none rounded-full py-2 pl-4 pr-3 text-sm w-96 transition-all text-left"
+                        >
+                            <Search className="w-4 h-4 text-neutral-500" />
+                            <span className="text-neutral-500 flex-1">Search platform...</span>
+                            <kbd className="text-[10px] bg-neutral-700 px-1.5 py-0.5 rounded text-neutral-400 flex items-center gap-0.5">
+                                <Command size={10} />K
+                            </kbd>
+                        </button>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={() => navigate('/admin/invites')}
+                            className="p-2 border border-neutral-800 bg-indigo-600/10 text-indigo-400 rounded-lg hover:bg-indigo-600/20 transition-all flex items-center gap-2 text-sm font-medium px-4"
+                        >
+                            <PlusCircle size={16} />
+                            Invite Seller
+                        </button>
+                        <NotificationCenter />
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 border border-white/10"></div>
+                    </div>
+                </header>
+
+                <main className="p-8">
+                    <Outlet />
+                </main>
+            </div>
+        </div>
+    );
+};
+
+export default AdminLayout;
+
