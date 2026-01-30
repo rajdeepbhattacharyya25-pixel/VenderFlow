@@ -62,6 +62,26 @@ const AuthCallback = () => {
 
                     if (profileError) console.error("Profile Fetch Error:", profileError);
 
+                    // Check for pending Telegram Link
+                    const telegramUserJson = sessionStorage.getItem('telegram_user');
+                    if (telegramUserJson && user.id) {
+                        try {
+                            const tgUser = JSON.parse(telegramUserJson);
+                            // Link account
+                            setStatus('Linking Telegram account...');
+                            await supabase.from('profiles').update({
+                                telegram_id: tgUser.id,
+                                telegram_username: tgUser.username,
+                                telegram_photo_url: tgUser.photo_url
+                            }).eq('id', user.id);
+
+                            sessionStorage.removeItem('telegram_user');
+                            console.log('Telegram account linked successfully');
+                        } catch (e) {
+                            console.error('Failed to link Telegram', e);
+                        }
+                    }
+
                     // Get stored metadata for store-specific logins
                     const storedRedirect = sessionStorage.getItem('auth_redirect');
                     const authType = sessionStorage.getItem('auth_type');

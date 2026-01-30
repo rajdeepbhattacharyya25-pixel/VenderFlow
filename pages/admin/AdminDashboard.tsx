@@ -17,6 +17,7 @@ import {
 import { adminDb } from '../../lib/admin-api';
 import RevenueChart from './components/RevenueChart';
 import AdminSupportModal from './components/AdminSupportModal';
+import { supabase } from '../../lib/supabase';
 
 interface AdminStats {
     totalSellers: number;
@@ -110,6 +111,20 @@ const AdminDashboard: React.FC = () => {
         const timeoutId = setTimeout(searchSellers, 300);
         return () => clearTimeout(timeoutId);
     }, [sellerSearch, targetType]);
+
+    // Real-time subscription for Unread Tickets
+    useEffect(() => {
+        const channel = supabase
+            .channel('dashboard-support-count')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'support_tickets' }, () => {
+                adminDb.getUnreadSupportCount().then(setUnreadSupportCount);
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, []);
 
     const fetchDashboardData = async () => {
         setLoading(true);

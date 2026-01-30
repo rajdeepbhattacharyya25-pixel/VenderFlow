@@ -47,11 +47,11 @@ serve(async (req) => {
             case "NEW_MESSAGE":
                 let attachmentInfo = "";
                 if (data?.attachment_url) {
-                    attachmentInfo = `\n\n📎 *Attachment:* [${data.attachment_name || 'View File'}](${data.attachment_url})`;
+                    attachmentInfo = `\n\nAttachment: ${data.attachment_name || 'View File'} (${data.attachment_url})`;
                 }
 
                 text = `
-📩 *New Support Message*
+📩 New Support Message
 👤 From: ${data?.email || "Unknown"}
 📝 Subject: ${data?.subject || "No Subject"}
 🎫 Ticket ID: ${data?.ticket_id}
@@ -62,7 +62,7 @@ ${message}${attachmentInfo}
 
             case "SYSTEM_ALERT":
                 text = `
-🚨 *SYSTEM ALERT*
+🚨 SYSTEM ALERT
 📅 ${timestamp}
 ⚠️ ${message}
 `;
@@ -70,7 +70,7 @@ ${message}${attachmentInfo}
 
             default:
                 text = `
-🔔 *Notification*
+🔔 Notification
 ${message}
 `;
         }
@@ -84,7 +84,7 @@ ${message}
                 body: JSON.stringify({
                     chat_id: TELEGRAM_CHAT_ID,
                     text: text,
-                    parse_mode: "Markdown",
+                    // parse_mode removed to avoid errors with special characters in emails/messages
                 }),
             }
         );

@@ -36,7 +36,7 @@ const EarningsChart: React.FC<EarningsChartProps> = ({ monthlyData, weeklyData, 
   const currentData = timeRange === 'Monthly' ? monthlyData : weeklyData;
 
   return (
-    <div className="bg-panel rounded-xl p-6 shadow-sm border border-muted/10 h-[400px] flex flex-col">
+    <div className="bg-panel rounded-xl p-4 sm:p-6 shadow-sm border border-muted/10 h-[300px] sm:h-[400px] flex flex-col">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-sm font-bold text-text">Earning Analytics</h2>
         <div className="flex items-center gap-4">

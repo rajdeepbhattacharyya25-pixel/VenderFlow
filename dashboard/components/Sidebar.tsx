@@ -21,6 +21,7 @@ interface SidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   sellerSlug: string | null;
+  onSidebarClose?: () => void;
 }
 
 const MENU_ITEMS = [
@@ -33,7 +34,7 @@ const MENU_ITEMS = [
   { id: 'support', label: 'Support', icon: MessageSquare },
 ];
 
-const Sidebar: React.FC<SidebarProps> = ({ collapsed, isMobile, activeTab, setActiveTab, sellerSlug }) => {
+const Sidebar: React.FC<SidebarProps> = ({ collapsed, isMobile, activeTab, setActiveTab, sellerSlug, onSidebarClose }) => {
   const navigate = useNavigate();
   const [unreadSupportCount, setUnreadSupportCount] = useState(0);
 
@@ -123,123 +124,115 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, isMobile, activeTab, setAc
     }
   };
 
-  if (isMobile) {
-
-    // Bottom Navigation for Mobile
-    return (
-      <nav className="fixed bottom-0 left-0 right-0 bg-panel border-t border-muted/10 px-6 py-3 flex justify-between items-center z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
-        {MENU_ITEMS.slice(0, 5).map((item) => {
-          const Icon = item.icon;
-          const isActive = activeTab === item.id;
-          const showBadge = item.id === 'support' && unreadSupportCount > 0;
-          return (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={`relative flex flex-col items-center gap-1 ${isActive ? 'text-chart-line' : 'text-muted'}`}
-            >
-              <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
-              {showBadge && (
-                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse" />
-              )}
-            </button>
-          )
-        })}
-      </nav>
-    );
-  }
-
-  // Desktop/Tablet Sidebar
+  // Desktop/Tablet Sidebar AND Mobile Overlay
   return (
-    <aside
-      className={`fixed top-0 left-0 h-full bg-panel border-r border-muted/10 z-40 transition-all duration-300 ease-in-out flex flex-col ${collapsed ? 'w-[72px]' : 'w-[240px]'}`}
-    >
-      {/* Logo Area */}
-      <div className={`h-[80px] flex items-center ${collapsed ? 'justify-center' : 'px-8'} border-b border-muted/10`}>
-        <div className="flex items-center gap-2 text-text font-bold text-xl tracking-tight">
-          <div className="w-8 h-8 rounded-lg bg-text flex items-center justify-center text-bg">
-            <Zap size={18} fill="currentColor" />
+    <>
+      {/* Mobile Overlay Backdrop */}
+      {isMobile && !collapsed && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={onSidebarClose}
+        />
+      )}
+
+      <aside
+        className={`fixed top-0 left-0 h-full bg-panel border-r border-muted/10 z-40 transition-all duration-300 ease-in-out flex flex-col 
+          ${isMobile
+            ? (collapsed ? '-translate-x-full' : 'translate-x-0 w-[280px] shadow-2xl')
+            : (collapsed ? 'w-[72px]' : 'w-[240px]')
+          }
+        `}
+      >
+        {/* Logo Area */}
+        <div className={`h-[80px] flex items-center ${collapsed ? 'justify-center' : 'px-8'} border-b border-muted/10`}>
+          <div className="flex items-center gap-2 text-text font-bold text-xl tracking-tight">
+            <div className="w-8 h-8 rounded-lg bg-text flex items-center justify-center text-bg">
+              <Zap size={18} fill="currentColor" />
+            </div>
+            {!collapsed && <span className="opacity-0 animate-[fadeIn_0.3s_ease-out_forwards]">GOIPSU</span>}
           </div>
-          {!collapsed && <span className="opacity-0 animate-[fadeIn_0.3s_ease-out_forwards]">GOIPSU</span>}
         </div>
-      </div>
 
-      {/* Nav Items */}
-      <nav className="flex-1 py-6 flex flex-col gap-2 px-4 overflow-y-auto">
-        {MENU_ITEMS.map((item) => {
-          const Icon = item.icon;
-          const isActive = activeTab === item.id;
-          const showBadge = item.id === 'support' && unreadSupportCount > 0 && !isActive;
+        {/* Nav Items */}
+        <nav className="flex-1 py-6 flex flex-col gap-2 px-4 overflow-y-auto">
+          {MENU_ITEMS.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeTab === item.id;
+            const showBadge = item.id === 'support' && unreadSupportCount > 0 && !isActive;
 
-          return (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={`
+            return (
+              <button
+                key={item.id}
+                onClick={() => {
+                  setActiveTab(item.id);
+                  if (isMobile && onSidebarClose) onSidebarClose();
+                }}
+                className={`
                         relative flex items-center h-12 rounded-xl transition-all duration-200 group
                         ${collapsed ? 'justify-center w-full px-0' : 'px-4 w-full'}
                         ${isActive ? 'bg-text text-bg shadow-lg' : 'text-muted hover:bg-bg hover:text-text'}
                     `}
-            >
-              <div className="relative">
-                <Icon size={20} strokeWidth={isActive ? 2.5 : 2} className="flex-shrink-0" />
-                {showBadge && (
-                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse border-2 border-panel" />
-                )}
-              </div>
-
-              {!collapsed && (
-                <span className={`ml-3 text-[13px] font-medium whitespace-nowrap opacity-0 animate-[fadeIn_0.2s_0.1s_ease-out_forwards]`}>
-                  {item.label}
-                </span>
-              )}
-
-              {/* Tooltip for collapsed state */}
-              {collapsed && (
-                <div className="absolute left-full ml-2 px-2 py-1 bg-text text-bg text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
-                  {item.label}
+              >
+                <div className="relative">
+                  <Icon size={20} strokeWidth={isActive ? 2.5 : 2} className="flex-shrink-0" />
+                  {showBadge && (
+                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse border-2 border-panel" />
+                  )}
                 </div>
-              )}
-            </button>
-          );
-        })}
 
-        <div className="mt-auto flex flex-col gap-2">
-          {sellerSlug && (
-            <a
-              href={`/store/${sellerSlug}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`
+                {!collapsed && (
+                  <span className={`ml-3 text-[13px] font-medium whitespace-nowrap opacity-0 animate-[fadeIn_0.2s_0.1s_ease-out_forwards]`}>
+                    {item.label}
+                  </span>
+                )}
+
+                {/* Tooltip for collapsed state */}
+                {collapsed && (
+                  <div className="absolute left-full ml-2 px-2 py-1 bg-text text-bg text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+                    {item.label}
+                  </div>
+                )}
+              </button>
+            );
+          })}
+
+          <div className="mt-auto flex flex-col gap-2">
+            {sellerSlug && (
+              <a
+                href={`/store/${sellerSlug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`
                         flex items-center h-12 rounded-xl transition-all duration-200 w-full group text-muted hover:text-primary hover:bg-primary/10
                         ${collapsed ? 'justify-center px-0' : 'px-4'}
                     `}
-              title="View Storefront"
-            >
-              <div className="relative">
-                <ShoppingBag size={20} className="flex-shrink-0" />
-                <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-green-500 border-2 border-panel"></div>
-              </div>
-              {!collapsed && <span className="ml-3 text-[13px] font-medium whitespace-nowrap">View Store</span>}
-            </a>
-          )}
+                title="View Storefront"
+              >
+                <div className="relative">
+                  <ShoppingBag size={20} className="flex-shrink-0" />
+                  <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-green-500 border-2 border-panel"></div>
+                </div>
+                {!collapsed && <span className="ml-3 text-[13px] font-medium whitespace-nowrap">View Store</span>}
+              </a>
+            )}
 
-          <button
-            onClick={handleLogout}
-            className={`
+            <button
+              onClick={handleLogout}
+              className={`
                         flex items-center h-12 rounded-xl transition-all duration-200 w-full group text-muted hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10
                         ${collapsed ? 'justify-center px-0' : 'px-4'}
                     `}
-          >
-            <LogOut size={20} className="flex-shrink-0" />
-            {!collapsed && <span className="ml-3 text-[13px] font-medium whitespace-nowrap">Logout</span>}
-          </button>
-        </div>
+            >
+              <LogOut size={20} className="flex-shrink-0" />
+              {!collapsed && <span className="ml-3 text-[13px] font-medium whitespace-nowrap">Logout</span>}
+            </button>
+          </div>
 
-      </nav>
+        </nav>
 
 
-    </aside>
+      </aside>
+    </>
   );
 };
 
