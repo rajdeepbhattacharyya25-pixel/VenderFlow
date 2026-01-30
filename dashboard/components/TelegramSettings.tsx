@@ -9,10 +9,22 @@ export const TelegramSettings = () => {
     const [botToken, setBotToken] = useState('');
     const [error, setError] = useState('');
     const [step, setStep] = useState<'input' | 'verify' | 'connected'>('input');
+    const [customAppUrl, setCustomAppUrl] = useState('');
 
     useEffect(() => {
         fetchConfig();
     }, []);
+
+    // Auto-poll for connection status when we are waiting for user to start the bot
+    useEffect(() => {
+        let interval: NodeJS.Timeout;
+        if (step === 'verify') {
+            interval = setInterval(fetchConfig, 3000); // Check every 3 seconds
+        }
+        return () => {
+            if (interval) clearInterval(interval);
+        };
+    }, [step]);
 
     const fetchConfig = async () => {
         try {
@@ -52,13 +64,23 @@ export const TelegramSettings = () => {
         setError('');
 
         try {
+            // Get current session
+            const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+            if (sessionError || !session) {
+                console.error("Session missing:", sessionError);
+                setError("Authentication failed. Please refresh the page and try again.");
+                return;
+            }
+
+            console.log("Connecting with token...", botToken.substring(0, 10) + "...");
+
             // Call Edge Function
-            const { data: { session } } = await supabase.auth.getSession();
             const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/telegram-seller-manager`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${session?.access_token}`
+                    'Authorization': `Bearer ${session.access_token}`
                 },
                 body: JSON.stringify({
                     action: 'connect_bot',
@@ -69,7 +91,8 @@ export const TelegramSettings = () => {
             const result = await res.json();
 
             if (!res.ok) {
-                throw new Error(result.error || 'Failed to connect bot');
+                console.error("API Error:", result);
+                throw new Error(result.error || `Connection failed (${res.status})`);
             }
 
             // Success
@@ -78,13 +101,84 @@ export const TelegramSettings = () => {
 
         } catch (err: any) {
             console.error(err);
-            setError(err.message || "Something went wrong");
+            setError(err.message || "Something went wrong connection to the server");
         } finally {
             setConnecting(false);
         }
     };
 
-    if (loading) return <div className="p-8"><Loader2 className="animate-spin text-primary" /></div>;
+    const handleTestNotification = async () => {
+        try {
+            const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+            if (sessionError || !session) {
+                alert("Please login again.");
+                return;
+            }
+
+            const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/telegram-seller-manager`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify({
+                    action: 'test_notification'
+                })
+            });
+
+            const result = await res.json();
+            if (!res.ok) throw new Error(result.error);
+
+            alert("Test notification sent! Check your Telegram.");
+
+        } catch (err: any) {
+            console.error(err);
+            alert("Failed to send test: " + err.message);
+        }
+    };
+
+    const handleSyncMenu = async () => {
+        setConnecting(true);
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                alert("Session expired. Please login again.");
+                return;
+            }
+
+            const tokenToUse = botToken || config?.bot_token;
+            if (!tokenToUse) {
+                if (confirm("Bot token not found in secure storage. Do you want to re-enter it?")) {
+                    setStep('input');
+                }
+                return;
+            }
+
+            const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/telegram-seller-manager`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify({
+                    action: 'connect_bot',
+                    bot_token: tokenToUse,
+                    app_url: customAppUrl || undefined
+                })
+            });
+
+            const result = await res.json();
+            if (!res.ok) throw new Error(result.error);
+
+            alert("Menu Button, Webhook & Commands Synced!");
+            await fetchConfig();
+        } catch (error: any) {
+            console.error(error);
+            alert("Sync failed: " + error.message);
+        } finally {
+            setConnecting(false);
+        }
+    };
 
     const renderHeader = (title: string, icon: React.ReactNode) => (
         <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
@@ -121,12 +215,41 @@ export const TelegramSettings = () => {
                             >
                                 Open Bot <ExternalLink size={14} />
                             </button>
-                            <button className="text-sm font-bold text-green-700 hover:underline">
+                            <button
+                                onClick={handleTestNotification}
+                                className="text-sm font-bold text-green-700 hover:underline"
+                            >
                                 Test Notification
+                            </button>
+                            <button
+                                onClick={handleSyncMenu}
+                                disabled={connecting}
+                                className="text-sm font-bold text-blue-600 hover:underline flex items-center gap-1"
+                            >
+                                {connecting ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
+                                Sync Menu Btn
+                            </button>
+                            <button
+                                onClick={() => setStep('input')}
+                                className="text-sm font-bold text-gray-500 hover:underline ml-auto"
+                            >
+                                Reconfigure
                             </button>
                         </div>
                     </div>
                 )}
+
+                <div className="mb-4">
+                    <p className="text-xs font-semibold text-gray-500 mb-1">OPTIONAL: Localhost / Tunnel URL</p>
+                    <input
+                        type="url"
+                        placeholder="e.g. https://crazy-cat-42.loca.lt"
+                        value={customAppUrl}
+                        onChange={(e) => setCustomAppUrl(e.target.value)}
+                        className="w-full text-sm border-gray-200 rounded-lg bg-gray-50 placeholder:text-gray-400"
+                    />
+                    <p className="text-[10px] text-gray-400 mt-1">If using localhost, paste your ngrok/localtunnel URL here before clicking 'Sync Menu Btn'.</p>
+                </div>
 
                 {step === 'verify' && (
                     <div className="bg-amber-50 border border-amber-100 rounded-xl p-6 mb-8">

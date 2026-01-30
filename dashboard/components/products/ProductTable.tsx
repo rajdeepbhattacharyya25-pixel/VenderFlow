@@ -21,7 +21,8 @@ const ProductTable: React.FC<ProductTableProps> = ({
 
     return (
         <div className="bg-panel rounded-2xl border border-muted/10 overflow-hidden shadow-sm">
-            <div className="overflow-x-auto">
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-left">
                     <thead>
                         <tr className="border-b border-muted/10 bg-bg/50">
@@ -112,6 +113,73 @@ const ProductTable: React.FC<ProductTableProps> = ({
                         ))}
                     </tbody>
                 </table>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="md:hidden flex flex-col divide-y divide-muted/10">
+                {products.length === 0 ? (
+                    <div className="p-8 text-center text-muted">
+                        No products found.
+                    </div>
+                ) : products.map((product) => (
+                    <div
+                        key={product.id}
+                        className={`p-4 flex gap-4 ${selectedIds.includes(product.id) ? 'bg-sky-500/5' : ''}`}
+                    >
+                        {/* Checkbox */}
+                        <div className="pt-1">
+                            <input
+                                type="checkbox"
+                                className="w-4 h-4 rounded border-muted/30 accent-chart-line cursor-pointer"
+                                checked={selectedIds.includes(product.id)}
+                                onChange={(e) => onSelect(product.id, e.target.checked)}
+                            />
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 min-w-0" onClick={() => onEdit(product)}>
+                            <div className="flex justify-between items-start mb-2">
+                                <div className="flex gap-3">
+                                    <div className="w-12 h-12 rounded-lg bg-muted/10 overflow-hidden border border-muted/10 flex-shrink-0">
+                                        {product.images && product.images[0] ? (
+                                            <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-xs text-muted">No Img</div>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <div className="font-medium text-text line-clamp-1">{product.name}</div>
+                                        <div className="text-xs text-muted">{product.category || 'Uncategorized'}</div>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <div className="font-bold text-text">₹{product.price.toLocaleString('en-IN')}</div>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center justify-between mt-2">
+                                <div className="flex items-center gap-2">
+                                    <span className={`
+                                        px-2 py-0.5 rounded-full text-[10px] font-medium border
+                                        ${product.is_active ? 'bg-green-500/10 text-green-500 border-green-500/20' : 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20'}
+                                    `}>
+                                        {product.is_active ? 'Published' : 'Draft'}
+                                    </span>
+                                    <span className="text-xs text-muted">Stock: {product.stock_quantity}</span>
+                                </div>
+                                <button
+                                    className="p-1.5 text-muted hover:text-text rounded-lg hover:bg-bg transition-colors"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onEdit(product);
+                                    }}
+                                >
+                                    <Edit2 size={16} />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                ))}
             </div>
         </div>
     );

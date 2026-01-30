@@ -20,10 +20,17 @@ import CartPage from './pages/CartPage';
 import CheckoutPage from './pages/CheckoutPage';
 import OrdersPage from './pages/OrdersPage';
 import AccountPage from './pages/AccountPage';
+import { initTelegramApp } from './lib/telegram';
+import TelegramInitializer from './components/TelegramInitializer';
 
 function App() {
+  React.useEffect(() => {
+    initTelegramApp();
+  }, []);
+
   return (
     <BrowserRouter>
+      <TelegramInitializer />
       <Routes>
         <Route path="/auth-callback" element={<AuthCallback />} />
 

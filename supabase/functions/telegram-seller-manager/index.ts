@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -21,18 +21,24 @@ serve(async (req) => {
             throw new Error("Missing Authorization header");
         }
 
+        const token = authHeader.replace('Bearer ', '');
+
         // Create client with user context for RLS
         const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
             global: { headers: { Authorization: authHeader } }
         });
 
-        const { data: { user }, error: authError } = await supabaseUser.auth.getUser();
+        // Explicitly pass token to getUser to avoid 'Auth session missing' in stateless environment
+        const { data: { user }, error: authError } = await supabaseUser.auth.getUser(token);
 
-        if (authError || !user) {
-            throw new Error("Unauthorized");
+        if (authError) {
+            throw new Error(`Auth Error: ${authError.message}`);
+        }
+        if (!user) {
+            throw new Error("Auth Error: No user found for this token");
         }
 
-        const { action, bot_token } = await req.json();
+        const { action, bot_token, app_url } = await req.json();
 
         // Init Service Client for Admin Actions
         const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -59,7 +65,7 @@ serve(async (req) => {
             const webhookSecret = crypto.randomUUID();
             const configId = crypto.randomUUID(); // Predetermine ID to pass in URL
 
-            // C. Set Webhook
+            // C.1. Set Webhook
             // We pass 'config_id' in URL query params so the webhook knows which seller config to load
             const setWebhookRes = await fetch(`https://api.telegram.org/bot${bot_token}/setWebhook`, {
                 method: 'POST',
@@ -75,6 +81,26 @@ serve(async (req) => {
             if (!setWebhookData.ok) {
                 throw new Error(`Failed to set Webhook: ${setWebhookData.description}`);
             }
+
+            // C.2. Set Chat Menu Button (Magic Feature)
+            // This automatically adds the "Open Dashboard" button to the user's bot
+            const finalAppUrl = app_url || Deno.env.get("PUBLIC_APP_URL") || "https://venderflow.vercel.app";
+
+            console.log("Setting Menu Button URL to:", finalAppUrl);
+
+            await fetch(`https://api.telegram.org/bot${bot_token}/setChatMenuButton`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    menu_button: {
+                        type: "web_app",
+                        text: "Dashboard",
+                        web_app: {
+                            url: `${finalAppUrl}/dashboard`
+                        }
+                    }
+                })
+            });
 
             // D. Save to DB
             // Using upsert based on seller_id (unique)
@@ -100,6 +126,46 @@ serve(async (req) => {
                 },
                 connect_token: configId // We can use configId as the 'start' payload too for simplicity or generate a separate one
             }), {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            });
+        }
+
+        if (action === 'test_notification') {
+            // Fetch Config
+            const { data: config, error: configError } = await supabaseAdmin
+                .from('seller_telegram_configs')
+                .select('*')
+                .eq('seller_id', user.id)
+                .single();
+
+            if (configError || !config) {
+                throw new Error("Configuration not found. Please connect your bot first.");
+            }
+
+            if (!config.chat_id) {
+                throw new Error("Chat ID missing. Please start the bot in Telegram first.");
+            }
+
+            // Send Message
+            const message = `🔔 **Test Notification**\n\nThis is a test message from your VenderFlow dashboard.\n\nTime: ${new Date().toLocaleString()}`;
+
+            const sendRes = await fetch(`https://api.telegram.org/bot${config.bot_token}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: config.chat_id,
+                    text: message,
+                    parse_mode: 'Markdown'
+                })
+            });
+
+            const sendData = await sendRes.json();
+
+            if (!sendData.ok) {
+                throw new Error(`Telegram API Error: ${sendData.description}`);
+            }
+
+            return new Response(JSON.stringify({ success: true }), {
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             });
         }

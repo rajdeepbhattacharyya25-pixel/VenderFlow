@@ -85,9 +85,11 @@ function App() {
       const mobile = window.innerWidth <= 640;
       const tablet = window.innerWidth <= 1024;
       setIsMobile(mobile);
-      if (tablet && !mobile) {
+      if (mobile) {
         setSidebarCollapsed(true);
-      } else if (!tablet) {
+      } else if (tablet) {
+        setSidebarCollapsed(true);
+      } else {
         setSidebarCollapsed(false);
       }
     };
@@ -156,6 +158,7 @@ function App() {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         sellerSlug={sellerSlug}
+        onSidebarClose={() => setSidebarCollapsed(true)}
       />
 
       {/* Main Content Area */}
