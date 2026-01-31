@@ -16,8 +16,18 @@ body {
   box-sizing: border-box;
   font-family: var(--font-body);
   background-color: var(--color-luxury-bg);
+  /* Default Light Mode Background */
   color: var(--color-luxury-text);
   -webkit-font-smoothing: antialiased;
+  /* overscroll-behavior-y: none;  <-- Removed to allow stretch/rubber-band effect requested by user */
+}
+
+/* Dark Mode Overrides for "Stretch" Background */
+html.dark,
+html.dark body {
+  background-color: #0a0a0a;
+  /* Dark background ensuring overscroll/stretch area is black, not white */
+  color: #e5e5e5;
 }
 
 .font-display {

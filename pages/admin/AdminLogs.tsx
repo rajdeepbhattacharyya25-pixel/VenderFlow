@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, User, Calendar, ArrowRight, Loader2, RefreshCw, Filter } from 'lucide-react';
+import { FileText, User, Calendar, RefreshCw, Filter, Shield, Key, AlertTriangle, CheckCircle, Lock } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import AdminLogStats from '../../dashboard/components/AdminLogStats';
 
 interface AuditLog {
     id: string;
@@ -52,17 +53,45 @@ const AdminLogs: React.FC = () => {
         loadLogs();
     }, [actionFilter]);
 
-    const getActionColor = (action: string) => {
-        if (action.includes('suspended') || action.includes('deleted')) {
-            return 'text-red-400 bg-red-500/10 border-red-500/20';
+    const getActionConfig = (action: string) => {
+        if (action.includes('suspended') || action.includes('deleted') || action.includes('failed')) {
+            return {
+                icon: AlertTriangle,
+                color: 'text-red-400',
+                bg: 'bg-red-500/10',
+                border: 'border-l-4 border-l-red-500'
+            };
         }
-        if (action.includes('activated') || action.includes('created')) {
-            return 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20';
+        if (action.includes('login') || action.includes('password')) {
+            return {
+                icon: Key,
+                color: 'text-amber-400',
+                bg: 'bg-amber-500/5',
+                border: 'border-l-4 border-l-amber-500'
+            };
         }
-        if (action.includes('invited')) {
-            return 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20';
+        if (action.includes('activated') || action.includes('created') || action.includes('success')) {
+            return {
+                icon: CheckCircle,
+                color: 'text-emerald-400',
+                bg: 'bg-emerald-500/5',
+                border: 'border-l-4 border-l-emerald-500'
+            };
         }
-        return 'text-neutral-400 bg-neutral-500/10 border-neutral-500/20';
+        if (action.includes('maintenance')) {
+            return {
+                icon: Lock,
+                color: 'text-purple-400',
+                bg: 'bg-purple-500/10',
+                border: 'border-l-4 border-l-purple-500'
+            };
+        }
+        return {
+            icon: FileText,
+            color: 'text-neutral-400',
+            bg: 'bg-neutral-900',
+            border: 'border border-neutral-800'
+        };
     };
 
     const formatAction = (action: string) => {
@@ -75,13 +104,13 @@ const AdminLogs: React.FC = () => {
     const uniqueActions = Array.from(new Set(logs.map(l => l.action)));
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-500">
+        <div className="space-y-8 animate-in fade-in duration-500">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-white tracking-tight">Audit Logs</h1>
+                    <h1 className="text-3xl font-bold text-white tracking-tight">Audit Logs</h1>
                     <p className="text-neutral-500 text-sm mt-1">
-                        Track all administrative actions on the platform.
+                        Track system security and changes.
                     </p>
                 </div>
                 <button
@@ -89,94 +118,98 @@ const AdminLogs: React.FC = () => {
                     className="flex items-center gap-2 px-4 py-2 bg-neutral-800 hover:bg-neutral-700 text-white rounded-xl text-sm font-medium transition-all"
                 >
                     <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-                    Refresh
+                    Refresh Data
                 </button>
             </div>
 
-            {/* Filter */}
+            {/* Analytics Dashboard (Option A) */}
+            <AdminLogStats logs={logs} />
+
+            {/* Filters */}
             <div className="bg-neutral-900 border border-neutral-800 p-4 rounded-2xl flex items-center gap-4">
                 <Filter size={16} className="text-neutral-500" />
                 <select
                     value={actionFilter}
                     onChange={(e) => setActionFilter(e.target.value)}
-                    className="bg-neutral-950 border border-neutral-800 rounded-xl py-2 px-3 text-sm outline-none text-neutral-300"
+                    className="bg-transparent text-white border-none focus:ring-0 text-sm outline-none cursor-pointer w-full"
                 >
                     <option value="">All Actions</option>
                     {uniqueActions.map(action => (
                         <option key={action} value={action}>{formatAction(action)}</option>
                     ))}
                 </select>
-                {actionFilter && (
-                    <button
-                        onClick={() => setActionFilter('')}
-                        className="text-sm text-neutral-500 hover:text-white transition-colors"
-                    >
-                        Clear
-                    </button>
-                )}
             </div>
 
-            {/* Logs List */}
-            <div className="bg-neutral-900 border border-neutral-800 rounded-2xl overflow-hidden">
-                {loading ? (
-                    <div className="flex items-center justify-center py-20">
-                        <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
-                    </div>
-                ) : logs.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-20 text-center">
-                        <FileText className="w-16 h-16 text-neutral-700 mb-4" />
-                        <p className="text-neutral-500">No audit logs found</p>
-                        <p className="text-neutral-600 text-sm mt-1">
-                            Admin actions will appear here
-                        </p>
+            {/* Smart Log List (Option C) */}
+            <div className="space-y-3">
+                {logs.length === 0 ? (
+                    <div className="text-center py-20 bg-neutral-900/50 rounded-2xl border border-neutral-800 border-dashed">
+                        <Shield size={48} className="mx-auto text-neutral-600 mb-4" />
+                        <p className="text-neutral-400">No audit logs found</p>
+                        <p className="text-xs text-neutral-600 mt-1">Admin actions will appear here automatically</p>
                     </div>
                 ) : (
-                    <div className="divide-y divide-neutral-800">
-                        {logs.map((log) => (
-                            <div key={log.id} className="p-4 hover:bg-neutral-800/30 transition-colors">
-                                <div className="flex items-start gap-4">
-                                    <div className="flex-shrink-0 w-10 h-10 bg-neutral-800 rounded-full flex items-center justify-center">
-                                        <User className="w-5 h-5 text-neutral-500" />
+                    logs.map((log) => {
+                        const config = getActionConfig(log.action);
+                        const Icon = config.icon;
+
+                        return (
+                            <div
+                                key={log.id}
+                                className={`group flex flex-col md:flex-row md:items-center gap-4 p-5 rounded-r-xl transition-all hover:translate-x-1 ${config.bg} ${config.border}`}
+                            >
+                                {/* Icon & Action */}
+                                <div className="flex items-start gap-4 flex-1">
+                                    <div className={`mt-0.5 p-2 rounded-lg bg-black/20 ${config.color}`}>
+                                        <Icon size={18} />
                                     </div>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2 flex-wrap">
-                                            <span className="font-medium text-white">
-                                                {log.profiles?.full_name || 'Admin'}
-                                            </span>
-                                            <ArrowRight className="w-4 h-4 text-neutral-600" />
-                                            <span className={`px-2 py-0.5 rounded-md text-xs font-medium border ${getActionColor(log.action)}`}>
-                                                {formatAction(log.action)}
-                                            </span>
+                                    <div>
+                                        <h3 className="text-white font-medium flex items-center gap-2">
+                                            {formatAction(log.action)}
                                             {log.target_type && (
-                                                <span className="text-neutral-500 text-sm">
-                                                    on {log.target_type}
+                                                <span className="text-xs px-2 py-0.5 rounded-full bg-neutral-800 text-neutral-400 font-normal">
+                                                    {log.target_type}
                                                 </span>
                                             )}
-                                        </div>
-
-                                        {log.metadata && Object.keys(log.metadata).length > 0 && (
-                                            <div className="mt-2 text-sm text-neutral-500">
-                                                {log.metadata.store_name && (
-                                                    <span>Store: <span className="text-neutral-400">{log.metadata.store_name}</span></span>
-                                                )}
-                                                {log.metadata.email && (
-                                                    <span className="ml-3">Email: <span className="text-neutral-400">{log.metadata.email}</span></span>
-                                                )}
-                                                {log.metadata.slug && (
-                                                    <span className="ml-3">Slug: <code className="text-neutral-400 bg-neutral-800 px-1 rounded">{log.metadata.slug}</code></span>
-                                                )}
-                                            </div>
-                                        )}
-
-                                        <div className="flex items-center gap-2 mt-2 text-xs text-neutral-600">
-                                            <Calendar className="w-3 h-3" />
-                                            {new Date(log.created_at).toLocaleString()}
+                                        </h3>
+                                        <div className="flex items-center gap-4 mt-1 text-sm text-neutral-400">
+                                            <span className="flex items-center gap-1.5">
+                                                <User size={12} />
+                                                {log.profiles?.full_name || 'System Admin'}
+                                            </span>
+                                            <span className="w-1 h-1 bg-neutral-700 rounded-full" />
+                                            <span className="flex items-center gap-1.5 font-mono text-xs">
+                                                <Calendar size={12} />
+                                                {new Date(log.created_at).toLocaleString()}
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
+
+                                {/* Smart Metadata (Only show if relevant) */}
+                                {log.metadata && (Object.keys(log.metadata).length > 0) && (
+                                    <div className="md:w-1/3 flex flex-wrap gap-2 justify-end">
+                                        {log.metadata.ip && (
+                                            <span className="text-xxs px-2 py-1 bg-black/40 rounded text-neutral-500 font-mono">
+                                                IP: {log.metadata.ip}
+                                            </span>
+                                        )}
+                                        {log.metadata.reason && (
+                                            <span className="text-xs px-2 py-1 bg-red-500/10 text-red-400 rounded">
+                                                Reason: {log.metadata.reason}
+                                            </span>
+                                        )}
+                                        {/* Fallback for other metadata */}
+                                        {!log.metadata.ip && !log.metadata.reason && (
+                                            <span className="text-xs text-neutral-600 italic">
+                                                Checking details...
+                                            </span>
+                                        )}
+                                    </div>
+                                )}
                             </div>
-                        ))}
-                    </div>
+                        );
+                    })
                 )}
             </div>
         </div>
