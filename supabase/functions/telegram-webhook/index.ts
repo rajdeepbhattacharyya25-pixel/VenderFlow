@@ -46,8 +46,6 @@ serve(async (req) => {
                 const command = text.trim().split(/\s+/)[0].split('@')[0];
                 const args = text.trim().split(/\s+/).slice(1).join(' ');
 
-                await sendMessage(chatId, `🐛 Debug: Command parsed: '${command}'`);
-
                 if (command === "/start") {
                     let siteUrl = Deno.env.get("SITE_URL") ?? 'https://e-commerce-landing-page-eight-self.vercel.app';
 

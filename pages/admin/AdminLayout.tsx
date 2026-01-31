@@ -20,30 +20,110 @@ import { supabase } from '../../lib/supabase';
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import CommandPalette from './components/CommandPalette';
 import NotificationCenter from './components/NotificationCenter';
+import { notifyAdmin } from '../../lib/notifications';
 
 const AdminLayout: React.FC = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
     const navigate = useNavigate();
 
-    // Set page title for admin section
+    // Set page title and theme for admin section
     useEffect(() => {
         document.title = 'Rajdeep Admin';
+        document.documentElement.classList.add('dark');
+
+        return () => {
+            // Check if we are navigating to a non-admin page before removing? 
+            // For now, let's leave it or remove it. 
+            // If we remove it, navigating to Storefront (which manages its own state) might flicker.
+            // But Storefront's useEffect will run and fix it.
+            // Leaving it is safer for "persist dark mode". But Storefront defaults to light.
+            // Let's NOT remove it here to avoid flash, let Storefront handle its own state.
+        };
     }, []);
 
-    // Keyboard shortcuts
-    useKeyboardShortcuts({
-        onCommandPalette: () => setIsCommandPaletteOpen(true),
-        onShowHelp: () => {
-            // Could show a help modal here
-            console.log('Shortcuts: G+D (Dashboard), G+S (Sellers), G+O (Orders), Ctrl+K (Search)');
-        }
-    });
+    // Session Timeout Logic (15 minutes)
+    useEffect(() => {
+        const TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
+        let lastActivity = Date.now();
+        let interval: NodeJS.Timeout;
 
-    const handleLogout = async () => {
+        const updateActivity = () => {
+            lastActivity = Date.now();
+        };
+
+        const checkActivity = () => {
+            if (Date.now() - lastActivity > TIMEOUT_MS) {
+                clearInterval(interval); // Stop checking immediately to prevent spam
+                handleLogout('timeout');
+            }
+        };
+
+        // Listen for user activity
+        window.addEventListener('mousemove', updateActivity);
+        window.addEventListener('keypress', updateActivity);
+        window.addEventListener('click', updateActivity);
+        window.addEventListener('scroll', updateActivity);
+
+        // Check every minute
+        interval = setInterval(checkActivity, 60 * 1000);
+
+        // LOGGING: Admin Access (Throttled to once per hour)
+        const logAdminAccess = async () => {
+            const lastLog = localStorage.getItem('last_admin_log');
+            const now = Date.now();
+
+            if (!lastLog || now - parseInt(lastLog) > 60 * 60 * 1000) {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (user) {
+                    await supabase.from('audit_logs').insert({
+                        actor_id: user.id,
+                        action: 'admin_login',
+                        target_type: 'platform',
+                        target_id: null,
+                        metadata: {
+                            ip: 'client-side', // IP detection requires generic edge function
+                            agent: navigator.userAgent
+                        }
+                    });
+                    localStorage.setItem('last_admin_log', now.toString());
+                }
+            }
+        };
+        logAdminAccess();
+
+        return () => {
+            window.removeEventListener('mousemove', updateActivity);
+            window.removeEventListener('keypress', updateActivity);
+            window.removeEventListener('click', updateActivity);
+            window.removeEventListener('scroll', updateActivity);
+            clearInterval(interval);
+        };
+    }, []);
+
+    const handleLogout = async (reason?: string) => {
+        if (reason === 'timeout') {
+            try {
+                await notifyAdmin({
+                    type: 'SYSTEM_ALERT',
+                    message: 'Admin session expired due to inactivity. You have been logged out.'
+                });
+            } catch (err) {
+                console.error('Failed to send timeout notification:', err);
+                // Continue to logout even if notification fails
+            }
+        }
         await supabase.auth.signOut();
         navigate('/?mode=seller');
     };
+
+    // Keyboard shortcuts (Restored)
+    useKeyboardShortcuts({
+        onCommandPalette: () => setIsCommandPaletteOpen(true),
+        onShowHelp: () => {
+            console.log('Shortcuts active');
+        }
+    });
 
     const navItems = [
         { icon: BarChart3, label: 'Dashboard', path: '/admin', shortcut: 'R D' },
