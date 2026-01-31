@@ -22,6 +22,7 @@ import OrdersPage from './pages/OrdersPage';
 import AccountPage from './pages/AccountPage';
 import { initTelegramApp } from './lib/telegram';
 import TelegramInitializer from './components/TelegramInitializer';
+import OfflineOverlay from './components/OfflineOverlay';
 
 function App() {
   React.useEffect(() => {
@@ -30,6 +31,7 @@ function App() {
 
   return (
     <BrowserRouter>
+      <OfflineOverlay />
       <TelegramInitializer />
       <Routes>
         <Route path="/auth-callback" element={<AuthCallback />} />

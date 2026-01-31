@@ -98,7 +98,3 @@ body {
     transform: translateY(-4px);
   }
 }
-
-.animate-cart-bounce {
-  animation: cart-bounce 0.4s ease-out;
-}

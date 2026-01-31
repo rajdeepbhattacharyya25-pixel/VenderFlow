@@ -1,0 +1,338 @@
+/* Cinematic Offline Overlay - Synced Physics Rewrite */
+
+:root {
+    /* Colors */
+    --overlay-bg: linear-gradient(135deg, #0a0a0a 0%, #000000 100%);
+    --beam-color: rgba(255, 255, 255, 0.1);
+    --beam-glow: rgba(255, 248, 220, 0.4);
+    /* Cornsilk Yellow Tint (Warm) */
+    --text-primary: #ffffff;
+    --text-secondary: rgba(255, 255, 255, 0.6);
+    --anim-ease: cubic-bezier(0.4, 0.0, 0.2, 1);
+
+    /* Geometry Variables for Perfect Sync */
+    --pivot-top: -150px;
+    --beam-width: 600px;
+    --beam-height: 120vh;
+}
+
+/* Base Container */
+.offline-overlay-root {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--overlay-bg);
+    color: var(--text-primary);
+    font-family: 'Space Grotesk', 'Inter', sans-serif;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease-in-out;
+    overflow: hidden;
+}
+
+.offline-overlay-root.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Vignette */
+.offline-vignette {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, transparent 0%, rgba(0, 0, 0, 0.9) 100%);
+    pointer-events: none;
+    z-index: 5;
+}
+
+/* --- SHARED PHYSICS MECHANISM --- */
+/* Both the Mask Pivot and the Spotlight Container MUST use this shared class 
+   to ensure they move in perfect lock-step. */
+.swing-mechanism {
+    position: absolute;
+    top: var(--pivot-top);
+    left: 50%;
+    transform-origin: top center;
+    transform: translateX(-50%);
+    width: var(--beam-width);
+    height: var(--beam-height);
+    will-change: transform;
+    /* Hint to browser to layer this */
+    animation: swing 3s ease-in-out infinite alternate;
+}
+
+/* Keyframes - Defined ONCE for everyone */
+@keyframes swing {
+    0% {
+        transform: translateX(-50%) rotate(25deg);
+    }
+
+    100% {
+        transform: translateX(-50%) rotate(-25deg);
+    }
+}
+
+/* --- LAYER 1: PHYSICS MASKING (The Reveal) --- */
+.wifi-physics-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    mix-blend-mode: screen;
+    /* Black -> Transparent */
+    background: black;
+    display: flex;
+    /* Essential for screen blend to work */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    isolation: isolate;
+    /* FORCE BLEND CONTEXT */
+}
+
+/* The Bright Target - Maroon & Ghostly */
+.wifi-bright-icon {
+    position: relative;
+    /* REQUIRED for z-index to work */
+    z-index: 1;
+    /* Sit below the mask */
+    width: 100px;
+    height: 100px;
+    color: #ff2a2a;
+    opacity: 0.25;
+    filter: drop-shadow(0 0 15px rgba(128, 0, 0, 0.6));
+    transform: translateY(-60px);
+}
+
+/* The Mask Container */
+.wifi-mask-container {
+    position: absolute;
+    inset: 0;
+    background: black;
+    mix-blend-mode: multiply;
+    z-index: 10;
+    /* FORCE ON TOP OF ICON */
+}
+
+/* The Mask Beam (Invisible Geometry) */
+.wifi-mask-beam {
+    position: absolute;
+    top: 160px;
+    /* Offset from pivot top */
+    left: 0;
+    right: 0;
+    bottom: 0;
+    /* Fill the mechanism width */
+    margin: auto;
+    width: 100%;
+    height: 100%;
+    /* EXPANDED CLIP PATH: ZERO-BLEED INNER MASK */
+    /* Beam: 45/55 -> 0/100. Match Line: 46/54 -> 8/92. */
+    /* 1% Top Buffer, 8% Bottom Buffer. */
+    /* This heavy inner-masking swallows the blur completely. */
+    clip-path: polygon(46% 0%, 54% 0%, 92% 100%, 8% 100%);
+
+    /* GRADIENT FADE: Keeps bottom edge soft. */
+    background: linear-gradient(to bottom, white 40%, black 90%);
+
+    filter: blur(25px);
+    /* 25px: Controlled softness. Tighter than beam (30px) to prevent bleed. */
+}
+
+/* --- LAYER 2: VISIBLE SPOTLIGHT --- */
+.spotlight-container {
+    /* Inherits .swing-mechanism styles */
+    z-index: 4;
+    pointer-events: none;
+}
+
+.spotlight-source {
+    position: absolute;
+    top: 150px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 24px;
+    height: 24px;
+    background: white;
+    border-radius: 50%;
+    box-shadow: 0 0 60px 20px rgba(255, 255, 255, 0.9);
+    animation: glow-pulse 3s infinite ease-in-out;
+}
+
+.spotlight-beam {
+    position: absolute;
+    top: 160px;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to bottom, var(--beam-glow) 0%, transparent 60%);
+    /* Visual Beam is narrower than Mask Beam */
+    clip-path: polygon(45% 0%, 55% 0%, 100% 100%, 0% 100%);
+    filter: blur(30px);
+    opacity: 0.5;
+}
+
+/* --- CONTENT --- */
+.offline-content {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    margin-top: 200px;
+    opacity: 0;
+    transition: all 0.8s var(--anim-ease);
+}
+
+.offline-overlay-root.visible .offline-content {
+    transform: translateY(0);
+    opacity: 1;
+    transition-delay: 0.2s;
+}
+
+.offline-title {
+    font-family: 'Permanent Marker', cursive;
+    font-size: 3.5rem;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.75rem;
+    text-transform: uppercase;
+    background: linear-gradient(to bottom, #ffffff 0%, #a0a0a0 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.offline-subtitle {
+    font-family: 'Inter', sans-serif;
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    margin-bottom: 3rem;
+    font-weight: 300;
+}
+
+/* Retry Button */
+.offline-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50px;
+    width: auto;
+    padding: 0 2rem;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    margin: 0 auto;
+    margin-top: 2rem;
+    color: white;
+    transition: all 0.1s ease-out;
+    opacity: 0.5;
+    position: relative;
+    overflow: hidden;
+    text-decoration: none;
+}
+
+.offline-btn:hover {
+    border-color: rgba(255, 255, 255, 0.6);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+    animation: filament-flicker 2s infinite;
+    opacity: 1;
+}
+
+.offline-btn.surging {
+    background: white !important;
+    color: black !important;
+    border-color: white !important;
+    box-shadow: 0 0 50px rgba(255, 255, 255, 1), 0 0 100px rgba(255, 255, 255, 0.8);
+    transform: scale(1.1);
+    opacity: 1 !important;
+    animation: power-surge 0.1s infinite alternate;
+}
+
+.offline-btn span {
+    font-family: 'Permanent Marker', cursive;
+    font-size: 1.2rem;
+    letter-spacing: 0.1em;
+    margin-left: 10px;
+}
+
+/* Animations */
+@keyframes filament-flicker {
+
+    0%,
+    100% {
+        opacity: 0.8;
+    }
+
+    3% {
+        opacity: 0.2;
+    }
+
+    7% {
+        opacity: 0.1;
+    }
+
+    9% {
+        opacity: 1;
+        text-shadow: 0 0 10px white;
+    }
+
+    32% {
+        opacity: 0.3;
+    }
+
+    60% {
+        opacity: 0.2;
+    }
+
+    92% {
+        opacity: 0.9;
+    }
+}
+
+@keyframes power-surge {
+    0% {
+        transform: scale(1.1) rotate(-2deg);
+    }
+
+    100% {
+        transform: scale(1.15) rotate(2deg);
+    }
+}
+
+@keyframes glow-pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+        transform: translateX(-50%) scale(1);
+    }
+
+    50% {
+        opacity: 0.7;
+        transform: translateX(-50%) scale(0.9);
+    }
+}
+
+/* Static Layer (Hidden) */
+.wifi-static-layer {
+    display: none;
+}
+
+.wifi-static-icon {
+    width: 100px;
+    height: 100px;
+    transform: translateY(-60px);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .offline-title {
+        font-size: 2rem;
+    }
+
+    :root {
+        --beam-width: 300px;
+    }
+}
