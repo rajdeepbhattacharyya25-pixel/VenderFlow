@@ -11,19 +11,28 @@ const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 serve(async (req) => {
+    console.log(`[Webhook] Request received: ${req.method} ${req.url}`);
+
     if (req.method === "POST") {
         try {
-            if (!TELEGRAM_BOT_TOKEN) throw new Error("Missing Bot Token");
+            if (!TELEGRAM_BOT_TOKEN) {
+                console.error("[Webhook] Missing TELEGRAM_BOT_TOKEN");
+                throw new Error("Missing Bot Token");
+            }
 
             const update = await req.json();
+            console.log("[Webhook] Update received:", JSON.stringify(update, null, 2));
 
             // We only care about messages
             if (!update.message) return new Response("OK", { status: 200 });
 
             const chatId = update.message.chat.id;
             const text = update.message.text;
+
             const user = update.message.from;
             const replyTo = update.message.reply_to_message;
+
+            // Security Check: Only allow authorized admin
 
             // Security Check: Only allow authorized admin
             if (SYSTEM_ADMIN_ID && chatId !== SYSTEM_ADMIN_ID) {
@@ -37,8 +46,28 @@ serve(async (req) => {
                 const command = text.trim().split(/\s+/)[0].split('@')[0];
                 const args = text.trim().split(/\s+/).slice(1).join(' ');
 
+                await sendMessage(chatId, `🐛 Debug: Command parsed: '${command}'`);
+
                 if (command === "/start") {
-                    await sendMessage(chatId, "👋 Welcome Admin! Available commands:\n/stats - System Overview\n/backup - Download Database\n/help - Show this menu");
+                    let siteUrl = Deno.env.get("SITE_URL") ?? 'https://e-commerce-landing-page-eight-self.vercel.app';
+
+                    // Telegram requires HTTPS. Fallback to production if localhost is detected.
+                    if (siteUrl.includes('localhost') || siteUrl.startsWith('http://')) {
+                        siteUrl = 'https://e-commerce-landing-page-eight-self.vercel.app';
+                    }
+
+                    const webAppUrl = `${siteUrl}/admin`;
+
+                    // 1. Send Inline Button (Immediate Action)
+                    const keyboard = {
+                        inline_keyboard: [
+                            [{ text: "🖥️ Open Admin Panel", web_app: { url: webAppUrl } }]
+                        ]
+                    };
+                    await sendMessage(chatId, "👋 Welcome Admin! \n\nClick the button below to open your dashboard inside Telegram:", 'Markdown', keyboard);
+
+                    // 2. Set Persistent Menu Button (Long-term Convenience)
+                    await setMenuButton(chatId, webAppUrl);
                 }
                 else if (command === "/stats") {
                     await handleStats(chatId);
@@ -101,7 +130,7 @@ Simply reply to any "New Message" notification to send a response back.
             return new Response("OK", { status: 200 });
 
         } catch (err) {
-            console.error(err);
+            console.error("[Webhook] UNCAUGHT ERROR:", err);
             return new Response(JSON.stringify({ error: err.message }), { status: 500 });
         }
     }
@@ -111,7 +140,7 @@ Simply reply to any "New Message" notification to send a response back.
 
 // --- Helper Functions ---
 
-async function sendMessage(chatId: number, text: string, parseMode: string | null = 'Markdown') {
+async function sendMessage(chatId: number, text: string, parseMode: string | null = 'Markdown', replyMarkup: any = null) {
     const body: any = {
         chat_id: chatId,
         text,
@@ -120,6 +149,10 @@ async function sendMessage(chatId: number, text: string, parseMode: string | nul
 
     if (parseMode) {
         body.parse_mode = parseMode;
+    }
+
+    if (replyMarkup) {
+        body.reply_markup = replyMarkup;
     }
 
     const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
@@ -131,6 +164,27 @@ async function sendMessage(chatId: number, text: string, parseMode: string | nul
     if (!res.ok) {
         const errData = await res.json();
         console.error("Telegram API Error:", errData);
+    }
+}
+
+async function setMenuButton(chatId: number, webAppUrl: string) {
+    try {
+        await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setChatMenuButton`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                chat_id: chatId,
+                menu_button: {
+                    type: "web_app",
+                    text: "Admin Panel",
+                    web_app: {
+                        url: webAppUrl
+                    }
+                }
+            }),
+        });
+    } catch (err) {
+        console.error("Failed to set menu button:", err);
     }
 }
 
