@@ -140,6 +140,18 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
                 if (error) throw error;
 
                 if (data.user) {
+                    // Log the session
+                    try {
+                        const { data: sessionData, error: sessionFnError } = await supabase.functions.invoke('log-session', {
+                            body: { device_info: navigator.userAgent }
+                        });
+                        if (sessionData?.session_id) {
+                            localStorage.setItem('current_session_id', sessionData.session_id);
+                        }
+                    } catch (sessionError) {
+                        console.error('Failed to log session:', sessionError);
+                    }
+
                     const { data: profile, error: profileError } = await supabase
                         .from('profiles')
                         .select('role')

@@ -21,7 +21,7 @@ import { HeroSkeleton, ScrollableSectionSkeleton } from '../components/Skeleton'
 import { supabase } from '../lib/supabase';
 import { Seller, loadSellerBySlug, setCurrentSeller, isSellerAccessible, checkStoreMembership, joinStore } from '../lib/seller';
 import { canAddToCart, setCartSeller, getCartSeller, clearCart, getCartItems, saveCartItems } from '../lib/cart';
-import { Store, AlertTriangle, ArrowLeft } from 'lucide-react';
+import { Store, AlertTriangle, ArrowLeft, AlertCircle } from 'lucide-react';
 import { clearStoreSession, StoreCustomer, getCurrentStoreCustomer, establishStoreSession } from '../lib/storeAuth';
 import { LoginModal } from '../components/LoginModal';
 import StoreRegister from './StoreRegister';
@@ -99,6 +99,39 @@ const SellerStorefront = () => {
         if (storeSettings) console.log("Debugging Store Settings:", storeSettings);
     }, [storeSettings]);
     const [isLoading, setIsLoading] = useState(true);
+    const [maintenanceMode, setMaintenanceMode] = useState(false); // Add Maintenance State
+
+    useEffect(() => {
+        const checkMaintenance = async () => {
+            const { data: settings } = await supabase
+                .from('platform_settings')
+                .select('maintenance_mode')
+                .single();
+
+            console.log("Seller Storefront Maintenance Check:", settings);
+            if (settings?.maintenance_mode) {
+                setMaintenanceMode(true);
+            }
+        };
+        checkMaintenance();
+
+        // Subscription for dynamic updates
+        const channel = supabase.channel('maintenance_mode_seller')
+            .on('postgres_changes', {
+                event: 'UPDATE',
+                schema: 'public',
+                table: 'platform_settings'
+            }, (payload) => {
+                if (payload.new && typeof payload.new.maintenance_mode !== 'undefined') {
+                    setMaintenanceMode(payload.new.maintenance_mode);
+                }
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, []);
 
     const [storeCustomer, setStoreCustomer] = useState<StoreCustomer | null>(null);
     const [isNameHydrating, setIsNameHydrating] = useState(true); // Prevent flash of "Friend"
@@ -1147,8 +1180,28 @@ const SellerStorefront = () => {
         }
     };
 
+    if (maintenanceMode) {
+        return (
+            <div className="min-h-screen bg-neutral-950 flex flex-col items-center justify-center p-4 font-body">
+                <div className="bg-neutral-900 border border-neutral-800 rounded-3xl p-8 max-w-md w-full text-center shadow-2xl animate-in fade-in zoom-in-95 duration-300">
+                    <div className="w-20 h-20 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <AlertCircle size={40} className="text-amber-500" />
+                    </div>
+                    <h1 className="text-2xl font-bold text-white mb-2 font-display">Store Maintenance</h1>
+                    <p className="text-neutral-400 mb-6">
+                        This store is currently unavailable due to platform maintenance. Please check back soon.
+                    </p>
+                    <div className="bg-neutral-800/50 rounded-xl p-4 text-sm text-neutral-300 border border-neutral-700">
+                        <p className="font-medium text-white mb-1">Status Updates</p>
+                        We apologize for the inconvenience.
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
-        <div className="min-h-screen flex flex-col font-body pb-[80px] md:pb-0 bg-white dark:bg-background-dark transition-colors duration-300">
+        <div className="min-h-screen flex flex-col font-body pb-[80px] md:pb-0 transition-colors duration-300" style={themeStyles}>
             <QuickViewModal
                 product={selectedProduct}
                 isOpen={isModalOpen}

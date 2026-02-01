@@ -147,10 +147,10 @@ const AdminLayout: React.FC = () => {
             <aside
                 className={`fixed top-0 left-0 h-full bg-neutral-900 border-r border-neutral-800 transition-all duration-300 z-50 ${isSidebarOpen ? 'w-64' : 'w-20'}`}
             >
-                <div className="h-16 flex items-center px-6 border-b border-neutral-800">
-                    <Shield className="w-8 h-8 text-indigo-500 min-w-[32px]" />
-                    {isSidebarOpen && <span className="ml-3 font-bold text-xl tracking-tight text-white">Rajdeep <span className="text-indigo-500 font-medium text-sm">ADMIN</span></span>}
-                </div>
+                <NavLink to="/admin" className="h-16 flex items-center px-6 border-b border-neutral-800 hover:bg-neutral-800/50 transition-colors cursor-pointer block text-left">
+                    <Shield className="w-8 h-8 text-indigo-500 min-w-[32px] inline-block" />
+                    {isSidebarOpen && <span className="ml-3 font-bold text-xl tracking-tight text-white inline-block">Rajdeep <span className="text-indigo-500 font-medium text-sm">ADMIN</span></span>}
+                </NavLink>
 
                 <nav className="p-4 space-y-2">
                     {navItems.map((item) => (

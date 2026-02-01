@@ -128,4 +128,18 @@ export interface StoreSettings {
   shipping_fee: number;
   free_shipping_threshold: number;
   theme_config?: ThemeConfig;
+  session_timeout_minutes?: number;
+  enforce_2fa?: boolean;
+}
+
+export interface PlatformSettings {
+  id: string;
+  commission_rate: number;
+  min_payout_amount: number;
+  maintenance_mode: boolean;
+  announcement_message: string | null;
+  session_timeout_minutes: number;
+  enforce_2fa: boolean;
+  max_login_attempts: number;
+  created_at: string;
 }

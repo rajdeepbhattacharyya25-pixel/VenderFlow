@@ -428,7 +428,7 @@ _Checked at ${new Date().toLocaleTimeString()}_
 async function handleLogin(chatId: number, commandArgs: string) {
     const emailArg = commandArgs.split(' ')[1];
 
-    await sendMessage(chatId, "🔐 Generating secure login link...");
+    // await sendMessage(chatId, "🔐 Generating secure login link...");
 
     let adminEmail = emailArg;
 

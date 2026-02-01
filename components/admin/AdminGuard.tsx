@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { toast } from 'react-hot-toast';
 import { Navigate, Outlet, useLocation, Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { ShieldX, Home } from 'lucide-react';
@@ -23,6 +24,7 @@ const AdminGuard: React.FC = () => {
 
                 setIsAuthenticated(true);
 
+                // Check Admin Role
                 const { data: profile, error } = await supabase
                     .from('profiles')
                     .select('role')
@@ -31,9 +33,40 @@ const AdminGuard: React.FC = () => {
 
                 if (error || !profile || profile.role !== 'admin') {
                     setIsAdmin(false);
-                } else {
-                    setIsAdmin(true);
+                    setLoading(false);
+                    return;
                 }
+
+                setIsAdmin(true);
+
+                // Check 2FA Enforcement
+                const { data: settings } = await supabase
+                    .from('platform_settings')
+                    .select('enforce_2fa')
+                    .single();
+
+                if (settings?.enforce_2fa) {
+                    const { data: factors } = await supabase.auth.mfa.listFactors();
+                    const hasVerifiedFactor = factors?.totp?.some((factor) => factor.status === 'verified');
+
+                    if (!hasVerifiedFactor) {
+                        // Show visible warning to admin
+                        toast.error(
+                            "Security Alert: Two-Factor Authentication is currently ENFORCED but not set up on your account. Please enable it in Settings.",
+                            {
+                                duration: 6000,
+                                icon: '⚠️',
+                                style: {
+                                    border: '1px solid #F59E0B',
+                                    padding: '16px',
+                                    fontWeight: '500'
+                                },
+                            }
+                        );
+                        console.warn('2FA is enforced but not set up');
+                    }
+                }
+
             } catch (error) {
                 console.error('Error checking admin role:', error);
                 setIsAuthenticated(false);

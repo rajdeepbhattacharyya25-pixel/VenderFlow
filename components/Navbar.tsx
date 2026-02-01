@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { IconSearch, IconUser, IconShoppingBag, IconMenu, IconX, IconHeart, IconSun, IconMoon, IconChevronDown } from './Icons';
+import { NotificationBell } from './NotificationBell';
 
 interface NavbarProps {
   onNavigate: (view: 'home' | 'wishlist' | 'cart' | 'account' | 'orders' | 'viewAll' | 'storeLogin' | 'storeRegister') => void;
@@ -167,6 +168,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     Dashboard
                   </a>
                 )}
+                <NotificationBell />
                 <button onClick={() => handleNavClick('account')} className="hover:text-primary transition-transform hover:scale-110 p-1" aria-label="Account">
                   <IconUser className="w-5 h-5" />
                 </button>

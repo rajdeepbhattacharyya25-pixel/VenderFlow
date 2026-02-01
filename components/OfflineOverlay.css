@@ -336,3 +336,56 @@
         --beam-width: 300px;
     }
 }
+
+/* --- 404 PAGE PHYSICS ADAPTATIONS --- */
+
+.four-oh-four-target {
+    font-family: 'Space Grotesk', sans-serif;
+    /* Matching font-display */
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.05em;
+    /* Bright color to be revealed by the beam */
+    color: rgba(255, 255, 255, 0.4);
+    /* Optional: Use gradient if preferred, but plain fits 'ghostly' well */
+    background: linear-gradient(to bottom, #404040 0%, #171717 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+
+    /* Positioning matches the original layout */
+    position: absolute;
+    top: 50%;
+    /* Adjust based on where mt-32 pushed it */
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    text-align: center;
+    white-space: nowrap;
+
+    /* Physics properties */
+    z-index: 1;
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.1));
+}
+
+/* Reuse wifi-mask-beam but potentially adjust for text size if coverage is issue */
+/* For now, the standard beam width (600px) covers the text (120-180px font size) */
+
+/* Typewriter Effect */
+.typewriter {
+    /* Layout: Fixed 'fit-content' width ensures the container is already at full size and centered */
+    width: fit-content;
+    margin: 0 auto;
+    white-space: nowrap;
+
+    /* Animation: Use clip-path to reveal from left-to-right without affecting layout width */
+    clip-path: inset(0 100% 0 0);
+    animation: typing-reveal 2s steps(50, end) forwards;
+}
+
+/* The typing reveal effect */
+@keyframes typing-reveal {
+    to {
+        clip-path: inset(0 0 0 0);
+    }
+}

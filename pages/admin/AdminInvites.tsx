@@ -73,10 +73,13 @@ const AdminInvites: React.FC = () => {
         return true;
     };
 
+    const [inviteLink, setInviteLink] = useState<string | null>(null);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
         setSuccess(false);
+        setInviteLink(null);
 
         // Validate
         if (!formData.email || !formData.store_name || !formData.slug) {
@@ -91,53 +94,31 @@ const AdminInvites: React.FC = () => {
             return;
         }
 
-        // Validate slug
-        const slugValid = await validateSlug();
-        if (!slugValid) return;
-
         setLoading(true);
 
         try {
-            // For now, we'll create a pending seller entry directly
-            // In production, this would call an Edge Function that uses admin.inviteUserByEmail()
+            const { data, error } = await supabase.functions.invoke('invite-seller', {
+                body: {
+                    email: formData.email,
+                    store_name: formData.store_name,
+                    slug: formData.slug,
+                    plan: formData.plan
+                }
+            });
 
-            // First check if email already exists
-            const { data: existingSeller } = await supabase
-                .from('profiles')
-                .select('id')
-                .eq('id', formData.email) // This won't work as profiles use UUID
-                .maybeSingle();
-
-            // Create an invite record (you could create a separate invites table)
-            // For now, we'll log the intent and show success
-
-            // Log the invite action
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-                await supabase.from('audit_logs').insert({
-                    actor_id: user.id,
-                    action: 'seller_invited',
-                    target_type: 'seller_invite',
-                    target_id: null, // No seller ID yet
-                    metadata: {
-                        email: formData.email,
-                        store_name: formData.store_name,
-                        slug: formData.slug,
-                        plan: formData.plan
-                    }
-                });
-            }
+            if (error) throw new Error(error.message || 'Failed to invoke invite function');
+            if (data?.error) throw new Error(data.error);
 
             setSuccess(true);
+            setInviteLink(data.invite_link);
+
+            // Clear form but keep success message
             setFormData({
                 email: '',
                 store_name: '',
                 slug: '',
                 plan: 'free'
             });
-
-            // Reset success message after 5 seconds
-            setTimeout(() => setSuccess(false), 5000);
 
         } catch (err: any) {
             console.error('Error inviting seller:', err);
@@ -159,13 +140,30 @@ const AdminInvites: React.FC = () => {
 
             {/* Success Message */}
             {success && (
-                <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-emerald-500 flex-shrink-0" />
-                    <div>
-                        <p className="text-emerald-400 font-medium">Invitation Logged Successfully!</p>
-                        <p className="text-emerald-400/70 text-sm">
-                            The seller invite has been recorded. In production, an email invitation would be sent.
+                <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
+                    <div className="w-full">
+                        <p className="text-emerald-400 font-medium">Invitation Created Successfully!</p>
+                        <p className="text-emerald-400/70 text-sm mt-1">
+                            The invite token has been generated.
                         </p>
+                        {inviteLink && (
+                            <div className="mt-3 bg-neutral-950/50 p-3 rounded-lg border border-emerald-500/20 flex flex-col gap-2">
+                                <span className="text-xs text-emerald-500/60 font-medium uppercase tracking-wider">Share this link</span>
+                                <div className="flex items-center gap-2">
+                                    <code className="text-xs text-emerald-300 font-mono break-all flex-1">
+                                        {inviteLink}
+                                    </code>
+                                    <button
+                                        onClick={() => navigator.clipboard.writeText(inviteLink)}
+                                        className="p-1.5 hover:bg-emerald-500/20 rounded-md text-emerald-500 transition-colors"
+                                        title="Copy Link"
+                                    >
+                                        <LinkIcon size={14} />
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
@@ -257,16 +255,16 @@ const AdminInvites: React.FC = () => {
                                 type="button"
                                 onClick={() => setFormData(prev => ({ ...prev, plan }))}
                                 className={`p-4 rounded-xl border-2 transition-all ${formData.plan === plan
-                                        ? plan === 'enterprise'
-                                            ? 'border-purple-500 bg-purple-500/10'
-                                            : plan === 'pro'
-                                                ? 'border-indigo-500 bg-indigo-500/10'
-                                                : 'border-neutral-500 bg-neutral-500/10'
-                                        : 'border-neutral-800 hover:border-neutral-700'
+                                    ? plan === 'enterprise'
+                                        ? 'border-purple-500 bg-purple-500/10'
+                                        : plan === 'pro'
+                                            ? 'border-indigo-500 bg-indigo-500/10'
+                                            : 'border-neutral-500 bg-neutral-500/10'
+                                    : 'border-neutral-800 hover:border-neutral-700'
                                     }`}
                             >
                                 <p className={`font-bold capitalize ${plan === 'enterprise' ? 'text-purple-400' :
-                                        plan === 'pro' ? 'text-indigo-400' : 'text-neutral-400'
+                                    plan === 'pro' ? 'text-indigo-400' : 'text-neutral-400'
                                     }`}>
                                     {plan}
                                 </p>
@@ -302,14 +300,7 @@ const AdminInvites: React.FC = () => {
                 </div>
             </form>
 
-            {/* Info Note */}
-            <div className="bg-amber-500/5 border border-amber-500/20 rounded-2xl p-4">
-                <p className="text-amber-400/80 text-sm">
-                    <strong>Note:</strong> Full email invitation functionality requires Supabase Edge Functions
-                    with the <code className="bg-amber-500/10 px-1.5 py-0.5 rounded">service_role</code> key.
-                    Currently, invitations are logged for manual processing.
-                </p>
-            </div>
+
         </div>
     );
 };
