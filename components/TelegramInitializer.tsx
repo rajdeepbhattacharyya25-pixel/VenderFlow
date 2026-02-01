@@ -12,52 +12,47 @@ const TelegramInitializer: React.FC = () => {
     const location = useLocation();
 
     useEffect(() => {
-        if (isTelegram && user) {
-            // Store Telegram user for AuthCallback to use if we are currently logging in
-            sessionStorage.setItem('telegram_user', JSON.stringify(user));
+        if (isTelegram && tg?.initData) {
+            // Store raw initData for AuthCallback (secure verification)
+            // We use the raw string which contains the hash for backend verification
+            sessionStorage.setItem('telegram_init_data', tg.initData);
 
             const checkAndLinkAccount = async () => {
                 const { data: { session } } = await supabase.auth.getSession();
 
                 if (session?.user) {
                     setIsLinking(true);
-                    // Check if already linked or needs linking
-                    const { data: profile } = await supabase
-                        .from('profiles')
-                        .select('telegram_id')
-                        .eq('id', session.user.id)
-                        .single();
 
-                    if (profile && (!profile.telegram_id || profile.telegram_id !== user.id)) {
-                        console.log("Linking Telegram Account " + user.id + " to user " + session.user.id);
+                    // Call the secure backend function to link account
+                    try {
+                        const { data, error } = await supabase.functions.invoke('link-telegram', {
+                            body: { initData: tg.initData }
+                        });
 
-                        const { error } = await supabase
-                            .from('profiles')
-                            .update({
-                                telegram_id: user.id,
-                                telegram_username: user.username,
-                                telegram_photo_url: user.photo_url
-                            })
-                            .eq('id', session.user.id);
+                        if (error) throw error;
 
-                        if (error) {
-                            console.error("Failed to link Telegram account", error);
-                            tg?.showAlert("Failed to link Telegram account. Please try again.");
-                        } else {
-                            tg?.showAlert("Telegram account successfully linked!");
+                        if (data?.success) {
+                            console.log("Telegram account linked successfully via backend verification");
+                            // Optional: Show success message if it wasn't already linked
+                            // We could store 'linked' state to avoid repeated alerts, 
+                            // but the backend is idempotent so it's fine.
                         }
+                    } catch (error) {
+                        console.error("Failed to link Telegram account securely:", error);
+                        // Silent fail or alert depending on UX preference. 
+                        // Since this runs in background on init, silent is usually better unless explicit action.
+                    } finally {
+                        setIsLinking(false);
                     }
-                    setIsLinking(false);
                 } else {
                     // Not logged in.
-                    // If we are on the login page (root), we might want to show a specific message?
-                    // But standard flow is fine. The user will login, triggering AuthCallback.
+                    // AuthCallback will handle the linking after login using the stored initData
                 }
             };
 
             checkAndLinkAccount();
         }
-    }, [isTelegram, user, tg]);
+    }, [isTelegram, tg]);
 
     if (isLinking) {
         return (

@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AuthCallback from './pages/AuthCallback';
+import StaffLogin from './pages/StaffLogin';
 import Storefront from './pages/Storefront';
 import SellerStorefront from './pages/SellerStorefront';
 import DashboardLayout from './dashboard/DashboardLayout';
@@ -24,9 +25,22 @@ import { initTelegramApp } from './lib/telegram';
 import TelegramInitializer from './components/TelegramInitializer';
 import OfflineOverlay from './components/OfflineOverlay';
 
+import NotFound from './pages/NotFound';
+
 function App() {
   React.useEffect(() => {
     initTelegramApp();
+
+    // Register Service Worker for Push Notifications
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js')
+        .then(registration => {
+          console.log('Service Worker registered with scope:', registration.scope);
+        })
+        .catch(error => {
+          console.error('Service Worker registration failed:', error);
+        });
+    }
   }, []);
 
   return (
@@ -35,6 +49,7 @@ function App() {
       <TelegramInitializer />
       <Routes>
         <Route path="/auth-callback" element={<AuthCallback />} />
+        <Route path="/staff/login" element={<StaffLogin />} />
 
         {/* Protected Seller Dashboard Routes */}
         <Route element={<SellerGuard />}>
@@ -69,7 +84,7 @@ function App() {
         </Route>
 
         <Route path="/" element={<Storefront />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   );

@@ -5,13 +5,15 @@ import {
     Shield, Palette, Database, Layout, Loader2, Image, Lock,
     Smartphone, QrCode, Download, Edit2, Trash2, CheckCircle2,
     Users, Activity, Zap, CreditCard as BillingIcon, ChevronRight,
-    Search, Bell as NotificationIcon, Truck, Plus, RefreshCw, Check, Send
+    Search, Bell as NotificationIcon, Truck, Plus, RefreshCw, Check, Send, AlertCircle, Info, Clock, LogOut, ExternalLink
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAutoBackup } from '../../hooks/useAutoBackup';
+import { TwoFactorSetup } from '../../components/TwoFactorSetup';
 import { TelegramSettings } from '../components/TelegramSettings';
+import { SharedAccessPanel } from '../components/SharedAccessPanel';
 
-type TabType = 'profile' | 'security' | 'access' | 'notifications' | 'billing' | 'appearance' | 'shipping' | 'data' | 'status' | 'telegram';
+type TabType = 'profile' | 'security' | 'access' | 'notifications' | 'billing' | 'appearance' | 'shipping' | 'data' | 'status';
 
 interface HeroSettings {
     badge_text: string;
@@ -62,6 +64,24 @@ interface StoreSettings {
     logo_url?: string;
 }
 
+interface Session {
+    id: string;
+    user_id: string;
+    ip_address: string;
+    device_info: string;
+    last_active: string;
+    location?: string; // We'll fetch this client-side if not in DB
+}
+
+interface SystemStatus {
+    database: { status: 'connected' | 'disconnected' | 'checking'; latency: number | null };
+    api: { status: 'healthy' | 'degraded' | 'down' | 'checking' };
+    realtime: { status: 'live' | 'offline' | 'checking' };
+    storage: { status: 'online' | 'offline' | 'checking' };
+    region: string;
+    provider: string;
+}
+
 const DEFAULT_HERO: HeroSettings = {
     badge_text: 'New Collection 2024',
     headline_1: 'Elevate Your',
@@ -83,6 +103,9 @@ const DEFAULT_THEME_CONFIG = {
 const Settings = () => {
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [show2FAModal, setShow2FAModal] = useState(false);
+    const [timeoutVal, setTimeoutVal] = useState<number | ''>(60);
+    const [timeoutUnit, setTimeoutUnit] = useState<'minutes' | 'hours' | 'never'>('minutes');
     const [activeTab, setActiveTab] = useState<TabType>('profile');
     const [settings, setSettings] = useState<StoreSettings>({
         store_name: '',
@@ -121,6 +144,104 @@ const Settings = () => {
         ],
         logo_url: ''
     });
+
+    // System Status State
+    const [systemStatus, setSystemStatus] = useState<SystemStatus>({
+        database: { status: 'checking', latency: null },
+        api: { status: 'checking' },
+        realtime: { status: 'checking' },
+        storage: { status: 'checking' },
+        region: 'us-east-1',
+        provider: 'Supabase'
+    });
+
+    const [sessions, setSessions] = useState<Session[]>([]);
+    const [loadingSessions, setLoadingSessions] = useState(false);
+
+    useEffect(() => {
+        if (activeTab === 'security') {
+            fetchSessions();
+        }
+    }, [activeTab]);
+
+    const fetchSessions = async () => {
+        setLoadingSessions(true);
+        const { data } = await supabase
+            .from('user_sessions')
+            .select('*')
+            .order('last_active', { ascending: false });
+
+        if (data) {
+            // Enrich with location (mock or fetch)
+            // For now, we'll just set them. In a real app, we'd batch fetch locations.
+            const enriched = await Promise.all(data.map(async (s) => {
+                let location = 'Unknown Location';
+                try {
+                    if (s.ip_address && s.ip_address !== '127.0.0.1' && s.ip_address !== 'localhost') {
+                        const res = await fetch(`https://ipapi.co/${s.ip_address}/json/`);
+                        const json = await res.json();
+                        if (json.city) location = `${json.city}, ${json.country_name}`;
+                    } else {
+                        location = 'Localhost';
+                    }
+                } catch (e) { console.error('Loc fetch error', e); }
+                return { ...s, location };
+            }));
+            setSessions(enriched);
+        }
+        setLoadingSessions(false);
+    };
+
+    // Check system status when status tab is active
+    useEffect(() => {
+        if (activeTab === 'status') {
+            checkSystemStatus();
+            const interval = setInterval(checkSystemStatus, 30000); // Check every 30s
+            return () => clearInterval(interval);
+        }
+    }, [activeTab]);
+
+    const checkSystemStatus = async () => {
+        setSystemStatus(prev => ({ ...prev, database: { ...prev.database, status: 'checking' } }));
+
+        // 1. Check Database
+        const startDb = performance.now();
+        const { error: dbError } = await supabase.from('store_settings').select('count').limit(1).maybeSingle();
+        const dbLatency = Math.round(performance.now() - startDb);
+
+        // 2. Check API (Edge Functions)
+        // We call a function, even if it returns 403/401 it means infrastructure is UP
+        const { error: fnError } = await supabase.functions.invoke('seller-status');
+        // If error is network error, then down. If error is 4xx/5xx from function logic, it's UP but maybe logic error.
+        // Supabase client 'error' usually means invocation failed (network) or function threw error.
+        // We'll treat 'Response' as healthy infrastructure.
+
+        // 3. Check Storage
+        const { error: storageError } = await supabase.storage.listBuckets();
+
+        // Update Static Statuses immediately
+        setSystemStatus(prev => ({
+            ...prev,
+            database: { status: dbError ? 'disconnected' : 'connected', latency: dbLatency },
+            api: { status: fnError && fnError.message === 'Failed to send request' ? 'down' : 'healthy' }, // Rough check
+            storage: { status: storageError ? 'offline' : 'online' },
+            realtime: { status: 'checking' }
+        }));
+
+        // 4. Check Realtime
+        const channelId = `health-${Date.now()}`;
+        const channel = supabase.channel(channelId);
+        channel.subscribe((status, err) => {
+            if (status === 'SUBSCRIBED') {
+                setSystemStatus(prev => ({ ...prev, realtime: { status: 'live' } }));
+                supabase.removeChannel(channel);
+            } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+                console.warn(`Realtime Health Check Failed: ${status}`, err);
+                setSystemStatus(prev => ({ ...prev, realtime: { status: 'offline' } }));
+                supabase.removeChannel(channel);
+            }
+        });
+    };
 
     const { lastBackupDate, connectAndBackup, performBackup, isBackupRunning, backupStatus, downloadLocalBackup } = useAutoBackup(false);
 
@@ -203,8 +324,23 @@ const Settings = () => {
                         { icon: 'truck', text: 'Free Express Shipping over ₹5,000' },
                         { icon: 'check', text: 'Authenticity Guaranteed' }
                     ],
-                    logo_url: data.logo_url || ''
+                    logo_url: data.logo_url || '',
+                    session_timeout_minutes: data.session_timeout_minutes || 60,
+                    enforce_2fa: data.enforce_2fa || false
                 });
+
+                // Sync local timeout state
+                const mins = data.session_timeout_minutes;
+                if (!mins || mins <= 0) {
+                    setTimeoutUnit('never');
+                    setTimeoutVal('');
+                } else if (mins % 60 === 0) {
+                    setTimeoutUnit('hours');
+                    setTimeoutVal(mins / 60);
+                } else {
+                    setTimeoutUnit('minutes');
+                    setTimeoutVal(mins);
+                }
             }
         } catch (err) {
             console.error(err);
@@ -218,6 +354,16 @@ const Settings = () => {
         try {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) throw new Error('Not authenticated');
+
+            // Calculate minutes based on unit
+            let finalMinutes = 0;
+            if (timeoutUnit === 'never') {
+                finalMinutes = -1; // -1 represents 'Never'
+            } else if (timeoutUnit === 'hours') {
+                finalMinutes = (typeof timeoutVal === 'number' ? timeoutVal : 0) * 60;
+            } else {
+                finalMinutes = typeof timeoutVal === 'number' ? timeoutVal : 60;
+            }
 
             const payload = {
                 seller_id: user.id,
@@ -239,7 +385,9 @@ const Settings = () => {
 
                 theme_config: settings.theme_config,
                 trust_badges: settings.trust_badges,
-                logo_url: settings.logo_url
+                logo_url: settings.logo_url,
+                session_timeout_minutes: finalMinutes,
+                enforce_2fa: settings.enforce_2fa
             };
 
             let result;
@@ -280,7 +428,6 @@ const Settings = () => {
         { id: 'appearance', label: 'Appearance', icon: Palette },
         { id: 'data', label: 'Data & Backup', icon: Database },
         { id: 'status', label: 'System Status', icon: Activity },
-        { id: 'telegram', label: 'Telegram Bot', icon: Send },
     ];
 
     const renderHeader = (title: string, icon: React.ReactNode) => (
@@ -424,18 +571,88 @@ const Settings = () => {
                                     </div>
                                 </div>
 
-                                <div className="bg-bg/50 p-6 rounded-2xl border border-border">
+                                <div className="bg-bg/50 p-6 rounded-2xl border border-border flex flex-col">
                                     <div className="flex items-center gap-2 mb-4 text-primary">
-                                        <Smartphone size={18} />
-                                        <h4 className="font-bold text-sm">Multi-Device Security</h4>
+                                        <Lock size={18} />
+                                        <h4 className="font-bold text-sm">Access Policy</h4>
                                     </div>
-                                    <p className="text-xs text-muted mb-6 leading-relaxed">
-                                        You are currently logged in on 3 devices. Keep your account safe by ending unknown sessions.
-                                    </p>
-                                    <button className="w-full bg-red-50 text-red-500 border border-red-100 hover:bg-red-100 font-bold py-3 rounded-xl transition-all text-sm shadow-sm flex items-center justify-center gap-2">
-                                        <Activity size={16} />
-                                        Logout from all devices
-                                    </button>
+
+                                    <div className="space-y-6 flex-1">
+                                        {/* Session Timeout Controls */}
+                                        <div>
+                                            <label className="text-[10px] font-bold text-muted uppercase tracking-wider mb-2 block">SESSION TIMEOUT</label>
+                                            <div className="flex items-center gap-2">
+                                                <div className="relative flex-1">
+                                                    <input
+                                                        type="number"
+                                                        value={timeoutVal}
+                                                        onChange={(e) => setTimeoutVal(e.target.value === '' ? '' : parseInt(e.target.value))}
+                                                        disabled={timeoutUnit === 'never'}
+                                                        className="w-full bg-bg border border-border rounded-xl px-4 py-2 text-text focus:outline-none focus:border-primary transition-colors pl-10 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                        placeholder={timeoutUnit === 'never' ? 'Infinite' : 'Enter duration'}
+                                                    />
+                                                    <Clock size={16} className="absolute left-3 top-2.5 text-muted" />
+                                                </div>
+
+                                                <select
+                                                    value={timeoutUnit}
+                                                    onChange={(e) => {
+                                                        const unit = e.target.value as any;
+                                                        setTimeoutUnit(unit);
+                                                        // Default values when switching
+                                                        if (unit === 'never') setTimeoutVal('');
+                                                        if (unit === 'hours' && (timeoutVal === '' || typeof timeoutVal !== 'number')) setTimeoutVal(1);
+                                                        if (unit === 'minutes' && (timeoutVal === '' || typeof timeoutVal !== 'number')) setTimeoutVal(60);
+                                                    }}
+                                                    className="bg-bg border border-border rounded-xl px-4 py-2 text-text text-sm focus:outline-none focus:border-primary transition-colors cursor-pointer hover:bg-bg/80"
+                                                >
+                                                    <option value="minutes">Minutes</option>
+                                                    <option value="hours">Hours</option>
+                                                    <option value="never">Never</option>
+                                                </select>
+                                            </div>
+                                            <p className="text-[10px] text-muted mt-2">
+                                                {timeoutUnit === 'never'
+                                                    ? "Staff will remain logged in indefinitely until they manually logout."
+                                                    : `Auto-logout inactive staff after ${timeoutVal || 0} ${timeoutUnit}.`
+                                                }
+                                            </p>
+                                        </div>
+
+                                        {/* 2FA Toggle */}
+                                        <div className="space-y-3">
+                                            <div className="flex items-center justify-between p-3 bg-bg border border-border rounded-xl">
+                                                <div className="flex items-center gap-3">
+                                                    <Smartphone size={18} className="text-primary" />
+                                                    <div>
+                                                        <div className="text-sm font-bold text-text">Enforce 2FA</div>
+                                                        <div className="text-[10px] text-muted">Require Two-Factor Auth for Staff</div>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    onClick={() => setSettings({ ...settings, enforce_2fa: !settings.enforce_2fa })}
+                                                    className={`w-10 h-5 rounded-full p-0.5 transition-colors ${settings.enforce_2fa ? 'bg-primary' : 'bg-gray-300'}`}
+                                                    aria-label="Toggle 2FA enforcement"
+                                                >
+                                                    <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${settings.enforce_2fa ? 'translate-x-5' : 'translate-x-0'}`} />
+                                                </button>
+                                            </div>
+
+                                            {/* 2FA Explanation Box */}
+                                            <div className={`p-3 rounded-lg text-xs leading-relaxed border transition-all ${settings.enforce_2fa ? 'bg-primary/10 border-primary/20 text-primary' : 'bg-bg border-border text-muted'}`}>
+                                                <div className="flex gap-2">
+                                                    <Info size={14} className="flex-shrink-0 mt-0.5" />
+                                                    <div>
+                                                        <span className="font-bold block mb-1">Policy Effect:</span>
+                                                        {settings.enforce_2fa
+                                                            ? "All staff accounts will be required to set up 2FA to access this dashboard."
+                                                            : "2FA is optional for your staff."
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -445,71 +662,117 @@ const Settings = () => {
                                         <CheckCircle2 size={24} />
                                     </div>
                                     <div>
-                                        <h4 className="font-bold text-sm text-green-900">Two-Step Verification Active</h4>
-                                        <p className="text-xs text-green-700/80">Your account is secured with mobile OTP verification.</p>
+                                        <h4 className="font-bold text-sm text-green-900">Your Two-Step Verification</h4>
+                                        <p className="text-xs text-green-700/80">Secure your personal account with mobile OTP verification.</p>
                                     </div>
                                 </div>
-                                <button className="text-primary font-bold text-sm hover:underline">Manage</button>
+                                <button
+                                    onClick={() => setShow2FAModal(true)}
+                                    className="text-primary font-bold text-sm hover:underline"
+                                >
+                                    Manage My 2FA
+                                </button>
+                            </div>
+
+                            {/* Active Sessions List */}
+                            <div className="mt-8 bg-panel border border-border rounded-2xl p-8">
+                                <div className="flex items-center justify-between mb-6">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 bg-primary/10 text-primary rounded-xl flex items-center justify-center">
+                                            <Users size={20} />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-lg font-bold text-text">Session History</h2>
+                                            <p className="text-muted text-xs">Detailed history of devices logged into your account</p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={fetchSessions}
+                                        className="p-2 hover:bg-bg rounded-lg text-muted hover:text-primary transition-colors"
+                                        title="Refresh List"
+                                    >
+                                        <RefreshCw size={16} className={loadingSessions ? "animate-spin" : ""} />
+                                    </button>
+                                </div>
+
+                                <div className="space-y-3">
+                                    {loadingSessions ? (
+                                        <div className="text-center py-8 text-muted text-sm">Loading session history...</div>
+                                    ) : sessions.length > 0 ? (
+                                        sessions.map((session) => {
+                                            const isCurrent = session.id === localStorage.getItem('current_session_id'); // Match logic from LoginModal
+                                            const ua = session.device_info || 'Unknown Device';
+                                            let icon = <ExternalLink size={16} />;
+                                            let os = 'Unknown Device';
+
+                                            if (/Mobile|Android|iPhone/i.test(ua)) icon = <Smartphone size={16} />;
+                                            else icon = <ExternalLink size={16} />; // Monitor icon ideally
+
+                                            // Simple parser
+                                            if (ua.includes('Windows')) os = 'Windows PC';
+                                            else if (ua.includes('Mac')) os = 'Mac';
+                                            else if (ua.includes('Linux')) os = 'Linux';
+                                            else if (ua.includes('Android')) os = 'Android';
+                                            else if (ua.includes('iPhone')) os = 'iPhone';
+
+                                            return (
+                                                <div key={session.id} className={`flex items-center justify-between p-4 border rounded-xl transition-all ${isCurrent ? 'bg-primary/5 border-primary/20' : 'bg-bg border-border'}`}>
+                                                    <div className="flex items-center gap-4">
+                                                        <div className={`p-2 rounded-full border ${isCurrent ? 'bg-green-500/10 border-green-500/20 text-green-600' : 'bg-gray-100 border-gray-200 text-gray-500 dark:bg-neutral-800 dark:border-neutral-700'}`}>
+                                                            {icon}
+                                                        </div>
+                                                        <div>
+                                                            <div className="flex items-center gap-2">
+                                                                <h4 className="text-sm font-bold text-text">{os}</h4>
+                                                                {!isCurrent && <span className="text-[10px] bg-gray-100 dark:bg-neutral-800 text-muted px-1.5 py-0.5 rounded border border-border">{session.ip_address}</span>}
+                                                            </div>
+                                                            <div className="flex items-center gap-3 text-xs text-muted mt-1">
+                                                                <span className="flex items-center gap-1">
+                                                                    <MapPin size={10} />
+                                                                    {session.location || 'Unknown Location'}
+                                                                </span>
+                                                                <span className="w-1 h-1 rounded-full bg-muted/50" />
+                                                                <span>{new Date(session.last_active).toLocaleString()}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-4">
+                                                        {isCurrent ? (
+                                                            <span className="text-xs px-2 py-1 rounded-full bg-green-500/10 text-green-600 font-bold border border-green-500/20 flex items-center gap-1">
+                                                                <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                                                                Current Session
+                                                            </span>
+                                                        ) : (
+                                                            <button
+                                                                className="text-xs text-red-500 hover:text-red-600 font-bold px-3 py-1.5 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg transition-colors"
+                                                                onClick={async () => {
+                                                                    if (!confirm('Revoke this session? User will be logged out.')) return;
+                                                                    await supabase.from('user_sessions').delete().eq('id', session.id);
+                                                                    fetchSessions();
+                                                                }}
+                                                            >
+                                                                Revoke
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })
+                                    ) : (
+                                        <div className="text-center py-8 text-muted">
+                                            <p>No active sessions found.</p>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
                 );
             case 'access':
                 return (
-                    <div className="bg-panel rounded-2xl p-8 border border-border shadow-sm animate-fadeIn">
-                        {renderHeader('Shared Access', <Users size={20} />)}
-
-                        <div className="bg-bg/50 p-8 rounded-[2rem] border border-border mb-8">
-                            <div className="flex items-center gap-10">
-                                <div className="w-40 h-40 bg-white p-4 rounded-2xl border border-border shadow-sm flex items-center justify-center">
-                                    <QrCode size={120} className="text-gray-800" />
-                                </div>
-                                <div className="flex-grow">
-                                    <h4 className="text-xl font-bold text-text mb-2">Invite your Helpers</h4>
-                                    <p className="text-sm text-muted mb-6 leading-relaxed max-w-sm">
-                                        Scan this QR to quickly log in on a helper's phone. No complex passwords needed for family or staff.
-                                    </p>
-                                    <button className="flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-xl font-bold text-sm hover:opacity-90 transition-all shadow-sm">
-                                        <Download size={18} />
-                                        Download QR Code
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-between mb-4">
-                                <h4 className="text-xs font-bold text-muted uppercase tracking-widest">Staff / Helpers (2/2)</h4>
-                                <span className="text-xs text-muted font-medium">Full - Upgrade to add more</span>
-                            </div>
-
-                            {[
-                                { name: 'Rahul (Manager)', roles: 'CREATE INVOICES, VIEW REPORTS', initial: 'R' },
-                                { name: 'Priya (Sales)', roles: 'CREATE INVOICES', initial: 'P' }
-                            ].map((staff, idx) => (
-                                <div key={idx} className="bg-bg/30 border border-border rounded-2xl p-4 flex items-center justify-between hover:border-primary/30 transition-colors group">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 bg-primary/10 text-primary font-bold rounded-full flex items-center justify-center">
-                                            {staff.initial}
-                                        </div>
-                                        <div>
-                                            <h5 className="font-bold text-sm text-text">{staff.name}</h5>
-                                            <p className="text-[10px] font-bold text-muted uppercase tracking-wider">{staff.roles}</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button className="p-2 text-muted hover:text-primary transition-colors">
-                                            <Edit2 size={16} />
-                                        </button>
-                                        <button className="p-2 text-muted hover:text-red-500 transition-colors">
-                                            <Trash2 size={16} />
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+                    <SharedAccessPanel />
                 );
+
             case 'notifications':
                 return (
                     <div className="bg-panel rounded-2xl p-8 border border-border shadow-sm animate-fadeIn">
@@ -558,26 +821,13 @@ const Settings = () => {
                             ))}
                         </div>
 
-                        <div className="mt-12 bg-sky-50 border border-sky-100 p-8 rounded-[2rem] flex items-center justify-between">
-                            <div className="flex items-center gap-6">
-                                <div className="p-3 bg-primary text-white rounded-2xl shadow-lg shadow-primary/20">
-                                    <NotificationIcon size={24} />
-                                </div>
-                                <div>
-                                    <h4 className="font-bold text-lg text-sky-950 mb-1">WhatsApp Notifications</h4>
-                                    <p className="text-sm text-sky-800/70 leading-relaxed">
-                                        Integrated WhatsApp messaging is available. Receive invoices and stock alerts directly on your business WhatsApp number.
-                                    </p>
-                                </div>
-                            </div>
-                            <button className="bg-primary text-white px-8 py-3.5 rounded-xl font-bold text-sm hover:opacity-90 transition-all shadow-md shadow-primary/10 whitespace-nowrap">
-                                Sync WhatsApp
-                            </button>
+                        <div className="mt-12">
+                            <h4 className="font-bold text-lg text-text border-b border-border pb-2 mb-6">Telegram Integration</h4>
+                            <TelegramSettings />
                         </div>
                     </div>
                 );
-            case 'telegram':
-                return <TelegramSettings />;
+
             case 'billing':
                 return (
                     <div className="bg-panel rounded-2xl p-8 border border-border shadow-sm animate-fadeIn">
@@ -840,7 +1090,7 @@ const Settings = () => {
                                 )}
                             </div>
 
-                            <div className="flex items-center justify-between bg-white border border-border rounded-xl p-4">
+                            <div className="flex items-center justify-between bg-white dark:bg-neutral-800/50 border border-border rounded-xl p-4">
                                 <div>
                                     <span className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">Last Succesful Backup</span>
                                     {lastBackupDate ? (
@@ -854,14 +1104,14 @@ const Settings = () => {
                                     <button
                                         onClick={downloadLocalBackup}
                                         disabled={isBackupRunning}
-                                        className="text-xs font-bold bg-white text-text border border-border hover:bg-gray-50 px-4 py-2 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
+                                        className="text-xs font-bold bg-white dark:bg-neutral-800 text-text border border-border hover:bg-gray-50 dark:hover:bg-neutral-700 px-4 py-2 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
                                     >
                                         <Download size={14} /> Download
                                     </button>
                                     <button
                                         onClick={connectAndBackup}
                                         disabled={isBackupRunning}
-                                        className="text-xs font-bold bg-white text-text border border-border hover:bg-gray-50 px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+                                        className="text-xs font-bold bg-white dark:bg-neutral-800 text-text border border-border hover:bg-gray-50 dark:hover:bg-neutral-700 px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
                                     >
                                         Connect Drive
                                     </button>
@@ -904,19 +1154,27 @@ const Settings = () => {
                         <div className="space-y-6">
                             <div className="bg-bg/50 p-6 rounded-2xl border border-border">
                                 <div className="flex items-center gap-3 mb-4">
-                                    <div className="w-10 h-10 bg-green-500/10 text-green-500 rounded-full flex items-center justify-center">
+                                    <div className={`w-10 h-10 ${systemStatus.database.status === 'connected' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'} rounded-full flex items-center justify-center`}>
                                         <Database size={20} />
                                     </div>
                                     <h4 className="font-bold text-sm">Database Connection</h4>
                                 </div>
                                 <div className="flex items-center gap-3 text-sm">
-                                    <span className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></span>
+                                    <span className={`w-2.5 h-2.5 rounded-full ${systemStatus.database.status === 'connected' ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></span>
                                     <span className="text-muted">Status: </span>
-                                    <span className="font-bold text-green-600">Active & Connected</span>
+                                    <span className={`font-bold ${systemStatus.database.status === 'connected' ? 'text-green-600' : 'text-red-500'}`}>
+                                        {systemStatus.database.status === 'checking' ? 'Checking...' :
+                                            systemStatus.database.status === 'connected' ? 'Active & Connected' : 'Disconnected'}
+                                    </span>
                                 </div>
+                                {systemStatus.database.latency && (
+                                    <div className="mt-2 text-xs text-muted">
+                                        Latency: {systemStatus.database.latency}ms
+                                    </div>
+                                )}
                                 <div className="mt-4 pt-4 border-t border-border flex justify-between text-[10px] font-bold text-muted uppercase tracking-wider">
-                                    <span>Cloud Provider: Supabase</span>
-                                    <span>Region: us-east-1</span>
+                                    <span>Cloud Provider: {systemStatus.provider}</span>
+                                    <span>Region: {systemStatus.region}</span>
                                 </div>
                             </div>
 
@@ -928,15 +1186,24 @@ const Settings = () => {
                                 <div className="space-y-3">
                                     <div className="flex items-center justify-between text-xs">
                                         <span className="text-muted">Edge Functions</span>
-                                        <span className="font-bold text-green-600">Healthy</span>
+                                        <span className={`font-bold ${systemStatus.api.status === 'healthy' ? 'text-green-600' : 'text-red-500'}`}>
+                                            {systemStatus.api.status === 'checking' ? '...' :
+                                                systemStatus.api.status === 'healthy' ? 'Healthy' : 'Degraded'}
+                                        </span>
                                     </div>
                                     <div className="flex items-center justify-between text-xs">
                                         <span className="text-muted">Realtime Channel</span>
-                                        <span className="font-bold text-green-600">Live</span>
+                                        <span className={`font-bold ${systemStatus.realtime.status === 'live' ? 'text-green-600' : 'text-red-500'}`}>
+                                            {systemStatus.realtime.status === 'checking' ? '...' :
+                                                systemStatus.realtime.status === 'live' ? 'Live' : 'Offline'}
+                                        </span>
                                     </div>
                                     <div className="flex items-center justify-between text-xs">
                                         <span className="text-muted">Storage Buckets</span>
-                                        <span className="font-bold text-green-600">Online</span>
+                                        <span className={`font-bold ${systemStatus.storage.status === 'online' ? 'text-green-600' : 'text-red-500'}`}>
+                                            {systemStatus.storage.status === 'checking' ? '...' :
+                                                systemStatus.storage.status === 'online' ? 'Online' : 'Offline'}
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -1076,6 +1343,15 @@ const Settings = () => {
                     {renderTabContent()}
                 </div>
             </div>
+
+            {show2FAModal && (
+                <TwoFactorSetup
+                    onClose={() => setShow2FAModal(false)}
+                    onComplete={() => {
+                        setShow2FAModal(false);
+                    }}
+                />
+            )}
         </div>
     );
 };

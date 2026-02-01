@@ -27,15 +27,38 @@ interface AdminLogStatsProps {
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
 const AdminLogStats: React.FC<AdminLogStatsProps> = ({ logs }) => {
-    // Process data for Activity Chart (Last 7 Days)
-    const getActivityData = () => {
-        const last7Days = Array.from({ length: 7 }, (_, i) => {
-            const d = new Date();
-            d.setDate(d.getDate() - i);
-            return d.toISOString().split('T')[0];
-        }).reverse();
+    const [dateRange, setDateRange] = React.useState<'7d' | '30d' | 'custom'>('7d');
+    const [customStart, setCustomStart] = React.useState('');
+    const [customEnd, setCustomEnd] = React.useState('');
 
-        return last7Days.map(date => {
+    // Process data for Activity Chart
+    const getActivityData = () => {
+        let days = 7;
+        let start = new Date();
+        start.setHours(0, 0, 0, 0);
+
+        if (dateRange === '30d') {
+            days = 30;
+            start.setDate(start.getDate() - 29);
+        } else if (dateRange === 'custom' && customStart && customEnd) {
+            const s = new Date(customStart);
+            const e = new Date(customEnd);
+            const diffTime = Math.abs(e.getTime() - s.getTime());
+            days = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+            start = s;
+        } else {
+            // Default 7d
+            start.setDate(start.getDate() - 6);
+        }
+
+        const dateArray = Array.from({ length: days }, (_, i) => {
+            const d = new Date(start);
+            d.setDate(d.getDate() + i);
+            return d.toISOString().split('T')[0];
+        });
+
+        return dateArray.map(date => {
+            // Filter logs for this specific date (ignoring time)
             const count = logs.filter(log => log.created_at.startsWith(date)).length;
             return {
                 date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
@@ -64,20 +87,48 @@ const AdminLogStats: React.FC<AdminLogStatsProps> = ({ logs }) => {
     const activityData = getActivityData();
     const actionData = getActionData();
 
-    if (logs.length === 0) return null;
-
     return (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             {/* Activity Chart */}
             <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6">
-                <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 bg-indigo-500/10 text-indigo-400 rounded-xl flex items-center justify-center">
-                        <Activity size={20} />
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-indigo-500/10 text-indigo-400 rounded-xl flex items-center justify-center">
+                            <Activity size={20} />
+                        </div>
+                        <div>
+                            <h3 className="font-bold text-white">Activity Volume</h3>
+                            <div className="flex items-center gap-2 mt-1">
+                                <select
+                                    value={dateRange}
+                                    onChange={(e) => setDateRange(e.target.value as any)}
+                                    className="bg-neutral-800 border-none text-xs text-neutral-400 rounded-lg py-1 pl-2 pr-6 focus:ring-1 focus:ring-indigo-500 cursor-pointer"
+                                >
+                                    <option value="7d">Last 7 Days</option>
+                                    <option value="30d">Last 30 Days</option>
+                                    <option value="custom">Custom Range</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        <h3 className="font-bold text-white">Activity Volume</h3>
-                        <p className="text-xs text-neutral-400">Actions over last 7 days</p>
-                    </div>
+
+                    {dateRange === 'custom' && (
+                        <div className="flex items-center gap-2 bg-neutral-800 p-1.5 rounded-lg border border-neutral-700">
+                            <input
+                                type="date"
+                                value={customStart}
+                                onChange={(e) => setCustomStart(e.target.value)}
+                                className="bg-transparent text-xs text-white border-none focus:ring-0 p-0 w-24"
+                            />
+                            <span className="text-neutral-500">-</span>
+                            <input
+                                type="date"
+                                value={customEnd}
+                                onChange={(e) => setCustomEnd(e.target.value)}
+                                className="bg-transparent text-xs text-white border-none focus:ring-0 p-0 w-24"
+                            />
+                        </div>
+                    )}
                 </div>
                 <div className="h-64 w-full">
                     <ResponsiveContainer width="100%" height="100%">

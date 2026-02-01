@@ -62,23 +62,36 @@ const AuthCallback = () => {
 
                     if (profileError) console.error("Profile Fetch Error:", profileError);
 
-                    // Check for pending Telegram Link
-                    const telegramUserJson = sessionStorage.getItem('telegram_user');
-                    if (telegramUserJson && user.id) {
-                        try {
-                            const tgUser = JSON.parse(telegramUserJson);
-                            // Link account
-                            setStatus('Linking Telegram account...');
-                            await supabase.from('profiles').update({
-                                telegram_id: tgUser.id,
-                                telegram_username: tgUser.username,
-                                telegram_photo_url: tgUser.photo_url
-                            }).eq('id', user.id);
+                    // Log the session for OAuth logins
+                    try {
+                        const { data: sessionData } = await supabase.functions.invoke('log-session', {
+                            body: { device_info: navigator.userAgent }
+                        });
+                        if (sessionData?.session_id) {
+                            localStorage.setItem('current_session_id', sessionData.session_id);
+                        }
+                    } catch (sessionError) {
+                        console.error('Failed to log OAuth session:', sessionError);
+                    }
 
-                            sessionStorage.removeItem('telegram_user');
-                            console.log('Telegram account linked successfully');
+                    // Check for pending Telegram Link
+                    // Check for pending Telegram Link
+                    const telegramInitData = sessionStorage.getItem('telegram_init_data');
+                    if (telegramInitData && user.id) {
+                        try {
+                            setStatus('Linking Telegram account...');
+
+                            const { error } = await supabase.functions.invoke('link-telegram', {
+                                body: { initData: telegramInitData }
+                            });
+
+                            if (error) throw error;
+
+                            sessionStorage.removeItem('telegram_init_data');
+                            console.log('Telegram account linked successfully via backend');
                         } catch (e) {
                             console.error('Failed to link Telegram', e);
+                            // We don't block login on this error, just log it
                         }
                     }
 

@@ -9,6 +9,8 @@ import { ProductCard } from '../components/ProductCard';
 import { Footer } from '../components/Footer';
 import { IconFilter, IconChevronDown, IconChevronRight } from '../components/Icons';
 import { products, recommendedProducts, popularProducts } from '../data';
+import { supabase } from '../lib/supabase'; // Add Supabase Import
+import { AlertCircle } from 'lucide-react'; // Add Icon Import
 import { QuickViewModal } from '../components/QuickViewModal';
 import { BottomNav } from '../components/BottomNav';
 import { Product } from '../types';
@@ -115,11 +117,48 @@ function Storefront() {
         }
     }, [hasHandledRedirect]);
 
+    // Maintenance Mode State
+    const [maintenanceMode, setMaintenanceMode] = useState(false);
+
+    useEffect(() => {
+        const checkMaintenance = async () => {
+            const { data: settings } = await supabase
+                .from('platform_settings')
+                .select('maintenance_mode')
+                .single();
+
+            if (settings?.maintenance_mode) {
+                setMaintenanceMode(true);
+            }
+        };
+        checkMaintenance();
+
+        // Subscribe to changes
+        const channel = supabase.channel('maintenance_mode_public')
+            .on('postgres_changes', {
+                event: 'UPDATE',
+                schema: 'public',
+                table: 'platform_settings'
+            }, (payload) => {
+                if (payload.new && typeof payload.new.maintenance_mode !== 'undefined') {
+                    setMaintenanceMode(payload.new.maintenance_mode);
+                }
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, []);
+
+
+
     // Automatic view switch after login
     useEffect(() => {
         if (user) {
             const redirect = sessionStorage.getItem('auth_redirect');
             if (redirect) {
+                // ... (existing redirect logic)
                 const lowerRedirect = redirect.toLowerCase();
                 if (lowerRedirect.includes('/account')) {
                     handleNavigate('account');
@@ -141,6 +180,7 @@ function Storefront() {
             setIsLoginModalOpen(false);
         }
     }, [user]);
+
 
     const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
 
@@ -547,6 +587,26 @@ function Storefront() {
                 );
         }
     };
+
+    if (maintenanceMode) {
+        return (
+            <div className="min-h-screen bg-neutral-950 flex flex-col items-center justify-center p-4 font-body">
+                <div className="bg-neutral-900 border border-neutral-800 rounded-3xl p-8 max-w-md w-full text-center shadow-2xl animate-in fade-in zoom-in-95 duration-300">
+                    <div className="w-20 h-20 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <AlertCircle size={40} className="text-amber-500" />
+                    </div>
+                    <h1 className="text-2xl font-bold text-white mb-2 font-display">System Maintenance</h1>
+                    <p className="text-neutral-400 mb-6">
+                        VenderFlow is currently undergoing scheduled maintenance to improve your experience. We will be back shortly.
+                    </p>
+                    <div className="bg-neutral-800/50 rounded-xl p-4 text-sm text-neutral-300 border border-neutral-700">
+                        <p className="font-medium text-white mb-1">Status Updates</p>
+                        Please check back in a few minutes.
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen flex flex-col font-body pb-[80px] md:pb-0 bg-white dark:bg-background-dark transition-colors duration-300">

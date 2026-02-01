@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Tag, DollarSign, ShoppingBag, Plus, FileText, BarChart2, AlertTriangle, ArrowRight, Eye, IndianRupee } from 'lucide-react';
+import { Tag, ShoppingBag, Plus, FileText, BarChart2, AlertTriangle, ArrowRight, Eye, IndianRupee } from 'lucide-react';
 import KPICard from '../components/KPICard';
 import EarningsChart from '../components/EarningsChart';
 import ProductTable from '../components/ProductTable';

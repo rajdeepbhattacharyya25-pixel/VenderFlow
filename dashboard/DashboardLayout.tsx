@@ -27,22 +27,47 @@ function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [sellerSlug, setSellerSlug] = useState<string | null>(null);
   const [isSuspended, setIsSuspended] = useState(false);
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [announcement, setAnnouncement] = useState<{ id: string; title: string; content: string; type: string } | null>(null);
+  const [isMaintenanceMode, setIsMaintenanceMode] = useState(false); // New state for maintenance mode
 
   useEffect(() => {
     const fetchSellerStatus = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
+        // 1. Check Platform Settings First
+        const { data: settings } = await supabase
+          .from('platform_settings')
+          .select('*')
+          .single();
+
+        // 2. Announcements
+        if (settings?.announcement_message) {
+          setAnnouncement({
+            id: 'global',
+            title: 'Global Announcement',
+            content: settings.announcement_message,
+            type: 'info'
+          });
+        }
+
+        if (settings?.maintenance_mode) {
+          setMaintenanceMode(true);
+        }
+
         const { data } = await supabase
           .from('sellers')
           .select('slug, store_name, status')
           .eq('id', user.id)
           .single();
+
         if (data) {
           setSellerSlug(data.slug);
+
           if (data.status === 'suspended') {
             setIsSuspended(true);
           }
+
           if (data.store_name) {
             document.title = `${data.store_name} Dashboard`;
           }
@@ -121,6 +146,26 @@ function App() {
         return <Dashboard theme={theme} onTabChange={setActiveTab} sellerSlug={sellerSlug} />;
     }
   };
+
+  if (maintenanceMode) {
+    return (
+      <div className="min-h-screen bg-neutral-950 flex flex-col items-center justify-center p-4">
+        <div className="bg-neutral-900 border border-neutral-800 rounded-3xl p-8 max-w-md w-full text-center shadow-2xl animate-in fade-in zoom-in-95 duration-300">
+          <div className="w-20 h-20 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+            <AlertCircle size={40} className="text-amber-500" />
+          </div>
+          <h1 className="text-2xl font-bold text-white mb-2">System Maintenance</h1>
+          <p className="text-neutral-400 mb-6">
+            The platform is currently undergoing scheduled maintenance. Please check back later.
+          </p>
+          <div className="bg-neutral-800/50 rounded-xl p-4 text-sm text-neutral-300 border border-neutral-700">
+            <p className="font-medium text-white mb-1">Check Telegram</p>
+            Check our Telegram channel for real-time status updates.
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (isSuspended) {
     return (

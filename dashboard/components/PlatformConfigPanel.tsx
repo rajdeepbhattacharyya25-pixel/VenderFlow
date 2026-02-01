@@ -1,16 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { DollarSign, AlertTriangle, Save, Globe, Lock, ShieldAlert, CreditCard } from 'lucide-react';
+import { IndianRupee, AlertTriangle, Save, Globe, Lock, ShieldAlert, CreditCard } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
 
-interface PlatformSettings {
-    id: string;
-    commission_rate: number;
-    min_payout_amount: number;
-    maintenance_mode: boolean;
-    announcement_message: string | null;
-    created_at: string;
-}
+import { PlatformSettings } from '../../types';
 
 const PlatformConfigPanel: React.FC = () => {
     const [settings, setSettings] = useState<PlatformSettings | null>(null);
@@ -45,7 +38,16 @@ const PlatformConfigPanel: React.FC = () => {
 
         try {
             setSaving(true);
-            const { error } = await supabase
+
+            // 1. Fetch current DB state (pre-update) to check for changes
+            const { data: preUpdateSettings } = await supabase
+                .from('platform_settings')
+                .select('maintenance_mode, announcement_message')
+                .eq('id', settings.id)
+                .single();
+
+            // 2. Perform Update
+            const { error: updateError } = await supabase
                 .from('platform_settings')
                 .update({
                     commission_rate: settings.commission_rate,
@@ -55,8 +57,39 @@ const PlatformConfigPanel: React.FC = () => {
                 })
                 .eq('id', settings.id);
 
-            if (error) throw error;
+            if (updateError) throw updateError;
+
             toast.success('Platform settings updated successfully');
+
+            // 3. Trigger Notifications if changed
+            if (preUpdateSettings) {
+                // Maintenance Mode Change
+                if (preUpdateSettings.maintenance_mode !== settings.maintenance_mode) {
+                    await supabase.functions.invoke('notify-all-sellers', {
+                        body: {
+                            type: 'MAINTENANCE',
+                            status: settings.maintenance_mode,
+                            message: settings.announcement_message // Optional context
+                        }
+                    });
+                    toast.success('Maintenance notification sent to sellers');
+                }
+
+                // Announcement Change (only if it's not empty and different)
+                if (settings.announcement_message && settings.announcement_message !== preUpdateSettings.announcement_message) {
+                    // Only send if it's NOT maintenance mode change (to avoid double notifs if both changed)
+                    if (preUpdateSettings.maintenance_mode === settings.maintenance_mode) {
+                        await supabase.functions.invoke('notify-all-sellers', {
+                            body: {
+                                type: 'ANNOUNCEMENT',
+                                message: settings.announcement_message
+                            }
+                        });
+                        toast.success('Announcement broadcasted to sellers');
+                    }
+                }
+            }
+
         } catch (error) {
             console.error('Error saving settings:', error);
             toast.error('Failed to update settings');
@@ -77,7 +110,7 @@ const PlatformConfigPanel: React.FC = () => {
             <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-8">
                 <div className="flex items-center gap-4 mb-6">
                     <div className="w-12 h-12 bg-green-500/10 text-green-400 rounded-xl flex items-center justify-center">
-                        <DollarSign size={24} />
+                        <IndianRupee size={24} />
                     </div>
                     <div>
                         <h2 className="text-xl font-bold text-white">Financials & Business Logic</h2>
@@ -111,7 +144,7 @@ const PlatformConfigPanel: React.FC = () => {
                                 className="w-full bg-black/20 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors pl-10"
                                 placeholder="500"
                             />
-                            <DollarSign size={16} className="absolute left-3 top-3.5 text-neutral-500" />
+                            <IndianRupee size={16} className="absolute left-3 top-3.5 text-neutral-500" />
                         </div>
                         <p className="text-xs text-neutral-500 mt-2">Minimum earnings required for sellers to withdraw.</p>
                     </div>
