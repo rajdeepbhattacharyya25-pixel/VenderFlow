@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
 
-const PUBLIC_VAPID_KEY = 'BAP5usM1CTN9crEEeJDavqVLWIlZSl_9Y5Ccmpcn4zVVDT9ShoMeARD91zeOaGoOXiDXeAxDuXESIA3FLWh3pm4';
+const PUBLIC_VAPID_KEY = 'BPLDWgW6EYvB03NAS_NUXG4JYsG6X2j3nbq5E3OKv99wIGAJipuAGpN4y11qL_LnHHePwZbgg4mkPwAtovfElRw';
 
 export function usePushNotifications() {
     const [isSubscribed, setIsSubscribed] = useState(false);
@@ -39,11 +39,18 @@ export function usePushNotifications() {
                 applicationServerKey: urlBase64ToUint8Array(PUBLIC_VAPID_KEY),
             });
 
+            // Get current user
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                throw new Error('You must be logged in to enable notifications');
+            }
+
             // Send to Supabase
             const { error } = await supabase.from('push_subscriptions').insert({
+                user_id: user.id,
                 endpoint: subscription.endpoint,
-                p256dh: btoa(String.fromCharCode.apply(null, new Uint8Array(subscription.getKey('p256dh')!))),
-                auth: btoa(String.fromCharCode.apply(null, new Uint8Array(subscription.getKey('auth')!))),
+                p256dh: btoa(String.fromCharCode.apply(null, new Uint8Array(subscription.getKey('p256dh')!) as unknown as number[])),
+                auth: btoa(String.fromCharCode.apply(null, new Uint8Array(subscription.getKey('auth')!) as unknown as number[])),
             });
 
             if (error && error.code !== '23505') { // Ignore unique violation

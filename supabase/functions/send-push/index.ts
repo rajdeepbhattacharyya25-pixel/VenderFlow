@@ -1,5 +1,5 @@
 
-import webpush from 'https://esm.sh/web-push@3.6.0';
+import webpush from 'https://esm.sh/web-push@3.6.7?target=deno';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
 
 // Initialize Web Push
