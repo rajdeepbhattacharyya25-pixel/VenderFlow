@@ -57,10 +57,7 @@ function Storefront() {
     const { user, role, signInWithGoogle, signOut } = useAuth();
     const navigate = useNavigate();
 
-    // DEBUG LOG
-    useEffect(() => {
-        console.log("Storefront Mounted. User:", user?.email);
-    }, [user]);
+
 
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -712,7 +709,7 @@ function Storefront() {
                 />
                 <BenefitsBar />
                 <main className="flex-grow flex flex-col items-center justify-center min-h-[500px]">
-                    <div style={{ color: 'red', fontWeight: 'bold', marginBottom: '10px' }}>Verified New Code Loaded</div>
+
                     <Loader2 className="w-12 h-12 text-indigo-500 animate-spin" />
                     <span className="mt-4 text-gray-500 font-medium animate-pulse">Loading VenderFlow Experience...</span>
                 </main>
@@ -751,9 +748,7 @@ function Storefront() {
             {currentView !== 'checkout' && <BenefitsBar />}
 
             <main className="flex-grow">
-                <div style={{ background: 'red', color: 'white', padding: '10px', textAlign: 'center', fontWeight: 'bold' }}>
-                    DEBUG: STOREFRONT RENDERED (isLoginModalOpen: {String(isLoginModalOpen)})
-                </div>
+
                 {renderContent()}
             </main>
 
