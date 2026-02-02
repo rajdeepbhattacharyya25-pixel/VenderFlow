@@ -30,7 +30,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   user,
   onLogin,
   storeName = "VenderFlow",
-  storeLogo,
+  storeLogo = "/logo.jpg",
   categories = ["Women", "Men", "Kids", "Accessories"],
   isAdmin = false
 }) => {

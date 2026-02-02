@@ -146,10 +146,8 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, isMobile, activeTab, setAc
         {/* Logo Area */}
         <div className={`h-[80px] flex items-center ${collapsed ? 'justify-center' : 'px-8'} border-b border-muted/10`}>
           <div className="flex items-center gap-2 text-text font-bold text-xl tracking-tight">
-            <div className="w-8 h-8 rounded-lg bg-text flex items-center justify-center text-bg">
-              <Zap size={18} fill="currentColor" />
-            </div>
-            {!collapsed && <span className="opacity-0 animate-[fadeIn_0.3s_ease-out_forwards]">GOIPSU</span>}
+            <img src="/logo.jpg" alt="VenderFlow" className="w-8 h-8 rounded-lg object-contain" />
+            {!collapsed && <span className="opacity-0 animate-[fadeIn_0.3s_ease-out_forwards]">VenderFlow</span>}
           </div>
         </div>
 
