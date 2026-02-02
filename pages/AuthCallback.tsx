@@ -31,15 +31,48 @@ const AuthCallback = () => {
         addLog("AuthCallback mounted. Checking session...");
 
         // Manual session check in case onAuthStateChange doesn't fire
-        supabase.auth.getSession().then(({ data, error }) => {
-            if (error) addLog(`Manual session check error: ${error.message}`);
-            else if (data.session) {
-                addLog(`Manual session check found user: ${data.session.user.email}`);
-                // Listener will handle logic, but good to know we have it.
-            } else {
-                addLog("Manual session check: No session found yet.");
+        const checkSession = async () => {
+            // 1. Try standard getSession first
+            const { data, error } = await Promise.race([
+                supabase.auth.getSession(),
+                new Promise<{ data: any, error: any }>(resolve => setTimeout(() => resolve({ data: { session: null }, error: { message: 'Timeout' as any } }), 2000))
+            ]);
+
+            if (data?.session) {
+                addLog(`Standard session check found user: ${data.session.user.email}`);
+                return; // Standard flow worked
             }
-        });
+
+            addLog(`Standard check result: ${error ? error.message : 'No session found (or timeout)'}`);
+
+            // 2. If standard failed/timed out, try manual hash parsing
+            const hash = window.location.hash;
+            if (hash && hash.includes('access_token')) {
+                addLog("Attempting manual hash parsing...");
+                const params = new URLSearchParams(hash.substring(1));
+                const access_token = params.get('access_token');
+                const refresh_token = params.get('refresh_token');
+
+                if (access_token && refresh_token) {
+                    addLog("Found tokens in hash. Force-setting session...");
+                    const { data: setData, error: setError } = await supabase.auth.setSession({
+                        access_token,
+                        refresh_token
+                    });
+
+                    if (setData.session) {
+                        addLog("Manual session set SUCCESS. Triggering auth state change...");
+                        // This should trigger the listener below
+                    } else if (setError) {
+                        addLog(`Manual session set ERROR: ${setError.message}`);
+                    }
+                } else {
+                    addLog("Hash present but missing tokens.");
+                }
+            }
+        };
+
+        checkSession();
 
         // Parse URL manually to debug
         const hash = window.location.hash;
