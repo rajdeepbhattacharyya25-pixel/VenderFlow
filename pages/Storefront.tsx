@@ -8,7 +8,7 @@ import { Hero } from '../components/Hero';
 import { ProductCard } from '../components/ProductCard';
 import { Footer } from '../components/Footer';
 import { IconFilter, IconChevronDown, IconChevronRight } from '../components/Icons';
-import { products, recommendedProducts, popularProducts } from '../data';
+// Products are now fetched from Supabase database
 import { supabase } from '../lib/supabase'; // Add Supabase Import
 import { AlertCircle } from 'lucide-react'; // Add Icon Import
 import { QuickViewModal } from '../components/QuickViewModal';
@@ -58,12 +58,85 @@ function Storefront() {
     const navigate = useNavigate();
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [wishlistIds, setWishlistIds] = useState<number[]>([]);
+    const [wishlistIds, setWishlistIds] = useState<string[]>([]);
     const [currentView, setCurrentView] = useState<ViewType>('home');
     const [cartItems, setCartItems] = useState<{ product: Product, size: string, quantity: number }[]>([]);
     const [checkoutItems, setCheckoutItems] = useState<{ product: Product, size: string, quantity: number }[]>([]);
-    const [recentlyViewedIds, setRecentlyViewedIds] = useState<number[]>([]);
+    const [recentlyViewedIds, setRecentlyViewedIds] = useState<string[]>([]);
     const [toasts, setToasts] = useState<{ id: number, message: string }[]>([]);
+
+    // Dynamic product state - fetched from Supabase
+    const [products, setProducts] = useState<Product[]>([]);
+    const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
+    const [popularProducts, setPopularProducts] = useState<Product[]>([]);
+    const [isLoadingProducts, setIsLoadingProducts] = useState(true);
+    const [productError, setProductError] = useState<string | null>(null);
+
+    // Fetch products from Supabase on mount
+    useEffect(() => {
+        const fetchProducts = async () => {
+            try {
+                setIsLoadingProducts(true);
+                setProductError(null);
+
+                // Fetch all active and published products with their media and variants
+                const { data: productsData, error } = await supabase
+                    .from('products')
+                    .select('*, product_media(file_url, is_primary), product_variants(*)')
+                    .eq('is_active', true)
+                    .eq('is_published', true)
+                    .order('created_at', { ascending: false });
+
+                if (error) {
+                    console.error('Error fetching products:', error);
+                    setProductError('Failed to load products');
+                    return;
+                }
+
+                // Map database products to Product interface
+                const mappedProducts: Product[] = (productsData || []).map((p: any) => {
+                    const images = p.product_media?.map((m: any) => m.file_url) || [];
+                    const sizes = p.product_variants?.length > 0
+                        ? p.product_variants.map((v: any) => v.variant_name)
+                        : ['Standard'];
+                    const hasDiscount = p.discount_price && Number(p.discount_price) > 0;
+
+                    return {
+                        id: p.id,
+                        name: p.name,
+                        description: p.description || '',
+                        category: p.category || 'Uncategorized',
+                        price: hasDiscount ? Number(p.discount_price) : Number(p.price),
+                        originalPrice: hasDiscount ? Number(p.price) : undefined,
+                        image: images.length > 0 ? images[0] : 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=400',
+                        images: images,
+                        sizes: sizes,
+                        rating: p.rating || 4.5,
+                        reviews: p.reviews || 0,
+                        seller_id: p.seller_id,
+                        stock_quantity: p.product_variants?.reduce((sum: number, v: any) => sum + (v.stock_quantity || 0), 0) || 0
+                    };
+                });
+
+                setProducts(mappedProducts);
+
+                // Create recommended and popular lists (randomized subsets)
+                const shuffled = [...mappedProducts].sort(() => 0.5 - Math.random());
+                setRecommendedProducts(shuffled.slice(0, Math.min(8, shuffled.length)));
+
+                const shuffled2 = [...mappedProducts].sort(() => 0.5 - Math.random());
+                setPopularProducts(shuffled2.slice(0, Math.min(8, shuffled2.length)));
+
+            } catch (err) {
+                console.error('Error in fetchProducts:', err);
+                setProductError('An error occurred while loading products');
+            } finally {
+                setIsLoadingProducts(false);
+            }
+        };
+
+        fetchProducts();
+    }, []);
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
     const [loginModalMode, setLoginModalMode] = useState<'customer' | 'seller'>('customer');
 
@@ -255,7 +328,7 @@ function Storefront() {
         showToast(`Added ${product.name} to bag`);
     };
 
-    const removeFromCart = (productId: number, size: string) => {
+    const removeFromCart = (productId: string, size: string) => {
         setCartItems(prev => prev.filter(item => !(item.product.id === productId && item.size === size)));
         showToast('Removed item from bag');
     };
@@ -272,7 +345,7 @@ function Storefront() {
         showToast('Saved to wishlist');
     };
 
-    const updateCartQuantity = (productId: number, size: string, delta: number) => {
+    const updateCartQuantity = (productId: string, size: string, delta: number) => {
         setCartItems(prev => prev.map(item => {
             if (item.product.id === productId && item.size === size) {
                 return { ...item, quantity: Math.max(1, item.quantity + delta) };
@@ -296,7 +369,7 @@ function Storefront() {
         // Cart update happens, Checkout component handles success screen
     };
 
-    const isWishlisted = (productId: number) => wishlistIds.includes(productId);
+    const isWishlisted = (productId: string) => wishlistIds.includes(productId);
 
     const wishlistedProducts = allProducts.filter(p => wishlistIds.includes(p.id));
     const uniqueWishlistedProducts = Array.from(new Map(wishlistedProducts.map(item => [item.id, item])).values());
