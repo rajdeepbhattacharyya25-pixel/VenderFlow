@@ -14,6 +14,10 @@
                     "value": "frame-ancestors *;"
                 },
                 {
+                    "key": "X-Frame-Options",
+                    "value": "ALLOWALL"
+                },
+                {
                     "key": "X-Content-Type-Options",
                     "value": "nosniff"
                 },
