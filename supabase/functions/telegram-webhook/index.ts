@@ -47,11 +47,11 @@ serve(async (req) => {
                 const args = text.trim().split(/\s+/).slice(1).join(' ');
 
                 if (command === "/start") {
-                    let siteUrl = Deno.env.get("SITE_URL") ?? 'https://e-commerce-landing-page-eight-self.vercel.app';
+                    let siteUrl = Deno.env.get("SITE_URL") ?? 'https://venderflow.vercel.app';
 
                     // Telegram requires HTTPS. Fallback to production if localhost is detected.
                     if (siteUrl.includes('localhost') || siteUrl.startsWith('http://')) {
-                        siteUrl = 'https://e-commerce-landing-page-eight-self.vercel.app';
+                        siteUrl = 'https://venderflow.vercel.app';
                     }
 
                     const webAppUrl = `${siteUrl}/admin`;
@@ -477,7 +477,7 @@ async function handleLogin(chatId: number, commandArgs: string) {
 
     // Manually construct the redirect - force it to point to auth-callback
     // Manually construct the redirect - force it to point to auth-callback
-    const SITE_URL = Deno.env.get("SITE_URL") ?? 'https://e-commerce-landing-page-eight-self.vercel.app';
+    const SITE_URL = Deno.env.get("SITE_URL") ?? 'https://venderflow.vercel.app';
     const redirectUrl = `${SITE_URL}/auth-callback`;
     let magicLink = baseLink;
 
