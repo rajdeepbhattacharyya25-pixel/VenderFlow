@@ -47,25 +47,33 @@ serve(async (req) => {
                 const args = text.trim().split(/\s+/).slice(1).join(' ');
 
                 if (command === "/start") {
-                    let siteUrl = Deno.env.get("SITE_URL") ?? 'https://venderflow.vercel.app';
+                    try {
+                        let siteUrl = Deno.env.get("SITE_URL") ?? 'https://venderflow.vercel.app';
+                        if (siteUrl.includes('localhost') || siteUrl.startsWith('http://')) {
+                            siteUrl = 'https://venderflow.vercel.app';
+                        }
+                        const webAppUrl = `${siteUrl}/admin`;
 
-                    // Telegram requires HTTPS. Fallback to production if localhost is detected.
-                    if (siteUrl.includes('localhost') || siteUrl.startsWith('http://')) {
-                        siteUrl = 'https://venderflow.vercel.app';
+                        // Send "Thinking" action
+                        await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendChatAction`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ chat_id: chatId, action: "typing" })
+                        });
+
+                        const keyboard = {
+                            inline_keyboard: [
+                                [{ text: "🖥️ Open Admin Panel (Web App)", web_app: { url: webAppUrl } }],
+                                [{ text: "🌐 Open in Chrome/Safari (Fallback)", url: webAppUrl }]
+                            ]
+                        };
+                        await sendMessage(chatId, "👋 Welcome Admin! \n\nClick the button below to open your dashboard:", 'Markdown', keyboard);
+
+                        // 2. Set Persistent Menu Button
+                        await setMenuButton(chatId, webAppUrl);
+                    } catch (e) {
+                        await sendMessage(chatId, `❌ Error starting bot: ${e.message}`);
                     }
-
-                    const webAppUrl = `${siteUrl}/admin`;
-
-                    // 1. Send Inline Button (Immediate Action)
-                    const keyboard = {
-                        inline_keyboard: [
-                            [{ text: "🖥️ Open Admin Panel", web_app: { url: webAppUrl } }]
-                        ]
-                    };
-                    await sendMessage(chatId, "👋 Welcome Admin! \n\nClick the button below to open your dashboard inside Telegram:", 'Markdown', keyboard);
-
-                    // 2. Set Persistent Menu Button (Long-term Convenience)
-                    await setMenuButton(chatId, webAppUrl);
                 }
                 else if (command === "/stats") {
                     await handleStats(chatId);
