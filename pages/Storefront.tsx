@@ -89,6 +89,7 @@ function Storefront() {
                     .select('*, product_media(file_url, is_primary), product_variants(*)')
                     .eq('is_active', true)
                     .eq('is_published', true)
+                    .is('seller_id', null) // Only show platform products (main store)
                     .order('created_at', { ascending: false });
 
                 const { data: productsData, error } = await Promise.race([
