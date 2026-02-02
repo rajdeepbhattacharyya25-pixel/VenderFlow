@@ -160,11 +160,37 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
 
                     console.log("DEBUG LOGIN:", { user: data.user.email, role: profile?.role, error: profileError });
 
-                    if (profile?.role === 'admin') {
+
+                    let currentProfile = profile;
+                    if (!currentProfile) {
+                        console.log("Profile not found in LoginModal. creating one...");
+                        try {
+                            const { data: newProfile, error: createError } = await supabase
+                                .from('profiles')
+                                .insert({
+                                    id: data.user.id,
+                                    email: data.user.email,
+                                    role: 'seller'
+                                })
+                                .select('role')
+                                .single();
+
+                            if (!createError) {
+                                currentProfile = newProfile;
+                            } else {
+                                console.error("LoginModal profile creation failed:", createError);
+                            }
+                        } catch (err) {
+                            console.error("LoginModal profile creation exception:", err);
+                        }
+                    }
+
+                    if (currentProfile?.role === 'admin') {
                         // Force a hard navigation for admin to ensure clean state
                         window.location.href = '/admin';
                         return;
-                    } else if (profile?.role === 'seller' || mode === 'seller') {
+                    } else if (currentProfile?.role === 'seller' || mode === 'seller') {
+                        // If we just created it or if mode is seller, go to dashboard
                         navigate('/dashboard');
                     }
                     onClose();

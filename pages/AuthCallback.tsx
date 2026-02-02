@@ -8,6 +8,12 @@ import { Loader2 } from 'lucide-react';
 const AuthCallback = () => {
     const navigate = useNavigate();
     const [status, setStatus] = useState('Logging you in...');
+    const [debugLog, setDebugLog] = useState<string[]>([]);
+
+    const addLog = (msg: string) => {
+        console.log(msg);
+        setDebugLog(prev => [...prev, msg]);
+    };
 
     const attemptRef = React.useRef(false);
     const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
@@ -24,7 +30,7 @@ const AuthCallback = () => {
 
         // Listen for auth state changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-            console.log("Auth Event:", event);
+            addLog(`Auth Event: ${event}`);
 
             // Clear any pending timeout if we get a session
             if (session?.user && timeoutRef.current) {
@@ -51,9 +57,11 @@ const AuthCallback = () => {
             if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user) {
                 try {
                     const user = session.user;
+                    addLog(`User found: ${user.email}`);
                     setStatus('Verifying your account...');
 
                     // Fetch user profile to check role
+                    addLog('Fetching profile...');
                     const { data: profile, error: profileError } = await supabase
                         .from('profiles')
                         .select('id, role')
@@ -67,8 +75,10 @@ const AuthCallback = () => {
 
                     // Self-healing: Create profile if missing
                     let currentProfile = profile;
-                    if (!currentProfile) {
-                        console.log("Profile not found. Attempting to create one...");
+                    if (currentProfile) {
+                        addLog(`Profile found: ${currentProfile.role}`);
+                    } else {
+                        addLog("Profile not found. Attempting to create one...");
                         try {
                             const { data: newProfile, error: createError } = await supabase
                                 .from('profiles')
@@ -83,10 +93,12 @@ const AuthCallback = () => {
                             if (createError) throw createError;
 
                             currentProfile = newProfile;
-                            console.log("Profile created successfully:", newProfile);
+                            currentProfile = newProfile;
+                            addLog("Profile created successfully");
                         } catch (err) {
                             console.error("Failed to create profile:", err);
                             setStatus('Account setup failed. Please contact support.');
+                            addLog(`Error creating profile: ${err.message || JSON.stringify(err)}`);
                             // Don't redirect immediately so user sees the error
                             return;
                         }
@@ -264,7 +276,9 @@ const AuthCallback = () => {
             <div className="relative z-10 text-center">
                 <Loader2 className="w-12 h-12 text-indigo-500 animate-spin mb-6 mx-auto" />
                 <h2 className="text-2xl font-bold text-white mb-2">{status}</h2>
-                <p className="text-gray-500">Please wait while we verify your credentials</p>
+                <div className="text-gray-500 text-sm max-w-md text-left bg-black/50 p-4 rounded-lg overflow-y-auto max-h-40 font-mono">
+                    {debugLog.map((log, i) => <div key={i}>{log}</div>)}
+                </div>
             </div>
         </div>
     );
