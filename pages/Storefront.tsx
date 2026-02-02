@@ -10,7 +10,7 @@ import { Footer } from '../components/Footer';
 import { IconFilter, IconChevronDown, IconChevronRight } from '../components/Icons';
 // Products are now fetched from Supabase database
 import { supabase } from '../lib/supabase'; // Add Supabase Import
-import { AlertCircle } from 'lucide-react'; // Add Icon Import
+import { AlertCircle, Loader2 } from 'lucide-react'; // Add Icon Import
 import { QuickViewModal } from '../components/QuickViewModal';
 import { BottomNav } from '../components/BottomNav';
 import { Product } from '../types';
@@ -56,6 +56,12 @@ const FOOTER_CONTENT = {
 function Storefront() {
     const { user, role, signInWithGoogle, signOut } = useAuth();
     const navigate = useNavigate();
+
+    // DEBUG LOG
+    useEffect(() => {
+        console.log("Storefront Mounted. User:", user?.email);
+    }, [user]);
+
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [wishlistIds, setWishlistIds] = useState<string[]>([]);
@@ -80,12 +86,18 @@ function Storefront() {
                 setProductError(null);
 
                 // Fetch all active and published products with their media and variants
-                const { data: productsData, error } = await supabase
+                // Add 5s timeout race
+                const fetchPromise = supabase
                     .from('products')
                     .select('*, product_media(file_url, is_primary), product_variants(*)')
                     .eq('is_active', true)
                     .eq('is_published', true)
                     .order('created_at', { ascending: false });
+
+                const { data: productsData, error } = await Promise.race([
+                    fetchPromise,
+                    new Promise<{ data: any, error: any }>(resolve => setTimeout(() => resolve({ data: null, error: { message: 'Product fetch timeout' } }), 5000))
+                ]);
 
                 if (error) {
                     console.error('Error fetching products:', error);
@@ -681,6 +693,34 @@ function Storefront() {
         );
     }
 
+    if (isLoadingProducts) {
+        return (
+            <div className="min-h-screen flex flex-col font-body pb-[80px] md:pb-0 bg-white dark:bg-background-dark transition-colors duration-300">
+                <TopBar />
+                <Navbar
+                    onSearch={() => { }}
+                    onNavigate={() => { }}
+                    onCategoryClick={() => { }}
+                    wishlistCount={0}
+                    cartCount={0}
+                    isDarkMode={isDarkMode}
+                    toggleDarkMode={toggleDarkMode}
+                    user={user}
+                    onLogin={() => { }}
+                    categories={[]}
+                    isAdmin={false}
+                />
+                <BenefitsBar />
+                <main className="flex-grow flex flex-col items-center justify-center min-h-[500px]">
+                    <div style={{ color: 'red', fontWeight: 'bold', marginBottom: '10px' }}>Verified New Code Loaded</div>
+                    <Loader2 className="w-12 h-12 text-indigo-500 animate-spin" />
+                    <span className="mt-4 text-gray-500 font-medium animate-pulse">Loading VenderFlow Experience...</span>
+                </main>
+                <div className="hidden">Debug: Products Loading...</div>
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen flex flex-col font-body pb-[80px] md:pb-0 bg-white dark:bg-background-dark transition-colors duration-300">
             {currentView !== 'checkout' && <TopBar />}
@@ -711,6 +751,9 @@ function Storefront() {
             {currentView !== 'checkout' && <BenefitsBar />}
 
             <main className="flex-grow">
+                <div style={{ background: 'red', color: 'white', padding: '10px', textAlign: 'center', fontWeight: 'bold' }}>
+                    DEBUG: STOREFRONT RENDERED (isLoginModalOpen: {String(isLoginModalOpen)})
+                </div>
                 {renderContent()}
             </main>
 
