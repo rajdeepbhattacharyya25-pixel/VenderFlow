@@ -28,6 +28,27 @@ const AuthCallback = () => {
             return;
         }
 
+        addLog("AuthCallback mounted. Checking session...");
+
+        // Manual session check in case onAuthStateChange doesn't fire
+        supabase.auth.getSession().then(({ data, error }) => {
+            if (error) addLog(`Manual session check error: ${error.message}`);
+            else if (data.session) {
+                addLog(`Manual session check found user: ${data.session.user.email}`);
+                // Listener will handle logic, but good to know we have it.
+            } else {
+                addLog("Manual session check: No session found yet.");
+            }
+        });
+
+        // Parse URL manually to debug
+        const hash = window.location.hash;
+        if (hash) {
+            addLog(`URL Hash detected (length: ${hash.length})`);
+        } else {
+            addLog("No URL Hash found");
+        }
+
         // Listen for auth state changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
             addLog(`Auth Event: ${event}`);
