@@ -198,6 +198,16 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
         return new Date(dateStr).toLocaleDateString('en-GB');
     };
 
+    const formatDateTime = (dateStr: string) => {
+        return new Date(dateStr).toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    };
+
     const getStatusColor = (status: string) => {
         return status === 'open'
             ? 'bg-emerald-500 text-white'
@@ -295,36 +305,85 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
                             <X size={20} />
                         </button>
                     </div>
-                    <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                    <div className="flex-1 overflow-y-auto p-3 space-y-6">
                         {loading ? (
                             <div className="text-neutral-700 dark:text-neutral-400 text-center py-4">Loading...</div>
                         ) : tickets.length === 0 ? (
                             <div className="text-neutral-700 dark:text-neutral-400 text-center py-8">No tickets found.</div>
                         ) : (
-                            tickets.map(ticket => (
-                                <button
-                                    key={ticket.id}
-                                    onClick={() => setSelectedTicket(ticket)}
-                                    className={`w-full text-left p-4 rounded-xl border-2 transition-all cursor-pointer ${selectedTicket?.id === ticket.id
-                                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
-                                        : 'border-neutral-200 dark:border-neutral-700 hover:border-indigo-300 dark:hover:border-indigo-700 bg-white dark:bg-neutral-800'
-                                        }`}
-                                >
-                                    <h3 className="font-semibold text-neutral-900 dark:text-white mb-1 truncate flex items-center gap-2">
-                                        {ticket.subject}
-                                        {(ticket.unread_count ?? 0) > 0 && (
-                                            <span className="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse shrink-0" title={`${ticket.unread_count} unread`} />
-                                        )}
-                                    </h3>
-                                    <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-2 truncate">{ticket.seller?.store_name || 'Unknown Seller'}</p>
-                                    <div className="flex items-center justify-between">
-                                        <span className={`px-2.5 py-1 rounded text-xs font-bold uppercase ${getStatusColor(ticket.status)}`}>
-                                            {ticket.status}
-                                        </span>
-                                        <span className="text-xs text-neutral-600 dark:text-neutral-400">{formatDate(ticket.updated_at)}</span>
+                            <>
+                                {/* Active Tickets */}
+                                {tickets.filter(t => t.status === 'open').length > 0 && (
+                                    <div>
+                                        <h3 className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-2 px-2">
+                                            Active Tickets
+                                        </h3>
+                                        <div className="space-y-2">
+                                            {tickets.filter(t => t.status === 'open').map(ticket => (
+                                                <button
+                                                    key={ticket.id}
+                                                    onClick={() => setSelectedTicket(ticket)}
+                                                    className={`w-full text-left p-4 rounded-xl border-2 transition-all cursor-pointer ${selectedTicket?.id === ticket.id
+                                                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
+                                                        : 'border-neutral-200 dark:border-neutral-700 hover:border-indigo-300 dark:hover:border-indigo-700 bg-white dark:bg-neutral-800'
+                                                        }`}
+                                                >
+                                                    <h3 className="font-semibold text-neutral-900 dark:text-white mb-1 truncate flex items-center gap-2">
+                                                        {ticket.subject}
+                                                        {(ticket.unread_count ?? 0) > 0 && (
+                                                            <span className="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse shrink-0" title={`${ticket.unread_count} unread`} />
+                                                        )}
+                                                    </h3>
+                                                    <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-2 truncate">{ticket.seller?.store_name || 'Unknown Seller'}</p>
+                                                    <div className="flex items-center justify-between">
+                                                        <span className={`px-2.5 py-1 rounded text-xs font-bold uppercase ${getStatusColor(ticket.status)}`}>
+                                                            {ticket.status}
+                                                        </span>
+                                                        <span className="text-xs text-neutral-600 dark:text-neutral-400">{formatDate(ticket.updated_at)}</span>
+                                                    </div>
+                                                </button>
+                                            ))}
+                                        </div>
                                     </div>
-                                </button>
-                            ))
+                                )}
+
+                                {/* Past Conversations */}
+                                {tickets.filter(t => t.status === 'closed').length > 0 && (
+                                    <div>
+                                        <h3 className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-2 px-2">
+                                            Past Conversations
+                                        </h3>
+                                        <div className="space-y-2">
+                                            {tickets.filter(t => t.status === 'closed').map(ticket => (
+                                                <button
+                                                    key={ticket.id}
+                                                    onClick={() => setSelectedTicket(ticket)}
+                                                    className={`w-full text-left p-4 rounded-xl border-2 transition-all cursor-pointer opacity-75 hover:opacity-100 ${selectedTicket?.id === ticket.id
+                                                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 opacity-100'
+                                                        : 'border-neutral-200 dark:border-neutral-700 hover:border-indigo-300 dark:hover:border-indigo-700 bg-neutral-50 dark:bg-neutral-800/50'
+                                                        }`}
+                                                >
+                                                    <h3 className="font-semibold text-neutral-900 dark:text-white mb-1 truncate flex items-center gap-2">
+                                                        {ticket.subject}
+                                                        {(ticket.unread_count ?? 0) > 0 && (
+                                                            <span className="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse shrink-0" title={`${ticket.unread_count} unread`} />
+                                                        )}
+                                                    </h3>
+                                                    <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-2 truncate">{ticket.seller?.store_name || 'Unknown Seller'}</p>
+                                                    <div className="flex items-center justify-between">
+                                                        <span className={`px-2.5 py-1 rounded text-xs font-bold uppercase ${getStatusColor(ticket.status)}`}>
+                                                            {ticket.status}
+                                                        </span>
+                                                        <span className="text-xs text-neutral-500 dark:text-neutral-500 font-mono">
+                                                            {formatDateTime(ticket.updated_at)}
+                                                        </span>
+                                                    </div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </>
                         )}
                     </div>
                 </div>

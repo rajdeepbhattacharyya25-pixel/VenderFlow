@@ -60,7 +60,37 @@ const AuthCallback = () => {
                         .eq('id', user.id)
                         .maybeSingle();
 
-                    if (profileError) console.error("Profile Fetch Error:", profileError);
+
+                    if (profileError && profileError.code !== 'PGRST116') {
+                        console.error("Profile Fetch Error:", profileError);
+                    }
+
+                    // Self-healing: Create profile if missing
+                    let currentProfile = profile;
+                    if (!currentProfile) {
+                        console.log("Profile not found. Attempting to create one...");
+                        try {
+                            const { data: newProfile, error: createError } = await supabase
+                                .from('profiles')
+                                .insert({
+                                    id: user.id,
+                                    email: user.email,
+                                    role: 'seller' // Default role
+                                })
+                                .select()
+                                .single();
+
+                            if (createError) throw createError;
+
+                            currentProfile = newProfile;
+                            console.log("Profile created successfully:", newProfile);
+                        } catch (err) {
+                            console.error("Failed to create profile:", err);
+                            setStatus('Account setup failed. Please contact support.');
+                            // Don't redirect immediately so user sees the error
+                            return;
+                        }
+                    }
 
                     // Log the session for OAuth logins
                     try {
@@ -102,9 +132,9 @@ const AuthCallback = () => {
                     // Determine redirect path
                     let redirectPath = '/';
 
-                    if (profile?.role === 'seller') {
+                    if (currentProfile?.role === 'seller') {
                         redirectPath = '/dashboard';
-                    } else if (profile?.role === 'admin') {
+                    } else if (currentProfile?.role === 'admin') {
                         redirectPath = '/admin';
                     } else if (authType === 'store_customer') {
                         // ... store customer logic (keep existing logic) ...
