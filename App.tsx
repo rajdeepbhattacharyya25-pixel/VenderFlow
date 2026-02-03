@@ -27,6 +27,8 @@ import OfflineOverlay from './components/OfflineOverlay';
 
 import NotFound from './pages/NotFound';
 
+import { Toaster } from 'react-hot-toast';
+
 function App() {
   React.useEffect(() => {
     initTelegramApp();
@@ -45,6 +47,7 @@ function App() {
 
   return (
     <BrowserRouter>
+      <Toaster position="top-right" />
       <OfflineOverlay />
       <TelegramInitializer />
       <Routes>

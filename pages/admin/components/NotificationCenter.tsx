@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bell, Check, Info, AlertTriangle, AlertCircle, ShoppingBag, User } from 'lucide-react';
+import { Bell, Check, Info, AlertTriangle, AlertCircle, ShoppingBag, User, Trash2 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { adminDb, Notification } from '../../../lib/admin-api';
 import { usePushNotifications } from '../../../hooks/usePushNotifications';
@@ -112,14 +112,26 @@ const NotificationCenter: React.FC = () => {
                 <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-neutral-900 border border-neutral-800 rounded-xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                     <div className="p-4 border-b border-neutral-800 flex items-center justify-between bg-neutral-900/50 backdrop-blur-sm">
                         <h3 className="font-semibold text-white text-sm">Notifications</h3>
-                        {unreadCount > 0 && (
-                            <button
-                                onClick={handleMarkAllRead}
-                                className="text-xs text-indigo-400 hover:text-indigo-300 font-medium transition-colors"
-                            >
-                                Mark all read
-                            </button>
-                        )}
+                        <div className="flex items-center gap-3">
+                            {unreadCount > 0 && (
+                                <button
+                                    onClick={handleMarkAllRead}
+                                    className="text-xs text-indigo-400 hover:text-indigo-300 font-medium transition-colors"
+                                >
+                                    Mark all read
+                                </button>
+                            )}
+                            {notifications.length > 0 && (
+                                <button
+                                    onClick={() => setNotifications([])}
+                                    className="text-xs text-neutral-400 hover:text-red-400 transition-colors flex items-center gap-1"
+                                    title="Clear list (keeps history)"
+                                >
+                                    <Trash2 size={12} />
+                                    Clear
+                                </button>
+                            )}
+                        </div>
                     </div>
 
                     <div className="max-h-[400px] overflow-y-auto">
@@ -182,9 +194,9 @@ const NotificationCenter: React.FC = () => {
                         )}
                     </div>
 
-                    {/* Footer - Push Opt-in */}
-                    {!isSubscribed && (
-                        <div className="p-3 bg-neutral-800/50 border-t border-neutral-700">
+                    {/* Footer - Push Status */}
+                    <div className="p-3 bg-neutral-800/50 border-t border-neutral-700">
+                        {!isSubscribed ? (
                             <button
                                 onClick={subscribeToPush}
                                 disabled={pushLoading}
@@ -193,8 +205,13 @@ const NotificationCenter: React.FC = () => {
                                 <Bell size={14} />
                                 {pushLoading ? 'Enabling...' : 'Enable Browser Notifications'}
                             </button>
-                        </div>
-                    )}
+                        ) : (
+                            <div className="w-full py-2 px-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 rounded-lg text-xs font-bold flex items-center justify-center gap-2 cursor-default">
+                                <Check size={14} />
+                                Notifications Active
+                            </div>
+                        )}
+                    </div>
                 </div>
             )}
         </div>

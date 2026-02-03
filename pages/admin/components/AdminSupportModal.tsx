@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { adminDb } from '../../../lib/admin-api';
 import { supabase } from '../../../lib/supabase';
-import { X, MessageSquare, Send, Paperclip, Clock, FileText, Image, Video, Download } from 'lucide-react';
+import { X, MessageSquare, Send, Paperclip, Clock, FileText, Image, Video, Download, CheckCircle } from 'lucide-react';
 
 interface Ticket {
     id: string;
@@ -185,6 +185,33 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
         if (result.success) {
             setReply('');
             setAttachment(null);
+            // Update the ticket's updated_at in the list to move it to top
+            setTickets(prev => {
+                const updated = prev.map(t =>
+                    t.id === selectedTicket.id
+                        ? { ...t, updated_at: new Date().toISOString() }
+                        : t
+                );
+                return updated.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+            });
+        }
+    };
+
+    const closeTicket = async () => {
+        if (!selectedTicket) return;
+        if (confirm('Are you sure you want to close this ticket?')) {
+            const result = await adminDb.updateTicketStatus(selectedTicket.id, 'closed');
+            if (result.success) {
+                setTickets(prev => {
+                    const updated = prev.map(t =>
+                        t.id === selectedTicket.id
+                            ? { ...t, status: 'closed' as const, updated_at: new Date().toISOString() }
+                            : t
+                    );
+                    return updated.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+                });
+                setSelectedTicket(prev => prev ? { ...prev, status: 'closed' } : null);
+            }
         }
     };
 
@@ -312,14 +339,14 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
                             <div className="text-neutral-700 dark:text-neutral-400 text-center py-8">No tickets found.</div>
                         ) : (
                             <>
-                                {/* Active Tickets */}
-                                {tickets.filter(t => t.status === 'open').length > 0 && (
+                                {/* Recent Chats (Top 2) */}
+                                {tickets.length > 0 && (
                                     <div>
                                         <h3 className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-2 px-2">
-                                            Active Tickets
+                                            Recent Chats
                                         </h3>
                                         <div className="space-y-2">
-                                            {tickets.filter(t => t.status === 'open').map(ticket => (
+                                            {tickets.slice(0, 2).map(ticket => (
                                                 <button
                                                     key={ticket.id}
                                                     onClick={() => setSelectedTicket(ticket)}
@@ -347,14 +374,14 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
                                     </div>
                                 )}
 
-                                {/* Past Conversations */}
-                                {tickets.filter(t => t.status === 'closed').length > 0 && (
+                                {/* Past Conversations (Rest) */}
+                                {tickets.length > 2 && (
                                     <div>
-                                        <h3 className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-2 px-2">
+                                        <h3 className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-2 px-2 mt-4">
                                             Past Conversations
                                         </h3>
                                         <div className="space-y-2">
-                                            {tickets.filter(t => t.status === 'closed').map(ticket => (
+                                            {tickets.slice(2).map(ticket => (
                                                 <button
                                                     key={ticket.id}
                                                     onClick={() => setSelectedTicket(ticket)}
@@ -417,6 +444,16 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3 pr-12">
+                                    {selectedTicket.status === 'open' && (
+                                        <button
+                                            onClick={closeTicket}
+                                            className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-neutral-200 dark:bg-neutral-800 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-300 rounded-lg text-xs font-medium transition-colors shadow-sm"
+                                            title="Close this ticket"
+                                        >
+                                            <CheckCircle size={14} className="text-emerald-500" />
+                                            Close Ticket
+                                        </button>
+                                    )}
                                     <div className="flex items-center gap-1.5 text-neutral-500">
                                         <Clock size={16} />
                                         <span className="text-sm">{formatDate(selectedTicket.created_at)}</span>

@@ -15,6 +15,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 
 
+
 interface SidebarProps {
   collapsed: boolean;
   isMobile: boolean;
@@ -23,6 +24,7 @@ interface SidebarProps {
   sellerSlug: string | null;
   businessLogo?: string | null;
   onSidebarClose?: () => void;
+  storeName?: string | null;
 }
 
 const MENU_ITEMS = [
@@ -35,7 +37,7 @@ const MENU_ITEMS = [
   { id: 'support', label: 'Support', icon: MessageSquare },
 ];
 
-const Sidebar: React.FC<SidebarProps> = ({ collapsed, isMobile, activeTab, setActiveTab, sellerSlug, businessLogo, onSidebarClose }) => {
+const Sidebar: React.FC<SidebarProps> = ({ collapsed, isMobile, activeTab, setActiveTab, sellerSlug, businessLogo, onSidebarClose, storeName }) => {
   const navigate = useNavigate();
   const [unreadSupportCount, setUnreadSupportCount] = useState(0);
 
@@ -146,14 +148,21 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, isMobile, activeTab, setAc
       >
         {/* Logo Area */}
         <div className={`h-[80px] flex items-center ${collapsed ? 'justify-center' : 'px-8'} border-b border-muted/10`}>
-          <div className="flex items-center gap-2 text-text font-bold text-xl tracking-tight">
+          <button
+            onClick={() => setActiveTab('dashboard')}
+            className="flex items-center gap-2 text-text font-bold text-xl tracking-tight hover:opacity-80 transition-opacity text-left w-full"
+          >
             <img
               src={businessLogo || "/logo.jpg"}
               alt="Business Logo"
-              className="w-8 h-8 rounded-lg object-cover"
+              className="w-8 h-8 rounded-lg object-cover flex-shrink-0"
             />
-            {!collapsed && <span className="opacity-0 animate-[fadeIn_0.3s_ease-out_forwards]">VenderFlow</span>}
-          </div>
+            {!collapsed && (
+              <span className="opacity-0 animate-[fadeIn_0.3s_ease-out_forwards] truncate">
+                {storeName || 'VenderFlow'}
+              </span>
+            )}
+          </button>
         </div>
 
         {/* Nav Items */}
