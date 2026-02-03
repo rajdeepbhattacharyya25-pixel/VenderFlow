@@ -392,6 +392,30 @@ const SellerStorefront = () => {
         }
     }, [storeSettings?.store_name, seller?.store_name]);
 
+    // Dynamic Favicon - Update to seller's logo
+    useEffect(() => {
+        const logoUrl = storeSettings?.logo_url;
+        if (logoUrl) {
+            const link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+            if (link) {
+                link.href = logoUrl;
+            } else {
+                const newLink = document.createElement('link');
+                newLink.rel = 'icon';
+                newLink.href = logoUrl;
+                document.head.appendChild(newLink);
+            }
+        }
+
+        // Cleanup: restore default favicon when leaving store
+        return () => {
+            const link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+            if (link) {
+                link.href = '/logo.jpg';
+            }
+        };
+    }, [storeSettings?.logo_url]);
+
 
 
     // Check membership status - for store-scoped auth, customers are always members if logged in
