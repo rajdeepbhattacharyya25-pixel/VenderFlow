@@ -404,14 +404,14 @@ const Support: React.FC = () => {
                         </div>
                     ) : (
                         <>
-                            {/* Active Tickets */}
-                            {tickets.filter(t => t.status === 'open').length > 0 && (
+                            {/* Recent Chats (Top 2) */}
+                            {tickets.length > 0 && (
                                 <div>
                                     <h3 className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-2 px-2">
-                                        Active Tickets
+                                        Recent Chats
                                     </h3>
                                     <div className="space-y-2">
-                                        {tickets.filter(t => t.status === 'open').map(ticket => (
+                                        {tickets.slice(0, 2).map(ticket => (
                                             <button
                                                 key={ticket.id}
                                                 onClick={() => {
@@ -441,14 +441,14 @@ const Support: React.FC = () => {
                                 </div>
                             )}
 
-                            {/* Past Conversations */}
-                            {tickets.filter(t => t.status === 'closed').length > 0 && (
+                            {/* Past Conversations (Rest) */}
+                            {tickets.length > 2 && (
                                 <div>
-                                    <h3 className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-2 px-2">
+                                    <h3 className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-2 px-2 mt-4">
                                         Past Conversations
                                     </h3>
                                     <div className="space-y-2">
-                                        {tickets.filter(t => t.status === 'closed').map(ticket => (
+                                        {tickets.slice(2).map(ticket => (
                                             <button
                                                 key={ticket.id}
                                                 onClick={() => {

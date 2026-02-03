@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { Shield, Key, Lock, ExternalLink, Loader2, AlertTriangle, Eye, EyeOff, Clock, Smartphone, Users, LogOut, CheckCircle, Info, MapPin } from 'lucide-react';
+import { Shield, Key, Lock, ExternalLink, Loader2, AlertTriangle, Eye, EyeOff, Clock, Smartphone, Users, LogOut, CheckCircle, Info, MapPin, Trash2, RefreshCw } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
@@ -29,6 +29,8 @@ const AdminSecurityPanel: React.FC = () => {
     const navigate = useNavigate();
 
     const [sessions, setSessions] = useState<any[]>([]);
+    const [selectedSessions, setSelectedSessions] = useState<Set<string>>(new Set());
+    const [isRevoking, setIsRevoking] = useState(false);
 
     useEffect(() => {
         fetchSessions();
@@ -428,13 +430,77 @@ const AdminSecurityPanel: React.FC = () => {
                             <p className="text-neutral-400 text-xs">Devices currently logged into admin panel</p>
                         </div>
                     </div>
-                    <button
-                        onClick={handleRevokeAll}
-                        className="text-xs text-red-400 hover:text-red-300 font-medium"
-                    >
-                        Revoke All
-                    </button>
+                    <div className="flex items-center gap-2">
+                        {/* Bulk Delete Button */}
+                        {selectedSessions.size > 0 && (
+                            <button
+                                onClick={async () => {
+                                    const count = selectedSessions.size;
+                                    if (!confirm(`Revoke ${count} selected session(s)? These devices will be logged out immediately.`)) return;
+                                    setIsRevoking(true);
+                                    try {
+                                        // Delete all selected sessions
+                                        const { error } = await supabase
+                                            .from('user_sessions')
+                                            .delete()
+                                            .in('id', Array.from(selectedSessions));
+
+                                        if (error) throw error;
+
+                                        setSelectedSessions(new Set());
+                                        await fetchSessions();
+                                        toast.success(`Revoked ${count} sessions`);
+                                    } catch (e) {
+                                        console.error('Bulk revoke error:', e);
+                                        toast.error('Failed to revoke some sessions');
+                                    } finally {
+                                        setIsRevoking(false);
+                                    }
+                                }}
+                                disabled={isRevoking}
+                                className="flex items-center gap-2 px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-xs font-bold rounded-lg transition-colors disabled:opacity-50"
+                            >
+                                {isRevoking ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                                Remove {selectedSessions.size} Selected
+                            </button>
+                        )}
+                        <button
+                            onClick={handleRevokeAll}
+                            className="text-xs text-red-400 hover:text-red-300 font-medium whitespace-nowrap"
+                        >
+                            Revoke All
+                        </button>
+                    </div>
                 </div>
+
+                {/* Select All Header */}
+                {sessions.length > 0 && (
+                    <div className="flex items-center gap-3 mb-4 pb-3 border-b border-neutral-800">
+                        <input
+                            type="checkbox"
+                            id="select-all-sessions-admin"
+                            checked={
+                                sessions.filter(s => s.id !== localStorage.getItem('current_session_id')).length > 0 &&
+                                sessions.filter(s => s.id !== localStorage.getItem('current_session_id')).every(s => selectedSessions.has(s.id))
+                            }
+                            onChange={(e) => {
+                                if (e.target.checked) {
+                                    // Select all non-current sessions
+                                    const nonCurrentIds = sessions
+                                        .filter(s => s.id !== localStorage.getItem('current_session_id'))
+                                        .map(s => s.id);
+                                    setSelectedSessions(new Set(nonCurrentIds));
+                                } else {
+                                    setSelectedSessions(new Set());
+                                }
+                            }}
+                            className="w-4 h-4 rounded border-neutral-700 bg-neutral-800 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                        />
+                        <label htmlFor="select-all-sessions-admin" className="text-xs font-bold text-neutral-500 uppercase tracking-wider cursor-pointer">
+                            Select All Devices ({sessions.filter(s => s.id !== localStorage.getItem('current_session_id')).length} removable)
+                        </label>
+                    </div>
+                )}
 
                 <div className="space-y-3">
 
@@ -451,9 +517,30 @@ const AdminSecurityPanel: React.FC = () => {
                         else if (ua.includes('CrOS')) os = 'Chromebook';
                         else if (ua.includes('Linux')) os = 'Linux';
 
+
+                        const isSelected = selectedSessions.has(session.id);
+
                         return (
-                            <div key={session.id} className="flex items-center justify-between p-4 bg-black/20 border border-neutral-800 rounded-xl">
+                            <div key={session.id} className={`flex items-center justify-between p-4 border rounded-xl transition-all ${isCurrent ? 'bg-indigo-500/5 border-indigo-500/20' : isSelected ? 'bg-red-500/10 border-red-500/30' : 'bg-black/20 border-neutral-800'}`}>
                                 <div className="flex items-center gap-4">
+                                    {/* Checkbox for non-current sessions */}
+                                    {!isCurrent && (
+                                        <input
+                                            type="checkbox"
+                                            checked={isSelected}
+                                            aria-label={`Select ${os} session for removal`}
+                                            onChange={(e) => {
+                                                const newSet = new Set(selectedSessions);
+                                                if (e.target.checked) {
+                                                    newSet.add(session.id);
+                                                } else {
+                                                    newSet.delete(session.id);
+                                                }
+                                                setSelectedSessions(newSet);
+                                            }}
+                                            className="w-4 h-4 rounded border-neutral-700 bg-neutral-800 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                                        />
+                                    )}
                                     <div className="p-2 bg-neutral-800 rounded-full text-neutral-400">
                                         {ua.match(/Mobile|Android|iPhone/i) ? <Smartphone size={16} /> : <ExternalLink size={16} />}
                                     </div>

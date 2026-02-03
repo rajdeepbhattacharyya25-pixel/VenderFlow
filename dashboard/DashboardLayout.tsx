@@ -31,6 +31,7 @@ function App() {
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [announcement, setAnnouncement] = useState<{ id: string; title: string; content: string; type: string } | null>(null);
   const [isMaintenanceMode, setIsMaintenanceMode] = useState(false); // New state for maintenance mode
+  const [storeName, setStoreName] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchSellerStatus = async () => {
@@ -64,6 +65,7 @@ function App() {
 
         if (data) {
           setSellerSlug(data.slug);
+          setStoreName(data.store_name);
 
           if (data.status === 'suspended') {
             setIsSuspended(true);
@@ -244,6 +246,7 @@ function App() {
         sellerSlug={sellerSlug}
         businessLogo={businessLogo}
         onSidebarClose={() => setSidebarCollapsed(true)}
+        storeName={storeName}
       />
 
       {/* Main Content Area */}
@@ -262,6 +265,7 @@ function App() {
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
           businessLogo={businessLogo}
+          storeName={storeName}
         />
 
         <main className="p-6 lg:px-10 pt-8">

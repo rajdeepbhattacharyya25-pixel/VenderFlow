@@ -809,6 +809,40 @@ export const adminDb = {
     },
 
     /**
+     * Update ticket status (e.g., close a ticket)
+     */
+    async updateTicketStatus(ticketId: string, status: 'open' | 'closed') {
+        try {
+            const { error } = await supabase
+                .from('support_tickets')
+                .update({
+                    status,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', ticketId);
+
+            if (error) throw error;
+
+            // Also log to audit logs
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                await supabase.from('audit_logs').insert({
+                    actor_id: user.id,
+                    action: 'ticket_status_updated',
+                    target_type: 'ticket',
+                    target_id: ticketId,
+                    metadata: { status }
+                });
+            }
+
+            return { success: true };
+        } catch (error) {
+            console.error('Error updating ticket status:', error);
+            return { success: false, error: 'Failed to update ticket status' };
+        }
+    },
+
+    /**
      * Get unread notifications for admin
      */
     async getNotifications(limit = 20) {

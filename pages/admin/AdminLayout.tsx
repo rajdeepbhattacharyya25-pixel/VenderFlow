@@ -253,7 +253,7 @@ const AdminLayout: React.FC = () => {
                             Invite Seller
                         </button>
                         <NotificationCenter />
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 border border-white/10"></div>
+                        <img src="/logo.jpg" alt="VenderFlow Logo" className="w-8 h-8 rounded-full border border-white/10 object-cover" />
                     </div>
                 </header>
 

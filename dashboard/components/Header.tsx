@@ -13,6 +13,7 @@ interface HeaderProps {
     searchTerm: string;
     onSearchChange: (value: string) => void;
     businessLogo?: string | null;
+    storeName?: string | null;
 }
 
 interface Notification {
@@ -33,7 +34,7 @@ interface SearchResult {
     action: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuClick, activeTab, setActiveTab, searchTerm, onSearchChange, businessLogo }) => {
+const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuClick, activeTab, setActiveTab, searchTerm, onSearchChange, businessLogo, storeName }) => {
     const [searchFocused, setSearchFocused] = useState(false);
     const [showNotifications, setShowNotifications] = useState(false);
     const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
@@ -223,7 +224,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
 
     const getTitle = (tab: string) => {
         switch (tab) {
-            case 'dashboard': return 'Dashboard Overview';
+            case 'dashboard': return `${storeName || 'Store'} Dashboard`;
             case 'products': return 'Product Catalog';
             case 'orders': return 'Orders & Shipping';
             case 'sales': return 'Sales Tracking';
