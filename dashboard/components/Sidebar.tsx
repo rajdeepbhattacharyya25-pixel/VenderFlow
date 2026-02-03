@@ -21,6 +21,7 @@ interface SidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   sellerSlug: string | null;
+  businessLogo?: string | null;
   onSidebarClose?: () => void;
 }
 
@@ -34,7 +35,7 @@ const MENU_ITEMS = [
   { id: 'support', label: 'Support', icon: MessageSquare },
 ];
 
-const Sidebar: React.FC<SidebarProps> = ({ collapsed, isMobile, activeTab, setActiveTab, sellerSlug, onSidebarClose }) => {
+const Sidebar: React.FC<SidebarProps> = ({ collapsed, isMobile, activeTab, setActiveTab, sellerSlug, businessLogo, onSidebarClose }) => {
   const navigate = useNavigate();
   const [unreadSupportCount, setUnreadSupportCount] = useState(0);
 
@@ -146,7 +147,11 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, isMobile, activeTab, setAc
         {/* Logo Area */}
         <div className={`h-[80px] flex items-center ${collapsed ? 'justify-center' : 'px-8'} border-b border-muted/10`}>
           <div className="flex items-center gap-2 text-text font-bold text-xl tracking-tight">
-            <img src="/logo.jpg" alt="VenderFlow" className="w-8 h-8 rounded-lg object-contain" />
+            <img
+              src={businessLogo || "/logo.jpg"}
+              alt="Business Logo"
+              className="w-8 h-8 rounded-lg object-cover"
+            />
             {!collapsed && <span className="opacity-0 animate-[fadeIn_0.3s_ease-out_forwards]">VenderFlow</span>}
           </div>
         </div>

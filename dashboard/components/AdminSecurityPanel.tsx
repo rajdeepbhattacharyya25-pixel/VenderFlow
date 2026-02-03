@@ -440,15 +440,16 @@ const AdminSecurityPanel: React.FC = () => {
 
                     {sessions.map((session) => {
                         const isCurrent = session.id === localStorage.getItem('current_session_id');
-                        const ua = session.device_info || 'Unknown Device';
+                        const ua = session.ua_string || session.device_info || 'Unknown Device';
                         let os = 'Unknown Device';
 
-                        // Simple parser
-                        if (ua.includes('Windows')) os = 'Windows PC';
-                        else if (ua.includes('Mac')) os = 'Mac';
-                        else if (ua.includes('Linux')) os = 'Linux';
+                        // Device detection - check mobile OS FIRST since Android UA contains "Linux"
+                        if (ua.includes('iPhone') || ua.includes('iPad')) os = 'iPhone';
                         else if (ua.includes('Android')) os = 'Android';
-                        else if (ua.includes('iPhone')) os = 'iPhone';
+                        else if (ua.includes('Windows')) os = 'Windows PC';
+                        else if (ua.includes('Mac')) os = 'Mac';
+                        else if (ua.includes('CrOS')) os = 'Chromebook';
+                        else if (ua.includes('Linux')) os = 'Linux';
 
                         return (
                             <div key={session.id} className="flex items-center justify-between p-4 bg-black/20 border border-neutral-800 rounded-xl">

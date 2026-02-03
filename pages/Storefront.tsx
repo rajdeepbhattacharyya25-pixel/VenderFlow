@@ -707,6 +707,7 @@ function Storefront() {
                     onLogin={() => { }}
                     categories={[]}
                     isAdmin={false}
+                    storeLogo="/logo.jpg"
                 />
                 <BenefitsBar />
                 <main className="flex-grow flex flex-col items-center justify-center min-h-[500px]">
@@ -744,6 +745,7 @@ function Storefront() {
                     }}
                     categories={uniqueCategories}
                     isAdmin={role === 'admin'}
+                    storeLogo="/logo.jpg"
                 />
             )}
             {currentView !== 'checkout' && <BenefitsBar />}

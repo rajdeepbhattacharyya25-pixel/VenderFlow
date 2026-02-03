@@ -268,8 +268,6 @@ const SellerStorefront = () => {
 
                 setSeller(sellerData);
                 setCurrentSeller(sellerData.id);
-                // Update document title
-                document.title = `${sellerData.store_name} - Modern Apparel`;
             } catch (error) {
                 console.error('Error loading seller:', error);
                 setSellerError('Failed to load store');
@@ -385,6 +383,14 @@ const SellerStorefront = () => {
             '--radius': borderRadius,
         } as React.CSSProperties;
     }, [storeSettings]);
+
+    // Update document title when storeSettings loads (prioritizes dashboard settings)
+    useEffect(() => {
+        const displayName = storeSettings?.store_name || seller?.store_name;
+        if (displayName) {
+            document.title = `${displayName} - Modern Apparel`;
+        }
+    }, [storeSettings?.store_name, seller?.store_name]);
 
 
 
@@ -955,8 +961,8 @@ const SellerStorefront = () => {
                 return seller ? (
                     <StoreRegister
                         seller={seller}
-                        onSuccess={() => {
-                            const session = getStoreSession(seller.slug);
+                        onSuccess={async () => {
+                            const session = await getCurrentStoreCustomer(seller.slug);
                             setStoreCustomer(session);
                             handleNavigate('home');
                         }}
