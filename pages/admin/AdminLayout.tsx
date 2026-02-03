@@ -42,22 +42,47 @@ const AdminLayout: React.FC = () => {
         };
     }, []);
 
-    // Session Timeout Logic (15 minutes)
+    // Session Timeout Logic - reads from platform_settings
     useEffect(() => {
-        const TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
         let lastActivity = Date.now();
-        let interval: NodeJS.Timeout;
+        let interval: NodeJS.Timeout | null = null;
+        let timeoutMinutes = 15; // Default fallback
 
         const updateActivity = () => {
             lastActivity = Date.now();
         };
 
         const checkActivity = () => {
+            // -1 means "never" timeout
+            if (timeoutMinutes <= 0) return;
+
+            const TIMEOUT_MS = timeoutMinutes * 60 * 1000;
             if (Date.now() - lastActivity > TIMEOUT_MS) {
-                clearInterval(interval); // Stop checking immediately to prevent spam
+                if (interval) clearInterval(interval);
                 handleLogout('timeout');
             }
         };
+
+        // Fetch timeout setting from database
+        const fetchTimeoutSetting = async () => {
+            try {
+                const { data } = await supabase
+                    .from('platform_settings')
+                    .select('session_timeout_minutes')
+                    .limit(1)
+                    .single();
+
+                if (data?.session_timeout_minutes) {
+                    timeoutMinutes = data.session_timeout_minutes;
+                    console.log(`Session timeout set to: ${timeoutMinutes === -1 ? 'Never' : timeoutMinutes + ' minutes'}`);
+                }
+            } catch (error) {
+                console.error('Error fetching session timeout:', error);
+            }
+        };
+
+        // Initialize
+        fetchTimeoutSetting();
 
         // Listen for user activity
         window.addEventListener('mousemove', updateActivity);
@@ -82,7 +107,7 @@ const AdminLayout: React.FC = () => {
                         target_type: 'platform',
                         target_id: null,
                         metadata: {
-                            ip: 'client-side', // IP detection requires generic edge function
+                            ip: 'client-side',
                             agent: navigator.userAgent
                         }
                     });
@@ -97,7 +122,7 @@ const AdminLayout: React.FC = () => {
             window.removeEventListener('keypress', updateActivity);
             window.removeEventListener('click', updateActivity);
             window.removeEventListener('scroll', updateActivity);
-            clearInterval(interval);
+            if (interval) clearInterval(interval);
         };
     }, []);
 

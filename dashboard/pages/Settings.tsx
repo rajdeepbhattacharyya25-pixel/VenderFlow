@@ -701,19 +701,20 @@ const Settings = () => {
                                     ) : sessions.length > 0 ? (
                                         sessions.map((session) => {
                                             const isCurrent = session.id === localStorage.getItem('current_session_id'); // Match logic from LoginModal
-                                            const ua = session.device_info || 'Unknown Device';
+                                            const ua = session.ua_string || session.device_info || 'Unknown Device';
                                             let icon = <ExternalLink size={16} />;
                                             let os = 'Unknown Device';
 
                                             if (/Mobile|Android|iPhone/i.test(ua)) icon = <Smartphone size={16} />;
                                             else icon = <ExternalLink size={16} />; // Monitor icon ideally
 
-                                            // Simple parser
-                                            if (ua.includes('Windows')) os = 'Windows PC';
-                                            else if (ua.includes('Mac')) os = 'Mac';
-                                            else if (ua.includes('Linux')) os = 'Linux';
+                                            // Device detection - check mobile OS FIRST since Android UA contains "Linux"
+                                            if (ua.includes('iPhone') || ua.includes('iPad')) os = 'iPhone';
                                             else if (ua.includes('Android')) os = 'Android';
-                                            else if (ua.includes('iPhone')) os = 'iPhone';
+                                            else if (ua.includes('Windows')) os = 'Windows PC';
+                                            else if (ua.includes('Mac')) os = 'Mac';
+                                            else if (ua.includes('CrOS')) os = 'Chromebook';
+                                            else if (ua.includes('Linux')) os = 'Linux';
 
                                             return (
                                                 <div key={session.id} className={`flex items-center justify-between p-4 border rounded-xl transition-all ${isCurrent ? 'bg-primary/5 border-primary/20' : 'bg-bg border-border'}`}>

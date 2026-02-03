@@ -26,6 +26,7 @@ function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [searchTerm, setSearchTerm] = useState('');
   const [sellerSlug, setSellerSlug] = useState<string | null>(null);
+  const [businessLogo, setBusinessLogo] = useState<string | null>(null);
   const [isSuspended, setIsSuspended] = useState(false);
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [announcement, setAnnouncement] = useState<{ id: string; title: string; content: string; type: string } | null>(null);
@@ -70,6 +71,21 @@ function App() {
 
           if (data.store_name) {
             document.title = `${data.store_name} Dashboard`;
+          }
+
+          // Fetch store settings for business logo
+          try {
+            const { data: storeSettings } = await supabase
+              .from('store_settings')
+              .select('logo_url')
+              .eq('seller_id', user.id)
+              .maybeSingle();
+
+            if (storeSettings?.logo_url) {
+              setBusinessLogo(storeSettings.logo_url);
+            }
+          } catch (error) {
+            console.error('Error fetching store settings:', error);
           }
 
           // Fetch Latest Announcement
@@ -203,6 +219,7 @@ function App() {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         sellerSlug={sellerSlug}
+        businessLogo={businessLogo}
         onSidebarClose={() => setSidebarCollapsed(true)}
       />
 
