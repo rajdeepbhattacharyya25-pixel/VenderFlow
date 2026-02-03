@@ -157,6 +157,8 @@ const Settings = () => {
 
     const [sessions, setSessions] = useState<Session[]>([]);
     const [loadingSessions, setLoadingSessions] = useState(false);
+    const [selectedSessions, setSelectedSessions] = useState<Set<string>>(new Set());
+    const [isRevoking, setIsRevoking] = useState(false);
 
     useEffect(() => {
         if (activeTab === 'security') {
@@ -686,14 +688,77 @@ const Settings = () => {
                                             <p className="text-muted text-xs">Detailed history of devices logged into your account</p>
                                         </div>
                                     </div>
-                                    <button
-                                        onClick={fetchSessions}
-                                        className="p-2 hover:bg-bg rounded-lg text-muted hover:text-primary transition-colors"
-                                        title="Refresh List"
-                                    >
-                                        <RefreshCw size={16} className={loadingSessions ? "animate-spin" : ""} />
-                                    </button>
+                                    <div className="flex items-center gap-2">
+                                        {/* Bulk Delete Button */}
+                                        {selectedSessions.size > 0 && (
+                                            <button
+                                                onClick={async () => {
+                                                    const count = selectedSessions.size;
+                                                    if (!confirm(`Revoke ${count} selected session(s)? These devices will be logged out immediately.`)) return;
+                                                    setIsRevoking(true);
+                                                    try {
+                                                        // Delete all selected sessions
+                                                        const { error } = await supabase
+                                                            .from('user_sessions')
+                                                            .delete()
+                                                            .in('id', Array.from(selectedSessions));
+
+                                                        if (error) throw error;
+
+                                                        setSelectedSessions(new Set());
+                                                        await fetchSessions();
+                                                    } catch (e) {
+                                                        console.error('Bulk revoke error:', e);
+                                                        alert('Failed to revoke some sessions');
+                                                    } finally {
+                                                        setIsRevoking(false);
+                                                    }
+                                                }}
+                                                disabled={isRevoking}
+                                                className="flex items-center gap-2 px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-xs font-bold rounded-lg transition-colors disabled:opacity-50"
+                                            >
+                                                {isRevoking ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                                                Remove {selectedSessions.size} Selected
+                                            </button>
+                                        )}
+                                        <button
+                                            onClick={fetchSessions}
+                                            className="p-2 hover:bg-bg rounded-lg text-muted hover:text-primary transition-colors"
+                                            title="Refresh List"
+                                        >
+                                            <RefreshCw size={16} className={loadingSessions ? "animate-spin" : ""} />
+                                        </button>
+                                    </div>
                                 </div>
+
+                                {/* Select All Header */}
+                                {sessions.length > 0 && (
+                                    <div className="flex items-center gap-3 mb-4 pb-3 border-b border-border">
+                                        <input
+                                            type="checkbox"
+                                            id="select-all-sessions"
+                                            checked={
+                                                sessions.filter(s => s.id !== localStorage.getItem('current_session_id')).length > 0 &&
+                                                sessions.filter(s => s.id !== localStorage.getItem('current_session_id')).every(s => selectedSessions.has(s.id))
+                                            }
+                                            onChange={(e) => {
+                                                if (e.target.checked) {
+                                                    // Select all non-current sessions
+                                                    const nonCurrentIds = sessions
+                                                        .filter(s => s.id !== localStorage.getItem('current_session_id'))
+                                                        .map(s => s.id);
+                                                    setSelectedSessions(new Set(nonCurrentIds));
+                                                } else {
+                                                    setSelectedSessions(new Set());
+                                                }
+                                            }}
+                                            className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+                                        />
+                                        <label htmlFor="select-all-sessions" className="text-xs font-bold text-muted uppercase tracking-wider cursor-pointer">
+                                            Select All Devices ({sessions.filter(s => s.id !== localStorage.getItem('current_session_id')).length} removable)
+                                        </label>
+                                    </div>
+                                )}
 
                                 <div className="space-y-3">
                                     {loadingSessions ? (
@@ -716,9 +781,31 @@ const Settings = () => {
                                             else if (ua.includes('CrOS')) os = 'Chromebook';
                                             else if (ua.includes('Linux')) os = 'Linux';
 
+                                            const isSelected = selectedSessions.has(session.id);
+
                                             return (
-                                                <div key={session.id} className={`flex items-center justify-between p-4 border rounded-xl transition-all ${isCurrent ? 'bg-primary/5 border-primary/20' : 'bg-bg border-border'}`}>
+                                                <div key={session.id} className={`flex items-center justify-between p-4 border rounded-xl transition-all ${isCurrent ? 'bg-primary/5 border-primary/20' : isSelected ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800' : 'bg-bg border-border hover:border-gray-300 dark:hover:border-gray-600'}`}>
                                                     <div className="flex items-center gap-4">
+                                                        {/* Checkbox for non-current sessions */}
+                                                        {!isCurrent ? (
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={isSelected}
+                                                                aria-label={`Select ${os} session for removal`}
+                                                                onChange={(e) => {
+                                                                    const newSet = new Set(selectedSessions);
+                                                                    if (e.target.checked) {
+                                                                        newSet.add(session.id);
+                                                                    } else {
+                                                                        newSet.delete(session.id);
+                                                                    }
+                                                                    setSelectedSessions(newSet);
+                                                                }}
+                                                                className="w-4 h-4 rounded border-gray-300 text-red-500 focus:ring-red-500 cursor-pointer"
+                                                            />
+                                                        ) : (
+                                                            <div className="w-4" /> // Spacer for alignment
+                                                        )}
                                                         <div className={`p-2 rounded-full border ${isCurrent ? 'bg-green-500/10 border-green-500/20 text-green-600' : 'bg-gray-100 border-gray-200 text-gray-500 dark:bg-neutral-800 dark:border-neutral-700'}`}>
                                                             {icon}
                                                         </div>
@@ -745,13 +832,19 @@ const Settings = () => {
                                                             </span>
                                                         ) : (
                                                             <button
-                                                                className="text-xs text-red-500 hover:text-red-600 font-bold px-3 py-1.5 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg transition-colors"
+                                                                className="text-xs text-red-500 hover:text-red-600 font-bold px-3 py-1.5 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg transition-colors flex items-center gap-1"
                                                                 onClick={async () => {
-                                                                    if (!confirm('Revoke this session? User will be logged out.')) return;
+                                                                    if (!confirm('Revoke this session? Device will be logged out immediately.')) return;
                                                                     await supabase.from('user_sessions').delete().eq('id', session.id);
+                                                                    setSelectedSessions(prev => {
+                                                                        const newSet = new Set(prev);
+                                                                        newSet.delete(session.id);
+                                                                        return newSet;
+                                                                    });
                                                                     fetchSessions();
                                                                 }}
                                                             >
+                                                                <LogOut size={12} />
                                                                 Revoke
                                                             </button>
                                                         )}

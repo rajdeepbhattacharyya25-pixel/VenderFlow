@@ -120,6 +120,29 @@ function App() {
     }
   }, [theme]);
 
+  // Dynamic Favicon - Update to seller's logo
+  useEffect(() => {
+    if (businessLogo) {
+      const link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+      if (link) {
+        link.href = businessLogo;
+      } else {
+        const newLink = document.createElement('link');
+        newLink.rel = 'icon';
+        newLink.href = businessLogo;
+        document.head.appendChild(newLink);
+      }
+    }
+
+    // Cleanup: restore default favicon when leaving dashboard
+    return () => {
+      const link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+      if (link) {
+        link.href = '/logo.jpg';
+      }
+    };
+  }, [businessLogo]);
+
   // Responsive Handler
   useEffect(() => {
     const handleResize = () => {
@@ -238,6 +261,7 @@ function App() {
           setActiveTab={setActiveTab}
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
+          businessLogo={businessLogo}
         />
 
         <main className="p-6 lg:px-10 pt-8">

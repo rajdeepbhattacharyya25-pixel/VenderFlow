@@ -12,6 +12,7 @@ interface HeaderProps {
     setActiveTab: (tab: string) => void;
     searchTerm: string;
     onSearchChange: (value: string) => void;
+    businessLogo?: string | null;
 }
 
 interface Notification {
@@ -32,7 +33,7 @@ interface SearchResult {
     action: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuClick, activeTab, setActiveTab, searchTerm, onSearchChange }) => {
+const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuClick, activeTab, setActiveTab, searchTerm, onSearchChange, businessLogo }) => {
     const [searchFocused, setSearchFocused] = useState(false);
     const [showNotifications, setShowNotifications] = useState(false);
     const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
@@ -407,13 +408,17 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
                         )}
                     </div>
 
-                    {/* Avatar */}
+                    {/* Avatar / Business Logo */}
                     <button
                         className="w-11 h-11 rounded-2xl overflow-hidden border-2 border-muted/5 shadow-sm hover:border-text/20 hover:scale-105 transition-all duration-300 p-0.5 bg-panel"
-                        title="User Profile"
+                        title="Business Profile"
                     >
                         <div className="w-full h-full rounded-xl overflow-hidden">
-                            <img src="https://picsum.photos/seed/user/200/200" alt="User Profile" className="w-full h-full object-cover" />
+                            <img
+                                src={businessLogo || "/logo.jpg"}
+                                alt="Business Logo"
+                                className="w-full h-full object-cover"
+                            />
                         </div>
                     </button>
                 </div>

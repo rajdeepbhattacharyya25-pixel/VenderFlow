@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Bell, Check, Info, AlertTriangle, AlertCircle, ShoppingBag, User } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { adminDb, Notification } from '../../../lib/admin-api';
+import { usePushNotifications } from '../../../hooks/usePushNotifications';
 
 const NotificationCenter: React.FC = () => {
     const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -9,6 +10,7 @@ const NotificationCenter: React.FC = () => {
     const [unreadCount, setUnreadCount] = useState(0);
     const [loading, setLoading] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const { isSubscribed, subscribeToPush, loading: pushLoading } = usePushNotifications();
 
     useEffect(() => {
         fetchNotifications();
@@ -179,6 +181,20 @@ const NotificationCenter: React.FC = () => {
                             </div>
                         )}
                     </div>
+
+                    {/* Footer - Push Opt-in */}
+                    {!isSubscribed && (
+                        <div className="p-3 bg-neutral-800/50 border-t border-neutral-700">
+                            <button
+                                onClick={subscribeToPush}
+                                disabled={pushLoading}
+                                className="w-full py-2 px-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold shadow-sm hover:shadow active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                            >
+                                <Bell size={14} />
+                                {pushLoading ? 'Enabling...' : 'Enable Browser Notifications'}
+                            </button>
+                        </div>
+                    )}
                 </div>
             )}
         </div>
