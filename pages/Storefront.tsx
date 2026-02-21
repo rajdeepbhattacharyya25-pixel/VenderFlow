@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Fuse from 'fuse.js';
 import { TopBar } from '../components/TopBar';
 import { useAuth } from '../hooks/useAuth';
 import { Navbar } from '../components/Navbar';
@@ -422,12 +423,19 @@ function Storefront() {
     };
 
     const handleSearch = (query: string) => {
-        const lowerQuery = query.toLowerCase();
-        const filtered = allProducts.filter(p =>
-            p.name.toLowerCase().includes(lowerQuery) ||
-            p.category.toLowerCase().includes(lowerQuery) ||
-            p.description?.toLowerCase().includes(lowerQuery)
-        );
+        if (!query.trim()) {
+            handleNavViewAll();
+            return;
+        }
+
+        const fuse = new Fuse(allProducts, {
+            keys: ['name', 'category', 'description'],
+            threshold: 0.4,
+            includeScore: true,
+            ignoreLocation: true
+        });
+
+        const filtered = fuse.search(query).map(result => result.item);
         handleOpenCollection(`Search results for "${query}"`, filtered, `${filtered.length} products found`);
     };
 

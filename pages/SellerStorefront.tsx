@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import Fuse from 'fuse.js';
 import { TopBar } from '../components/TopBar';
 import { Navbar } from '../components/Navbar';
 import { BenefitsBar } from '../components/BenefitsBar';
@@ -617,16 +618,17 @@ const SellerStorefront = () => {
 
     const handleSearch = (query: string) => {
         if (!query.trim()) {
-            // Reset to show all products - fetch fresh if needed
-            // For now, we'll just not filter (requires page refresh for full reset)
             return;
         }
 
-        const lowerQ = query.toLowerCase();
-        const filtered = products.filter(p =>
-            p.name.toLowerCase().includes(lowerQ) ||
-            p.description.toLowerCase().includes(lowerQ)
-        );
+        const fuse = new Fuse(products, {
+            keys: ['name', 'description'],
+            threshold: 0.4,
+            includeScore: true,
+            ignoreLocation: true
+        });
+
+        const filtered = fuse.search(query).map(result => result.item);
         setProducts(filtered);
     };
 
