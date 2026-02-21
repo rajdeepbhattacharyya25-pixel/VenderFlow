@@ -8,6 +8,7 @@ import CustomerAuthGuard from './components/CustomerAuthGuard';
 import TelegramInitializer from './components/TelegramInitializer';
 import OfflineOverlay from './components/OfflineOverlay';
 import ErrorBoundary from './components/ErrorBoundary';
+import CookieConsent from './components/CookieConsent';
 import { initTelegramApp } from './lib/telegram';
 
 // Lazy loaded pages for performance code-splitting
@@ -59,6 +60,7 @@ function App() {
       <BrowserRouter>
         <Toaster position="top-right" />
         <OfflineOverlay />
+        <CookieConsent />
         <TelegramInitializer />
 
         <Suspense fallback={<PageLoader />}>
