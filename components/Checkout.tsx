@@ -226,7 +226,7 @@ export const Checkout: React.FC<CheckoutProps> = ({
 
   // --- CHECKOUT FORM ---
   return (
-    <div className="min-h-screen bg-white dark:bg-background-dark pb-24 md:pb-10 transition-colors">
+    <div className="min-h-screen bg-white dark:bg-background-dark pb-32 md:pb-10 transition-colors">
 
       {/* Progress Header */}
       <div className="sticky top-0 z-40 bg-white/90 dark:bg-background-dark/90 backdrop-blur-md border-b border-gray-100 dark:border-gray-800">
@@ -371,8 +371,9 @@ export const Checkout: React.FC<CheckoutProps> = ({
                     <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Pin Code</label>
                     <input
                       type="text" name="zip" value={formData.zip} onChange={handleInputChange}
+                      inputMode="numeric"
                       className={`w-full bg-gray-50 dark:bg-surface-dark border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all ${errors.zip ? 'border-red-500 error-field' : 'border-gray-200 dark:border-gray-700'}`}
-                      placeholder="e.g. 10001"
+                      placeholder="e.g. 400001"
                     />
                     {errors.zip && <p className="text-red-500 text-xs mt-1">{errors.zip}</p>}
                   </div>
@@ -381,8 +382,9 @@ export const Checkout: React.FC<CheckoutProps> = ({
                     <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Phone Number</label>
                     <input
                       type="tel" name="phone" value={formData.phone} onChange={handleInputChange}
+                      inputMode="tel"
                       className={`w-full bg-gray-50 dark:bg-surface-dark border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all ${errors.phone ? 'border-red-500 error-field' : 'border-gray-200 dark:border-gray-700'}`}
-                      placeholder="e.g. +1 555 123 4567"
+                      placeholder="e.g. +91 98765 43210"
                     />
                     {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
                   </div>
@@ -491,7 +493,7 @@ export const Checkout: React.FC<CheckoutProps> = ({
                   <div>
                     <label className="block text-[10px] font-bold uppercase text-gray-500 mb-1">Card Number</label>
                     <div className="relative">
-                      <input type="text" placeholder="0000 0000 0000 0000" className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-gray-600 rounded-xl px-4 py-3 pl-12 outline-none focus:border-primary transition-colors" />
+                      <input type="text" inputMode="numeric" placeholder="0000 0000 0000 0000" className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-gray-600 rounded-xl px-4 py-3 pl-12 outline-none focus:border-primary transition-colors" />
                       <IconCreditCard className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     </div>
                   </div>
@@ -605,6 +607,7 @@ export const Checkout: React.FC<CheckoutProps> = ({
                 onClick={handleSubmit}
                 disabled={loading || (paymentMethod === 'cod' && !isPhoneVerified)}
                 className="w-full mt-6 bg-primary text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-xl hover:bg-green-900 transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                style={{ minHeight: '48px', WebkitTapHighlightColor: 'transparent' }}
               >
                 {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <IconCheck className="w-5 h-5" />}
                 {loading ? 'Processing...' : 'Place Order'}

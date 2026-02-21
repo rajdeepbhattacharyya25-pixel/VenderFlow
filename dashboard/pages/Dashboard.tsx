@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { Tag, ShoppingBag, Plus, FileText, BarChart2, AlertTriangle, ArrowRight, Eye, IndianRupee } from 'lucide-react';
+import { Tag, ShoppingBag, Plus, FileText, BarChart2, AlertTriangle, ArrowRight, Eye, IndianRupee, MoreHorizontal } from 'lucide-react';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import KPICard from '../components/KPICard';
 import EarningsChart from '../components/EarningsChart';
 import ProductTable from '../components/ProductTable';
@@ -337,11 +338,12 @@ const Dashboard: React.FC<DashboardProps> = ({ theme, onTabChange, sellerSlug })
             </html>
         `;
 
-        // Using document.open/write/close is acceptable here since the invoice
-        // is rendered in a new window and all user data is escaped
-        invoiceWindow.document.open();
-        invoiceWindow.document.write(invoiceHTML);
-        invoiceWindow.document.close();
+        const blob = new Blob([invoiceHTML], { type: 'text/html' });
+        const blobUrl = URL.createObjectURL(blob);
+        invoiceWindow.location.href = blobUrl;
+
+        // Clean up the object URL after a short delay
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
     };
 
     return (
@@ -355,50 +357,50 @@ const Dashboard: React.FC<DashboardProps> = ({ theme, onTabChange, sellerSlug })
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     <button
                         onClick={() => onTabChange?.('products')}
-                        className="flex items-center gap-3 p-4 bg-panel rounded-2xl border border-muted/10 hover:border-chart-line transition-all group shadow-sm"
+                        className="flex items-center gap-3 p-4 bg-luxury-card rounded-2xl border border-luxury-border/50 shadow-soft hover:shadow-glow hover:-translate-y-1 transition-all duration-300 group"
                     >
-                        <div className="w-10 h-10 rounded-xl bg-sky-500/10 text-sky-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <div className="w-10 h-10 rounded-xl bg-sky-500/10 text-sky-500 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                             <Plus size={20} />
                         </div>
                         <div className="text-left">
-                            <span className="text-xs text-muted block">Product</span>
-                            <span className="text-sm font-bold text-text">Add New</span>
+                            <span className="text-xs text-luxury-text/60 block font-medium">Product</span>
+                            <span className="text-sm font-bold text-luxury-text">Add New</span>
                         </div>
                     </button>
                     <button
                         onClick={() => onTabChange?.('orders')}
-                        className="flex items-center gap-3 p-4 bg-panel rounded-2xl border border-muted/10 hover:border-text transition-all group shadow-sm"
+                        className="flex items-center gap-3 p-4 bg-luxury-card rounded-2xl border border-luxury-border/50 shadow-soft hover:shadow-glow hover:-translate-y-1 transition-all duration-300 group"
                     >
-                        <div className="w-10 h-10 rounded-xl bg-orange-500/10 text-orange-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <div className="w-10 h-10 rounded-xl bg-orange-500/10 text-orange-500 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                             <FileText size={20} />
                         </div>
                         <div className="text-left">
-                            <span className="text-xs text-muted block">Order</span>
-                            <span className="text-sm font-bold text-text">Invoices</span>
+                            <span className="text-xs text-luxury-text/60 block font-medium">Order</span>
+                            <span className="text-sm font-bold text-luxury-text">Invoices</span>
                         </div>
                     </button>
                     <button
                         onClick={() => onTabChange?.('reports')}
-                        className="flex items-center gap-3 p-4 bg-panel rounded-2xl border border-muted/10 hover:border-chart-line transition-all group shadow-sm"
+                        className="flex items-center gap-3 p-4 bg-luxury-card rounded-2xl border border-luxury-border/50 shadow-soft hover:shadow-glow hover:-translate-y-1 transition-all duration-300 group"
                     >
-                        <div className="w-10 h-10 rounded-xl bg-green-500/10 text-green-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <div className="w-10 h-10 rounded-xl bg-green-500/10 text-green-500 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                             <BarChart2 size={20} />
                         </div>
                         <div className="text-left">
-                            <span className="text-xs text-muted block">Stats</span>
-                            <span className="text-sm font-bold text-text">Full Report</span>
+                            <span className="text-xs text-luxury-text/60 block font-medium">Stats</span>
+                            <span className="text-sm font-bold text-luxury-text">Full Report</span>
                         </div>
                     </button>
                     <button
                         onClick={() => onTabChange?.('sales')}
-                        className="flex items-center gap-3 p-4 bg-panel rounded-2xl border border-muted/10 hover:border-text transition-all group shadow-sm"
+                        className="flex items-center gap-3 p-4 bg-luxury-card rounded-2xl border border-luxury-border/50 shadow-soft hover:shadow-glow hover:-translate-y-1 transition-all duration-300 group"
                     >
-                        <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                             <Tag size={20} />
                         </div>
                         <div className="text-left">
-                            <span className="text-xs text-muted block">Discount</span>
-                            <span className="text-sm font-bold text-text">Campaigns</span>
+                            <span className="text-xs text-luxury-text/60 block font-medium">Discount</span>
+                            <span className="text-sm font-bold text-luxury-text">Campaigns</span>
                         </div>
                     </button>
                     {sellerSlug && (
@@ -406,14 +408,14 @@ const Dashboard: React.FC<DashboardProps> = ({ theme, onTabChange, sellerSlug })
                             href={`/store/${sellerSlug}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-3 p-4 bg-panel rounded-2xl border border-muted/10 hover:border-chart-line transition-all group shadow-sm"
+                            className="flex items-center gap-3 p-4 bg-luxury-card rounded-2xl border border-luxury-border/50 shadow-soft hover:shadow-glow hover:-translate-y-1 transition-all duration-300 group"
                         >
-                            <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                                 <Eye size={20} />
                             </div>
                             <div className="text-left">
-                                <span className="text-xs text-muted block">Storefront</span>
-                                <span className="text-sm font-bold text-text">View Live</span>
+                                <span className="text-xs text-luxury-text/60 block font-medium">Storefront</span>
+                                <span className="text-sm font-bold text-luxury-text">View Live</span>
                             </div>
                         </a>
                     )}
@@ -426,7 +428,7 @@ const Dashboard: React.FC<DashboardProps> = ({ theme, onTabChange, sellerSlug })
                         value={stats.sales}
                         prefix="₹ "
                         icon={Tag}
-                        accentColorClass="bg-accent-1"
+                        color="blue"
                         trend="up"
                         loading={loading}
                     />
@@ -435,7 +437,7 @@ const Dashboard: React.FC<DashboardProps> = ({ theme, onTabChange, sellerSlug })
                         value={stats.earnings}
                         prefix="₹ "
                         icon={IndianRupee}
-                        accentColorClass="bg-accent-2"
+                        color="yellow"
                         trend="up"
                         loading={loading}
                     />
@@ -444,7 +446,7 @@ const Dashboard: React.FC<DashboardProps> = ({ theme, onTabChange, sellerSlug })
                         value={stats.orders}
                         suffix=" "
                         icon={ShoppingBag}
-                        accentColorClass="bg-accent-3"
+                        color="purple"
                         trend="down"
                         loading={loading}
                     />
@@ -464,24 +466,46 @@ const Dashboard: React.FC<DashboardProps> = ({ theme, onTabChange, sellerSlug })
             {/* Right Sidebar (Donut + Recent) */}
             <div className="w-full xl:w-[320px] flex-shrink-0 flex flex-col gap-6">
                 {/* Low Stock Alert - Perfect for Small Business Inventory Management */}
-                <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-500/20 rounded-2xl p-5 shadow-sm">
-                    <div className="flex items-center gap-3 text-red-600 dark:text-red-400 mb-4">
-                        <AlertTriangle size={20} />
-                        <h4 className="font-bold text-sm uppercase tracking-wider">Inventory Alert</h4>
+                {/* Mode of Order - Donut Chart */}
+                <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-slate-100 dark:border-slate-700">
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="font-bold text-sm text-slate-800 dark:text-white">Mode of Order</h3>
+                        <MoreHorizontal size={16} className="text-slate-400" />
                     </div>
-                    <div className="space-y-3">
-                        <div className="flex justify-between items-center">
-                            <span className="text-xs text-muted font-medium">Cotton T-Shirt (L)</span>
-                            <span className="text-xs font-bold text-red-600 px-2 py-0.5 bg-red-100 dark:bg-red-900/40 rounded-full">2 Left</span>
+
+                    <div className="h-[200px] w-full relative">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <Pie
+                                    data={[
+                                        { name: 'Online orders', value: 65 },
+                                        { name: 'Store orders', value: 35 }
+                                    ]}
+                                    innerRadius={60}
+                                    outerRadius={80}
+                                    paddingAngle={0}
+                                    dataKey="value"
+                                    startAngle={90}
+                                    endAngle={-270}
+                                >
+                                    <Cell key="cell-0" fill="#38bdf8" strokeWidth={0} />
+                                    <Cell key="cell-1" fill="#1e293b" strokeWidth={0} />
+                                </Pie>
+                            </PieChart>
+                        </ResponsiveContainer>
+                        {/* Center Text if needed, or leave clean */}
+                    </div>
+
+                    <div className="flex justify-center gap-6 mt-4">
+                        <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-sm bg-sky-400"></div>
+                            <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Online orders</span>
                         </div>
-                        <div className="flex justify-between items-center">
-                            <span className="text-xs text-muted font-medium">Denim Jeans (32)</span>
-                            <span className="text-xs font-bold text-red-600 px-2 py-0.5 bg-red-100 dark:bg-red-900/40 rounded-full">4 Left</span>
+                        <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-sm bg-slate-800 dark:bg-slate-200"></div>
+                            <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Store orders</span>
                         </div>
                     </div>
-                    <button className="w-full mt-4 flex items-center justify-center gap-2 py-2 text-xs font-bold text-red-600 dark:text-red-400 hover:underline">
-                        RESTOCK NOW <ArrowRight size={12} />
-                    </button>
                 </div>
 
 
@@ -500,24 +524,24 @@ const Dashboard: React.FC<DashboardProps> = ({ theme, onTabChange, sellerSlug })
                         <div className="flex items-center gap-4">
                             <img src={selectedOrder.productImage} alt={selectedOrder.productName} className="w-20 h-20 rounded-xl object-cover" />
                             <div>
-                                <h4 className="font-bold text-text text-lg">{selectedOrder.productName}</h4>
-                                <p className="text-muted text-sm">{selectedOrder.time}</p>
+                                <h4 className="font-bold text-theme-text text-lg">{selectedOrder.productName}</h4>
+                                <p className="text-theme-muted text-sm">{selectedOrder.time}</p>
                             </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="p-4 rounded-lg bg-bg border border-muted/10">
-                                <span className="text-xs text-muted block mb-1">Price</span>
-                                <span className="text-lg font-bold text-text">₹{selectedOrder.price.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                            <div className="p-4 rounded-lg bg-theme-bg border border-theme-muted/10">
+                                <span className="text-xs text-theme-muted block mb-1">Price</span>
+                                <span className="text-lg font-bold text-theme-text">₹{selectedOrder.price.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                             </div>
-                            <div className="p-4 rounded-lg bg-bg border border-muted/10">
-                                <span className="text-xs text-muted block mb-1">Status</span>
+                            <div className="p-4 rounded-lg bg-theme-bg border border-theme-muted/10">
+                                <span className="text-xs text-theme-muted block mb-1">Status</span>
                                 <span className="text-sm font-bold text-green-500 bg-green-500/10 px-2 py-1 rounded inline-block">Completed</span>
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <h5 className="font-medium text-text">Customer Information</h5>
-                            <div className="text-sm text-muted">
-                                <p className="font-semibold text-text">{selectedOrder.customerName}</p>
+                            <h5 className="font-medium text-theme-text">Customer Information</h5>
+                            <div className="text-sm text-theme-muted">
+                                <p className="font-semibold text-theme-text">{selectedOrder.customerName}</p>
                                 <p>{selectedOrder.customerEmail}</p>
                                 <p className="opacity-80">{selectedOrder.customerAddress}</p>
                             </div>
@@ -525,13 +549,13 @@ const Dashboard: React.FC<DashboardProps> = ({ theme, onTabChange, sellerSlug })
                         <div className="flex gap-3 mt-4">
                             <button
                                 onClick={handleTrackOrder}
-                                className="flex-1 py-2.5 bg-text text-bg rounded-lg font-medium hover:opacity-90 transition-opacity"
+                                className="flex-1 py-2.5 bg-theme-text text-theme-bg rounded-lg font-medium hover:opacity-90 transition-opacity"
                             >
                                 Track Order
                             </button>
                             <button
                                 onClick={handleDownloadInvoice}
-                                className="flex-1 py-2.5 border border-muted/20 text-text rounded-lg font-medium hover:bg-bg transition-colors"
+                                className="flex-1 py-2.5 border border-theme-muted/20 text-theme-text rounded-lg font-medium hover:bg-theme-bg transition-colors"
                             >
                                 Download Invoice
                             </button>

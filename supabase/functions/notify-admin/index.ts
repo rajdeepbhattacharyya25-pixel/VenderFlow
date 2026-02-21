@@ -4,7 +4,7 @@ const TELEGRAM_BOT_TOKEN = Deno.env.get("TELEGRAM_BOT_TOKEN");
 const TELEGRAM_CHAT_ID = Deno.env.get("TELEGRAM_CHAT_ID");
 
 const corsHeaders = {
-    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Origin": Deno.env.get('ALLOWED_ORIGIN') ?? "https://venderflow.vercel.app",
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 

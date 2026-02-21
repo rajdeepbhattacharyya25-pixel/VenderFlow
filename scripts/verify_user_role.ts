@@ -1,3 +1,12 @@
+/**
+ * verify_user_role.ts
+ * 
+ * Admin role verification utility.
+ * 
+ * USAGE: Set credentials via environment variables, never hardcode them.
+ * 
+ *   ADMIN_EMAIL=your@email.com ADMIN_PASSWORD=your_password npx tsx scripts/verify_user_role.ts
+ */
 
 import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
@@ -11,7 +20,6 @@ const envVars: Record<string, string> = {};
 envContent.split('\n').forEach(line => {
     const [key, value] = line.split('=');
     if (key && value) {
-        // Remove quotes if present
         let val = value.trim();
         if (val.startsWith('"') && val.endsWith('"')) {
             val = val.slice(1, -1);
@@ -21,32 +29,25 @@ envContent.split('\n').forEach(line => {
 });
 
 const supabaseUrl = envVars.VITE_SUPABASE_URL;
-const supabaseKey = envVars.VITE_SUPABASE_ANON_KEY; // Using anon key, hoping RLS allows read. If not, implies RLS issue.
-
-// Wait, if RLS blocks read, this script will fail (return empty or error).
-// But I need to check if the user *exists* and has *role*.
-// To bypass RLS, I should use SERVICE_ROLE_KEY if available.
-// But it's not in .env.local usually.
-// I'll try with ANON key first. My fix 20260127083000_fix_profiles_rls.sql allows users to read their OWN profile.
-// But this script is NOT authenticated as the user. It's authenticated as ANON.
-// So RLS will block it!
-// I need data.
-
-// Ah, the script can query `auth.users` via `supabase.auth.admin` if I had service key.
-// But I don't.
-
-// BUT, I can query with the user's EMAIL/PASSWORD to simulate login and THEN check profile?
-// Yes.
+const supabaseKey = envVars.VITE_SUPABASE_ANON_KEY;
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function checkUser() {
-    console.log('🔍 Attempting to login as rajdeep.bhattacharyya25@gmail.com...');
+    const email = process.env.ADMIN_EMAIL;
+    const password = process.env.ADMIN_PASSWORD;
 
-    // Attempt Login
+    if (!email || !password) {
+        console.error('❌ Missing ADMIN_EMAIL or ADMIN_PASSWORD environment variables.');
+        console.error('Usage: ADMIN_EMAIL=you@example.com ADMIN_PASSWORD=*** npx tsx scripts/verify_user_role.ts');
+        process.exit(1);
+    }
+
+    console.log(`🔍 Attempting to login as ${email}...`);
+
     const { data: { user }, error: loginError } = await supabase.auth.signInWithPassword({
-        email: 'rajdeep.bhattacharyya25@gmail.com',
-        password: 'rick2007' // User provided this password earlier
+        email,
+        password,
     });
 
     if (loginError) {
@@ -61,7 +62,6 @@ async function checkUser() {
 
     console.log(`✅ Login Successful! User ID: ${user.id}`);
 
-    // Now check profile
     const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')

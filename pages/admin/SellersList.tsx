@@ -257,8 +257,8 @@ const SellersList: React.FC = () => {
         <div className="space-y-6 animate-in fade-in duration-500">
             {/* Floating Bulk Action Bar */}
             {selectedIds.size > 0 && (
-                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-4 duration-200">
-                    <div className="bg-neutral-900 border border-neutral-700 rounded-2xl shadow-2xl shadow-black/50 px-6 py-4 flex items-center gap-6">
+                <div className="fixed bottom-4 left-4 right-4 md:left-1/2 md:right-auto md:-translate-x-1/2 md:bottom-6 z-50 animate-in slide-in-from-bottom-4 duration-200">
+                    <div className="bg-neutral-900 border border-neutral-700 rounded-2xl shadow-2xl shadow-black/50 px-4 md:px-6 py-3 md:py-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 md:gap-6">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center font-bold text-white">
                                 {selectedIds.size}
@@ -274,7 +274,8 @@ const SellersList: React.FC = () => {
                             <button
                                 onClick={() => handleBulkAction('activate')}
                                 disabled={bulkLoading}
-                                className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-xl text-sm font-medium transition-all"
+                                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 md:px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-xl text-sm font-medium transition-all"
+                                style={{ WebkitTapHighlightColor: 'transparent' }}
                             >
                                 <UserCheck size={16} />
                                 Activate All
@@ -282,7 +283,8 @@ const SellersList: React.FC = () => {
                             <button
                                 onClick={() => handleBulkAction('suspend')}
                                 disabled={bulkLoading}
-                                className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white rounded-xl text-sm font-medium transition-all"
+                                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 md:px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white rounded-xl text-sm font-medium transition-all"
+                                style={{ WebkitTapHighlightColor: 'transparent' }}
                             >
                                 <UserX size={16} />
                                 Suspend All
@@ -327,8 +329,8 @@ const SellersList: React.FC = () => {
             </div>
 
             {/* Filters Bar */}
-            <div className="bg-neutral-900 border border-neutral-800 p-4 rounded-2xl flex flex-wrap items-center justify-between gap-4">
-                <div className="flex items-center gap-4 flex-1 min-w-[300px]">
+            <div className="bg-neutral-900 border border-neutral-800 p-4 rounded-2xl flex flex-wrap items-center justify-between gap-3 md:gap-4">
+                <div className="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
                     <div className="relative flex-1">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500" />
                         <input
@@ -529,7 +531,7 @@ const SellersList: React.FC = () => {
                                                 {new Date(seller.created_at).toLocaleDateString()}
                                             </td>
                                             <td className="p-4 text-right">
-                                                <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <div className="flex items-center justify-end gap-1 md:gap-2 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                                                     <button
                                                         onClick={() => navigate(`/admin/seller/${seller.id}`)}
                                                         className="p-2 hover:bg-neutral-700 rounded-lg text-neutral-400 hover:text-white transition-all"
@@ -625,8 +627,8 @@ const SellersList: React.FC = () => {
 
             {/* Direct Message Modal */}
             {messageModalSeller && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                    <div className="bg-neutral-900 border border-neutral-700 rounded-2xl w-full max-w-lg shadow-2xl animate-in zoom-in-95 duration-200">
+                <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center md:p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="bg-neutral-900 border border-neutral-700 rounded-t-2xl md:rounded-2xl w-full md:max-w-lg shadow-2xl animate-in slide-in-from-bottom-4 md:zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
                         <div className="p-6 border-b border-neutral-800">
                             <div className="flex items-center justify-between">
                                 <div>

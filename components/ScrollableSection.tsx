@@ -97,7 +97,7 @@ export const ScrollableSection: React.FC<ScrollableSectionProps> = ({
           {badge && (
             <div className="flex items-center gap-2 mb-2">
               {badge === "Just Dropped" && <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>}
-              <span className={`text-xs font-bold uppercase tracking-wider ${badgeColor}`}>{badge}</span>
+              <span className={`text-xs font-bold uppercase tracking-wider ${badge === "Curated For You" ? "text-orange-500" : badgeColor}`}>{badge}</span>
             </div>
           )}
           <h2 className="text-3xl font-bold text-gray-900 dark:text-white font-display transition-colors">{title}</h2>
@@ -135,7 +135,7 @@ export const ScrollableSection: React.FC<ScrollableSectionProps> = ({
         style={getMaskStyle()}
       >
         {products.map((product) => (
-          <div key={product.id} className={`${compact ? 'w-[160px] md:w-[180px] lg:w-[200px]' : 'w-[220px] md:w-[240px] lg:w-[260px]'} flex-none snap-start`}>
+          <div key={product.id} className={`${compact ? 'w-[140px] md:w-[180px] lg:w-[200px]' : 'w-[170px] md:w-[240px] lg:w-[260px]'} flex-none snap-start`}>
             <ProductCard
               product={product}
               onQuickView={onQuickView}

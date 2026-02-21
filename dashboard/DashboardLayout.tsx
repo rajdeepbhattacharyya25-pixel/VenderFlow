@@ -148,7 +148,7 @@ function App() {
   // Responsive Handler
   useEffect(() => {
     const handleResize = () => {
-      const mobile = window.innerWidth <= 640;
+      const mobile = window.innerWidth <= 768;
       const tablet = window.innerWidth <= 1024;
       setIsMobile(mobile);
       if (mobile) {
@@ -235,7 +235,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-bg transition-colors duration-300 font-sans selection:bg-chart-line selection:text-white pb-20 sm:pb-0">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 transition-colors duration-300 font-sans selection:bg-indigo-500 selection:text-white pb-20 md:pb-0">
 
       {/* Left Sidebar */}
       <Sidebar
@@ -268,7 +268,7 @@ function App() {
           storeName={storeName}
         />
 
-        <main className="p-6 lg:px-10 pt-8">
+        <main className="p-4 sm:p-6 lg:px-10 pt-6 sm:pt-8">
           {announcement && (
             <div className={`mb-6 p-4 rounded-xl border flex items-start gap-3 animate-in slide-in-from-top-2 ${announcement.type === 'warning' ? 'bg-amber-500/10 border-amber-500/20 text-amber-500' :
               announcement.type === 'update' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' :

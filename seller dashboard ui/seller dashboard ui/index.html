@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GoIpsu Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+            },
+            colors: {
+              bg: 'var(--bg)',
+              panel: 'var(--panel)',
+              muted: 'var(--muted)',
+              text: 'var(--text)',
+              'accent-1': 'var(--accent-1)',
+              'accent-2': 'var(--accent-2)',
+              'accent-3': 'var(--accent-3)',
+              'chart-line': 'var(--chart-line)',
+              'donut-online': 'var(--donut-online)',
+              'donut-store': 'var(--donut-store)',
+            },
+            boxShadow: {
+              'soft': '0 4px 20px var(--shadow)',
+              'glow': '0 0 15px var(--accent-1)',
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      :root {
+        /* LIGHT THEME DEFAULT */
+        --bg: #F5F7FA;
+        --panel: #FFFFFF;
+        --muted: #6B7280; /* Neutral 500 */
+        --text: #111827; /* Gray 900 */
+        
+        /* KPI Accents (Pastels for Light Mode) */
+        --accent-1: #DFF8FF; /* Cyan */
+        --accent-2: #F1FFC8; /* Lime */
+        --accent-3: #F3E9FF; /* Mauve */
+        
+        --chart-line: #A7D129;
+        --donut-online: #38BDF8;
+        --donut-store: #1F2937;
+        --shadow: rgba(16,24,40,0.06);
+      }
+
+      .dark {
+        /* DARK THEME OVERRIDES */
+        --bg: #0B0C0E; /* Deep almost-black */
+        --panel: #151619; /* Slightly lighter panel */
+        --muted: #9CA3AF; /* Gray 400 - distinct from bg */
+        --text: #F9FAFB; /* Gray 50 - bright white text */
+        
+        /* KPI Accents (Rich/Saturated for Dark Mode) */
+        /* These pops of color replace the invisible 6% opacity versions */
+        --accent-1: #164E63; /* Cyan 900 */
+        --accent-2: #365314; /* Lime 900 */
+        --accent-3: #581C87; /* Purple 900 */
+
+        --chart-line: #D9F99D; /* Lime 200 - pops against dark bg */
+        --donut-online: #38BDF8; /* Sky 400 */
+        --donut-store: #334155; /* Slate 700 */
+        --shadow: rgba(0,0,0,0.5);
+      }
+
+      body {
+        background-color: var(--bg);
+        color: var(--text);
+        transition: background-color 0.3s ease, color 0.3s ease;
+      }
+      
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent; 
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--muted); 
+        border-radius: 4px;
+        opacity: 0.5;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #555; 
+      }
+
+      /* Utilities */
+      .card-hover {
+        transition: transform 220ms cubic-bezier(.2,.8,.2,1), box-shadow 220ms cubic-bezier(.2,.8,.2,1);
+      }
+      .card-hover:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 12px 24px -8px var(--shadow);
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
+    "recharts": "https://esm.sh/recharts@^3.6.0"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body>
+    <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>

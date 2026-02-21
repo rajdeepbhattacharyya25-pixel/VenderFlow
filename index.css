@@ -1,12 +1,69 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@config "./tailwind.config.js";
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
 
 :root {
-  --font-display: 'Cormorant', serif;
-  --font-body: 'Montserrat', sans-serif;
-  --color-luxury-bg: #FAFAF9;
-  --color-luxury-text: #0C0A09;
-  --color-luxury-primary: #1C1917;
-  --color-luxury-accent: #CA8A04;
+  /* Standard Green/White Theme */
+  --color-primary: #047857;
+  /* Emerald 700 - Deep Green */
+  --color-primary-light: #10B981;
+  /* Emerald 500 */
+  --color-secondary: #F3F4F6;
+  /* Gray 100 */
+  --color-accent: #D97706;
+  /* Amber 600 */
+
+  --color-bg: #FFFFFF;
+  --color-text: #1F2937;
+  /* Gray 800 */
+  --color-muted: #6B7280;
+  /* Gray 500 */
+  --color-border: #E5E7EB;
+  /* Gray 200 */
+
+  /* Retain luxury vars mapping for compatibility until full cleanup */
+  --color-luxury-bg: #FFFFFF;
+  --color-luxury-card: #FFFFFF;
+  --color-luxury-text: #1F2937;
+  --color-luxury-accent: #047857;
+  --color-luxury-border: #E5E7EB;
+}
+
+html.dark {
+  /* Standard Dark Mode */
+  --color-primary: #10B981;
+  --color-primary-light: #34D399;
+  --color-secondary: #1F2937;
+  --color-accent: #F59E0B;
+
+  --color-bg: #111827;
+  /* Gray 900 */
+  --color-text: #F9FAFB;
+  /* Gray 50 */
+  --color-muted: #9CA3AF;
+  --color-border: #374151;
+
+  /* Retain luxury vars mapping for compatibility */
+  --color-luxury-bg: #111827;
+  --color-luxury-card: #1F2937;
+  --color-luxury-text: #F9FAFB;
+  --color-luxury-accent: #10B981;
+  --color-luxury-border: #374151;
+
+  /* Explicit Dark Mode Overrides */
+  .btn-primary-dark {
+    background-color: var(--color-primary) !important;
+    color: white !important;
+  }
+
+  .btn-white-dark {
+    background-color: white !important;
+    color: #111827 !important;
+  }
 }
 
 /* Global Styles */
@@ -14,22 +71,14 @@ body {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: var(--font-body);
-  background-color: var(--color-luxury-bg);
-  /* Default Light Mode Background */
-  color: var(--color-luxury-text);
+  font-family: 'Inter', sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-text);
   -webkit-font-smoothing: antialiased;
-  /* overscroll-behavior-y: none;  <-- Removed to allow stretch/rubber-band effect requested by user */
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Dark Mode Overrides for "Stretch" Background */
-html.dark,
-html.dark body {
-  background-color: #0a0a0a;
-  /* Dark background ensuring overscroll/stretch area is black, not white */
-  color: #e5e5e5;
-}
-
+/* Typography Utility Classes */
 .font-display {
   font-family: var(--font-display);
 }
@@ -38,6 +87,7 @@ html.dark body {
   font-family: var(--font-body);
 }
 
+/* Login Box Styles */
 .login-box {
   max-width: 350px;
   margin: 100px auto;
@@ -107,4 +157,25 @@ html.dark body {
   50% {
     transform: translateY(-4px);
   }
+}
+
+/* ===== Mobile Utilities ===== */
+.hide-scroll {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.hide-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* Safe area padding for notched devices */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Prevent pull-to-refresh on mobile */
+html {
+  overscroll-behavior: none;
 }

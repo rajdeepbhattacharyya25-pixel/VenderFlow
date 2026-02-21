@@ -11,7 +11,7 @@ const vapidDetails = {
 
 Deno.serve(async (req) => {
     if (req.method === 'OPTIONS') {
-        return new Response('ok', { headers: { 'Access-Control-Allow-Origin': '*' } });
+        return new Response('ok', { headers: { 'Access-Control-Allow-Origin': Deno.env.get('ALLOWED_ORIGIN') ?? 'https://venderflow.vercel.app' } });
     }
 
     try {

@@ -108,7 +108,7 @@ const AdminLogs: React.FC = () => {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-white tracking-tight">Audit Logs</h1>
+                    <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight">Audit Logs</h1>
                     <p className="text-neutral-500 text-sm mt-1">
                         Track system security and changes.
                     </p>
@@ -134,7 +134,7 @@ const AdminLogs: React.FC = () => {
                     className="bg-transparent text-white border-none focus:ring-0 text-sm outline-none cursor-pointer w-full"
                 >
                     <option value="">All Actions</option>
-                    {uniqueActions.map(action => (
+                    {uniqueActions.map((action: string) => (
                         <option key={action} value={action}>{formatAction(action)}</option>
                     ))}
                 </select>
