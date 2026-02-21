@@ -17,23 +17,23 @@ const AdminSettings: React.FC = () => {
 
     return (
         <div className="max-w-7xl mx-auto">
-            <h1 className="text-3xl font-bold text-white tracking-tight mb-8">Platform Settings</h1>
+            <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight mb-6 md:mb-8">Platform Settings</h1>
 
-            <div className="flex flex-col lg:flex-row gap-8">
-                {/* Sidebar Navigation */}
+            <div className="flex flex-col lg:flex-row gap-6 md:gap-8">
+                {/* Tab Navigation — horizontal scroll on mobile, vertical sidebar on desktop */}
                 <div className="w-full lg:w-64 flex-shrink-0">
-                    <div className="bg-neutral-900 border border-neutral-800 rounded-2xl overflow-hidden sticky top-24">
-                        <div className="p-4 border-b border-neutral-800">
+                    <div className="bg-neutral-900 border border-neutral-800 rounded-2xl overflow-hidden lg:sticky lg:top-24">
+                        <div className="p-3 md:p-4 border-b border-neutral-800 hidden lg:block">
                             <h2 className="text-xs font-bold text-neutral-500 uppercase tracking-wider">Configuration</h2>
                         </div>
-                        <nav className="p-2 space-y-1">
+                        <nav className="p-2 flex lg:flex-col gap-1 overflow-x-auto hide-scroll">
                             {tabs.map((tab) => (
                                 <button
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id as any)}
-                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${activeTab === tab.id
-                                            ? 'bg-indigo-600/10 text-indigo-400'
-                                            : 'text-neutral-400 hover:bg-neutral-800 hover:text-white'
+                                    className={`w-full lg:w-auto flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${activeTab === tab.id
+                                        ? 'bg-indigo-600/10 text-indigo-400'
+                                        : 'text-neutral-400 hover:bg-neutral-800 hover:text-white'
                                         }`}
                                 >
                                     <tab.icon size={18} />

@@ -139,26 +139,29 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, isMobile, activeTab, setAc
       )}
 
       <aside
-        className={`fixed top-0 left-0 h-full bg-panel border-r border-muted/10 z-40 transition-all duration-300 ease-in-out flex flex-col 
+        className={`fixed top-0 left-0 h-full bg-[#1a1c2e] border-r border-white/5 z-40 transition-all duration-300 ease-in-out flex flex-col shadow-2xl
           ${isMobile
-            ? (collapsed ? '-translate-x-full' : 'translate-x-0 w-[280px] shadow-2xl')
+            ? (collapsed ? '-translate-x-full' : 'translate-x-0 w-[280px]')
             : (collapsed ? 'w-[72px]' : 'w-[240px]')
           }
         `}
       >
         {/* Logo Area */}
-        <div className={`h-[80px] flex items-center ${collapsed ? 'justify-center' : 'px-8'} border-b border-muted/10`}>
+        <div className={`h-[80px] flex items-center ${collapsed ? 'justify-center' : 'px-6'} border-b border-white/5`}>
           <button
             onClick={() => setActiveTab('dashboard')}
-            className="flex items-center gap-2 text-text font-bold text-xl tracking-tight hover:opacity-80 transition-opacity text-left w-full"
+            className="flex items-center gap-3 text-luxury-text font-display font-bold text-xl tracking-tight hover:opacity-80 transition-opacity text-left w-full group"
           >
-            <img
-              src={businessLogo || "/logo.jpg"}
-              alt="Business Logo"
-              className="w-8 h-8 rounded-lg object-cover flex-shrink-0"
-            />
+            <div className="relative">
+              <img
+                src={businessLogo || "/logo.jpg"}
+                alt="Business Logo"
+                className="w-9 h-9 rounded-lg object-cover flex-shrink-0 shadow-soft group-hover:shadow-glow transition-shadow duration-300"
+              />
+            </div>
+
             {!collapsed && (
-              <span className="opacity-0 animate-[fadeIn_0.3s_ease-out_forwards] truncate">
+              <span className="opacity-0 animate-[fadeIn_0.3s_ease-out_forwards] truncate uppercase tracking-widest text-sm text-white">
                 {storeName || 'VenderFlow'}
               </span>
             )}
@@ -166,7 +169,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, isMobile, activeTab, setAc
         </div>
 
         {/* Nav Items */}
-        <nav className="flex-1 py-6 flex flex-col gap-2 px-4 overflow-y-auto">
+        <nav className="flex-1 py-6 flex flex-col gap-1.5 px-3 overflow-y-auto">
           {MENU_ITEMS.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -180,27 +183,35 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, isMobile, activeTab, setAc
                   if (isMobile && onSidebarClose) onSidebarClose();
                 }}
                 className={`
-                        relative flex items-center h-12 rounded-xl transition-all duration-200 group
+                        relative flex items-center h-12 rounded-lg transition-all duration-300 group overflow-hidden
                         ${collapsed ? 'justify-center w-full px-0' : 'px-4 w-full'}
-                        ${isActive ? 'bg-text text-bg shadow-lg' : 'text-muted hover:bg-bg hover:text-text'}
+                        ${isActive
+                    ? 'bg-white/10 text-white translate-x-1'
+                    : 'text-slate-400 hover:bg-white/5 hover:text-white hover:translate-x-1'
+                  }
                     `}
               >
-                <div className="relative">
-                  <Icon size={20} strokeWidth={isActive ? 2.5 : 2} className="flex-shrink-0" />
+                <div className="relative z-10 flex items-center">
+                  <Icon size={20} strokeWidth={isActive ? 2.5 : 1.5} className="flex-shrink-0" />
                   {showBadge && (
-                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse border-2 border-panel" />
+                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse border-2 border-luxury-card" />
+                  )}
+
+                  {!collapsed && (
+                    <span className={`ml-3 text-[13px] font-medium whitespace-nowrap opacity-0 animate-[fadeIn_0.2s_0.1s_ease-out_forwards]`}>
+                      {item.label}
+                    </span>
                   )}
                 </div>
 
-                {!collapsed && (
-                  <span className={`ml-3 text-[13px] font-medium whitespace-nowrap opacity-0 animate-[fadeIn_0.2s_0.1s_ease-out_forwards]`}>
-                    {item.label}
-                  </span>
+                {/* Active Indicator Line */}
+                {isActive && collapsed && (
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white rounded-r-full" />
                 )}
 
                 {/* Tooltip for collapsed state */}
                 {collapsed && (
-                  <div className="absolute left-full ml-2 px-2 py-1 bg-text text-bg text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+                  <div className="absolute left-full ml-3 px-3 py-1.5 bg-luxury-text text-luxury-bg text-xs font-bold rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-xl">
                     {item.label}
                   </div>
                 )}
@@ -208,21 +219,21 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, isMobile, activeTab, setAc
             );
           })}
 
-          <div className="mt-auto flex flex-col gap-2">
+          <div className="mt-auto flex flex-col gap-2 pt-6 border-t border-white/5">
             {sellerSlug && (
               <a
                 href={`/store/${sellerSlug}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={`
-                        flex items-center h-12 rounded-xl transition-all duration-200 w-full group text-muted hover:text-primary hover:bg-primary/10
+                        flex items-center h-12 rounded-lg transition-all duration-200 w-full group text-slate-400 hover:text-white hover:bg-white/5
                         ${collapsed ? 'justify-center px-0' : 'px-4'}
                     `}
                 title="View Storefront"
               >
                 <div className="relative">
                   <ShoppingBag size={20} className="flex-shrink-0" />
-                  <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-green-500 border-2 border-panel"></div>
+                  <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-green-500 border-2 border-luxury-card"></div>
                 </div>
                 {!collapsed && <span className="ml-3 text-[13px] font-medium whitespace-nowrap">View Store</span>}
               </a>
@@ -231,7 +242,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, isMobile, activeTab, setAc
             <button
               onClick={handleLogout}
               className={`
-                        flex items-center h-12 rounded-xl transition-all duration-200 w-full group text-muted hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10
+                        flex items-center h-12 rounded-lg transition-all duration-200 w-full group text-slate-400 hover:text-red-400 hover:bg-red-500/10
                         ${collapsed ? 'justify-center px-0' : 'px-4'}
                     `}
             >

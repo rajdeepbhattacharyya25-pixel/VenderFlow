@@ -274,16 +274,18 @@ const AdminDashboard: React.FC = () => {
             {/* Page Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-white tracking-tight">Platform Overview</h1>
+                    <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight">Platform Overview</h1>
                     <p className="text-neutral-500 text-sm mt-1">Real-time snapshots of your e-commerce ecosystem.</p>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 md:gap-4 flex-wrap">
                     <button
                         onClick={() => setShowSupportModal(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-neutral-800 hover:bg-neutral-700 text-white rounded-xl transition-colors font-medium text-sm border border-neutral-700 relative"
+                        className="flex items-center gap-2 px-3 md:px-4 py-2 bg-neutral-800 hover:bg-neutral-700 text-white rounded-xl transition-colors font-medium text-xs md:text-sm border border-neutral-700 relative"
+                        style={{ WebkitTapHighlightColor: 'transparent' }}
                     >
-                        <MessageSquare size={18} />
-                        Support Tickets
+                        <MessageSquare size={16} />
+                        <span className="hidden sm:inline">Support Tickets</span>
+                        <span className="sm:hidden">Support</span>
                         {unreadSupportCount > 0 && (
                             <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white border-2 border-neutral-900">
                                 {unreadSupportCount}
@@ -292,17 +294,19 @@ const AdminDashboard: React.FC = () => {
                     </button>
                     <button
                         onClick={() => setShowAnnouncementModal(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-colors font-medium text-sm shadow-lg shadow-indigo-500/20"
+                        className="flex items-center gap-2 px-3 md:px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-colors font-medium text-xs md:text-sm shadow-lg shadow-indigo-500/20"
+                        style={{ WebkitTapHighlightColor: 'transparent' }}
                     >
-                        <Megaphone size={18} />
-                        Create Announcement
+                        <Megaphone size={16} />
+                        <span className="hidden sm:inline">Create Announcement</span>
+                        <span className="sm:hidden">Announce</span>
                     </button>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
                 {statsDisplay.map((stat, i) => (
-                    <div key={i} className="bg-neutral-900 border border-neutral-800 p-6 rounded-2xl hover:border-neutral-700 transition-all group">
+                    <div key={i} className="bg-neutral-900 border border-neutral-800 p-4 md:p-6 rounded-2xl hover:border-neutral-700 transition-all group">
                         <div className="flex items-center justify-between mb-4">
                             <div className={`p-3 rounded-xl ${stat.bg} ${stat.color}`}>
                                 <stat.icon size={24} />
@@ -312,8 +316,8 @@ const AdminDashboard: React.FC = () => {
                                 {stat.change}
                             </div>
                         </div>
-                        <p className="text-neutral-500 text-sm font-medium uppercase tracking-wider">{stat.label}</p>
-                        <h3 className="text-2xl font-bold text-white mt-1">{stat.value}</h3>
+                        <p className="text-neutral-500 text-[11px] md:text-sm font-medium uppercase tracking-wider">{stat.label}</p>
+                        <h3 className="text-xl md:text-2xl font-bold text-white mt-1">{stat.value}</h3>
 
                         {/* Storage indicator for Sys Health card */}
                         {stat.label === 'Sys Health' && !loading && (
@@ -464,8 +468,8 @@ const AdminDashboard: React.FC = () => {
 
             {/* Announcement Modal */}
             {showAnnouncementModal && (
-                <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-neutral-900 border border-neutral-800 rounded-2xl w-full max-w-lg p-6 animate-in zoom-in-95 duration-200">
+                <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-end md:items-center justify-center z-50 md:p-4">
+                    <div className="bg-neutral-900 border border-neutral-800 rounded-t-2xl md:rounded-2xl w-full md:max-w-lg p-5 md:p-6 animate-in slide-in-from-bottom-4 md:zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
                         <div className="flex items-center justify-between mb-6">
                             <h2 className="text-xl font-bold text-white">Create Announcement</h2>
                             <button

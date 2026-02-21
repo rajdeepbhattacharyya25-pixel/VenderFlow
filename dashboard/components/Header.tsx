@@ -235,14 +235,14 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
     };
 
     return (
-        <header className="h-[80px] flex items-center justify-between px-6 lg:px-10 bg-panel/80 backdrop-blur-md border-b border-muted/5 sticky top-0 z-40 transition-all">
+        <header className="h-[80px] flex items-center justify-between px-6 lg:px-10 bg-theme-panel/80 backdrop-blur-md border-b border-muted/5 sticky top-0 z-40 transition-all">
             <div className="flex items-center gap-4">
                 {isMobile && (
-                    <button onClick={onMenuClick} className="p-2 -ml-2 text-text hover:bg-bg/50 rounded-xl transition-colors" title="Toggle Sidebar">
+                    <button onClick={onMenuClick} className="p-2 -ml-2 text-theme-text hover:bg-theme-bg/50 rounded-xl transition-colors" title="Toggle Sidebar">
                         <Menu size={24} />
                     </button>
                 )}
-                <h1 className="text-xl font-bold tracking-tight text-text animate-in slide-in-from-left-2 duration-300">{getTitle(activeTab)}</h1>
+                <h1 className="text-xl font-bold tracking-tight text-theme-text animate-in slide-in-from-left-2 duration-300">{getTitle(activeTab)}</h1>
             </div>
 
             <div className="flex items-center gap-4 lg:gap-8">
@@ -250,17 +250,17 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
                 <div className="relative z-50">
                     <div
                         className={`
-                        hidden sm:flex items-center bg-bg/50 border border-muted/10 rounded-2xl px-4 py-2.5 transition-all duration-300 ease-out
-                        ${searchFocused ? 'w-[400px] border-text/20 ring-4 ring-text/5 bg-panel shadow-lg' : 'w-[280px] hover:border-text/10'}
+                        hidden sm:flex items-center bg-theme-bg/50 border border-muted/10 rounded-2xl px-4 py-2.5 transition-all duration-300 ease-out
+                        ${searchFocused ? 'w-[400px] border-text/20 ring-4 ring-text/5 bg-theme-panel shadow-lg' : 'w-[280px] hover:border-text/10'}
                     `}
                     >
-                        <Search size={18} className={`transition-colors duration-300 ${searchFocused ? 'text-primary' : 'text-muted'}`} />
+                        <Search size={18} className={`transition-colors duration-300 ${searchFocused ? 'text-primary' : 'text-theme-muted'}`} />
                         <input
                             type="text"
                             placeholder="Search everything (products, settings, orders)..."
                             value={searchTerm}
                             onChange={(e) => onSearchChange(e.target.value)}
-                            className="bg-transparent border-none outline-none text-sm text-text placeholder-muted/60 w-full ml-3 font-medium"
+                            className="bg-transparent border-none outline-none text-sm text-theme-text placeholder-muted/60 w-full ml-3 font-medium"
                             onFocus={() => setSearchFocused(true)}
                             onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
                         />
@@ -269,14 +269,14 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
 
                     {/* Search Results Dropdown */}
                     {searchFocused && searchTerm.length >= 2 && searchResults.length > 0 && (
-                        <div className="absolute top-full left-0 w-full mt-2 bg-panel border border-muted/10 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                        <div className="absolute top-full left-0 w-full mt-2 bg-theme-panel border border-muted/10 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                             <div className="max-h-[400px] overflow-y-auto py-2">
-                                <div className="px-4 py-2 text-[10px] font-bold text-muted uppercase tracking-wider bg-bg/50">Top Results</div>
+                                <div className="px-4 py-2 text-[10px] font-bold text-theme-muted uppercase tracking-wider bg-theme-bg/50">Top Results</div>
                                 {searchResults.map((result) => (
                                     <button
                                         key={result.id}
                                         onClick={result.action}
-                                        className="w-full text-left px-4 py-3 hover:bg-bg/50 flex items-center gap-3 transition-colors border-b border-muted/5 last:border-0 group"
+                                        className="w-full text-left px-4 py-3 hover:bg-theme-bg/50 flex items-center gap-3 transition-colors border-b border-muted/5 last:border-0 group"
                                     >
                                         <div className={`p-2 rounded-lg ${result.type === 'product' ? 'bg-orange-500/10 text-orange-600' :
                                             result.type === 'order' ? 'bg-blue-500/10 text-blue-600' :
@@ -287,15 +287,15 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
                                                     <SettingsIcon size={16} />}
                                         </div>
                                         <div className="flex-1">
-                                            <div className="text-sm font-semibold text-text group-hover:text-primary transition-colors">{result.title}</div>
-                                            {result.subtitle && <div className="text-xs text-muted">{result.subtitle}</div>}
+                                            <div className="text-sm font-semibold text-theme-text group-hover:text-primary transition-colors">{result.title}</div>
+                                            {result.subtitle && <div className="text-xs text-theme-muted">{result.subtitle}</div>}
                                         </div>
-                                        <ChevronRight size={14} className="text-muted group-hover:text-primary opacity-0 group-hover:opacity-100 transition-all" />
+                                        <ChevronRight size={14} className="text-theme-muted group-hover:text-primary opacity-0 group-hover:opacity-100 transition-all" />
                                     </button>
                                 ))}
                             </div>
-                            <div className="p-3 bg-bg/30 text-center border-t border-muted/10">
-                                <span className="text-[10px] text-muted">Press Enter to see all results</span>
+                            <div className="p-3 bg-theme-bg/30 text-center border-t border-muted/10">
+                                <span className="text-[10px] text-theme-muted">Press Enter to see all results</span>
                             </div>
                         </div>
                     )}
@@ -305,12 +305,12 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
                     {/* Theme Toggle */}
                     <button
                         onClick={toggleTheme}
-                        className="relative w-[60px] h-8 rounded-full bg-panel border-2 border-muted/5 hover:border-muted/10 transition-all flex items-center px-1 group shadow-sm overflow-hidden"
+                        className="relative w-[60px] h-8 rounded-full bg-theme-panel border-2 border-muted/5 hover:border-muted/10 transition-all flex items-center px-1 group shadow-sm overflow-hidden"
                         aria-label="Toggle Theme"
                     >
                         <div className="absolute inset-0 flex justify-between items-center px-2 pointer-events-none opacity-40">
-                            <Sun size={12} className={theme === 'light' ? 'text-orange-500' : 'text-muted'} />
-                            <Moon size={12} className={theme === 'dark' ? 'text-indigo-400' : 'text-muted'} />
+                            <Sun size={12} className={theme === 'light' ? 'text-orange-500' : 'text-theme-muted'} />
+                            <Moon size={12} className={theme === 'dark' ? 'text-indigo-400' : 'text-theme-muted'} />
                         </div>
                         <div
                             className={`w-6 h-6 rounded-lg shadow-lg transform transition-all duration-500 ease-in-out flex items-center justify-center z-10
@@ -330,7 +330,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
                     <div className="relative">
                         <button
                             onClick={() => setShowNotifications(!showNotifications)}
-                            className={`relative p-2.5 rounded-2xl hover:bg-bg border border-transparent hover:border-muted/10 transition-all text-text group ${showNotifications ? 'bg-bg border-muted/20' : ''}`}
+                            className={`relative p-2.5 rounded-2xl hover:bg-theme-bg border border-transparent hover:border-muted/10 transition-all text-theme-text group ${showNotifications ? 'bg-theme-bg border-muted/20' : ''}`}
                             title="Notifications"
                         >
                             <Bell size={20} className="group-hover:scale-110 transition-transform" />
@@ -345,9 +345,9 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
                                     className="fixed inset-0 z-40"
                                     onClick={() => setShowNotifications(false)}
                                 />
-                                <div className="absolute right-0 mt-4 w-96 bg-panel border border-muted/10 rounded-3xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
-                                    <div className="p-5 border-b border-muted/10 flex justify-between items-center bg-bg/20">
-                                        <h4 className="font-bold text-sm tracking-tight text-text">
+                                <div className="absolute right-0 mt-4 w-96 bg-theme-panel border border-muted/10 rounded-3xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+                                    <div className="p-5 border-b border-muted/10 flex justify-between items-center bg-theme-bg/20">
+                                        <h4 className="font-bold text-sm tracking-tight text-theme-text">
                                             Notifications
                                             {unreadCount > 0 && (
                                                 <span className="ml-2 text-xs bg-red-500 text-white px-2 py-0.5 rounded-full">{unreadCount}</span>
@@ -355,14 +355,14 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
                                         </h4>
                                         <button
                                             onClick={markAllAsRead}
-                                            className="text-[10px] text-text/60 font-bold uppercase tracking-widest hover:text-text transition-colors bg-bg px-2 py-1 rounded-lg"
+                                            className="text-[10px] text-theme-text/60 font-bold uppercase tracking-widest hover:text-theme-text transition-colors bg-theme-bg px-2 py-1 rounded-lg"
                                         >
                                             Mark all read
                                         </button>
                                     </div>
                                     <div className="max-h-[440px] overflow-y-auto hide-scroll">
                                         {notifications.length === 0 ? (
-                                            <div className="p-8 text-center text-muted">
+                                            <div className="p-8 text-center text-theme-muted">
                                                 <Bell size={32} className="mx-auto mb-2 opacity-50" />
                                                 <p className="text-sm">No notifications yet</p>
                                             </div>
@@ -370,7 +370,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
                                             notifications.map(n => (
                                                 <div
                                                     key={n.id}
-                                                    className={`p-4 hover:bg-bg/40 transition-all border-b border-muted/5 flex gap-4 cursor-pointer group relative ${!n.is_read ? 'bg-bg/20' : ''}`}
+                                                    className={`p-4 hover:bg-theme-bg/40 transition-all border-b border-muted/5 flex gap-4 cursor-pointer group relative ${!n.is_read ? 'bg-theme-bg/20' : ''}`}
                                                     onClick={() => {
                                                         if (n.link) {
                                                             const tab = n.link.split('/').pop();
@@ -383,8 +383,8 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
                                                         {getNotificationIcon(n.type)}
                                                     </div>
                                                     <div className="flex-1 min-w-0">
-                                                        <p className="text-[13px] font-medium text-text leading-snug mb-1 line-clamp-2">{n.message}</p>
-                                                        <span className="text-[10px] font-bold text-muted uppercase tracking-wider">{formatTimeAgo(n.created_at)}</span>
+                                                        <p className="text-[13px] font-medium text-theme-text leading-snug mb-1 line-clamp-2">{n.message}</p>
+                                                        <span className="text-[10px] font-bold text-theme-muted uppercase tracking-wider">{formatTimeAgo(n.created_at)}</span>
                                                     </div>
                                                     {!n.is_read && (
                                                         <div className="w-2 h-2 rounded-full bg-blue-500 absolute right-4 top-1/2 -translate-y-1/2"></div>
@@ -393,13 +393,13 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
                                             ))
                                         )}
                                     </div>
-                                    <div className="p-4 bg-bg/20 text-center">
+                                    <div className="p-4 bg-theme-bg/20 text-center">
                                         <button
                                             onClick={() => {
                                                 setActiveTab('settings');
                                                 setShowNotifications(false);
                                             }}
-                                            className="text-xs font-bold text-muted hover:text-text transition-all tracking-wide uppercase"
+                                            className="text-xs font-bold text-theme-muted hover:text-theme-text transition-all tracking-wide uppercase"
                                         >
                                             View All Activity
                                         </button>
@@ -411,7 +411,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
 
                     {/* Avatar / Business Logo */}
                     <button
-                        className="w-11 h-11 rounded-2xl overflow-hidden border-2 border-muted/5 shadow-sm hover:border-text/20 hover:scale-105 transition-all duration-300 p-0.5 bg-panel"
+                        className="w-11 h-11 rounded-2xl overflow-hidden border-2 border-muted/5 shadow-sm hover:border-text/20 hover:scale-105 transition-all duration-300 p-0.5 bg-theme-panel"
                         title="Business Profile"
                     >
                         <div className="w-full h-full rounded-xl overflow-hidden">

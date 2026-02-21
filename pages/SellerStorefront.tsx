@@ -373,16 +373,22 @@ const SellerStorefront = () => {
     const themeStyles = useMemo(() => {
         if (!storeSettings?.theme_config) return {};
         const { colors, fonts, borderRadius } = storeSettings.theme_config;
+
+        // In dark mode, we largely override the user's custom text/bg colors to ensure readability
+        // unless we want to support "custom dark themes" later.
+        // For now, force standard dark mode colors which are handled by Tailwind's dark: classes
+        // but we still pass fonts and radius.
+
         return {
             '--primary': colors.primary,
             '--secondary': colors.secondary,
-            '--bg-color': colors.background,
-            '--text-color': colors.text,
+            '--bg-color': isDarkMode ? '#0a0a0a' : colors.background,
+            '--text-color': isDarkMode ? '#ffffff' : colors.text,
             '--heading-font': fonts.heading,
             '--body-font': fonts.body,
             '--radius': borderRadius,
         } as React.CSSProperties;
-    }, [storeSettings]);
+    }, [storeSettings, isDarkMode]);
 
     // Update document title when storeSettings loads (prioritizes dashboard settings)
     useEffect(() => {
@@ -1035,21 +1041,19 @@ const SellerStorefront = () => {
                 return (
                     <>
                         {storeCustomer && (
-                            <div className="w-full text-center py-6 bg-[#fffbf0] dark:bg-neutral-900 border-b border-[#f0e6d2] dark:border-neutral-800 transition-colors relative overflow-hidden">
-                                <style>
-                                    {`@import url('https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap');`}
-                                </style>
-                                <h1 style={{ fontFamily: "'Great Vibes', cursive" }} className="text-4xl md:text-5xl text-amber-900 dark:text-amber-100 min-h-[1.5em] flex items-center justify-center">
+                            <div className="w-full text-center py-6 bg-gradient-to-r from-emerald-50 via-white to-emerald-50 dark:from-neutral-900 dark:via-neutral-900 dark:to-neutral-900 border-b border-emerald-100 dark:border-white/10 transition-colors">
+                                <h1 className="text-2xl md:text-3xl font-display font-semibold text-gray-900 dark:text-gray-50 min-h-[1.5em] flex items-center justify-center gap-2">
                                     {isNameHydrating ? (
-                                        // Show placeholder while checking for better name
                                         <span className="animate-pulse">Welcome...</span>
                                     ) : (
-                                        <Typewriter
-                                            text={`Welcome ${storeCustomer.metadata?.first_name || storeCustomer.display_name?.split(' ')[0] || storeCustomer.email?.split('@')[0] || 'Friend'} to our little corner!`}
-                                            delay={20}
-                                        />
+                                        <>
+                                            <span className="text-emerald-600 dark:text-emerald-400">👋</span>
+                                            <Typewriter
+                                                text={`Welcome back, ${storeCustomer.metadata?.first_name || storeCustomer.display_name?.split(' ')[0] || storeCustomer.email?.split('@')[0] || 'there'}!`}
+                                                delay={20}
+                                            />
+                                        </>
                                     )}
-                                    <span className="animate-pulse ml-1 opacity-50">|</span>
                                 </h1>
                             </div>
                         )}
@@ -1083,14 +1087,14 @@ const SellerStorefront = () => {
                             </section>
 
                             {recommendedProducts.length > 0 && (
-                                <section className="bg-[#F9F7F2] dark:bg-surface-dark/50 -mx-4 md:-mx-8 px-4 md:px-8 py-12 rounded-3xl transition-colors">
+                                <section className="bg-gray-50 dark:bg-neutral-900/50 -mx-4 md:-mx-8 px-4 md:px-8 py-16 rounded-[2.5rem] transition-colors">
                                     {isLoading ? (
                                         <ScrollableSectionSkeleton />
                                     ) : (
                                         <ScrollableSection
                                             title="Recommended"
                                             badge="Curated For You"
-                                            badgeColor="text-accent"
+                                            badgeColor="text-amber-600"
                                             products={recommendedProducts}
                                             onViewAll={() => handleOpenCollection("Recommended", recommendedProducts)}
                                             onQuickView={handleQuickView}
@@ -1104,103 +1108,73 @@ const SellerStorefront = () => {
                             )}
 
                             {popularProducts.length > 0 && (
-                                <section>
+                                <section className="bg-white dark:bg-white/5 -mx-4 md:-mx-8 px-4 md:px-8 py-12 rounded-3xl border-t border-b border-neutral-100 dark:border-white/10 transition-colors">
                                     {isLoading ? (
                                         <ScrollableSectionSkeleton />
                                     ) : (
                                         <ScrollableSection
                                             title="Most Popular"
                                             badge="Trending Now"
-                                            badgeColor="text-red-500"
+                                            badgeColor="text-amber-500"
                                             products={popularProducts}
                                             onViewAll={() => handleOpenCollection("Most Popular", popularProducts)}
                                             onQuickView={handleQuickView}
                                             onToggleWishlist={toggleWishlist}
                                             isWishlisted={isWishlisted}
                                             onAddToCart={(p) => addToCart(p)}
+                                            backgroundVariant="default"
                                         />
                                     )}
                                 </section>
                             )}
 
-                            {/* Discovery Section */}
-                            <section className="py-12 border-t border-gray-100 dark:border-gray-800 transition-colors">
-                                <div className="relative overflow-hidden rounded-[2rem] p-6 md:p-10 text-center shadow-sm transition-all duration-500 hover:shadow-md bg-white dark:bg-surface-dark mx-auto max-w-5xl">
+                            <section className="py-16 px-4">
+                                <div className="relative overflow-hidden rounded-3xl mx-auto max-w-6xl border border-gray-200 dark:border-neutral-800 transition-colors">
+                                    {/* Header with gradient */}
+                                    <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 dark:from-emerald-800 dark:to-emerald-900 px-8 md:px-16 pt-12 pb-10 text-center">
+                                        <h2 className="text-3xl md:text-4xl font-display font-semibold text-white mb-3 tracking-tight">
+                                            Explore Our Collections
+                                        </h2>
+                                        <p className="text-emerald-100 dark:text-emerald-200 text-base md:text-lg max-w-lg mx-auto leading-relaxed">
+                                            Browse by category to find exactly what you're looking for
+                                        </p>
+                                    </div>
 
-                                    {/* Background Gradients with Cross-Fade */}
-                                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 opacity-100 dark:opacity-0 transition-opacity duration-500 ease-in-out"></div>
-                                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-950/20 via-purple-950/20 to-pink-950/20 opacity-0 dark:opacity-100 transition-opacity duration-500 ease-in-out"></div>
-
-                                    {/* Decorative Elements */}
-                                    <div className="absolute top-0 left-0 w-40 h-40 bg-blue-200/20 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-500"></div>
-                                    <div className="absolute bottom-0 right-0 w-40 h-40 bg-rose-200/20 rounded-full blur-3xl translate-x-1/2 translate-y-1/2 pointer-events-none transition-colors duration-500"></div>
-
-                                    <h2 className="text-xl md:text-3xl font-display font-bold text-gray-900 dark:text-white mb-3 relative z-10 transition-colors">
-                                        Still Looking for Something You’ll Love?
-                                    </h2>
-                                    <p className="text-gray-600 dark:text-gray-300 mb-6 text-sm md:text-base max-w-lg mx-auto leading-relaxed relative z-10 transition-colors">
-                                        Explore our most popular categories and discover your next favorite.
-                                    </p>
-
-                                    <div className="flex flex-wrap justify-center gap-3 relative z-10 w-full max-w-4xl mx-auto">
-                                        {uniqueCategories.map((category, index) => {
-                                            // Cycle through 4 distinct visual styles for variety
-                                            const styleIndex = index % 3; // 0=Rose, 1=Blue, 2=Yellow 
-                                            // Note: 3=Purple used for Best Sellers, 4=Teal used for New Arrivals
-
-                                            // Rose Style (0)
-                                            if (styleIndex === 0) {
-                                                return (
-                                                    <button
-                                                        key={category}
-                                                        onClick={() => handleCategoryClick(category)}
-                                                        className="px-6 py-4 bg-white dark:bg-surface-dark border border-rose-100 dark:border-rose-900/30 rounded-xl text-base font-bold text-gray-900 dark:text-white hover:bg-rose-50 dark:hover:bg-rose-900/20 hover:border-rose-200 hover:scale-[1.02] transition-all shadow-sm hover:shadow-rose-100 dark:hover:shadow-none bg-opacity-80 backdrop-blur-sm min-w-[150px] group"
-                                                    >
-                                                        <span className="block text-rose-500 text-[10px] font-bold uppercase tracking-wider mb-0.5 group-hover:text-rose-600">Shop</span>
-                                                        {category}
-                                                    </button>
-                                                );
-                                            }
-                                            // Blue Style (1)
-                                            if (styleIndex === 1) {
-                                                return (
-                                                    <button
-                                                        key={category}
-                                                        onClick={() => handleCategoryClick(category)}
-                                                        className="px-6 py-4 bg-white dark:bg-surface-dark border border-blue-100 dark:border-blue-900/30 rounded-xl text-base font-bold text-gray-900 dark:text-white hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-200 hover:scale-[1.02] transition-all shadow-sm hover:shadow-blue-100 dark:hover:shadow-none bg-opacity-80 backdrop-blur-sm min-w-[150px] group"
-                                                    >
-                                                        <span className="block text-blue-500 text-[10px] font-bold uppercase tracking-wider mb-0.5 group-hover:text-blue-600">Shop</span>
-                                                        {category}
-                                                    </button>
-                                                );
-                                            }
-                                            // Yellow Style (2)
-                                            return (
+                                    {/* Category pills */}
+                                    <div className="bg-gray-50 dark:bg-neutral-900 px-8 md:px-16 py-10">
+                                        <div className="flex flex-wrap justify-center gap-3 w-full max-w-4xl mx-auto">
+                                            {uniqueCategories.map((category) => (
                                                 <button
                                                     key={category}
                                                     onClick={() => handleCategoryClick(category)}
-                                                    className="px-6 py-4 bg-white dark:bg-surface-dark border border-yellow-100 dark:border-yellow-900/30 rounded-xl text-base font-bold text-gray-900 dark:text-white hover:bg-yellow-50 dark:hover:bg-yellow-900/20 hover:border-yellow-200 hover:scale-[1.02] transition-all shadow-sm hover:shadow-yellow-100 dark:hover:shadow-none bg-opacity-80 backdrop-blur-sm min-w-[150px] group"
+                                                    className="px-6 py-3 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-full text-sm font-semibold text-gray-800 dark:text-gray-200 hover:bg-emerald-50 hover:border-emerald-400 hover:text-emerald-700 dark:hover:bg-emerald-950/30 dark:hover:text-emerald-400 dark:hover:border-emerald-600 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
                                                 >
-                                                    <span className="block text-yellow-500 text-[10px] font-bold uppercase tracking-wider mb-0.5 group-hover:text-yellow-600">Shop</span>
                                                     {category}
                                                 </button>
-                                            );
-                                        })}
+                                            ))}
+                                            <button
+                                                onClick={() => handleOpenCollection("Most Popular", popularProducts)}
+                                                className="px-6 py-3 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-full text-sm font-semibold text-gray-800 dark:text-gray-200 hover:bg-emerald-50 hover:border-emerald-400 hover:text-emerald-700 dark:hover:bg-emerald-950/30 dark:hover:text-emerald-400 dark:hover:border-emerald-600 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+                                            >
+                                                🔥 Best Sellers
+                                            </button>
+                                            <button
+                                                onClick={() => handleOpenCollection("New Arrivals", products)}
+                                                className="px-6 py-3 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-full text-sm font-semibold text-gray-800 dark:text-gray-200 hover:bg-emerald-50 hover:border-emerald-400 hover:text-emerald-700 dark:hover:bg-emerald-950/30 dark:hover:text-emerald-400 dark:hover:border-emerald-600 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+                                            >
+                                                ✨ New Arrivals
+                                            </button>
+                                        </div>
 
-                                        <button
-                                            onClick={() => handleOpenCollection("Most Popular", popularProducts)}
-                                            className="px-6 py-4 bg-white dark:bg-surface-dark border border-purple-100 dark:border-purple-900/30 rounded-xl text-base font-bold text-gray-900 dark:text-white hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:border-purple-200 hover:scale-[1.02] transition-all shadow-sm hover:shadow-purple-100 dark:hover:shadow-none bg-opacity-80 backdrop-blur-sm min-w-[150px] group"
-                                        >
-                                            <span className="block text-purple-500 text-[10px] font-bold uppercase tracking-wider mb-0.5 group-hover:text-purple-600">View</span>
-                                            Best Sellers
-                                        </button>
-                                        <button
-                                            onClick={() => handleOpenCollection("New Arrivals", products)}
-                                            className="px-6 py-4 bg-white dark:bg-surface-dark border border-teal-100 dark:border-teal-900/30 rounded-xl text-base font-bold text-gray-900 dark:text-white hover:bg-teal-50 dark:hover:bg-teal-900/20 hover:border-teal-200 hover:scale-[1.02] transition-all shadow-sm hover:shadow-teal-100 dark:hover:shadow-none bg-opacity-80 backdrop-blur-sm min-w-[150px] group"
-                                        >
-                                            <span className="block text-teal-500 text-[10px] font-bold uppercase tracking-wider mb-0.5 group-hover:text-teal-600">View</span>
-                                            New Arrivals
-                                        </button>
+                                        <div className="text-center mt-8">
+                                            <button
+                                                onClick={() => handleOpenCollection("All Products", products)}
+                                                className="inline-flex items-center gap-2 px-8 py-3.5 bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white rounded-full font-semibold text-sm shadow-lg shadow-emerald-600/20 hover:shadow-emerald-600/30 transition-all duration-200 hover:-translate-y-0.5"
+                                            >
+                                                View All Products
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </section>
@@ -1231,7 +1205,7 @@ const SellerStorefront = () => {
     }
 
     return (
-        <div className="min-h-screen flex flex-col font-body pb-[80px] md:pb-0 transition-colors duration-300" style={themeStyles}>
+        <div className="min-h-screen flex flex-col font-body pb-[80px] md:pb-0 bg-white dark:bg-neutral-950 transition-colors duration-300" style={themeStyles}>
             <QuickViewModal
                 product={selectedProduct}
                 isOpen={isModalOpen}
@@ -1295,6 +1269,8 @@ const SellerStorefront = () => {
                         }
                     }}
                     cartCount={cartTotalItems}
+                    wishlistCount={wishlistIds.length}
+                    activeTab={currentView}
                 />
             )}
 

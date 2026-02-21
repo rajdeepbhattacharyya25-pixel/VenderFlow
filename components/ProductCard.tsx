@@ -98,7 +98,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView, 
         )}
 
         {/* Action Buttons (Top Right) */}
-        <div className={`absolute ${compact ? 'top-2 right-2' : 'top-3 right-3'} z-20 flex flex-col gap-2 translate-x-10 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300`}>
+        <div className={`absolute ${compact ? 'top-2 right-2' : 'top-3 right-3'} z-20 flex flex-col gap-2 md:translate-x-10 md:opacity-0 md:group-hover:translate-x-0 md:group-hover:opacity-100 transition-all duration-300`}>
           <button
             onClick={handleWishlistClick}
             className={`rounded-full shadow-sm hover:shadow-md transition-all transform active:scale-90 ${compact ? 'p-1.5' : 'p-2.5'} ${isWishlisted
@@ -124,12 +124,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView, 
           <img
             src={product.image}
             alt={product.name}
-            className="w-full h-full object-contain mix-blend-multiply transform group-hover:scale-105 transition-transform duration-700 ease-out will-change-transform"
+            className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal transform group-hover:scale-105 transition-transform duration-700 ease-out will-change-transform"
           />
         </div>
 
         {/* Bottom Hover Actions */}
-        <div className={`absolute ${compact ? 'inset-x-2 bottom-2' : 'inset-x-3 bottom-3'} flex gap-2 translate-y-full opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 delay-75 z-20`}>
+        <div className={`absolute ${compact ? 'inset-x-2 bottom-2' : 'inset-x-3 bottom-3'} flex gap-2 md:translate-y-full md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 transition-all duration-300 delay-75 z-20`}>
           <button
             onClick={handleAddClick}
             className={`flex-1 bg-gray-900/90 dark:bg-black/90 backdrop-blur-sm hover:bg-black text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 transform active:scale-95 ${compact ? 'py-2 text-[10px]' : 'py-3 text-xs'}`}

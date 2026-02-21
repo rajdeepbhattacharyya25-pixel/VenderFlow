@@ -17,7 +17,7 @@ const RecentOrders: React.FC<RecentOrdersProps> = ({ orders, onOrderClick }) => 
     // In a real app, trigger state update or API call here
   };
   return (
-    <div className="bg-panel rounded-xl p-6 shadow-sm border border-muted/10">
+    <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-slate-100 dark:border-slate-700">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-sm font-bold text-text">Recent Orders</h3>
         <button className="text-muted hover:text-text transition-colors" title="View All Orders"><MoreHorizontal size={18} /></button>
@@ -39,8 +39,8 @@ const RecentOrders: React.FC<RecentOrdersProps> = ({ orders, onOrderClick }) => 
                 <div className="flex items-center gap-2">
                   <span className="text-[11px] text-muted">{order.time}</span>
                   <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium border ${order.status === 'cancelled' ? 'bg-red-50 text-red-600 border-red-100' :
-                      order.status === 'delivered' ? 'bg-green-50 text-green-600 border-green-100' :
-                        'bg-gray-50 text-gray-600 border-gray-100'
+                    order.status === 'delivered' ? 'bg-green-50 text-green-600 border-green-100' :
+                      'bg-gray-50 text-gray-600 border-gray-100'
                     }`}>
                     {order.status}
                   </span>

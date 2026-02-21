@@ -204,7 +204,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
     };
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center md:p-4">
             {/* Backdrop */}
             <div
                 className="absolute inset-0 bg-stone-950/40 backdrop-blur-md transition-opacity animate-in fade-in duration-500"
@@ -212,8 +212,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
             ></div>
 
             {/* Modal Content */}
-            <div className="relative w-full max-w-[400px] bg-stone-950 rounded-[2rem] overflow-hidden shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] animate-in zoom-in-95 duration-500 border border-white/10">
-                <div className="p-8 sm:p-10">
+            <div className="relative w-full h-full md:h-auto md:max-w-[400px] bg-stone-950 md:rounded-[2rem] overflow-hidden shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] animate-in slide-in-from-bottom-4 md:zoom-in-95 duration-500 border-0 md:border border-white/10 flex flex-col">
+                <div className="p-6 sm:p-8 md:p-10 flex-1 overflow-y-auto" style={{ paddingTop: 'max(env(safe-area-inset-top, 24px), 24px)' }}>
                     {/* Close Button */}
                     <button
                         onClick={onClose}
@@ -257,6 +257,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
                                         autoComplete="off"
                                         className="w-full bg-stone-900/50 border border-white/5 rounded-xl px-5 py-3.5 text-white placeholder-stone-700 focus:outline-none focus:ring-1 focus:ring-white/20 transition-all text-sm font-medium"
                                         placeholder="Email Address"
+                                        inputMode="email"
+                                        autoCapitalize="off"
                                     />
                                 </div>
 
@@ -279,6 +281,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
                                 type="submit"
                                 disabled={isLoading}
                                 className="w-full bg-white text-stone-950 font-bold py-4 rounded-xl hover:bg-stone-200 active:scale-[0.98] transition-all duration-300 disabled:opacity-50 text-[10px] uppercase tracking-[0.4em] shadow-xl shadow-white/5"
+                                style={{ minHeight: '48px', WebkitTapHighlightColor: 'transparent' }}
                             >
                                 {isLoading ? (
                                     <div className="flex items-center justify-center gap-3">

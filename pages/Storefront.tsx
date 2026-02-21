@@ -574,7 +574,7 @@ function Storefront() {
                                 />
                             </section>
 
-                            {/* Recommended Section */}
+                            {/* Recommended Section - Rounded Background */}
                             <section className="bg-[#F9F7F2] dark:bg-surface-dark/50 -mx-4 md:-mx-8 px-4 md:px-8 py-12 rounded-3xl md:rounded-[3rem] transition-colors">
                                 <ScrollableSection
                                     title="Recommended"
@@ -620,46 +620,63 @@ function Storefront() {
                                 </section>
                             )}
 
-                            {/* Discovery Section */}
+                            {/* Discovery Section - Pastel Gradient Style */}
                             <section className="py-12 border-t border-gray-100 dark:border-gray-800 transition-colors">
-                                <div className="relative overflow-hidden rounded-[2rem] p-6 md:p-10 text-center shadow-sm transition-all duration-500 hover:shadow-md bg-white dark:bg-surface-dark mx-auto max-w-5xl">
+                                <div className="relative overflow-hidden rounded-[2rem] md:rounded-[3rem] p-8 md:p-16 text-center shadow-sm transition-all duration-500 hover:shadow-md mx-auto max-w-5xl">
 
-                                    {/* Background Gradients with Cross-Fade */}
-                                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 opacity-100 dark:opacity-0 transition-opacity duration-500 ease-in-out"></div>
-                                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-950/20 via-purple-950/20 to-pink-950/20 opacity-0 dark:opacity-100 transition-opacity duration-500 ease-in-out"></div>
+                                    {/* Pastel Gradient Background - Light Mode */}
+                                    <div className="absolute inset-0 bg-gradient-to-r from-pink-100 via-blue-50 to-purple-100 opacity-100 dark:opacity-0 transition-opacity duration-500"></div>
 
-                                    {/* Decorative Elements */}
-                                    <div className="absolute top-0 left-0 w-40 h-40 bg-blue-200/20 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-500"></div>
-                                    <div className="absolute bottom-0 right-0 w-40 h-40 bg-rose-200/20 rounded-full blur-3xl translate-x-1/2 translate-y-1/2 pointer-events-none transition-colors duration-500"></div>
+                                    {/* Dark Mode Gradient */}
+                                    <div className="absolute inset-0 bg-gradient-to-r from-pink-950/40 via-blue-950/40 to-purple-950/40 opacity-0 dark:opacity-100 transition-opacity duration-500"></div>
 
-                                    <h2 className="text-xl md:text-3xl font-display font-bold text-gray-900 dark:text-white mb-3 relative z-10 transition-colors">
-                                        Still Looking for Something You’ll Love?
+                                    <h2 className="text-2xl md:text-4xl lg:text-5xl font-display font-bold text-gray-900 dark:text-white mb-4 relative z-10 transition-colors">
+                                        Still Looking for Something You'll Love?
                                     </h2>
-                                    <p className="text-gray-600 dark:text-gray-300 mb-6 text-sm md:text-base max-w-lg mx-auto leading-relaxed relative z-10 transition-colors">
+                                    <p className="text-gray-600 dark:text-gray-300 mb-10 text-base md:text-lg max-w-2xl mx-auto leading-relaxed relative z-10 transition-colors">
                                         Explore our most popular categories and discover your next favorite.
                                     </p>
 
-                                    <div className="flex flex-wrap justify-center gap-3 relative z-10 w-full max-w-4xl mx-auto">
+                                    {/* Category Buttons - Matching Reference Layout */}
+                                    <div className="flex flex-wrap justify-center gap-3 md:gap-4 relative z-10 w-full max-w-4xl mx-auto">
                                         <button
                                             onClick={() => handleCategoryClick("Women")}
-                                            className="px-6 py-4 bg-white dark:bg-surface-dark border border-rose-100 dark:border-rose-900/30 rounded-xl text-base font-bold text-gray-900 dark:text-white hover:bg-rose-50 dark:hover:bg-rose-900/20 hover:border-rose-200 hover:scale-[1.02] transition-all shadow-sm hover:shadow-rose-100 dark:hover:shadow-none bg-opacity-80 backdrop-blur-sm min-w-[150px] group"
+                                            className="px-6 py-4 bg-white dark:bg-gray-800 rounded-2xl text-base font-semibold text-gray-900 dark:text-white hover:scale-105 transition-all shadow-sm hover:shadow-md min-w-[160px] group"
                                         >
-                                            <span className="block text-rose-500 text-[10px] font-bold uppercase tracking-wider mb-0.5 group-hover:text-rose-600">Shop</span>
-                                            Women’s Collection
+                                            <span className="block text-rose-500 text-[10px] font-bold uppercase tracking-wider mb-0.5">Shop</span>
+                                            Women's Collection
                                         </button>
                                         <button
                                             onClick={() => handleCategoryClick("Men")}
-                                            className="px-6 py-4 bg-white dark:bg-surface-dark border border-blue-100 dark:border-blue-900/30 rounded-xl text-base font-bold text-gray-900 dark:text-white hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-200 hover:scale-[1.02] transition-all shadow-sm hover:shadow-blue-100 dark:hover:shadow-none bg-opacity-80 backdrop-blur-sm min-w-[150px] group"
+                                            className="px-6 py-4 bg-white dark:bg-gray-800 rounded-2xl text-base font-semibold text-gray-900 dark:text-white hover:scale-105 transition-all shadow-sm hover:shadow-md min-w-[160px] group"
                                         >
-                                            <span className="block text-blue-500 text-[10px] font-bold uppercase tracking-wider mb-0.5 group-hover:text-blue-600">Shop</span>
-                                            Men’s Collection
+                                            <span className="block text-blue-500 text-[10px] font-bold uppercase tracking-wider mb-0.5">Shop</span>
+                                            Men's Collection
                                         </button>
                                         <button
                                             onClick={() => handleCategoryClick("Kids")}
-                                            className="px-6 py-4 bg-white dark:bg-surface-dark border border-yellow-100 dark:border-yellow-900/30 rounded-xl text-base font-bold text-gray-900 dark:text-white hover:bg-yellow-50 dark:hover:bg-yellow-900/20 hover:border-yellow-200 hover:scale-[1.02] transition-all shadow-sm hover:shadow-yellow-100 dark:hover:shadow-none bg-opacity-80 backdrop-blur-sm min-w-[150px] group"
+                                            className="px-6 py-4 bg-white dark:bg-gray-800 rounded-2xl text-base font-semibold text-gray-900 dark:text-white hover:scale-105 transition-all shadow-sm hover:shadow-md min-w-[160px] group"
                                         >
-                                            <span className="block text-yellow-500 text-[10px] font-bold uppercase tracking-wider mb-0.5 group-hover:text-yellow-600">Shop</span>
+                                            <span className="block text-yellow-500 text-[10px] font-bold uppercase tracking-wider mb-0.5">Shop</span>
                                             Kids' Collection
+                                        </button>
+                                        <button
+                                            onClick={() => handleOpenCollection("Most Popular", popularProducts)}
+                                            className="px-6 py-4 bg-white dark:bg-gray-800 rounded-2xl text-base font-semibold text-gray-900 dark:text-white hover:scale-105 transition-all shadow-sm hover:shadow-md min-w-[160px] group"
+                                        >
+                                            <span className="block text-purple-500 text-[10px] font-bold uppercase tracking-wider mb-0.5">View</span>
+                                            Best Sellers
+                                        </button>
+                                    </div>
+
+                                    {/* New Arrivals Button - Centered Below */}
+                                    <div className="flex justify-center mt-4 relative z-10">
+                                        <button
+                                            onClick={() => handleOpenCollection("New Arrivals", products)}
+                                            className="px-6 py-4 bg-white dark:bg-gray-800 rounded-2xl text-base font-semibold text-gray-900 dark:text-white hover:scale-105 transition-all shadow-sm hover:shadow-md min-w-[160px] group"
+                                        >
+                                            <span className="block text-teal-500 text-[10px] font-bold uppercase tracking-wider mb-0.5">View</span>
+                                            New Arrivals
                                         </button>
                                     </div>
                                 </div>
@@ -713,7 +730,7 @@ function Storefront() {
                 <main className="flex-grow flex flex-col items-center justify-center min-h-[500px]">
 
                     <Loader2 className="w-12 h-12 text-indigo-500 animate-spin" />
-                    <span className="mt-4 text-gray-500 font-medium animate-pulse">Loading VenderFlow Experience...</span>
+                    <span className="mt-4 text-gray-500 dark:text-gray-400 font-medium animate-pulse">Loading VenderFlow Experience...</span>
                 </main>
                 <div className="hidden">Debug: Products Loading...</div>
             </div>
@@ -721,7 +738,7 @@ function Storefront() {
     }
 
     return (
-        <div className="min-h-screen flex flex-col font-body pb-[80px] md:pb-0 bg-white dark:bg-background-dark transition-colors duration-300">
+        <div className="min-h-screen flex flex-col font-body pb-[80px] md:pb-0 bg-[var(--color-luxury-bg)] transition-colors duration-300">
             {currentView !== 'checkout' && <TopBar />}
             {currentView !== 'checkout' && (
                 <Navbar
@@ -772,7 +789,7 @@ function Storefront() {
                     } else {
                         handleNavigate(view);
                     }
-                }} cartCount={cartTotalItems} />
+                }} cartCount={cartTotalItems} wishlistCount={wishlistIds.length} activeTab={currentView} />
             )}
 
             <QuickViewModal
