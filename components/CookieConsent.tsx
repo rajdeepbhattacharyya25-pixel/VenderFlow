@@ -50,7 +50,7 @@ export default function CookieConsent() {
     if (!isVisible) return null;
 
     return (
-        <div className="fixed bottom-0 left-0 right-0 z-50 p-4 font-sans sm:p-6 sm:max-w-md">
+        <div className="fixed bottom-0 right-0 z-50 p-4 font-sans w-full sm:p-6 sm:max-w-md">
             <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-2xl rounded-2xl p-5 overflow-hidden animate-in slide-in-from-bottom-5 fade-in duration-300">
 
                 {!showPreferences ? (
