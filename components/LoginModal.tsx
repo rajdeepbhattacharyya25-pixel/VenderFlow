@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Sparkles, Star, ShieldCheck, Lock, Store, X, Mail } from 'lucide-react';
+import { Store, ShieldCheck, Lock, Star, Sparkles, X, Mail } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { OwlOverlay } from './OwlOverlay';
 
 interface LoginModalProps {
     isOpen: boolean;
@@ -212,8 +213,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
             ></div>
 
             {/* Modal Content */}
-            <div className="relative w-full h-full md:h-auto md:max-w-[400px] bg-stone-950 md:rounded-[2rem] overflow-hidden shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] animate-in slide-in-from-bottom-4 md:zoom-in-95 duration-500 border-0 md:border border-white/10 flex flex-col">
-                <div className="p-6 sm:p-8 md:p-10 flex-1 overflow-y-auto" style={{ paddingTop: 'max(env(safe-area-inset-top, 24px), 24px)' }}>
+            <div id="login-panel" className="relative w-full h-full md:h-auto md:max-w-[360px] bg-stone-950 md:rounded-[2rem] overflow-visible shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] animate-in slide-in-from-bottom-4 md:zoom-in-95 duration-500 border-0 md:border border-white/10 flex flex-col md:mt-6">
+                <OwlOverlay targetSelector="#login-panel" isError={!!error} />
+                <div className="p-6 sm:p-8 flex-1 overflow-y-auto" style={{ paddingTop: 'max(env(safe-area-inset-top, 24px), 24px)' }}>
                     {/* Close Button */}
                     <button
                         onClick={onClose}
@@ -225,11 +227,11 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
 
                     <div className="flex flex-col items-center">
                         {/* Header */}
-                        <div className="text-center mb-6 w-full">
-                            <div className="mx-auto w-10 h-10 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center mb-4">
+                        <div className="text-center mb-5 w-full">
+                            <div className="mx-auto w-10 h-10 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center mb-3">
                                 <Lock className="w-5 h-5 text-stone-100" strokeWidth={1.2} />
                             </div>
-                            <h3 className="text-3xl font-display font-medium text-white mb-2 tracking-tight">
+                            <h3 className="text-2xl font-display font-medium text-white mb-1.5 tracking-tight">
                                 {isSignUp ? 'Create Account' : (mode === 'seller' ? 'Vendor Portal' : 'Welcome Back')}
                             </h3>
                             <p className="text-stone-500 text-[9px] font-bold uppercase tracking-[0.3em]">
@@ -255,7 +257,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
                                         onChange={(e) => setEmail(e.target.value)}
                                         required
                                         autoComplete="off"
-                                        className="w-full bg-stone-900/50 border border-white/5 rounded-xl px-5 py-3.5 text-white placeholder-stone-700 focus:outline-none focus:ring-1 focus:ring-white/20 transition-all text-sm font-medium"
+                                        className="w-full bg-stone-900/50 border border-white/5 rounded-xl px-4 py-3 text-white placeholder-stone-700 focus:outline-none focus:ring-1 focus:ring-white/20 transition-all text-sm font-medium"
                                         placeholder="Email Address"
                                         inputMode="email"
                                         autoCapitalize="off"
@@ -271,7 +273,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
                                         required
                                         minLength={6}
                                         autoComplete="new-password"
-                                        className="w-full bg-stone-900/50 border border-white/5 rounded-xl px-5 py-3.5 text-white placeholder-stone-700 focus:outline-none focus:ring-1 focus:ring-white/20 transition-all text-sm font-medium"
+                                        className="w-full bg-stone-900/50 border border-white/5 rounded-xl px-4 py-3 text-white placeholder-stone-700 focus:outline-none focus:ring-1 focus:ring-white/20 transition-all text-sm font-medium"
                                         placeholder="••••••••"
                                     />
                                 </div>
@@ -280,8 +282,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
                             <button
                                 type="submit"
                                 disabled={isLoading}
-                                className="w-full bg-white text-stone-950 font-bold py-4 rounded-xl hover:bg-stone-200 active:scale-[0.98] transition-all duration-300 disabled:opacity-50 text-[10px] uppercase tracking-[0.4em] shadow-xl shadow-white/5"
-                                style={{ minHeight: '48px', WebkitTapHighlightColor: 'transparent' }}
+                                className="w-full bg-white text-stone-950 font-bold py-3.5 rounded-xl hover:bg-stone-200 active:scale-[0.98] transition-all duration-300 disabled:opacity-50 text-[10px] uppercase tracking-[0.4em] shadow-xl shadow-white/5"
+                                style={{ minHeight: '44px', WebkitTapHighlightColor: 'transparent' }}
                             >
                                 {isLoading ? (
                                     <div className="flex items-center justify-center gap-3">
@@ -308,7 +310,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
                         <button
                             onClick={handleGoogleLogin}
                             disabled={isLoading}
-                            className="w-full flex items-center justify-center gap-4 bg-stone-900/50 border border-white/5 text-white font-bold py-4 rounded-xl hover:bg-stone-800 transition-all active:scale-[0.98] disabled:opacity-50 text-[10px] uppercase tracking-[0.4em]"
+                            className="w-full flex items-center justify-center gap-4 bg-stone-900/50 border border-white/5 text-white font-bold py-3.5 rounded-xl hover:bg-stone-800 transition-all active:scale-[0.98] disabled:opacity-50 text-[10px] uppercase tracking-[0.4em]"
+                            style={{ minHeight: '44px' }}
                         >
                             <svg className="w-5 h-5" viewBox="0 0 24 24">
                                 <path

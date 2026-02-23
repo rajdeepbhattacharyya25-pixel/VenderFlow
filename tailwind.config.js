@@ -6,6 +6,7 @@ export default {
         "./components/**/*.{js,ts,jsx,tsx}",
         "./pages/**/*.{js,ts,jsx,tsx}",
         "./hooks/**/*.{js,ts,jsx,tsx}",
+        "./dashboard/**/*.{js,ts,jsx,tsx}",
         "./landing page ui/**/*.{js,ts,jsx,tsx}"
     ],
     darkMode: 'class',

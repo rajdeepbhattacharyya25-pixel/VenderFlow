@@ -16,7 +16,7 @@ export const useAdminBackup = () => {
         const { data: sellers } = await supabase.from('sellers').select('*');
         const { data: products } = await supabase.from('products').select('*');
         const { data: orders } = await supabase.from('orders').select('*');
-        const { data: users } = await supabase.from('profiles').select('*').optional(); // If profiles exist
+        const { data: users } = await supabase.from('profiles').select('*'); // If profiles exist
 
         return {
             backup_type: 'ADMIN_PLATFORM_FULL',

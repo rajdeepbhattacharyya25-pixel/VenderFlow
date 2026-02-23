@@ -1,10 +1,22 @@
+export interface ProductMedia {
+  id: string;
+  product_id: string;
+  file_url: string;
+  is_primary: boolean;
+  sort_order: number;
+  media_type: 'image' | 'video';
+  variant_value?: string;
+  created_at: string;
+}
+
 export interface Product {
   id: string;
   name: string;
   price: number;
   originalPrice?: number;
   image: string;
-  images?: string[];
+  images?: string[]; // Kept for backward compat in some old renders
+  media?: ProductMedia[];
   description?: string;
   badge?: {
     text: string;
@@ -18,6 +30,7 @@ export interface Product {
   seller_id?: string;
   stock?: number;
   stock_quantity?: number;
+  status?: 'draft' | 'live';
 }
 
 export interface NavLink {

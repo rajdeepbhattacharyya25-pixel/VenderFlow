@@ -195,7 +195,7 @@ function App() {
           <div className="w-20 h-20 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
             <AlertCircle size={40} className="text-amber-500" />
           </div>
-          <h1 className="text-2xl font-bold text-white mb-2">System Maintenance</h1>
+          <h2 className="text-2xl font-bold text-white mb-2">System Maintenance</h2>
           <p className="text-neutral-400 mb-6">
             The platform is currently undergoing scheduled maintenance. Please check back later.
           </p>
@@ -215,7 +215,7 @@ function App() {
           <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
             <AlertCircle size={40} className="text-red-500" />
           </div>
-          <h1 className="text-2xl font-bold text-white mb-2">Account Suspended</h1>
+          <h2 className="text-2xl font-bold text-white mb-2">Account Suspended</h2>
           <p className="text-neutral-400 mb-6">
             Your storefront has been suspended due to a violation of our terms or administrative action.
           </p>
@@ -266,6 +266,7 @@ function App() {
           onSearchChange={setSearchTerm}
           businessLogo={businessLogo}
           storeName={storeName}
+          sellerSlug={sellerSlug}
         />
 
         <main className="p-4 sm:p-6 lg:px-10 pt-6 sm:pt-8">

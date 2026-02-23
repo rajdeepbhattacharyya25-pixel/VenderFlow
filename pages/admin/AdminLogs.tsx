@@ -81,9 +81,9 @@ const AdminLogs: React.FC = () => {
         if (action.includes('maintenance')) {
             return {
                 icon: Lock,
-                color: 'text-purple-400',
-                bg: 'bg-purple-500/10',
-                border: 'border-l-4 border-l-purple-500'
+                color: 'text-indigo-400',
+                bg: 'bg-indigo-500/10',
+                border: 'border-l-4 border-l-indigo-500'
             };
         }
         return {
@@ -131,6 +131,7 @@ const AdminLogs: React.FC = () => {
                 <select
                     value={actionFilter}
                     onChange={(e) => setActionFilter(e.target.value)}
+                    aria-label="Filter by action type"
                     className="bg-transparent text-white border-none focus:ring-0 text-sm outline-none cursor-pointer w-full"
                 >
                     <option value="">All Actions</option>

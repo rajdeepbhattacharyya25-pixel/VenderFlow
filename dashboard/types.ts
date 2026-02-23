@@ -12,10 +12,12 @@ export interface Product {
   discount_price?: number;
   is_active: boolean;
   has_variants: boolean;
+  status?: 'draft' | 'live';
   created_at: string;
   updated_at: string;
   // Virtual / Joined fields for UI convenience
-  images?: string[];
+  images?: string[]; // Kept for backward compat in some places, but prefer media below
+  media?: ProductMedia[];
   stock_quantity?: number;
   low_stock_threshold?: number;
   allow_out_of_stock_orders?: boolean;
@@ -42,13 +44,15 @@ export interface ProductStock {
   updated_at: string;
 }
 
-// Product Media (images)
+// Product Media (images and videos)
 export interface ProductMedia {
   id: string;
   product_id: string;
   file_url: string;
   is_primary: boolean;
   sort_order: number;
+  media_type: 'image' | 'video';
+  variant_value?: string;
   created_at: string;
 }
 
@@ -76,4 +80,15 @@ export interface ChartDataPoint {
   name: string;
   value: number;
   target?: number;
+}
+
+export interface ChartData {
+  name: string;
+  value: number;
+}
+
+export interface DonutData {
+  name: string;
+  value: number;
+  color: string;
 }

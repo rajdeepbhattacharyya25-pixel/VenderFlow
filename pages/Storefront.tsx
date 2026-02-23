@@ -87,10 +87,9 @@ function Storefront() {
                 // Add 5s timeout race
                 const fetchPromise = supabase
                     .from('products')
-                    .select('*, product_media(file_url, is_primary), product_variants(*)')
+                    .select('*, product_media(id, file_url, is_primary), product_variants(*)')
                     .eq('is_active', true)
                     .eq('is_published', true)
-                    .is('seller_id', null) // Only show platform products (main store)
                     .order('created_at', { ascending: false });
 
                 const { data: productsData, error } = await Promise.race([
@@ -106,7 +105,8 @@ function Storefront() {
 
                 // Map database products to Product interface
                 const mappedProducts: Product[] = (productsData || []).map((p: any) => {
-                    const images = p.product_media?.map((m: any) => m.file_url) || [];
+                    const media = p.product_media || [];
+                    const images = media.map((m: any) => m.file_url) || [];
                     const sizes = p.product_variants?.length > 0
                         ? p.product_variants.map((v: any) => v.variant_name)
                         : ['Standard'];
@@ -119,8 +119,9 @@ function Storefront() {
                         category: p.category || 'Uncategorized',
                         price: hasDiscount ? Number(p.discount_price) : Number(p.price),
                         originalPrice: hasDiscount ? Number(p.price) : undefined,
-                        image: images.length > 0 ? images[0] : 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=400',
+                        image: images.length > 0 ? images[0] : (media.length > 0 ? media[0].file_url : 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=400'),
                         images: images,
+                        media: media,
                         sizes: sizes,
                         rating: p.rating || 4.5,
                         reviews: p.reviews || 0,
@@ -585,7 +586,7 @@ function Storefront() {
                             {/* Recommended Section - Rounded Background */}
                             <section className="bg-[#F9F7F2] dark:bg-surface-dark/50 -mx-4 md:-mx-8 px-4 md:px-8 py-12 rounded-3xl md:rounded-[3rem] transition-colors">
                                 <ScrollableSection
-                                    title="Recommended"
+                                    title="Recommendations"
                                     badge="Curated For You"
                                     badgeColor="text-accent"
                                     products={recommendedProducts}
@@ -633,10 +634,10 @@ function Storefront() {
                                 <div className="relative overflow-hidden rounded-[2rem] md:rounded-[3rem] p-8 md:p-16 text-center shadow-sm transition-all duration-500 hover:shadow-md mx-auto max-w-5xl">
 
                                     {/* Pastel Gradient Background - Light Mode */}
-                                    <div className="absolute inset-0 bg-gradient-to-r from-pink-100 via-blue-50 to-purple-100 opacity-100 dark:opacity-0 transition-opacity duration-500"></div>
+                                    <div className="absolute inset-0 bg-gradient-to-r from-pink-100 via-blue-50 to-indigo-100 opacity-100 dark:opacity-0 transition-opacity duration-500"></div>
 
                                     {/* Dark Mode Gradient */}
-                                    <div className="absolute inset-0 bg-gradient-to-r from-pink-950/40 via-blue-950/40 to-purple-950/40 opacity-0 dark:opacity-100 transition-opacity duration-500"></div>
+                                    <div className="absolute inset-0 bg-gradient-to-r from-pink-950/40 via-blue-950/40 to-indigo-950/40 opacity-0 dark:opacity-100 transition-opacity duration-500"></div>
 
                                     <h2 className="text-2xl md:text-4xl lg:text-5xl font-display font-bold text-gray-900 dark:text-white mb-4 relative z-10 transition-colors">
                                         Still Looking for Something You'll Love?
@@ -672,7 +673,7 @@ function Storefront() {
                                             onClick={() => handleOpenCollection("Most Popular", popularProducts)}
                                             className="px-6 py-4 bg-white dark:bg-gray-800 rounded-2xl text-base font-semibold text-gray-900 dark:text-white hover:scale-105 transition-all shadow-sm hover:shadow-md min-w-[160px] group"
                                         >
-                                            <span className="block text-purple-500 text-[10px] font-bold uppercase tracking-wider mb-0.5">View</span>
+                                            <span className="block text-indigo-500 text-[10px] font-bold uppercase tracking-wider mb-0.5">View</span>
                                             Best Sellers
                                         </button>
                                     </div>

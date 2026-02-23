@@ -24,7 +24,7 @@ interface AdminLogStatsProps {
     logs: AuditLog[];
 }
 
-const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#06b6d4'];
 
 const AdminLogStats: React.FC<AdminLogStatsProps> = ({ logs }) => {
     const [dateRange, setDateRange] = React.useState<'7d' | '30d' | 'custom'>('7d');
@@ -102,6 +102,7 @@ const AdminLogStats: React.FC<AdminLogStatsProps> = ({ logs }) => {
                                 <select
                                     value={dateRange}
                                     onChange={(e) => setDateRange(e.target.value as any)}
+                                    aria-label="Date range filter"
                                     className="bg-neutral-800 border-none text-xs text-neutral-400 rounded-lg py-1 pl-2 pr-6 focus:ring-1 focus:ring-indigo-500 cursor-pointer"
                                 >
                                     <option value="7d">Last 7 Days</option>
@@ -118,6 +119,7 @@ const AdminLogStats: React.FC<AdminLogStatsProps> = ({ logs }) => {
                                 type="date"
                                 value={customStart}
                                 onChange={(e) => setCustomStart(e.target.value)}
+                                aria-label="Custom start date"
                                 className="bg-transparent text-xs text-white border-none focus:ring-0 p-0 w-24"
                             />
                             <span className="text-neutral-500">-</span>
@@ -125,6 +127,7 @@ const AdminLogStats: React.FC<AdminLogStatsProps> = ({ logs }) => {
                                 type="date"
                                 value={customEnd}
                                 onChange={(e) => setCustomEnd(e.target.value)}
+                                aria-label="Custom end date"
                                 className="bg-transparent text-xs text-white border-none focus:ring-0 p-0 w-24"
                             />
                         </div>

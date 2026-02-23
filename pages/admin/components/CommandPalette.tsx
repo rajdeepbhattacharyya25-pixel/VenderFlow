@@ -163,7 +163,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
 
     const getTypeColor = (type: string) => {
         switch (type) {
-            case 'seller': return 'from-violet-500 to-purple-600';
+            case 'seller': return 'from-teal-500 to-cyan-600';
             case 'order': return 'from-emerald-500 to-teal-600';
             case 'product': return 'from-amber-500 to-orange-600';
             default: return 'from-indigo-500 to-blue-600';
@@ -172,7 +172,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
 
     const navItems = [
         { icon: BarChart3, label: 'Dashboard', path: '/admin', key: 'R D', color: 'from-indigo-500 to-blue-600' },
-        { icon: Users, label: 'Sellers', path: '/admin/sellers', key: 'R S', color: 'from-violet-500 to-purple-600' },
+        { icon: Users, label: 'Sellers', path: '/admin/sellers', key: 'R S', color: 'from-teal-500 to-cyan-600' },
         { icon: ShoppingCart, label: 'Orders', path: '/admin/orders', key: 'R O', color: 'from-emerald-500 to-teal-600' },
         { icon: Mail, label: 'Invites', path: '/admin/invites', key: 'R I', color: 'from-pink-500 to-rose-600' },
         { icon: ShoppingBag, label: 'Products', path: '/admin/products', key: 'R P', color: 'from-amber-500 to-orange-600' },
@@ -192,17 +192,17 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
             {/* Modal */}
             <div className="relative w-full max-w-2xl mx-4 animate-in fade-in zoom-in-95 slide-in-from-top-4 duration-200">
                 {/* Glow effect */}
-                <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-3xl blur-xl opacity-20" />
+                <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 via-indigo-500 to-pink-500 rounded-3xl blur-xl opacity-20" />
 
                 <div className="relative bg-neutral-900/95 border border-neutral-700/50 rounded-2xl shadow-2xl overflow-hidden">
                     {/* Search Input */}
                     <div className="relative">
-                        <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 pointer-events-none" />
+                        <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 via-indigo-500/10 to-pink-500/10 pointer-events-none" />
                         <div className="relative flex items-center p-5">
                             {/* Search Icon */}
                             <div className="relative flex-shrink-0 mr-4">
                                 <div className="absolute inset-0 bg-indigo-500 rounded-xl blur-md opacity-30" />
-                                <div className="relative p-2.5 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl">
+                                <div className="relative p-2.5 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl">
                                     <Search className="w-5 h-5 text-white" />
                                 </div>
                             </div>

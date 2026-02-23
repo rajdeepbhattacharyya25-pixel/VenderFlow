@@ -143,6 +143,11 @@ const SellerStorefront = () => {
 
     const location = useLocation();
 
+    // Preview Mode Setup
+    const searchParams = new URLSearchParams(location.search);
+    const isPreviewMode = searchParams.get('preview') === 'true';
+    const [canViewDrafts, setCanViewDrafts] = useState(false);
+
     // UI state
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -292,12 +297,28 @@ const SellerStorefront = () => {
                     setStoreCustomer(customer);
                 }
 
-                // Load products for this seller only
-                const { data: productsData } = await supabase
+                // Check seller auth for preview mode
+                let isAuthorizedSeller = false;
+                if (isPreviewMode) {
+                    const { data: { user } } = await supabase.auth.getUser();
+                    if (user && user.id === seller.id) {
+                        isAuthorizedSeller = true;
+                        setCanViewDrafts(true);
+                    }
+                }
+
+                // Load products for this seller
+                let productQuery = supabase
                     .from('products')
                     .select('*, product_media(file_url, is_primary), product_variants(*)')
-                    .eq('seller_id', seller.id)
-                    .eq('is_active', true);
+                    .eq('seller_id', seller.id);
+
+                // Only allow viewing drafts if it's the authenticated seller in preview mode
+                if (!isAuthorizedSeller) {
+                    productQuery = productQuery.eq('is_active', true);
+                }
+
+                const { data: productsData } = await productQuery;
 
                 const mappedProducts = (productsData || []).map((p: any) => {
                     const images = p.product_media?.map((m: any) => m.file_url) || [];
@@ -1051,7 +1072,7 @@ const SellerStorefront = () => {
                                         <>
                                             <span className="text-emerald-600 dark:text-emerald-400">👋</span>
                                             <Typewriter
-                                                text={`Welcome back, ${storeCustomer.metadata?.first_name || storeCustomer.display_name?.split(' ')[0] || storeCustomer.email?.split('@')[0] || 'there'}!`}
+                                                text={`Welcome to our little corner, ${storeCustomer.metadata?.first_name || storeCustomer.display_name?.split(' ')[0] || storeCustomer.email?.split('@')[0] || 'there'}!!`}
                                                 delay={20}
                                             />
                                         </>
@@ -1094,7 +1115,7 @@ const SellerStorefront = () => {
                                         <ScrollableSectionSkeleton />
                                     ) : (
                                         <ScrollableSection
-                                            title="Recommended"
+                                            title="Recommendations"
                                             badge="Curated For You"
                                             badgeColor="text-amber-600"
                                             products={recommendedProducts}
@@ -1208,6 +1229,13 @@ const SellerStorefront = () => {
 
     return (
         <div className="min-h-screen flex flex-col font-body pb-[80px] md:pb-0 bg-white dark:bg-neutral-950 transition-colors duration-300" style={themeStyles}>
+            {/* Preview Mode Indicator */}
+            {isPreviewMode && canViewDrafts && (
+                <div className="w-full bg-amber-500 text-amber-950 text-xs sm:text-sm font-bold py-1.5 px-4 flex items-center justify-center gap-2 z-[60] sticky top-0 shadow-sm shadow-amber-500/20">
+                    <span className="animate-pulse">⚡</span>
+                    Preview Mode — Not Live (Only visible to you)
+                </div>
+            )}
             <QuickViewModal
                 product={selectedProduct}
                 isOpen={isModalOpen}

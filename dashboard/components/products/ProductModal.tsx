@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Image as ImageIcon, Plus, Trash, Star, Check, AlertCircle, Command } from 'lucide-react';
+import { X, Image as ImageIcon, Plus, Trash, Star, Check, AlertCircle, Command, Video } from 'lucide-react';
 import { Product } from '../../types';
 import { uploadProductImage } from '../../lib/storage';
 import { compressImage } from '../../lib/imageUtils';
+import { ProductMedia } from '../../types';
 
 interface ProductModalProps {
     isOpen: boolean;
@@ -17,10 +18,13 @@ interface ProductFormData {
     description: string;
     category: string;
     is_active: boolean;
+    status: 'draft' | 'live';
     images: string[];
+    videoUrl: string | null;
+    variantImages: Record<string, string>; // variant name to image URL
     mainImageIndex: number;
     hasVariants: boolean;
-    variants: Array<{ option: string; value: string; price?: number; stock?: number }>;
+    variants: Array<{ id?: string; option: string; value: string; price?: number; stock?: number }>;
     price: number;
     discountPrice: number | null;
     trackStock: boolean;
@@ -34,7 +38,10 @@ const defaultFormData: ProductFormData = {
     description: '',
     category: '',
     is_active: true,
+    status: 'draft',
     images: [],
+    videoUrl: null,
+    variantImages: {},
     mainImageIndex: 0,
     hasVariants: false,
     variants: [],
@@ -64,6 +71,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
     const [errors, setErrors] = useState<Record<string, string>>({});
 
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const videoInputRef = useRef<HTMLInputElement>(null);
 
     // Custom Category Management
     const [availableCategories, setAvailableCategories] = useState<string[]>([
@@ -115,15 +123,34 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
     // Initialize form with product data
     useEffect(() => {
         if (product) {
+
+            // Extract media info
+            const media = product.media || [];
+            const images = media.map(m => m.file_url);
+            const video = null;
+            const variantImages: Record<string, string> = {};
+
             setFormData({
                 name: product.name || '',
                 description: product.description || '',
                 category: product.category || '',
                 is_active: product.is_active ?? true,
-                images: product.images || [],
+                status: product.status || 'draft',
+                images: images.length > 0 ? images : (product.images || []),
+                videoUrl: video ? video.file_url : null,
+                variantImages: variantImages,
                 mainImageIndex: 0,
                 hasVariants: product.has_variants ?? false,
-                variants: [],
+                variants: product.variants ? product.variants.map((v: any) => {
+                    const parts = v.variant_name.split(': ');
+                    return {
+                        id: v.id,
+                        option: parts.length > 1 ? parts[0] : 'Size',
+                        value: parts.length > 1 ? parts[1] : v.variant_name,
+                        price: v.price_override || undefined,
+                        stock: v.stock_quantity || 0
+                    };
+                }) : [],
                 price: product.price || 0,
                 discountPrice: product.discount_price ?? null,
                 trackStock: true, // Will be fetched from product_stock if needed, default true
@@ -180,9 +207,10 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
                 price: formData.price,
                 discount_price: formData.discountPrice || undefined,
                 is_active: formData.is_active,
+                status: formData.status,
                 has_variants: formData.hasVariants,
                 variants: formData.variants.map(v => ({
-                    id: '', // Will be assigned by DB or ignored on insert
+                    id: v.id,
                     product_id: product?.id || '',
                     variant_name: `${v.option}: ${v.value}`,
                     price_override: v.price,
@@ -239,6 +267,72 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
         }
     };
 
+    const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || e.target.files.length === 0) return;
+        const file = e.target.files[0];
+
+        const video = document.createElement('video');
+        video.preload = 'metadata';
+
+        video.onloadedmetadata = async () => {
+            window.URL.revokeObjectURL(video.src);
+            if (video.duration > 30) {
+                alert('Video must be 30 seconds or less.');
+                if (e.target) e.target.value = '';
+                return;
+            }
+
+            try {
+                setUploading(true);
+                setUploadStatus('Uploading video...');
+                const productId = product?.id || 'temp-new-product';
+                const { data, error } = await uploadProductImage(file, productId, false, 'video');
+
+                if (error) throw error;
+
+                if (data && data.file_url) {
+                    updateField('videoUrl', data.file_url);
+                }
+            } catch (err: any) {
+                console.error('Video upload failed', err);
+                alert(err.message || 'Video upload failed');
+            } finally {
+                setUploading(false);
+                setUploadStatus('');
+                if (e.target) e.target.value = '';
+            }
+        };
+        video.src = URL.createObjectURL(file);
+    };
+
+    const handleVariantImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, variantValue: string) => {
+        if (!e.target.files || e.target.files.length === 0) return;
+        try {
+            const originalFile = e.target.files[0];
+            setUploading(true);
+            setUploadStatus(`Optimizing image for ${variantValue}...`);
+
+            const { file: compressedFile } = await compressImage(originalFile);
+            setUploadStatus('Uploading...');
+
+            const productId = product?.id || 'temp-new-product';
+            const { data, error } = await uploadProductImage(compressedFile, productId, false, 'image', variantValue);
+
+            if (error) throw error;
+
+            if (data && data.file_url) {
+                const newVariantImages = { ...formData.variantImages, [variantValue]: data.file_url };
+                updateField('variantImages', newVariantImages);
+            }
+        } catch (err: any) {
+            alert(err.message || 'Upload failed');
+        } finally {
+            setUploading(false);
+            setUploadStatus('');
+            if (e.target) e.target.value = '';
+        }
+    };
+
     const removeImage = (index: number) => {
         const newImages = formData.images.filter((_, i) => i !== index);
         updateField('images', newImages);
@@ -246,6 +340,8 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
             updateField('mainImageIndex', Math.max(0, newImages.length - 1));
         }
     };
+
+    const removeVideo = () => updateField('videoUrl', null);
 
     const setMainImage = (index: number) => {
         updateField('mainImageIndex', index);
@@ -281,17 +377,17 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
             onClick={onClose}
         >
             <div
-                className="bg-panel rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl border border-muted/20 animate-[slideUp_0.3s_ease-out]"
+                className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl border border-gray-200 dark:border-slate-700 animate-[slideUp_0.3s_ease-out]"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b border-muted/10">
-                    <h2 className="text-xl font-bold text-text">
+                <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-slate-700/50">
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">
                         {product ? 'Edit Product' : 'Add New Product'}
                     </h2>
                     <button
                         onClick={onClose}
-                        className="p-2 text-muted hover:text-red-500 rounded-lg hover:bg-red-500/10 transition-colors"
+                        className="p-2 text-gray-400 dark:text-gray-500 hover:text-red-500 rounded-lg hover:bg-red-500/10 transition-colors"
                         title="Close Modal"
                     >
                         <X size={20} />
@@ -301,20 +397,20 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
                 {/* Body */}
                 <div className="flex-1 flex min-h-0 overflow-hidden">
                     {/* Sidebar Nav */}
-                    <div className="w-48 border-r border-muted/10 p-4 space-y-1 overflow-y-auto bg-bg/30">
+                    <div className="w-48 border-r border-gray-100 dark:border-slate-700/50 p-4 space-y-1 overflow-y-auto bg-gray-50/50 dark:bg-slate-800/30">
                         {sections.map(section => (
                             <button
                                 key={section.id}
                                 onClick={() => setActiveSection(section.id)}
                                 className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg text-sm font-medium transition-all group ${activeSection === section.id
                                     ? 'bg-sky-500/10 text-sky-600 dark:text-sky-400 shadow-sm'
-                                    : 'text-muted hover:text-text hover:bg-bg'
+                                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-800'
                                     }`}
                             >
                                 <span>{section.label}</span>
                                 <span className={`text-[10px] font-bold px-1 py-0.5 rounded border transition-colors ${activeSection === section.id
                                     ? 'bg-sky-500/20 border-sky-500/30 text-sky-600'
-                                    : 'bg-muted/5 border-muted/20 text-muted group-hover:border-muted/40'
+                                    : 'bg-gray-100 dark:bg-slate-800 border-gray-200 dark:border-slate-600 text-gray-400 dark:text-gray-500 group-hover:border-gray-300 dark:group-hover:border-slate-500'
                                     }`}>
                                     {section.shortcut && section.shortcut.includes('Alt + ') ? '⌥' + section.shortcut.split('Alt + ')[1] : section.shortcut}
                                 </span>
@@ -328,14 +424,14 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
                         {activeSection === 'basic' && (
                             <div className="space-y-6 max-w-xl animate-[fadeIn_0.2s_ease-out]">
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-text">
+                                    <label className="text-sm font-medium text-gray-900 dark:text-gray-100">
                                         Product Name <span className="text-red-500">*</span>
                                     </label>
                                     <input
                                         type="text"
                                         value={formData.name}
                                         onChange={(e) => updateField('name', e.target.value)}
-                                        className={`w-full p-3 rounded-xl bg-bg border ${errors.name ? 'border-red-500' : 'border-muted/20'} text-text focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 outline-none transition-all`}
+                                        className={`w-full p-3 rounded-xl bg-gray-50 dark:bg-slate-800 border ${errors.name ? 'border-red-500' : 'border-gray-200 dark:border-slate-600'} text-gray-900 dark:text-white focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 outline-none transition-all`}
                                         placeholder="e.g. Cotton T-Shirt, Handmade Soap"
                                     />
                                     {errors.name && (
@@ -346,18 +442,18 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-text">Description</label>
+                                    <label className="text-sm font-medium text-gray-900 dark:text-gray-100">Description</label>
                                     <textarea
                                         value={formData.description}
                                         onChange={(e) => updateField('description', e.target.value)}
-                                        className="w-full h-28 p-3 rounded-xl bg-bg border border-muted/20 text-text focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 outline-none resize-none transition-all"
+                                        className="w-full h-28 p-3 rounded-xl bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-600 text-gray-900 dark:text-white focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 outline-none resize-none transition-all"
                                         placeholder="Tell customers about your product..."
                                     />
-                                    <p className="text-xs text-muted">Optional - helps customers understand what they're buying</p>
+                                    <p className="text-xs text-gray-400 dark:text-gray-500">Optional - helps customers understand what they're buying</p>
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label htmlFor="category" className="text-sm font-medium text-text">Category</label>
+                                    <label htmlFor="category" className="text-sm font-medium text-gray-900 dark:text-gray-100">Category</label>
                                     {!isAddingNewCategory ? (
                                         <select
                                             id="category"
@@ -370,7 +466,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
                                                     updateField('category', e.target.value);
                                                 }
                                             }}
-                                            className="w-full p-3 rounded-xl bg-bg border border-muted/20 text-text focus:border-sky-500 outline-none transition-all"
+                                            className="w-full p-3 rounded-xl bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-600 text-gray-900 dark:text-white focus:border-sky-500 outline-none transition-all"
                                         >
                                             <option value="">Select a category</option>
                                             {availableCategories.map(cat => (
@@ -386,7 +482,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
                                                     value={newCategoryName}
                                                     onChange={(e) => setNewCategoryName(e.target.value)}
                                                     placeholder="Enter new category name"
-                                                    className="flex-1 p-3 rounded-xl bg-bg border border-sky-500 text-text focus:ring-2 focus:ring-sky-500/20 outline-none transition-all"
+                                                    className="flex-1 p-3 rounded-xl bg-gray-50 dark:bg-slate-800 border border-sky-500 text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500/20 outline-none transition-all"
                                                     autoFocus
                                                 />
                                                 <button
@@ -410,7 +506,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
                                                         setIsAddingNewCategory(false);
                                                         setNewCategoryName('');
                                                     }}
-                                                    className="px-4 py-2 bg-muted/10 text-muted rounded-xl hover:bg-muted/20 transition-colors"
+                                                    className="px-4 py-2 bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-gray-400 rounded-xl hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
                                                 >
                                                     Cancel
                                                 </button>
@@ -422,31 +518,59 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
                                     )}
                                 </div>
 
-                                <div className="space-y-3 p-4 rounded-xl bg-bg/50 border border-muted/10">
-                                    <label className="text-sm font-medium text-text">Visibility</label>
-                                    <div className="flex gap-3">
-                                        <button
-                                            type="button"
-                                            onClick={() => updateField('is_active', true)}
-                                            className={`flex-1 p-3 rounded-xl border-2 transition-all ${formData.is_active === true
-                                                ? 'border-green-500 bg-green-500/10 text-green-600'
-                                                : 'border-muted/20 text-muted hover:border-muted/40'
-                                                }`}
-                                        >
-                                            <div className="font-medium">✓ Available for sale</div>
-                                            <div className="text-xs opacity-70 mt-1">Customers can see and buy</div>
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => updateField('is_active', false)}
-                                            className={`flex-1 p-3 rounded-xl border-2 transition-all ${formData.is_active === false
-                                                ? 'border-yellow-500 bg-yellow-500/10 text-yellow-600'
-                                                : 'border-muted/20 text-muted hover:border-muted/40'
-                                                }`}
-                                        >
-                                            <div className="font-medium">Hidden (Draft)</div>
-                                            <div className="text-xs opacity-70 mt-1">Only you can see this</div>
-                                        </button>
+                                <div className="space-y-4 p-4 rounded-xl bg-gray-50/50 dark:bg-slate-800/50 border border-gray-100 dark:border-slate-700/50">
+                                    <div className="space-y-3">
+                                        <label className="text-sm font-medium text-gray-900 dark:text-gray-100">Publishing Status</label>
+                                        <div className="flex gap-3">
+                                            <button
+                                                type="button"
+                                                onClick={() => updateField('status', 'live')}
+                                                className={`flex-1 p-3 rounded-xl border-2 transition-all ${formData.status === 'live'
+                                                    ? 'border-green-500 bg-green-500/10 text-green-600 dark:text-green-400'
+                                                    : 'border-gray-200 dark:border-slate-600 text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-slate-500'
+                                                    }`}
+                                            >
+                                                <div className="font-medium flex justify-center items-center gap-2">✓ Live</div>
+                                                <div className="text-xs opacity-70 mt-1 text-center">Visible to public (if active)</div>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => updateField('status', 'draft')}
+                                                className={`flex-1 p-3 rounded-xl border-2 transition-all ${formData.status === 'draft'
+                                                    ? 'border-yellow-500 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400'
+                                                    : 'border-gray-200 dark:border-slate-600 text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-slate-500'
+                                                    }`}
+                                            >
+                                                <div className="font-medium flex justify-center items-center gap-2">Draft</div>
+                                                <div className="text-xs opacity-70 mt-1 text-center">Preview mode only</div>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-3 pt-4 border-t border-gray-100 dark:border-slate-700/50">
+                                        <label className="text-sm font-medium text-gray-900 dark:text-gray-100">Store Visibility</label>
+                                        <div className="flex gap-3">
+                                            <button
+                                                type="button"
+                                                onClick={() => updateField('is_active', true)}
+                                                className={`flex-1 p-3 rounded-xl border-2 transition-all ${formData.is_active === true
+                                                    ? 'border-sky-500 bg-sky-500/10 text-sky-600 dark:text-sky-400'
+                                                    : 'border-gray-200 dark:border-slate-600 text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-slate-500'
+                                                    }`}
+                                            >
+                                                <div className="font-medium text-center">Active (Available)</div>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => updateField('is_active', false)}
+                                                className={`flex-1 p-3 rounded-xl border-2 transition-all ${formData.is_active === false
+                                                    ? 'border-gray-500 bg-gray-500/10 text-gray-600 dark:text-gray-300'
+                                                    : 'border-gray-200 dark:border-slate-600 text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-slate-500'
+                                                    }`}
+                                            >
+                                                <div className="font-medium text-center">Inactive (Hidden)</div>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -455,11 +579,11 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
                         {/* PHOTOS */}
                         {activeSection === 'photos' && (
                             <div className="space-y-6 animate-[fadeIn_0.2s_ease-out]">
-                                <div className="relative border-2 border-dashed border-muted/30 rounded-xl p-8 flex flex-col items-center justify-center text-center hover:border-sky-500/50 transition-all cursor-pointer bg-bg/50 group">
-                                    <ImageIcon size={48} className="text-muted mb-4 group-hover:text-sky-500 transition-colors" />
-                                    <p className="font-medium text-text">Drag & drop images here</p>
-                                    <p className="text-sm text-muted mt-1">or click to browse <span className="text-[10px] font-mono bg-muted/10 px-1 rounded border border-muted/20 ml-1">Ctrl+U</span></p>
-                                    <p className="text-xs text-muted mt-3">Images are automatically optimized for fast loading</p>
+                                <div className="relative border-2 border-dashed border-gray-300 dark:border-slate-600 rounded-xl p-8 flex flex-col items-center justify-center text-center hover:border-sky-500/50 transition-all cursor-pointer bg-gray-50/50 dark:bg-slate-800/30 group">
+                                    <ImageIcon size={48} className="text-gray-400 dark:text-gray-500 mb-4 group-hover:text-sky-500 transition-colors" />
+                                    <p className="font-medium text-gray-900 dark:text-white">Drag & drop images here</p>
+                                    <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">or click to browse <span className="text-[10px] font-mono bg-gray-100 dark:bg-slate-800 px-1 rounded border border-gray-200 dark:border-slate-600 ml-1">Ctrl+U</span></p>
+                                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-3">Images are automatically optimized for fast loading</p>
                                     <input
                                         ref={fileInputRef}
                                         type="file"
@@ -479,17 +603,17 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
 
                                 {formData.images.length > 0 && (
                                     <div className="space-y-3">
-                                        <p className="text-sm font-medium text-text">Your photos ({formData.images.length})</p>
+                                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Your photos ({formData.images.length})</p>
                                         <div className="grid grid-cols-4 gap-4">
                                             {formData.images.map((img, i) => (
                                                 <div
                                                     key={i}
                                                     className={`relative group aspect-square rounded-xl overflow-hidden border-2 transition-all ${i === formData.mainImageIndex
                                                         ? 'border-sky-500 ring-2 ring-sky-500/20'
-                                                        : 'border-muted/20 hover:border-muted/40'
+                                                        : 'border-gray-200 dark:border-slate-600 hover:border-gray-300 dark:hover:border-slate-500'
                                                         }`}
                                                 >
-                                                    <img src={img} alt="" className="w-full h-full object-cover" />
+                                                    <img src={img} alt="Product screenshot" className="w-full h-full object-cover" />
 
                                                     {i === formData.mainImageIndex && (
                                                         <div className="absolute top-2 left-2 px-2 py-1 bg-sky-500 text-white text-xs font-medium rounded-md flex items-center gap-1">
@@ -520,23 +644,55 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
                                         </div>
                                     </div>
                                 )}
+
+                                {/* VIDEO UPLOAD */}
+                                <div className="border-t border-gray-100 dark:border-slate-700/50 pt-6 mt-6">
+                                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">Product Video (Optional)</p>
+                                    {!formData.videoUrl ? (
+                                        <div className="relative border-2 border-dashed border-gray-300 dark:border-slate-600 rounded-xl p-6 flex flex-col items-center justify-center text-center hover:border-sky-500/50 transition-all cursor-pointer bg-gray-50/50 dark:bg-slate-800/30 group">
+                                            <Video size={32} className="text-gray-400 dark:text-gray-500 mb-2 group-hover:text-sky-500 transition-colors" />
+                                            <p className="font-medium text-gray-900 dark:text-white text-sm">Upload a short video</p>
+                                            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Max 30 seconds</p>
+                                            <input
+                                                ref={videoInputRef}
+                                                type="file"
+                                                className="absolute inset-0 opacity-0 cursor-pointer"
+                                                accept="video/*"
+                                                onChange={handleVideoUpload}
+                                                disabled={uploading}
+                                                title="Upload Product Video"
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div className="relative aspect-video rounded-xl overflow-hidden border-2 border-gray-200 dark:border-slate-600 bg-black group max-w-sm">
+                                            <video src={formData.videoUrl} className="w-full h-full object-contain" controls />
+                                            <button
+                                                onClick={removeVideo}
+                                                className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100"
+                                                title="Remove Video"
+                                            >
+                                                <Trash size={16} />
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         )}
 
                         {/* VARIANTS */}
                         {activeSection === 'variants' && (
                             <div className="space-y-6 max-w-xl animate-[fadeIn_0.2s_ease-out]">
-                                <div className="p-4 rounded-xl bg-bg/50 border border-muted/10">
+                                <div className="p-4 rounded-xl bg-gray-50/50 dark:bg-slate-800/50 border border-gray-100 dark:border-slate-700/50">
                                     <label className="flex items-center gap-3 cursor-pointer">
                                         <input
                                             type="checkbox"
                                             checked={formData.hasVariants}
                                             onChange={(e) => updateField('hasVariants', e.target.checked)}
-                                            className="w-5 h-5 rounded border-muted/30 text-sky-500 focus:ring-sky-500"
+                                            className="w-5 h-5 rounded border-gray-300 dark:border-slate-500 text-sky-500 focus:ring-sky-500"
                                         />
                                         <div>
-                                            <span className="font-medium text-text">This product has variants</span>
-                                            <p className="text-sm text-muted">Like different sizes or colors</p>
+                                            <span className="font-medium text-gray-900 dark:text-gray-100">This product has variants</span>
+                                            <p className="text-sm text-gray-400 dark:text-gray-500">Like different sizes or colors</p>
                                         </div>
                                     </label>
                                 </div>
@@ -544,9 +700,9 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
                                 {formData.hasVariants && (
                                     <div className="space-y-4">
                                         {formData.variants.map((variant, index) => (
-                                            <div key={index} className="p-4 rounded-xl border border-muted/20 bg-bg/30 space-y-3">
+                                            <div key={index} className="p-4 rounded-xl border border-gray-200 dark:border-slate-600 bg-gray-50/30 dark:bg-slate-800/30 space-y-3">
                                                 <div className="flex items-center justify-between">
-                                                    <span className="text-sm font-medium text-text">Option {index + 1}</span>
+                                                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Option {index + 1}</span>
                                                     <button
                                                         onClick={() => removeVariant(index)}
                                                         title="Remove variant"
@@ -555,45 +711,64 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
                                                         <Trash size={16} />
                                                     </button>
                                                 </div>
-                                                <div className="grid grid-cols-2 gap-3">
-                                                    <select
-                                                        title="Variant type"
-                                                        value={variant.option}
-                                                        onChange={(e) => updateVariant(index, 'option', e.target.value)}
-                                                        className="p-2.5 rounded-lg bg-bg border border-muted/20 text-text text-sm"
-                                                    >
-                                                        <option value="Size">Size</option>
-                                                        <option value="Color">Color</option>
-                                                        <option value="Material">Material</option>
-                                                        <option value="Style">Style</option>
-                                                    </select>
-                                                    <input
-                                                        type="text"
-                                                        value={variant.value}
-                                                        onChange={(e) => updateVariant(index, 'value', e.target.value)}
-                                                        placeholder="e.g. Small, Red, Cotton"
-                                                        className="p-2.5 rounded-lg bg-bg border border-muted/20 text-text text-sm"
-                                                    />
+                                                <div className="flex gap-3">
+                                                    {formData.variantImages[variant.value] ? (
+                                                        <div className="relative w-12 h-12 rounded-lg overflow-hidden shrink-0 border border-gray-200 dark:border-slate-600 group">
+                                                            <img src={formData.variantImages[variant.value]} className="w-full h-full object-cover" alt={`${variant.value} variant view`} />
+                                                            <button onClick={() => {
+                                                                const newVariantImages = { ...formData.variantImages };
+                                                                delete newVariantImages[variant.value];
+                                                                updateField('variantImages', newVariantImages);
+                                                            }} className="absolute inset-0 bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity" title="Remove image">
+                                                                <Trash size={12} />
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="relative w-12 h-12 flex flex-col items-center justify-center border border-dashed border-gray-300 dark:border-slate-600 rounded-lg cursor-pointer hover:border-sky-500 text-gray-400 dark:text-gray-500 shrink-0 bg-gray-50/50 dark:bg-slate-800/30 overflow-hidden group">
+                                                            <ImageIcon size={16} className="group-hover:text-sky-500 transition-colors" />
+                                                            <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => handleVariantImageUpload(e, variant.value)} disabled={uploading || !variant.value} title={!variant.value ? "Enter a variant value first" : "Upload variant image"} />
+                                                        </div>
+                                                    )}
+                                                    <div className="flex-1 grid grid-cols-2 gap-3">
+                                                        <select
+                                                            title="Variant type"
+                                                            value={variant.option}
+                                                            onChange={(e) => updateVariant(index, 'option', e.target.value)}
+                                                            className="p-2.5 rounded-lg bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-600 text-gray-900 dark:text-white text-sm"
+                                                        >
+                                                            <option value="Size">Size</option>
+                                                            <option value="Color">Color</option>
+                                                            <option value="Material">Material</option>
+                                                            <option value="Style">Style</option>
+                                                        </select>
+                                                        <input
+                                                            type="text"
+                                                            value={variant.value}
+                                                            onChange={(e) => updateVariant(index, 'value', e.target.value)}
+                                                            placeholder="e.g. Small, Red, Cotton"
+                                                            className="p-2.5 rounded-lg bg-bg border border-muted/20 text-text text-sm"
+                                                        />
+                                                    </div>
                                                 </div>
                                                 <div className="grid grid-cols-2 gap-3">
                                                     <div>
-                                                        <label className="text-xs text-muted">Price (optional)</label>
+                                                        <label className="text-xs text-gray-400 dark:text-gray-500">Price (optional)</label>
                                                         <input
                                                             type="number"
                                                             value={variant.price || ''}
                                                             onChange={(e) => updateVariant(index, 'price', e.target.value ? Number(e.target.value) : undefined)}
                                                             placeholder="Override price"
-                                                            className="w-full p-2.5 rounded-lg bg-bg border border-muted/20 text-text text-sm"
+                                                            className="w-full p-2.5 rounded-lg bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-600 text-gray-900 dark:text-white text-sm"
                                                         />
                                                     </div>
                                                     <div>
-                                                        <label className="text-xs text-muted">Stock (optional)</label>
+                                                        <label className="text-xs text-gray-400 dark:text-gray-500">Stock (optional)</label>
                                                         <input
                                                             type="number"
                                                             value={variant.stock || ''}
                                                             onChange={(e) => updateVariant(index, 'stock', e.target.value ? Number(e.target.value) : undefined)}
                                                             placeholder="Variant stock"
-                                                            className="w-full p-2.5 rounded-lg bg-bg border border-muted/20 text-text text-sm"
+                                                            className="w-full p-2.5 rounded-lg bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-600 text-gray-900 dark:text-white text-sm"
                                                         />
                                                     </div>
                                                 </div>
@@ -602,7 +777,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
 
                                         <button
                                             onClick={addVariant}
-                                            className="w-full p-3 rounded-xl border-2 border-dashed border-muted/30 text-muted hover:border-sky-500/50 hover:text-sky-500 transition-all flex items-center justify-center gap-2"
+                                            className="w-full p-3 rounded-xl border-2 border-dashed border-gray-300 dark:border-slate-600 text-gray-400 dark:text-gray-500 hover:border-sky-500/50 hover:text-sky-500 transition-all flex items-center justify-center gap-2"
                                         >
                                             <Plus size={18} /> Add Variant
                                         </button>
@@ -610,7 +785,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
                                 )}
 
                                 {!formData.hasVariants && (
-                                    <div className="text-center py-8 text-muted">
+                                    <div className="text-center py-8 text-gray-400 dark:text-gray-500">
                                         <p className="text-sm">No variants needed? That's fine!</p>
                                         <p className="text-xs mt-1">Stock will be managed as a single product</p>
                                     </div>
@@ -622,16 +797,16 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
                         {activeSection === 'pricing' && (
                             <div className="space-y-6 max-w-md animate-[fadeIn_0.2s_ease-out]">
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-text">
+                                    <label className="text-sm font-medium text-gray-900 dark:text-gray-100">
                                         Selling Price <span className="text-red-500">*</span>
                                     </label>
                                     <div className="relative">
-                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted">₹</span>
+                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500">₹</span>
                                         <input
                                             type="number"
                                             value={formData.price || ''}
                                             onChange={(e) => updateField('price', Number(e.target.value))}
-                                            className={`w-full p-3 pl-8 rounded-xl bg-bg border ${errors.price ? 'border-red-500' : 'border-muted/20'} text-text text-lg font-medium focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 outline-none transition-all`}
+                                            className={`w-full p-3 pl-8 rounded-xl bg-gray-50 dark:bg-slate-800 border ${errors.price ? 'border-red-500' : 'border-gray-200 dark:border-slate-600'} text-gray-900 dark:text-white text-lg font-medium focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 outline-none transition-all`}
                                             placeholder="0"
                                         />
                                     </div>
@@ -643,18 +818,18 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-text">Discount Price</label>
+                                    <label className="text-sm font-medium text-gray-900 dark:text-gray-100">Discount Price</label>
                                     <div className="relative">
-                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted">₹</span>
+                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500">₹</span>
                                         <input
                                             type="number"
                                             value={formData.discountPrice || ''}
                                             onChange={(e) => updateField('discountPrice', e.target.value ? Number(e.target.value) : null)}
-                                            className="w-full p-3 pl-8 rounded-xl bg-bg border border-muted/20 text-text focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 outline-none transition-all"
+                                            className="w-full p-3 pl-8 rounded-xl bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-600 text-gray-900 dark:text-white focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 outline-none transition-all"
                                             placeholder="Optional - sale price"
                                         />
                                     </div>
-                                    <p className="text-xs text-muted">Leave empty if not on sale</p>
+                                    <p className="text-xs text-gray-400 dark:text-gray-500">Leave empty if not on sale</p>
                                 </div>
 
                                 {formData.sellingPrice > 0 && formData.discountPrice && formData.discountPrice < formData.sellingPrice && (
@@ -673,17 +848,17 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
                         {/* STOCK */}
                         {activeSection === 'stock' && (
                             <div className="space-y-6 max-w-md animate-[fadeIn_0.2s_ease-out]">
-                                <div className="p-4 rounded-xl bg-bg/50 border border-muted/10">
+                                <div className="p-4 rounded-xl bg-gray-50/50 dark:bg-slate-800/50 border border-gray-100 dark:border-slate-700/50">
                                     <label className="flex items-center gap-3 cursor-pointer">
                                         <input
                                             type="checkbox"
                                             checked={formData.trackStock}
                                             onChange={(e) => updateField('trackStock', e.target.checked)}
-                                            className="w-5 h-5 rounded border-muted/30 text-sky-500 focus:ring-sky-500"
+                                            className="w-5 h-5 rounded border-gray-300 dark:border-slate-500 text-sky-500 focus:ring-sky-500"
                                         />
                                         <div>
-                                            <span className="font-medium text-text">Track stock quantity</span>
-                                            <p className="text-sm text-muted">Automatically updates when orders are placed</p>
+                                            <span className="font-medium text-gray-900 dark:text-gray-100">Track stock quantity</span>
+                                            <p className="text-sm text-gray-400 dark:text-gray-500">Automatically updates when orders are placed</p>
                                         </div>
                                     </label>
                                 </div>
@@ -691,7 +866,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
                                 {formData.trackStock && (
                                     <>
                                         <div className="space-y-2">
-                                            <label htmlFor="stockQuantity" className="text-sm font-medium text-text">Available Quantity</label>
+                                            <label htmlFor="stockQuantity" className="text-sm font-medium text-gray-900 dark:text-gray-100">Available Quantity</label>
                                             <input
                                                 id="stockQuantity"
                                                 type="number"
@@ -699,12 +874,12 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
                                                 onChange={(e) => updateField('stockQuantity', Number(e.target.value))}
                                                 min="0"
                                                 placeholder="0"
-                                                className="w-full p-3 rounded-xl bg-bg border border-muted/20 text-text text-lg font-medium focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 outline-none transition-all"
+                                                className="w-full p-3 rounded-xl bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-600 text-gray-900 dark:text-white text-lg font-medium focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 outline-none transition-all"
                                             />
                                         </div>
 
                                         <div className="space-y-2">
-                                            <label htmlFor="lowStockThreshold" className="text-sm font-medium text-text">Low stock alert</label>
+                                            <label htmlFor="lowStockThreshold" className="text-sm font-medium text-gray-900 dark:text-gray-100">Low stock alert</label>
                                             <input
                                                 id="lowStockThreshold"
                                                 type="number"
@@ -712,35 +887,35 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
                                                 onChange={(e) => updateField('lowStockThreshold', Number(e.target.value))}
                                                 min="0"
                                                 placeholder="5"
-                                                className="w-full p-3 rounded-xl bg-bg border border-muted/20 text-text focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 outline-none transition-all"
+                                                className="w-full p-3 rounded-xl bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-600 text-gray-900 dark:text-white focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 outline-none transition-all"
                                             />
-                                            <p className="text-xs text-muted">You'll be notified when stock falls below this</p>
+                                            <p className="text-xs text-gray-400 dark:text-gray-500">You'll be notified when stock falls below this</p>
                                         </div>
 
                                         <div className="space-y-3">
-                                            <label className="text-sm font-medium text-text">When out of stock</label>
+                                            <label className="text-sm font-medium text-gray-900 dark:text-gray-100">When out of stock</label>
                                             <div className="space-y-2">
                                                 <button
                                                     type="button"
                                                     onClick={() => updateField('allowOutOfStockOrders', false)}
                                                     className={`w-full p-3 rounded-xl border-2 text-left transition-all ${formData.allowOutOfStockOrders === false
                                                         ? 'border-sky-500 bg-sky-500/10'
-                                                        : 'border-muted/20 hover:border-muted/40'
+                                                        : 'border-gray-200 dark:border-slate-600 hover:border-gray-300 dark:hover:border-slate-500'
                                                         }`}
                                                 >
-                                                    <div className="font-medium text-text">Hide product</div>
-                                                    <div className="text-xs text-muted mt-1">Product won't be visible to customers</div>
+                                                    <div className="font-medium text-gray-900 dark:text-gray-100">Hide product</div>
+                                                    <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">Product won't be visible to customers</div>
                                                 </button>
                                                 <button
                                                     type="button"
                                                     onClick={() => updateField('allowOutOfStockOrders', true)}
                                                     className={`w-full p-3 rounded-xl border-2 text-left transition-all ${formData.allowOutOfStockOrders === true
                                                         ? 'border-sky-500 bg-sky-500/10'
-                                                        : 'border-muted/20 hover:border-muted/40'
+                                                        : 'border-gray-200 dark:border-slate-600 hover:border-gray-300 dark:hover:border-slate-500'
                                                         }`}
                                                 >
-                                                    <div className="font-medium text-text">Allow pre-orders</div>
-                                                    <div className="text-xs text-muted mt-1">Customers can still order (shown as "Pre-order")</div>
+                                                    <div className="font-medium text-gray-900 dark:text-gray-100">Allow pre-orders</div>
+                                                    <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">Customers can still order (shown as "Pre-order")</div>
                                                 </button>
                                             </div>
                                         </div>
@@ -760,7 +935,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
                 </div>
 
                 {/* Footer */}
-                <div className="p-4 border-t border-muted/10 flex justify-between items-center bg-bg/50 rounded-b-2xl">
+                <div className="p-4 border-t border-gray-100 dark:border-slate-700/50 flex justify-between items-center bg-gray-50/50 dark:bg-slate-800/30 rounded-b-2xl">
                     <div className="flex items-center gap-2 text-sm">
                         {hasChanges && (
                             <span className="flex items-center gap-2 text-yellow-600">
@@ -777,7 +952,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
                     <div className="flex gap-3">
                         <button
                             onClick={onClose}
-                            className="px-4 py-2.5 rounded-xl border border-muted/20 text-text font-medium hover:bg-bg transition-colors"
+                            className="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-slate-600 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
                         >
                             Cancel
                         </button>

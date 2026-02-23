@@ -7,7 +7,9 @@ const BUCKET_NAME = 'products-images';
 export async function uploadProductImage(
     file: File,
     productId: string,
-    isPrimary: boolean = false
+    isPrimary: boolean = false,
+    mediaType: 'image' | 'video' = 'image',
+    variantValue?: string
 ): Promise<{ data: ProductMedia | null; error: Error | null }> {
     try {
         const fileExt = file.name.split('.').pop();
@@ -32,7 +34,7 @@ export async function uploadProductImage(
                 product_id: productId,
                 file_url: publicUrl,
                 is_primary: isPrimary,
-                sort_order: 0 // You might want to calculate this dynamically
+                sort_order: 0
             })
             .select() // important to return the object
             .single();
@@ -41,7 +43,7 @@ export async function uploadProductImage(
 
         return { data: mediaData, error: null };
     } catch (error: any) {
-        console.error('Error uploading image:', error);
+        console.error(`Error uploading ${mediaType}:`, error);
         return { data: null, error: error };
     }
 }

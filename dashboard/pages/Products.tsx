@@ -37,7 +37,7 @@ const Products: React.FC<ProductsProps> = ({ searchTerm = '' }) => {
                 .from('products')
                 .select(`
                     *,
-                    product_media ( file_url, is_primary ),
+                    product_media ( id, file_url, is_primary, sort_order ),
                     product_stock ( stock_quantity ),
                     product_variants (*)
                 `)
@@ -46,14 +46,18 @@ const Products: React.FC<ProductsProps> = ({ searchTerm = '' }) => {
             if (error) throw error;
 
             const mappedProducts = (data || []).map((p: any) => {
-                // Extract images from relation
-                const images = p.product_media?.map((m: any) => m.file_url) || [];
+                // Ensure we use the proper media objects
+                const media = p.product_media || [];
+                // Fallback for simple images string array if still used somewhere
+                const images = media.map((m: any) => m.file_url);
+
                 // Extract stock
                 const stock = p.product_stock?.[0]?.stock_quantity ?? 0;
 
                 return {
                     ...p,
                     images: images.length > 0 ? images : ['https://via.placeholder.com/150'],
+                    media: media,
                     stock_quantity: stock,
                     variants: p.product_variants || [],
                     orders: Math.floor(Math.random() * 50),
@@ -184,16 +188,30 @@ const Products: React.FC<ProductsProps> = ({ searchTerm = '' }) => {
 
             // 3. Update Variants
             if (productData.variants) {
-                // Clear existing variants to ensure sync
-                const { error: deleteError } = await supabase
-                    .from('product_variants')
-                    .delete()
-                    .eq('product_id', productId);
+                // For proper upsert, we should use 'id' if it exists. 
+                // Since this might cause issues if variant IDs are missing from client, 
+                // an alternative is to delete variants NOT in the new list, and upsert the rest.
+                // For simplicity matching the existing flow but safer:
 
-                if (deleteError) console.error('Error clearing variants:', deleteError);
+                // Get current variants to find which ones to delete
+                const currentVariantsIds = productData.variants.filter((v: any) => v.id).map((v: any) => v.id);
+
+                if (currentVariantsIds.length > 0) {
+                    await supabase
+                        .from('product_variants')
+                        .delete()
+                        .eq('product_id', productId)
+                        .not('id', 'in', `(${currentVariantsIds.join(',')})`);
+                } else {
+                    await supabase
+                        .from('product_variants')
+                        .delete()
+                        .eq('product_id', productId);
+                }
 
                 if (productData.variants.length > 0) {
-                    const variantsToInsert = productData.variants.map(v => ({
+                    const variantsToUpsert = productData.variants.map((v: any) => ({
+                        ...(v.id ? { id: v.id } : {}), // include id for upsert if we have it
                         product_id: productId,
                         variant_name: v.variant_name,
                         price_override: v.price_override,
@@ -202,9 +220,9 @@ const Products: React.FC<ProductsProps> = ({ searchTerm = '' }) => {
 
                     const { error: variantsError } = await supabase
                         .from('product_variants')
-                        .insert(variantsToInsert);
+                        .upsert(variantsToUpsert, { onConflict: 'id' });
 
-                    if (variantsError) console.error('Error inserting variants:', variantsError);
+                    if (variantsError) console.error('Error upserting variants:', variantsError);
                 }
             }
 

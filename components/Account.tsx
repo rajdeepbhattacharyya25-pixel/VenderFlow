@@ -714,7 +714,7 @@ export const Account: React.FC<AccountProps> = ({ onNavigate, showToast, onLogou
           <div className="bg-white dark:bg-surface-dark p-8 rounded-[2rem] border border-gray-100 dark:border-gray-700/50 shadow-sm transition-colors relative h-full">
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-purple-50 dark:bg-purple-900/20 text-purple-600 rounded-full flex items-center justify-center">
+                <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 rounded-full flex items-center justify-center">
                   <IconCreditCard className="w-5 h-5" />
                 </div>
                 <h3 className="font-bold font-display text-gray-900 dark:text-white text-xl">Payments</h3>
@@ -738,7 +738,7 @@ export const Account: React.FC<AccountProps> = ({ onNavigate, showToast, onLogou
                     <div>
                       <p className="text-sm font-bold text-gray-900 dark:text-white transition-colors flex items-center gap-2">
                         •••• {card.last4}
-                        {card.is_default && <span className="text-[8px] bg-purple-50 text-purple-600 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">Default</span>}
+                        {card.is_default && <span className="text-[8px] bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">Default</span>}
                       </p>
                       <p className="text-[11px] text-gray-500 dark:text-gray-400 font-medium mt-0.5">Expires {card.expiry}</p>
                     </div>

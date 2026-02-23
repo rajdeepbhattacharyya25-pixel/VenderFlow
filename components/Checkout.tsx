@@ -34,6 +34,7 @@ interface CheckoutProps {
   onNavigateCart: () => void;
   onNavigateHome: () => void;
   storeCustomer?: any;
+  isMockPreview?: boolean;
 }
 
 export const Checkout: React.FC<CheckoutProps> = ({
@@ -43,7 +44,8 @@ export const Checkout: React.FC<CheckoutProps> = ({
   onPlaceOrder,
   onNavigateCart,
   onNavigateHome,
-  storeCustomer
+  storeCustomer,
+  isMockPreview = false
 }) => {
   const [step, setStep] = useState<'checkout' | 'confirmation'>('checkout');
   const [loading, setLoading] = useState(false);
@@ -131,15 +133,18 @@ export const Checkout: React.FC<CheckoutProps> = ({
 
   const handleSubmit = async () => {
     // If no address selected and not creating new one, force selection or new
-    if (!isNewAddress && selectedAddressId === 0) {
-      setIsNewAddress(true);
-      return;
-    }
+    // Allow proceeding without validation in mock preview mode
+    if (!isMockPreview) {
+      if (!isNewAddress && selectedAddressId === 0) {
+        setIsNewAddress(true);
+        return;
+      }
 
-    if (!validate()) {
-      const firstError = document.querySelector('.error-field');
-      if (firstError) firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      return;
+      if (!validate()) {
+        const firstError = document.querySelector('.error-field');
+        if (firstError) firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
     }
 
     setLoading(true);
@@ -535,15 +540,17 @@ export const Checkout: React.FC<CheckoutProps> = ({
                   </div>
 
                   {/* Phone Verification for COD */}
-                  <PhoneVerification
-                    initialPhone={formData.phone}
-                    onPhoneChange={(phone) => setFormData(prev => ({ ...prev, phone }))}
-                    onVerifySuccess={(phone) => {
-                      setIsPhoneVerified(true);
-                      setVerifiedPhone(phone);
-                      setFormData(prev => ({ ...prev, phone })); // Sync verified phone back to form
-                    }}
-                  />
+                  {!isMockPreview && (
+                    <PhoneVerification
+                      initialPhone={formData.phone}
+                      onPhoneChange={(phone) => setFormData(prev => ({ ...prev, phone }))}
+                      onVerifySuccess={(phone) => {
+                        setIsPhoneVerified(true);
+                        setVerifiedPhone(phone);
+                        setFormData(prev => ({ ...prev, phone })); // Sync verified phone back to form
+                      }}
+                    />
+                  )}
                 </div>
               )}
             </div>
@@ -605,12 +612,12 @@ export const Checkout: React.FC<CheckoutProps> = ({
 
               <button
                 onClick={handleSubmit}
-                disabled={loading || (paymentMethod === 'cod' && !isPhoneVerified)}
+                disabled={loading || (!isMockPreview && paymentMethod === 'cod' && !isPhoneVerified)}
                 className="w-full mt-6 bg-primary text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-xl hover:bg-green-900 transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 style={{ minHeight: '48px', WebkitTapHighlightColor: 'transparent' }}
               >
                 {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <IconCheck className="w-5 h-5" />}
-                {loading ? 'Processing...' : 'Place Order'}
+                {loading ? 'Processing...' : (isMockPreview ? 'Place Mock Order' : 'Place Order')}
               </button>
 
               <p className="text-xs text-center text-gray-500 mt-4 flex items-center justify-center gap-1">

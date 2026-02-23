@@ -1,4 +1,4 @@
-import { ChartData, DonutData, Order, Product } from './types';
+import { ChartData, DonutData } from './types';
 
 export const EARNINGS_DATA: ChartData[] = [
   { name: 'Jan', value: 1100 },
@@ -25,7 +25,7 @@ export const WEEKLY_EARNINGS_DATA: ChartData[] = [
   { name: 'Sun', value: 1200 },
 ];
 
-export const TOP_PRODUCTS: Product[] = [
+export const TOP_PRODUCTS = [
   {
     id: 'p1',
     name: 'Nike Revolution 3',
@@ -55,7 +55,7 @@ export const TOP_PRODUCTS: Product[] = [
   },
 ];
 
-export const RECENT_ORDERS: Order[] = [
+export const RECENT_ORDERS = [
   { id: 'o1', productName: 'Nike Revolution 3', productImage: 'https://picsum.photos/seed/nike1/64/64', time: 'just now', price: 250 },
   { id: 'o2', productName: 'Round Neck Grey T-Shirt', productImage: 'https://picsum.photos/seed/grey/64/64', time: '2 mins ago', price: 99 },
   { id: 'o3', productName: 'Polo Multicolor T-Shirt', productImage: 'https://picsum.photos/seed/polo/64/64', time: '15 mins ago', price: 139 },
