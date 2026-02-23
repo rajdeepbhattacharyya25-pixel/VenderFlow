@@ -5,7 +5,7 @@ import {
     Shield, Palette, Database, Layout, Loader2, Image, Lock,
     Smartphone, QrCode, Download, Edit2, Trash2, CheckCircle2,
     Users, Activity, Zap, CreditCard as BillingIcon, ChevronRight,
-    Search, Bell as NotificationIcon, Truck, Plus, RefreshCw, Check, Send, AlertCircle, Info, Clock, LogOut, ExternalLink
+    Search, Bell as NotificationIcon, Truck, Plus, RefreshCw, Check, Send, AlertCircle, Info, Clock, LogOut, ExternalLink, Eye
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAutoBackup } from '../../hooks/useAutoBackup';
@@ -160,9 +160,82 @@ const Settings = () => {
     const [selectedSessions, setSelectedSessions] = useState<Set<string>>(new Set());
     const [isRevoking, setIsRevoking] = useState(false);
 
+    const [previewLoading, setPreviewLoading] = useState(false);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [activePreviews, setActivePreviews] = useState<any[]>([]);
+
+    const fetchPreviews = async () => {
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) return;
+            const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-previews/vendor`, {
+                headers: { 'Authorization': `Bearer ${session.access_token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setActivePreviews(data);
+            }
+        } catch (error) {
+            console.error('Error fetching previews', error);
+        }
+    };
+
+    const handleDeletePreview = async (id: string) => {
+        if (!confirm('Are you sure you want to delete this preview?')) return;
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) return;
+            const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-previews/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${session.access_token}` }
+            });
+            if (res.ok) {
+                fetchPreviews();
+            } else {
+                const err = await res.json();
+                alert(err.error || 'Failed to delete preview');
+            }
+        } catch (error) {
+            console.error('Error deleting preview', error);
+        }
+    };
+
+    const handleCreatePreview = async () => {
+        setPreviewLoading(true);
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) throw new Error("No active session");
+
+            const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-previews`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify({ action: 'create' })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to create preview');
+            }
+
+            const data = await response.json();
+            setPreviewUrl(`${window.location.origin}/preview/${data.preview.id}`);
+            fetchPreviews();
+        } catch (error: any) {
+            console.error('Error creating preview:', error);
+            alert(`Error creating preview: ${error.message}`);
+        } finally {
+            setPreviewLoading(false);
+        }
+    };
+
     useEffect(() => {
         if (activeTab === 'security') {
             fetchSessions();
+        } else if (activeTab === 'appearance') {
+            fetchPreviews();
         }
     }, [activeTab]);
 
@@ -978,6 +1051,77 @@ const Settings = () => {
                     <div className="bg-panel rounded-2xl p-8 border border-border shadow-sm animate-fadeIn">
                         {renderHeader('Appearance', <Palette size={20} />)}
 
+                        {/* Preview Environment Banner */}
+                        <div className="mb-8 p-6 bg-primary/5 border border-primary/20 rounded-2xl flex flex-col gap-4">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h4 className="font-bold text-sm text-primary flex items-center gap-2 mb-1">
+                                        <Eye size={16} /> Storefront Previews
+                                    </h4>
+                                    <p className="text-xs text-muted">Generate a temporary preview link to see your storefront with draft products. Max 2 active previews.</p>
+                                </div>
+                                <div className="flex flex-col items-end gap-2">
+                                    <button
+                                        onClick={handleCreatePreview}
+                                        disabled={previewLoading || activePreviews.length >= 2}
+                                        className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-xl text-sm font-bold hover:opacity-90 transition-opacity disabled:opacity-50"
+                                    >
+                                        {previewLoading ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
+                                        Generate Link
+                                    </button>
+                                </div>
+                            </div>
+
+                            {previewUrl && (
+                                <div className="bg-white dark:bg-black/50 p-3 rounded-xl border border-border flex items-center justify-between">
+                                    <span className="text-xs font-mono text-muted">{previewUrl}</span>
+                                    <a
+                                        href={previewUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-xs text-primary hover:underline flex items-center gap-1 font-bold"
+                                    >
+                                        <ExternalLink size={12} /> Open Preview Link
+                                    </a>
+                                </div>
+                            )}
+
+                            {activePreviews.length > 0 && (
+                                <div className="mt-4 space-y-2">
+                                    <h5 className="font-bold text-xs text-text uppercase tracking-wider mb-2">Active Previews</h5>
+                                    {activePreviews.map(preview => (
+                                        <div key={preview.id} className="bg-bg p-4 rounded-xl border border-border flex items-center justify-between">
+                                            <div>
+                                                <div className="text-sm font-medium text-text flex items-center gap-2">
+                                                    Preview Link
+                                                    {preview.published && <span className="bg-green-500/10 text-green-500 px-2 py-0.5 rounded text-[10px]">Published</span>}
+                                                </div>
+                                                <div className="text-xs text-muted mt-1">Expires: {new Date(preview.expires_at).toLocaleString()}</div>
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <a
+                                                    href={`/preview/${preview.id}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="p-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors"
+                                                    title="View Preview"
+                                                >
+                                                    <ExternalLink size={16} />
+                                                </a>
+                                                <button
+                                                    onClick={() => handleDeletePreview(preview.id)}
+                                                    className="p-2 bg-red-500/10 text-red-500 rounded-lg hover:bg-red-500/20 transition-colors"
+                                                    title="Delete Preview"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
                         <div className="max-w-3xl">
                             <div className="space-y-6 mb-12">
                                 <h4 className="font-bold text-lg text-text border-b border-border pb-2">Banner Configuration</h4>
@@ -996,7 +1140,7 @@ const Settings = () => {
                                     />
                                     {settings.theme_config?.hero?.image_url && (
                                         <div className="w-full h-32 rounded-lg overflow-hidden border border-border relative group">
-                                            <img src={settings.theme_config.hero.image_url} className="w-full h-full object-cover" />
+                                            <img src={settings.theme_config.hero.image_url} alt="Storefront Hero Preview" className="w-full h-full object-cover" />
                                         </div>
                                     )}
                                 </div>

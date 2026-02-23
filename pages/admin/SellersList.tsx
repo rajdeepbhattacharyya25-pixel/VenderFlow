@@ -131,7 +131,7 @@ const SellersList: React.FC = () => {
 
     const getPlanStyles = (plan: string) => {
         switch (plan) {
-            case 'enterprise': return 'bg-purple-500/10 text-purple-400 border-purple-500/20';
+            case 'enterprise': return 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20';
             case 'pro': return 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20';
             default: return 'bg-neutral-700/30 text-neutral-500 border-neutral-700/50';
         }

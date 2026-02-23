@@ -32,6 +32,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
                                     className="w-4 h-4 rounded border-muted/30 accent-chart-line cursor-pointer"
                                     checked={allSelected}
                                     onChange={(e) => onSelectAll(e.target.checked)}
+                                    aria-label="Select all products"
                                 />
                             </th>
                             <th className="p-4 text-xs font-semibold text-muted uppercase tracking-wider">Product</th>
@@ -62,6 +63,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
                                         className="w-4 h-4 rounded border-muted/30 accent-chart-line cursor-pointer"
                                         checked={selectedIds.includes(product.id)}
                                         onChange={(e) => onSelect(product.id, e.target.checked)}
+                                        aria-label={`Select ${product.name}`}
                                     />
                                 </td>
                                 <td className="p-4">
@@ -133,6 +135,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
                                 className="w-4 h-4 rounded border-muted/30 accent-chart-line cursor-pointer"
                                 checked={selectedIds.includes(product.id)}
                                 onChange={(e) => onSelect(product.id, e.target.checked)}
+                                aria-label={`Select ${product.name}`}
                             />
                         </div>
 

@@ -80,6 +80,25 @@ export const NotificationBell: React.FC = () => {
         setUnreadCount(0);
     };
 
+    const handleTestPush = async () => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            await supabase.functions.invoke('send-push', {
+                body: {
+                    record: {
+                        user_id: user.id,
+                        title: 'Test Notification',
+                        message: 'Browser notifications are working perfectly!'
+                    }
+                }
+            });
+        } catch (err) {
+            console.error('Failed to trigger test push:', err);
+        }
+    };
+
     return (
         <div className="relative">
             <button
@@ -155,8 +174,8 @@ export const NotificationBell: React.FC = () => {
                         </div>
 
                         {/* Footer - Push Opt-in */}
-                        {!isSubscribed && (
-                            <div className="p-3 bg-gray-50 dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700">
+                        <div className="p-3 bg-gray-50 dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700">
+                            {!isSubscribed ? (
                                 <button
                                     onClick={subscribeToPush}
                                     disabled={loading}
@@ -165,8 +184,21 @@ export const NotificationBell: React.FC = () => {
                                     <IconBell className="w-3 h-3" />
                                     {loading ? 'Enabling...' : 'Enable Push Notifications'}
                                 </button>
-                            </div>
-                        )}
+                            ) : (
+                                <div className="flex gap-2 w-full">
+                                    <div className="flex-1 py-2 px-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 rounded-lg text-xs font-bold flex items-center justify-center gap-2 cursor-default">
+                                        Notifications Active
+                                    </div>
+                                    <button
+                                        onClick={handleTestPush}
+                                        title="Send Test Notification"
+                                        className="px-3 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg text-xs font-bold transition-all flex items-center justify-center"
+                                    >
+                                        Test
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </>
             )}

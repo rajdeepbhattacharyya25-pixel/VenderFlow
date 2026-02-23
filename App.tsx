@@ -16,6 +16,7 @@ const AuthCallback = React.lazy(() => import('./pages/AuthCallback'));
 const StaffLogin = React.lazy(() => import('./pages/StaffLogin'));
 const Storefront = React.lazy(() => import('./pages/Storefront'));
 const SellerStorefront = React.lazy(() => import('./pages/SellerStorefront'));
+const PreviewStorefront = React.lazy(() => import('./pages/PreviewStorefront'));
 const DashboardLayout = React.lazy(() => import('./dashboard/DashboardLayout'));
 const AdminLayout = React.lazy(() => import('./pages/admin/AdminLayout'));
 const AdminDashboard = React.lazy(() => import('./pages/admin/AdminDashboard'));
@@ -75,6 +76,9 @@ function App() {
 
             {/* Seller Storefront Routes */}
             <Route path="/store/:sellerSlug/*" element={<SellerStorefront />} />
+
+            {/* Preview Environment Route */}
+            <Route path="/preview/:previewId/*" element={<PreviewStorefront />} />
 
             {/* Public Cart Page */}
             <Route path="/cart" element={<CartPage />} />

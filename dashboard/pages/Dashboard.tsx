@@ -270,6 +270,8 @@ const Dashboard: React.FC<DashboardProps> = ({ theme, onTabChange, sellerSlug })
             <html>
             <head>
                 <title>Invoice #${safeId}</title>
+                <meta name="description" content="Customer invoice document" />
+                <meta property="og:title" content="Invoice #${safeId}" />
                 <style>
                     body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 40px; max-width: 800px; mx-auto; }
                     .header { display: flex; justify-content: space-between; margin-bottom: 40px; border-bottom: 2px solid #eee; padding-bottom: 20px; }
@@ -395,7 +397,7 @@ const Dashboard: React.FC<DashboardProps> = ({ theme, onTabChange, sellerSlug })
                         onClick={() => onTabChange?.('sales')}
                         className="flex items-center gap-3 p-4 bg-luxury-card rounded-2xl border border-luxury-border/50 shadow-soft hover:shadow-glow hover:-translate-y-1 transition-all duration-300 group"
                     >
-                        <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                        <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                             <Tag size={20} />
                         </div>
                         <div className="text-left">
@@ -446,7 +448,7 @@ const Dashboard: React.FC<DashboardProps> = ({ theme, onTabChange, sellerSlug })
                         value={stats.orders}
                         suffix=" "
                         icon={ShoppingBag}
-                        color="purple"
+                        color="indigo"
                         trend="down"
                         loading={loading}
                     />

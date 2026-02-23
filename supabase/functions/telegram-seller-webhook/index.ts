@@ -102,15 +102,28 @@ async function handleStart(message: any, config: any, supabase: any) {
     const text = message.text;
 
     const parts = text.split(' ');
+
+    // Determine the Storefront URL to show in the bot
+    const siteUrl = Deno.env.get("PUBLIC_APP_URL") ?? Deno.env.get("SITE_URL") ?? "https://venderflow.vercel.app";
+    const dashboardUrl = `${siteUrl}/dashboard`;
+
+    // We provide the web app option in the welcome message anyway, it's very convenient
+    const keyboard = {
+        inline_keyboard: [
+            [{ text: "🖥️ Open Seller Dashboard", web_app: { url: dashboardUrl } }],
+            [{ text: "🌐 Open in Browser", url: dashboardUrl }]
+        ]
+    };
+
     if (parts.length > 1 && parts[1] === config.id) {
         await supabase
             .from('seller_telegram_configs')
             .update({ chat_id: chatId })
             .eq('id', config.id);
 
-        await sendMessage(config.bot_token, chatId, `✅ <b>Connected Successfully!</b>\n\nYour store <b>${config.bot_username || 'Bot'}</b> is now linked.\nTry /help to see what I can do.`);
+        await sendMessage(config.bot_token, chatId, `✅ <b>Connected Successfully!</b>\n\nYour store <b>${config.bot_username || 'Bot'}</b> is now linked.\nTry /help to see what I can do or open your dashboard below:`, keyboard);
     } else {
-        await sendMessage(config.bot_token, chatId, "👋 Welcome! Please use the 'Connect' button in your Seller Dashboard to link this chat.");
+        await sendMessage(config.bot_token, chatId, "👋 Welcome to VenderFlow Seller Bot!\n\nPlease use the 'Connect' button in your Seller Dashboard to link this chat, or open the dashboard below to manage your store.", keyboard);
     }
 }
 
@@ -337,17 +350,23 @@ async function handleLogin(chatId: number, config: any, supabase: any) {
     }
 }
 
-async function sendMessage(token: string, chatId: number, text: string) {
+async function sendMessage(token: string, chatId: number, text: string, replyMarkup: any = null) {
     try {
+        const body: any = {
+            chat_id: chatId,
+            text: text,
+            parse_mode: 'HTML', // Use HTML for robustness
+            disable_web_page_preview: true
+        };
+
+        if (replyMarkup) {
+            body.reply_markup = replyMarkup;
+        }
+
         const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                chat_id: chatId,
-                text: text,
-                parse_mode: 'HTML', // Use HTML for robustness
-                disable_web_page_preview: true
-            })
+            body: JSON.stringify(body)
         });
 
         if (!res.ok) {
@@ -356,13 +375,12 @@ async function sendMessage(token: string, chatId: number, text: string) {
 
             // Fallback: If parse error, send plain text
             if (data.error_code === 400 && (data.description.includes('parse') || data.description.includes('entities'))) {
+                body.text = "⚠️ Format Error: " + text.replace(/<[^>]*>/g, ""); // Strip tags and send plain
+                delete body.parse_mode;
                 await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        chat_id: chatId,
-                        text: "⚠️ Format Error: " + text.replace(/<[^>]*>/g, ""), // Strip tags and send plain
-                    })
+                    body: JSON.stringify(body)
                 });
             }
         }

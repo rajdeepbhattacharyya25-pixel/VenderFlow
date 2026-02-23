@@ -129,7 +129,7 @@ const Orders = () => {
         switch (status) {
             case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-800';
             case 'processing': return 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800';
-            case 'shipped': return 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-800';
+            case 'shipped': return 'bg-indigo-100 text-indigo-800 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-400 dark:border-indigo-800';
             case 'delivered': return 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800';
             case 'cancelled': return 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800';
             default: return 'bg-gray-100 text-gray-800';
@@ -263,7 +263,7 @@ const Orders = () => {
                                     {order.items.map((item, idx) => (
                                         <div key={idx} className="flex items-center gap-3 bg-gray-50 dark:bg-black/20 p-2 rounded-lg border border-gray-100 dark:border-gray-800">
                                             <div className="w-10 h-10 bg-white dark:bg-gray-700 rounded overflow-hidden border border-gray-200 dark:border-gray-600 flex-shrink-0">
-                                                <img src={item.image} alt="" className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal" />
+                                                <img src={item.image} alt={item.name} className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal" />
                                             </div>
                                             <div className="min-w-0">
                                                 <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{item.name}</p>

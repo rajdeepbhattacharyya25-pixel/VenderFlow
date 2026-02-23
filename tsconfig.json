@@ -26,5 +26,12 @@
     },
     "allowImportingTsExtensions": true,
     "noEmit": true
-  }
+  },
+  "exclude": [
+    "node_modules",
+    "supabase",
+    "dashboard/supabase",
+    "scripts",
+    "seller dashboard ui"
+  ]
 }

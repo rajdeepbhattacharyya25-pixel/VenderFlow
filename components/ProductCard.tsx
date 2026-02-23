@@ -12,6 +12,7 @@ interface ProductCardProps {
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView, isWishlisted, onToggleWishlist, onAddToCart, compact = false }) => {
+  const videoMedia = product.media?.find(m => m.media_type === 'video');
   const [activeAnimation, setActiveAnimation] = useState<'none' | 'wishlist' | 'cart'>('none');
   const timeoutRef = useRef<number | null>(null);
 
@@ -84,7 +85,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView, 
                 <div className="absolute inset-0 flex items-center justify-center">
                   <img
                     src={product.image}
-                    alt=""
+                    alt={`${product.name} zoom effect`}
                     className="w-2/3 h-2/3 object-contain animate-zoom-fade opacity-60 mix-blend-multiply dark:mix-blend-normal"
                   />
                 </div>
@@ -120,12 +121,27 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView, 
         </div>
 
         {/* Product Image */}
-        <div className={`w-full h-full ${compact ? 'p-3' : 'p-4'} cursor-pointer flex items-center justify-center overflow-hidden`} onClick={() => onQuickView(product)}>
+        <div className={`w-full h-full ${compact ? 'p-3' : 'p-4'} cursor-pointer flex items-center justify-center overflow-hidden relative`} onClick={() => onQuickView(product)}>
+          {videoMedia && (
+            <div className="absolute top-3 left-3 z-10 bg-black/40 backdrop-blur-md rounded-full p-1.5 shadow-sm opacity-80 group-hover:opacity-0 transition-opacity md:flex hidden">
+              <svg className="w-3 h-3 text-white pl-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+            </div>
+          )}
           <img
             src={product.image}
             alt={product.name}
             className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal transform group-hover:scale-105 transition-transform duration-700 ease-out will-change-transform"
           />
+          {videoMedia && (
+            <video
+              src={videoMedia.file_url}
+              className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+              autoPlay
+              muted
+              loop
+              playsInline
+            />
+          )}
         </div>
 
         {/* Bottom Hover Actions */}

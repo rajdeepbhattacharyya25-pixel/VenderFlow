@@ -1,0 +1,38 @@
+
+============================================================
+  SEO CHECKER - Search Engine Optimization Audit
+============================================================
+Project: C:\Users\ASUS\Downloads\e-commerce-landing-page
+Time: 2026-02-22 20:57:49
+------------------------------------------------------------
+Found 40 page files to analyze
+
+============================================================
+SEO ANALYSIS RESULTS
+============================================================
+
+Issue Summary:
+  [4] Missing meta description
+  [4] Missing Open Graph tags
+  [3] Image has empty alt attribute
+  [1] Missing <title> tag
+  [1] Multiple H1 tags (2)
+  [1] Image missing alt attribute
+
+Affected files (8):
+  - index.html
+  - ProductCard.tsx
+  - DashboardLayout.tsx
+  - Dashboard.tsx
+  - Orders.tsx
+  ... and 3 more
+
+{
+  "script": "seo_checker",
+  "project": "C:\\Users\\ASUS\\Downloads\\e-commerce-landing-page",
+  "files_checked": 40,
+  "files_with_issues": 8,
+  "issues_found": 14,
+  "passed": false
+}
+

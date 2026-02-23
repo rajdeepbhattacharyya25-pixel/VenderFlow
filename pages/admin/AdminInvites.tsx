@@ -256,14 +256,14 @@ const AdminInvites: React.FC = () => {
                                 onClick={() => setFormData(prev => ({ ...prev, plan }))}
                                 className={`p-4 rounded-xl border-2 transition-all ${formData.plan === plan
                                     ? plan === 'enterprise'
-                                        ? 'border-purple-500 bg-purple-500/10'
+                                        ? 'border-indigo-500 bg-indigo-500/10'
                                         : plan === 'pro'
                                             ? 'border-indigo-500 bg-indigo-500/10'
                                             : 'border-neutral-500 bg-neutral-500/10'
                                     : 'border-neutral-800 hover:border-neutral-700'
                                     }`}
                             >
-                                <p className={`font-bold capitalize ${plan === 'enterprise' ? 'text-purple-400' :
+                                <p className={`font-bold capitalize ${plan === 'enterprise' ? 'text-indigo-400' :
                                     plan === 'pro' ? 'text-indigo-400' : 'text-neutral-400'
                                     }`}>
                                     {plan}

@@ -291,7 +291,7 @@ export const SharedAccessPanel = () => {
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in">
                     <div className="bg-panel w-full max-w-sm rounded-[2rem] p-8 shadow-2xl border border-border text-center relative overflow-hidden">
                         {/* Confetti or decorative elements can go here */}
-                        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary to-purple-500" />
+                        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary to-indigo-500" />
 
                         <div className="mb-6">
                             <h3 className="text-2xl font-bold text-text mb-2">Access Granted!</h3>

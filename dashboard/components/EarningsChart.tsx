@@ -48,6 +48,7 @@ const EarningsChart: React.FC<EarningsChartProps> = ({ monthlyData, weeklyData, 
             <select
               value={timeRange}
               onChange={(e) => setTimeRange(e.target.value)}
+              aria-label="Time range filter"
               className="bg-bg text-text text-xs font-medium py-1 px-3 rounded-lg outline-none border border-muted/20 focus:border-muted cursor-pointer appearance-none pr-8"
             >
               <option>Monthly</option>
