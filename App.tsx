@@ -1,5 +1,5 @@
-import React, { Suspense } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import React, { Suspense, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 
 import SellerGuard from './components/admin/SellerGuard';
@@ -10,11 +10,12 @@ import OfflineOverlay from './components/OfflineOverlay';
 import ErrorBoundary from './components/ErrorBoundary';
 import CookieConsent from './components/CookieConsent';
 import { initTelegramApp } from './lib/telegram';
+import { capturePage } from './lib/analytics';
 
 // Lazy loaded pages for performance code-splitting
 const AuthCallback = React.lazy(() => import('./pages/AuthCallback'));
 const StaffLogin = React.lazy(() => import('./pages/StaffLogin'));
-const Storefront = React.lazy(() => import('./pages/Storefront'));
+const LandingPage = React.lazy(() => import('./pages/LandingPage'));
 const SellerStorefront = React.lazy(() => import('./pages/SellerStorefront'));
 const PreviewStorefront = React.lazy(() => import('./pages/PreviewStorefront'));
 const DashboardLayout = React.lazy(() => import('./dashboard/DashboardLayout'));
@@ -32,6 +33,28 @@ const CheckoutPage = React.lazy(() => import('./pages/CheckoutPage'));
 const OrdersPage = React.lazy(() => import('./pages/OrdersPage'));
 const AccountPage = React.lazy(() => import('./pages/AccountPage'));
 const NotFound = React.lazy(() => import('./pages/NotFound'));
+const AdminAnalytics = React.lazy(() => import('@/pages/admin/AdminAnalytics'));
+const ApplyToSell = React.lazy(() => import('./pages/ApplyToSell'));
+const SellerApplications = React.lazy(() => import('./pages/admin/SellerApplications'));
+const Onboarding = React.lazy(() => import('./pages/Onboarding'));
+
+// Legal Pages
+const TermsPage = React.lazy(() => import('./pages/legal/TermsPage'));
+const PrivacyPage = React.lazy(() => import('./pages/legal/PrivacyPage'));
+const PaymentPage = React.lazy(() => import('./pages/legal/PaymentPage'));
+const CookiePage = React.lazy(() => import('./pages/legal/CookiePage'));
+
+// Company Pages
+const AboutPage = React.lazy(() => import('./pages/AboutPage'));
+
+// Fires capturePage() on every route change (consent-gated inside capturePage)
+function RouteChangeTracker() {
+  const location = useLocation();
+  useEffect(() => {
+    capturePage();
+  }, [location.pathname]);
+  return null;
+}
 
 // Loading Fallback Component
 const PageLoader = () => (
@@ -59,6 +82,7 @@ function App() {
   return (
     <ErrorBoundary>
       <BrowserRouter>
+        <RouteChangeTracker />
         <Toaster position="top-right" />
         <OfflineOverlay />
         <CookieConsent />
@@ -71,6 +95,7 @@ function App() {
 
             {/* Protected Seller Dashboard Routes */}
             <Route element={<SellerGuard />}>
+              <Route path="/onboarding" element={<Onboarding />} />
               <Route path="/dashboard/*" element={<DashboardLayout />} />
             </Route>
 
@@ -94,6 +119,7 @@ function App() {
             <Route element={<AdminGuard />}>
               <Route path="/admin" element={<AdminLayout />}>
                 <Route index element={<AdminDashboard />} />
+                <Route path="applications" element={<SellerApplications />} />
                 <Route path="sellers" element={<SellersList />} />
                 <Route path="seller/:sellerId" element={<SellerDetail />} />
                 <Route path="products" element={<AdminProducts />} />
@@ -101,10 +127,21 @@ function App() {
                 <Route path="invites" element={<AdminInvites />} />
                 <Route path="logs" element={<AdminLogs />} />
                 <Route path="settings" element={<AdminSettings />} />
+                <Route path="analytics" element={<AdminAnalytics />} />
               </Route>
             </Route>
 
-            <Route path="/" element={<Storefront />} />
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/apply" element={<ApplyToSell />} />
+            {/* Legal Pages */}
+            <Route path="/terms" element={<TermsPage />} />
+            <Route path="/privacy-policy" element={<PrivacyPage />} />
+            <Route path="/payment-policy" element={<PaymentPage />} />
+            <Route path="/cookie-policy" element={<CookiePage />} />
+
+            {/* Company Pages */}
+            <Route path="/about" element={<AboutPage />} />
+
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { promotionsApi } from '../lib/promotions';
 import { Product } from '../types';
 import {
   IconCheck, IconMapPin, IconCreditCard, IconWallet, IconBanknote,
@@ -30,7 +31,7 @@ interface CheckoutProps {
   items: CartItem[];
   shippingFee?: number;
   freeShippingThreshold?: number;
-  onPlaceOrder: (items: CartItem[], address: any, paymentMethod: string) => Promise<boolean>;
+  onPlaceOrder: (items: CartItem[], address: any, paymentMethod: string, promotionId?: string, discountAmount?: number) => Promise<boolean>;
   onNavigateCart: () => void;
   onNavigateHome: () => void;
   storeCustomer?: any;
@@ -99,13 +100,63 @@ export const Checkout: React.FC<CheckoutProps> = ({
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Promo Code State
+  const [promoCode, setPromoCode] = useState('');
+  const [appliedPromo, setAppliedPromo] = useState<any>(null);
+  const [promoError, setPromoError] = useState('');
+  const [checkingPromo, setCheckingPromo] = useState(false);
+  const [discountAmount, setDiscountAmount] = useState(0);
+
   // Calculations
   const subtotal = items.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+  const discountedSubtotal = Math.max(0, subtotal - discountAmount);
   const shippingCost = deliveryMethod === 'express'
     ? 299
-    : (freeShippingThreshold > 0 && subtotal >= freeShippingThreshold ? 0 : shippingFee);
-  const tax = subtotal * 0.12; // 12% GST Approx
-  const total = subtotal + shippingCost + tax;
+    : (freeShippingThreshold > 0 && discountedSubtotal >= freeShippingThreshold ? 0 : shippingFee);
+  const tax = discountedSubtotal * 0.12; // 12% GST Approx
+  const total = discountedSubtotal + shippingCost + tax;
+
+  const handleApplyPromo = async () => {
+    if (!promoCode.trim()) {
+      setPromoError('Please enter a code');
+      return;
+    }
+
+    setCheckingPromo(true);
+    setPromoError('');
+
+    try {
+      const sellerId = items[0]?.product?.seller_id;
+      if (!sellerId) throw new Error('Could not identify seller');
+
+      const result = await promotionsApi.validatePromoCode(
+        promoCode,
+        sellerId,
+        subtotal,
+        storeCustomer?.email
+      );
+
+      if (result.valid && result.promo) {
+        setAppliedPromo(result.promo);
+        setDiscountAmount(result.discountAmount || 0);
+      } else {
+        setPromoError(result.error || 'Invalid code');
+        setAppliedPromo(null);
+        setDiscountAmount(0);
+      }
+    } catch (err) {
+      setPromoError('Failed to verify code');
+    } finally {
+      setCheckingPromo(false);
+    }
+  };
+
+  const removePromo = () => {
+    setAppliedPromo(null);
+    setPromoCode('');
+    setDiscountAmount(0);
+    setPromoError('');
+  };
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -168,7 +219,7 @@ export const Checkout: React.FC<CheckoutProps> = ({
     }
 
     try {
-      const success = await onPlaceOrder(items, address, paymentMethod);
+      const success = await onPlaceOrder(items, address, paymentMethod, appliedPromo?.id, discountAmount);
       if (success) {
         // Trigger WhatsApp Notification - REMOVED
         /*
@@ -592,6 +643,12 @@ export const Checkout: React.FC<CheckoutProps> = ({
                   <span>Subtotal</span>
                   <span>₹{subtotal.toFixed(2)}</span>
                 </div>
+                {appliedPromo && (
+                  <div className="flex justify-between text-green-600 dark:text-green-400 font-medium">
+                    <span>Discount ({appliedPromo.code})</span>
+                    <span>-₹{discountAmount.toFixed(2)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-gray-600 dark:text-gray-400">
                   <span>Shipping</span>
                   <span>{shippingCost === 0 ? <span className="text-green-600 font-bold">Free</span> : `₹${shippingCost.toFixed(2)}`}</span>
@@ -600,6 +657,43 @@ export const Checkout: React.FC<CheckoutProps> = ({
                   <span>Tax (12%)</span>
                   <span>₹{tax.toFixed(2)}</span>
                 </div>
+              </div>
+
+              {/* Promo Code Input */}
+              <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+                {!appliedPromo ? (
+                  <div>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={promoCode}
+                        onChange={e => setPromoCode(e.target.value.toUpperCase())}
+                        placeholder="Discount code"
+                        className="flex-1 bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-gray-600 rounded-xl px-4 py-2 text-sm outline-none focus:border-primary transition-colors uppercase"
+                      />
+                      <button
+                        onClick={handleApplyPromo}
+                        disabled={checkingPromo || !promoCode.trim()}
+                        className="bg-gray-900 dark:bg-white text-white dark:text-black px-4 py-2 rounded-xl text-sm font-bold hover:bg-gray-800 disabled:opacity-50 transition-colors"
+                      >
+                        {checkingPromo ? '...' : 'Apply'}
+                      </button>
+                    </div>
+                    {promoError && <p className="text-red-500 text-xs mt-2 font-medium">{promoError}</p>}
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between bg-green-50 dark:bg-green-900/20 px-4 py-3 rounded-xl border border-green-200 dark:border-green-800/50">
+                    <div className="flex items-center gap-2">
+                      <IconCheck className="w-4 h-4 text-green-600 dark:text-green-400" />
+                      <span className="text-sm font-bold text-green-700 dark:text-green-300">
+                        {appliedPromo.code} applied
+                      </span>
+                    </div>
+                    <button onClick={removePromo} className="text-xs text-green-700 dark:text-green-400 hover:underline font-medium">
+                      Remove
+                    </button>
+                  </div>
+                )}
               </div>
 
               <div className="flex justify-between items-center pt-4 border-t border-gray-200 dark:border-gray-600 mt-4">

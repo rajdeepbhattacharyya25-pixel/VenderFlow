@@ -782,9 +782,9 @@ const SellerStorefront = () => {
         handleNavigate('checkout');
     };
 
-    const handlePlaceOrder = async (orderedItems: { product: Product, size: string, quantity: number }[], address: any, paymentMethod: string): Promise<boolean> => {
+    const handlePlaceOrder = async (orderedItems: { product: Product, size: string, quantity: number }[], address: any, paymentMethod: string, promotionId?: string, discountAmount?: number): Promise<boolean> => {
         try {
-            console.log("Placing order...", { orderedItems, address, paymentMethod });
+            console.log("Placing order...", { orderedItems, address, paymentMethod, promotionId, discountAmount });
 
             // 1. Get User
             const { data: { user } } = await supabase.auth.getUser();
@@ -802,11 +802,12 @@ const SellerStorefront = () => {
 
             // 3. Calculate Totals
             const subtotal = orderedItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
-            const shippingFee = storeSettings?.shipping_fee || 199;
-            const freeThreshold = storeSettings?.free_shipping_threshold || 2500;
-            const shippingCost = (subtotal >= freeThreshold) ? 0 : shippingFee;
-            const tax = subtotal * (storeSettings?.tax_percentage || 0.12);
-            const total = subtotal + shippingCost + tax;
+            const discountedSubtotal = Math.max(0, subtotal - (discountAmount || 0));
+            const shippingFee = storeSettings?.shipping_fee ?? 199;
+            const freeThreshold = storeSettings?.free_shipping_threshold ?? 2500;
+            const shippingCost = (freeThreshold > 0 && discountedSubtotal >= freeThreshold) ? 0 : shippingFee;
+            const tax = discountedSubtotal * (storeSettings?.tax_percentage || 0.12);
+            const total = discountedSubtotal + shippingCost + tax;
 
             // 4. Insert Order
             const { data: order, error } = await supabase
@@ -818,6 +819,8 @@ const SellerStorefront = () => {
                     status: 'pending',
                     shipping_address: address, // Correct column
                     payment_method: paymentMethod,
+                    promotion_id: promotionId,
+                    discount_amount: discountAmount || 0,
                     items: orderedItems.map(item => ({
                         product_id: item.product.id,
                         name: item.product.name,
@@ -834,6 +837,21 @@ const SellerStorefront = () => {
                 console.error("Supabase Order Error:", error);
                 alert(`Order Error: ${error.message} - Prop: ${error.details}`);
                 return false;
+            }
+
+            // 4.1 Record Promo Usage
+            if (promotionId) {
+                const customerEmail = user.email || storeCustomer?.email || 'guest@example.com';
+                try {
+                    await supabase.from('promotion_usages').insert({
+                        promotion_id: promotionId,
+                        order_id: order.id,
+                        customer_email: customerEmail
+                    });
+                    await supabase.rpc('increment_promotion_uses', { promo_id: promotionId });
+                } catch (err) {
+                    console.error("Failed to record promo usage:", err);
+                }
             }
 
             console.log("Order placed:", order);

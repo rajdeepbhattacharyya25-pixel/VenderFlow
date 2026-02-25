@@ -268,6 +268,68 @@ export const adminDb = {
     },
 
     /**
+     * Get seller applications with pagination and filters
+     */
+    async getApplications(params: { page?: number, limit?: number, status?: string } = {}) {
+        const { page = 1, limit = 25, status } = params;
+        const offset = (page - 1) * limit;
+
+        let query = supabase
+            .from('seller_applications')
+            .select('*', { count: 'exact' });
+
+        if (status && status !== 'all') {
+            query = query.eq('status', status);
+        }
+
+        const { data, count, error } = await query
+            .order('created_at', { ascending: false })
+            .range(offset, offset + limit - 1);
+
+        if (error) {
+            console.error('Error fetching applications:', error);
+            return { applications: [], total: 0, error: error.message };
+        }
+
+        return { applications: data || [], total: count || 0 };
+    },
+
+    /**
+     * Review an application (Approve or Reject)
+     */
+    async reviewApplication(applicationId: string, action: 'approve' | 'reject') {
+        try {
+            const token = await getAuthToken();
+            if (!token) {
+                return { success: false, error: 'Not authenticated' };
+            }
+
+            const response = await fetch(`${EDGE_FUNCTIONS_URL}/review-application`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    application_id: applicationId,
+                    action: action
+                })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                return { success: false, error: result.error || `Failed to ${action} application` };
+            }
+
+            return { success: true, data: result };
+        } catch (error: any) {
+            console.error(`Error processing application ${action}:`, error);
+            return { success: false, error: error.message || 'Network error' };
+        }
+    },
+
+    /**
      * Get real-time admin statistics for dashboard
      */
     async getAdminStats() {
@@ -943,5 +1005,23 @@ export const adminDb = {
             console.error('Error marking ticket messages read:', error);
             return false;
         }
+    },
+
+    /**
+     * Creates a new seller store via Edge Function.
+     * This is the single source of truth for store creation.
+     */
+    async createSeller(details: { store_name: string; slug: string; client_request_id?: string; utm?: any }) {
+        const { data, error } = await supabase.functions.invoke('create-seller', {
+            body: details
+        });
+
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+
+        return {
+            ...data.data,
+            created: data.created
+        };
     }
 };

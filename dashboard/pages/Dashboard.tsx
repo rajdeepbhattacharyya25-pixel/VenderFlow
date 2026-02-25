@@ -31,6 +31,7 @@ const Dashboard: React.FC<DashboardProps> = ({ theme, onTabChange, sellerSlug })
     const [monthlyData, setMonthlyData] = useState(EARNINGS_DATA);
     const [weeklyData, setWeeklyData] = useState(WEEKLY_EARNINGS_DATA);
     const [toasts, setToasts] = useState<{ id: number, message: string }[]>([]);
+    const [trafficData, setTrafficData] = useState<{ visitors_7d: number, change_pct: number } | null>(null);
 
     useEffect(() => {
         fetchDashboardData();
@@ -229,6 +230,20 @@ const Dashboard: React.FC<DashboardProps> = ({ theme, onTabChange, sellerSlug })
                 } else {
                     setTopProducts([]);
                 }
+
+                // Fetch Storefront Traffic (isolated to this seller)
+                try {
+                    const { data: analyticsData, error: funcError } = await supabase.functions.invoke('seller-analytics', {
+                        body: { widgets: ['traffic'] }
+                    });
+
+                    if (analyticsData?.traffic) {
+                        setTrafficData(analyticsData.traffic);
+                    }
+                } catch (analyticsError) {
+                    console.error('Error fetching seller analytics:', analyticsError);
+                }
+
             }
         } catch (error) {
             console.error('Error fetching dashboard data:', error);
@@ -424,7 +439,7 @@ const Dashboard: React.FC<DashboardProps> = ({ theme, onTabChange, sellerSlug })
                 </div>
 
                 {/* KPI Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                     <KPICard
                         title="Total Sales"
                         value={stats.sales}
@@ -450,6 +465,15 @@ const Dashboard: React.FC<DashboardProps> = ({ theme, onTabChange, sellerSlug })
                         icon={ShoppingBag}
                         color="indigo"
                         trend="down"
+                        loading={loading}
+                    />
+                    <KPICard
+                        title="Store Traffic (7D)"
+                        value={trafficData?.visitors_7d || 0}
+                        suffix=" visits"
+                        icon={Eye}
+                        color="indigo"
+                        trend={trafficData ? (trafficData.change_pct >= 0 ? "up" : "down") : undefined}
                         loading={loading}
                     />
                 </div>

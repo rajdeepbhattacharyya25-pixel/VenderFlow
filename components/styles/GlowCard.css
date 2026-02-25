@@ -1,0 +1,14 @@
+.glow-card-container {
+    --glow-x: 0px;
+    --glow-y: 0px;
+    --glow-opacity: 0;
+    --glow-color: rgba(16, 185, 129, 0.15);
+    /* Default Emerald */
+}
+
+.glow-card-effect {
+    opacity: var(--glow-opacity);
+    background: radial-gradient(600px circle at var(--glow-x) var(--glow-y),
+            var(--glow-color),
+            transparent 40%);
+}

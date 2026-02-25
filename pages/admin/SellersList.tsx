@@ -320,7 +320,7 @@ const SellersList: React.FC = () => {
                     </button>
                     <button
                         onClick={() => navigate('/admin/invites')}
-                        className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-indigo-600/20"
+                        className="flex items-center gap-2 px-4 py-3 md:py-2 min-h-[44px] md:min-h-0 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-indigo-600/20"
                     >
                         <Plus size={18} />
                         Invite Seller
@@ -338,12 +338,12 @@ const SellersList: React.FC = () => {
                             placeholder="Search by name or slug..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full bg-neutral-950 border border-neutral-800 rounded-xl py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all"
+                            className="w-full bg-neutral-950 border border-neutral-800 rounded-xl py-3 md:py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all"
                         />
                     </div>
                     <button
                         onClick={() => setShowFilters(!showFilters)}
-                        className={`flex items-center gap-2 px-4 py-2 border rounded-xl text-sm transition-all ${showFilters || statusFilter || planFilter
+                        className={`flex items-center gap-2 px-4 py-3 md:py-2 min-h-[44px] md:min-h-0 border rounded-xl text-sm transition-all ${showFilters || statusFilter || planFilter
                             ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400'
                             : 'bg-neutral-950 border-neutral-800 text-neutral-400 hover:border-neutral-700'
                             }`}
@@ -430,7 +430,7 @@ const SellersList: React.FC = () => {
                                     <th className="p-4 w-12">
                                         <button
                                             onClick={toggleSelectAll}
-                                            className="p-1 hover:bg-neutral-700 rounded transition-colors"
+                                            className="w-11 h-11 flex items-center justify-center hover:bg-neutral-700 rounded transition-colors"
                                             title={allSelected ? "Deselect all" : "Select all"}
                                         >
                                             {allSelected ? (
@@ -478,7 +478,7 @@ const SellersList: React.FC = () => {
                                             <td className="p-4 w-12">
                                                 <button
                                                     onClick={() => toggleSelect(seller.id)}
-                                                    className="p-1 hover:bg-neutral-700 rounded transition-colors"
+                                                    className="w-11 h-11 flex items-center justify-center hover:bg-neutral-700 rounded transition-colors"
                                                     title={selectedIds.has(seller.id) ? "Deselect" : "Select"}
                                                 >
                                                     {selectedIds.has(seller.id) ? (
@@ -495,7 +495,7 @@ const SellersList: React.FC = () => {
                                                     </span>
                                                     <button
                                                         onClick={() => setMessageModalSeller(seller)}
-                                                        className="p-1.5 hover:bg-indigo-500/20 rounded-lg text-neutral-500 hover:text-indigo-400 transition-all opacity-0 group-hover:opacity-100"
+                                                        className="w-11 h-11 flex items-center justify-center hover:bg-indigo-500/20 rounded-lg text-neutral-500 hover:text-indigo-400 transition-all opacity-0 group-hover:opacity-100"
                                                         title="Send message"
                                                     >
                                                         <MessageSquare size={14} />
@@ -534,7 +534,7 @@ const SellersList: React.FC = () => {
                                                 <div className="flex items-center justify-end gap-1 md:gap-2 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                                                     <button
                                                         onClick={() => navigate(`/admin/seller/${seller.id}`)}
-                                                        className="p-2 hover:bg-neutral-700 rounded-lg text-neutral-400 hover:text-white transition-all"
+                                                        className="w-11 h-11 flex items-center justify-center hover:bg-neutral-700 rounded-lg text-neutral-400 hover:text-white transition-all"
                                                         title="View profile"
                                                     >
                                                         <Eye size={16} />
@@ -543,7 +543,7 @@ const SellersList: React.FC = () => {
                                                         href={`/store/${seller.slug}`}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
-                                                        className="p-2 hover:bg-neutral-700 rounded-lg text-neutral-400 hover:text-white transition-all"
+                                                        className="w-11 h-11 flex items-center justify-center hover:bg-neutral-700 rounded-lg text-neutral-400 hover:text-white transition-all"
                                                         title="View storefront"
                                                     >
                                                         <ExternalLink size={16} />
@@ -551,7 +551,7 @@ const SellersList: React.FC = () => {
                                                     {seller.status === 'active' ? (
                                                         <button
                                                             onClick={() => handleQuickStatusChange(seller, 'suspended')}
-                                                            className="p-2 hover:bg-red-500/10 rounded-lg text-neutral-400 hover:text-red-500 transition-all"
+                                                            className="w-11 h-11 flex items-center justify-center hover:bg-red-500/10 rounded-lg text-neutral-400 hover:text-red-500 transition-all"
                                                             title="Suspend"
                                                         >
                                                             <UserX size={16} />
@@ -559,7 +559,7 @@ const SellersList: React.FC = () => {
                                                     ) : (
                                                         <button
                                                             onClick={() => handleQuickStatusChange(seller, 'active')}
-                                                            className="p-2 hover:bg-emerald-500/10 rounded-lg text-neutral-400 hover:text-emerald-500 transition-all"
+                                                            className="w-11 h-11 flex items-center justify-center hover:bg-emerald-500/10 rounded-lg text-neutral-400 hover:text-emerald-500 transition-all"
                                                             title="Activate"
                                                         >
                                                             <UserCheck size={16} />
@@ -585,7 +585,7 @@ const SellersList: React.FC = () => {
                             <button
                                 onClick={() => setPage(p => Math.max(1, p - 1))}
                                 disabled={page === 1}
-                                className="p-2 border border-neutral-800 rounded-lg text-neutral-500 hover:bg-neutral-800 disabled:opacity-30 disabled:cursor-not-allowed"
+                                className="w-11 h-11 md:w-8 md:h-8 flex items-center justify-center border border-neutral-800 rounded-lg text-neutral-500 hover:bg-neutral-800 disabled:opacity-30 disabled:cursor-not-allowed"
                             >
                                 <ChevronLeft size={16} />
                             </button>
@@ -604,7 +604,7 @@ const SellersList: React.FC = () => {
                                     <button
                                         key={pageNum}
                                         onClick={() => setPage(pageNum)}
-                                        className={`w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-colors ${page === pageNum
+                                        className={`w-11 h-11 md:w-8 md:h-8 flex items-center justify-center rounded-lg text-sm md:text-xs font-bold transition-colors ${page === pageNum
                                             ? 'bg-indigo-600 text-white'
                                             : 'hover:bg-neutral-800 text-neutral-400'
                                             }`}
@@ -616,7 +616,7 @@ const SellersList: React.FC = () => {
                             <button
                                 onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                                 disabled={page === totalPages}
-                                className="p-2 border border-neutral-800 rounded-lg text-neutral-500 hover:bg-neutral-800 disabled:opacity-30 disabled:cursor-not-allowed"
+                                className="w-11 h-11 md:w-8 md:h-8 flex items-center justify-center border border-neutral-800 rounded-lg text-neutral-500 hover:bg-neutral-800 disabled:opacity-30 disabled:cursor-not-allowed"
                             >
                                 <ChevronRight size={16} />
                             </button>
@@ -643,7 +643,7 @@ const SellersList: React.FC = () => {
                                         setMessageSubject('');
                                         setMessageContent('');
                                     }}
-                                    className="p-2 hover:bg-neutral-800 rounded-lg text-neutral-400 hover:text-white transition-colors"
+                                    className="w-11 h-11 flex items-center justify-center hover:bg-neutral-800 rounded-lg text-neutral-400 hover:text-white transition-colors"
                                     title="Close"
                                 >
                                     <X size={20} />
@@ -679,14 +679,14 @@ const SellersList: React.FC = () => {
                                     setMessageSubject('');
                                     setMessageContent('');
                                 }}
-                                className="px-4 py-2 text-neutral-400 hover:text-white transition-colors"
+                                className="px-4 py-3 md:py-2 min-h-[44px] md:min-h-0 text-neutral-400 hover:text-white transition-colors"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={sendDirectMessage}
                                 disabled={sendingMessage || !messageSubject.trim() || !messageContent.trim()}
-                                className="flex items-center gap-2 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-medium transition-all"
+                                className="flex items-center gap-2 px-5 py-3 md:py-2 min-h-[44px] md:min-h-0 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-medium transition-all"
                             >
                                 {sendingMessage ? (
                                     <Loader2 size={16} className="animate-spin" />

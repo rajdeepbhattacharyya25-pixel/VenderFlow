@@ -8,6 +8,7 @@ import Sales from './pages/Sales';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 import Support from './pages/Support';
+import Promotions from './pages/Promotions';
 import { Theme } from './types';
 
 
@@ -181,6 +182,8 @@ function App() {
         return <Reports />;
       case 'settings':
         return <Settings />;
+      case 'promotions':
+        return <Promotions />;
       case 'support':
         return <Support />;
       default:

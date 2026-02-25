@@ -1,5 +1,6 @@
 import React from 'react';
 import { IconChevronDown } from './Icons';
+import { DarkModeToggle } from './DarkModeToggle';
 
 export const TopBar: React.FC = () => {
   return (
@@ -8,6 +9,7 @@ export const TopBar: React.FC = () => {
         <span>Free Shipping on Orders Over ₹2,500</span>
       </div>
       <div className="flex items-center gap-6">
+        <DarkModeToggle />
         <a href="mailto:support@fashionstore.com" className="hover:text-primary dark:hover:text-white transition-colors">Help Center</a>
       </div>
     </div>

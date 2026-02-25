@@ -15,7 +15,8 @@ import {
     PlusCircle,
     Menu,
     Command,
-    X
+    X,
+    TrendingUp
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
@@ -166,11 +167,13 @@ const AdminLayout: React.FC = () => {
 
     const navItems = [
         { icon: BarChart3, label: 'Dashboard', path: '/admin', shortcut: 'R D' },
+        { icon: FileText, label: 'Applications', path: '/admin/applications', shortcut: 'R E' },
         { icon: Users, label: 'Sellers', path: '/admin/sellers', shortcut: 'R S' },
         { icon: ShoppingBag, label: 'Products', path: '/admin/products', shortcut: 'R P' },
         { icon: ShoppingCart, label: 'Orders', path: '/admin/orders', shortcut: 'R O' },
         { icon: Mail, label: 'Invites', path: '/admin/invites', shortcut: 'R I' },
         { icon: FileText, label: 'Audit Logs', path: '/admin/logs', shortcut: 'R L' },
+        { icon: TrendingUp, label: 'Analytics', path: '/admin/analytics', shortcut: 'R A' },
         { icon: Settings, label: 'Settings', path: '/admin/settings' },
     ];
 
@@ -212,7 +215,7 @@ const AdminLayout: React.FC = () => {
                     {isMobile && isSidebarOpen && (
                         <button
                             onClick={closeMobileSidebar}
-                            className="p-2 text-neutral-400 hover:text-white hover:bg-neutral-800 rounded-lg transition-colors"
+                            className="w-11 h-11 flex items-center justify-center text-neutral-400 hover:text-white hover:bg-neutral-800 rounded-lg transition-colors"
                             aria-label="Close sidebar"
                             style={{ WebkitTapHighlightColor: 'transparent' }}
                         >
@@ -273,7 +276,7 @@ const AdminLayout: React.FC = () => {
                     <div className="flex items-center gap-2 md:gap-4">
                         <button
                             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                            className="p-2.5 hover:bg-neutral-800 rounded-lg transition-colors text-neutral-400 active:bg-neutral-700"
+                            className="w-11 h-11 flex items-center justify-center hover:bg-neutral-800 rounded-lg transition-colors text-neutral-400 active:bg-neutral-700"
                             title={isSidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
                             aria-label="Toggle sidebar"
                             style={{ WebkitTapHighlightColor: 'transparent' }}
@@ -294,7 +297,7 @@ const AdminLayout: React.FC = () => {
                         {/* Mobile search icon */}
                         <button
                             onClick={() => setIsCommandPaletteOpen(true)}
-                            className="md:hidden p-2.5 hover:bg-neutral-800 rounded-lg transition-colors text-neutral-400"
+                            className="md:hidden w-11 h-11 flex items-center justify-center hover:bg-neutral-800 rounded-lg transition-colors text-neutral-400"
                             aria-label="Search"
                             style={{ WebkitTapHighlightColor: 'transparent' }}
                         >
@@ -305,7 +308,7 @@ const AdminLayout: React.FC = () => {
                     <div className="flex items-center gap-2 md:gap-4">
                         <button
                             onClick={() => navigate('/admin/invites')}
-                            className="hidden md:flex p-2 border border-neutral-800 bg-indigo-600/10 text-indigo-400 rounded-lg hover:bg-indigo-600/20 transition-all items-center gap-2 text-sm font-medium px-4"
+                            className="hidden md:flex min-h-[44px] border border-neutral-800 bg-indigo-600/10 text-indigo-400 rounded-lg hover:bg-indigo-600/20 transition-all items-center gap-2 text-sm font-medium px-4"
                         >
                             <PlusCircle size={16} />
                             Invite Seller
@@ -313,7 +316,7 @@ const AdminLayout: React.FC = () => {
                         {/* Mobile: icon-only invite button */}
                         <button
                             onClick={() => navigate('/admin/invites')}
-                            className="md:hidden p-2.5 bg-indigo-600/10 text-indigo-400 rounded-lg hover:bg-indigo-600/20 transition-colors"
+                            className="md:hidden w-11 h-11 flex items-center justify-center bg-indigo-600/10 text-indigo-400 rounded-lg hover:bg-indigo-600/20 transition-colors"
                             aria-label="Invite Seller"
                             style={{ WebkitTapHighlightColor: 'transparent' }}
                         >

@@ -125,8 +125,8 @@ const PreviewStorefront = () => {
         setCurrentView('checkout');
     };
 
-    const handlePlaceOrder = async () => {
-        alert("Success! Since this is a Preview Environment, no real order was placed and no payment was processed.");
+    const handlePlaceOrder = async (orderedItems: any, address: any, paymentMethod: string, promotionId?: string, discountAmount?: number) => {
+        alert(`Success! Since this is a Preview Environment, no real order was placed. ${promotionId ? 'Promo applied!' : ''}`);
         setCartItems([]);
         setCurrentView('home');
         return true;
