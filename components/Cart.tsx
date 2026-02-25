@@ -185,14 +185,14 @@ export const Cart: React.FC<CartProps> = ({
                     <div className="flex items-center gap-2 md:gap-4 order-2 md:order-1">
                       <button
                         onClick={() => onMoveToWishlist(item.product, item.size)}
-                        className="flex items-center gap-1.5 text-xs font-bold text-gray-500 hover:text-primary dark:text-gray-400 dark:hover:text-white transition-colors py-1 px-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                        className="flex items-center gap-1.5 text-xs font-bold text-gray-500 hover:text-primary dark:text-gray-400 dark:hover:text-white transition-colors py-2 px-3 min-h-[44px] rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
                       >
                         <IconHeart className="w-4 h-4" /> <span className="hidden sm:inline">Save for Later</span>
                       </button>
                       <span className="w-px h-4 bg-gray-200 dark:bg-gray-700 hidden sm:block"></span>
                       <button
                         onClick={() => onRemove(item.product.id, item.size)}
-                        className="flex items-center gap-1.5 text-xs font-bold text-gray-500 hover:text-red-500 dark:text-gray-400 transition-colors py-1 px-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
+                        className="flex items-center gap-1.5 text-xs font-bold text-gray-500 hover:text-red-500 dark:text-gray-400 transition-colors py-2 px-3 min-h-[44px] rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
                         title="Remove item"
                         aria-label="Remove item"
                       >
@@ -204,7 +204,7 @@ export const Cart: React.FC<CartProps> = ({
                     <div className="flex items-center bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl order-1 md:order-2 ml-auto md:ml-0">
                       <button
                         onClick={() => onUpdateQuantity(item.product.id, item.size, -1)}
-                        className="w-10 h-10 md:w-8 md:h-8 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors rounded-l-xl text-lg font-medium disabled:opacity-30"
+                        className="w-11 h-11 md:w-8 md:h-8 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors rounded-l-xl text-lg font-medium disabled:opacity-30"
                         disabled={item.quantity <= 1}
                         style={{ WebkitTapHighlightColor: 'transparent' }}
                       >
@@ -213,7 +213,7 @@ export const Cart: React.FC<CartProps> = ({
                       <span className="w-10 md:w-8 text-center text-sm font-bold text-gray-900 dark:text-white">{item.quantity}</span>
                       <button
                         onClick={() => onUpdateQuantity(item.product.id, item.size, 1)}
-                        className="w-10 h-10 md:w-8 md:h-8 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors rounded-r-xl text-lg font-medium disabled:opacity-30 disabled:cursor-not-allowed"
+                        className="w-11 h-11 md:w-8 md:h-8 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors rounded-r-xl text-lg font-medium disabled:opacity-30 disabled:cursor-not-allowed"
                         disabled={isLowStock}
                         style={{ WebkitTapHighlightColor: 'transparent' }}
                       >

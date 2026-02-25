@@ -33,20 +33,30 @@ const TelegramInitializer: React.FC = () => {
 
                         if (data?.success) {
                             console.log("Telegram account linked successfully via backend verification");
-                            // Optional: Show success message if it wasn't already linked
-                            // We could store 'linked' state to avoid repeated alerts, 
-                            // but the backend is idempotent so it's fine.
                         }
                     } catch (error) {
                         console.error("Failed to link Telegram account securely:", error);
-                        // Silent fail or alert depending on UX preference. 
-                        // Since this runs in background on init, silent is usually better unless explicit action.
                     } finally {
                         setIsLinking(false);
                     }
-                } else {
-                    // Not logged in.
-                    // AuthCallback will handle the linking after login using the stored initData
+                } else if (!location.pathname.includes('/auth-callback')) {
+                    // Not logged in. Attempt auto-login via Telegram Web App!
+                    setIsLinking(true);
+                    try {
+                        const { data, error } = await supabase.functions.invoke('link-telegram', {
+                            body: { initData: tg.initData, mode: 'login' }
+                        });
+
+                        // Error here usually means account is not linked, which is fine, they just proceed as guest.
+                        if (!error && data?.success && data?.url) {
+                            console.log("Auto-login successful, redirecting...");
+                            window.location.href = data.url;
+                            return; // Do not set isLinking to false to avoid flash of unauthenticated content
+                        }
+                    } catch (err) {
+                        console.error("Auto-login via Telegram failed:", err);
+                    }
+                    setIsLinking(false);
                 }
             };
 
@@ -59,7 +69,7 @@ const TelegramInitializer: React.FC = () => {
             <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
                 <div className="bg-panel p-6 rounded-2xl shadow-xl flex flex-col items-center gap-4 border border-muted/10">
                     <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                    <p className="text-sm font-medium text-text">Linking Telegram Account...</p>
+                    <p className="text-sm font-medium text-text">Securely Authenticating...</p>
                 </div>
             </div>
         );

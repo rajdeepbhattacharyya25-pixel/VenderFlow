@@ -12,7 +12,8 @@ serve(async (req) => {
     }
 
     try {
-        const { initData } = await req.json();
+        const body = await req.json();
+        const { initData, mode } = body;
 
         if (!initData) {
             throw new Error("Missing initData");
@@ -94,6 +95,56 @@ serve(async (req) => {
         if (!userStr) throw new Error("Missing user data");
         const telegramUser = JSON.parse(userStr);
 
+        const telegramId = telegramUser.id;
+
+        // --- NEW: Login Mode ---
+        if (mode === 'login') {
+            const supabaseAdmin = createClient(
+                Deno.env.get('SUPABASE_URL') ?? '',
+                Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+            );
+
+            // Find user profile by telegram_id
+            const { data: profile, error: profileError } = await supabaseAdmin
+                .from('profiles')
+                .select('id, role')
+                .eq('telegram_id', telegramId)
+                .single();
+
+            if (profileError || !profile) {
+                throw new Error("No account linked to this Telegram ID. Please link your account first.");
+            }
+
+            // Get user email
+            const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(profile.id);
+            if (userError || !userData?.user?.email) {
+                throw new Error("Failed to find user email.");
+            }
+
+            // Generate Magic Link
+            const SITE_URL = Deno.env.get('SITE_URL') ?? 'https://venderflow.vercel.app';
+            let redirectPath = '/dashboard';
+            if (profile.role === 'admin') redirectPath = '/admin';
+
+            const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+                type: 'magiclink',
+                email: userData.user.email,
+                options: {
+                    redirectTo: `${SITE_URL}${redirectPath}`
+                }
+            });
+
+            if (linkError || !linkData?.properties?.action_link) {
+                throw new Error("Failed to generate login link.");
+            }
+
+            return new Response(JSON.stringify({ success: true, url: linkData.properties.action_link }), {
+                headers: { ...corsHeaders, "Content-Type": "application/json" },
+                status: 200,
+            });
+        }
+        // ------------------------
+
         // 2. Helper Authentication (User must be logged in to Supabase to link)
         const supabaseClient = createClient(
             Deno.env.get('SUPABASE_URL') ?? '',
@@ -123,7 +174,7 @@ serve(async (req) => {
             status: 200,
         });
 
-    } catch (error) {
+    } catch (error: any) {
         console.error("Link Telegram Error:", error);
         return new Response(JSON.stringify({ error: error.message }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -7,7 +7,8 @@ import { Footer } from '../components/Footer';
 import { ContactUsModal } from '../components/ContactUsModal';
 import { MagneticButton } from '../components/MagneticButton';
 import { GlowCard } from '../components/GlowCard';
-import { Star, CreditCard, LayoutTemplate, PlayCircle, Store, ShoppingBag, ShieldCheck, Zap, ArrowRight, CheckCircle2, ChevronRight } from 'lucide-react';
+import { FAQ } from '../components/FAQ';
+import { Star, CreditCard, LayoutTemplate, PlayCircle, Store, ShoppingBag, ShieldCheck, Zap, ArrowRight, CheckCircle2, ChevronRight, Sun, Moon } from 'lucide-react';
 import { Events } from '../lib/analytics';
 import { capturePage } from '../lib/analytics';
 import { motion, useScroll, useTransform } from 'framer-motion';
@@ -19,7 +20,7 @@ export default function LandingPage() {
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
     const [isContactModalOpen, setIsContactModalOpen] = useState(false);
 
-    const { resolvedTheme } = useTheme();
+    const { resolvedTheme, setTheme } = useTheme();
     const scrollSentinelRef = useRef<HTMLDivElement>(null);
 
     // Track landing_scrolled_50pct via IntersectionObserver
@@ -95,27 +96,37 @@ export default function LandingPage() {
             {/* Minimal SaaS Header */}
             <header className="sticky top-0 z-50 bg-slate-50/90 dark:bg-neutral-900/90 backdrop-blur-md border-b border-gray-200 dark:border-neutral-800 transition-all">
                 <div className="max-w-[1600px] mx-auto px-4 md:px-8 h-16 md:h-20 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <img src="/logo.jpg" alt="VenderFlow" className="h-8 md:h-10 w-auto rounded-lg" fetchPriority="high" />
-                        <span className="text-xl md:text-2xl font-bold font-display text-emerald-700 dark:text-emerald-500 tracking-tight">
+                    <div className="flex items-center gap-2 min-w-[100px] sm:min-w-0">
+                        <img src="/logo.jpg" alt="VenderFlow" className="h-8 md:h-10 w-auto rounded-lg shrink-0" fetchPriority="high" />
+                        <span className="text-lg sm:text-xl md:text-2xl font-bold font-display text-emerald-700 dark:text-emerald-500 tracking-tight truncate">
                             VenderFlow
                         </span>
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+                        {/* Theme Toggle */}
+                        <button
+                            onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+                            className="p-2 sm:p-2.5 text-gray-500 hover:text-emerald-600 dark:text-gray-400 dark:hover:text-emerald-400 transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-neutral-800"
+                            aria-label="Toggle dark mode"
+                        >
+                            {resolvedTheme === 'dark' ? <Sun className="w-4 h-4 sm:w-5 sm:h-5" /> : <Moon className="w-4 h-4 sm:w-5 sm:h-5" />}
+                        </button>
+
                         <button
                             onClick={handleLogin}
-                            className="hidden md:block px-4 py-3 md:py-2 text-sm font-semibold text-gray-600 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                            className="px-2 sm:px-4 py-3 md:py-2 text-[13px] sm:text-sm font-semibold text-gray-600 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
                         >
-                            {user ? 'Go to Dashboard' : 'Seller Login'}
+                            <span className="hidden sm:inline">{user ? 'Go to Dashboard' : 'Seller Login'}</span>
+                            <span className="sm:hidden">{user ? 'Dashboard' : 'Login'}</span>
                         </button>
                         <button
                             onClick={handleApplyToSell}
-                            className="px-5 py-3 md:py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm shadow-sm hover:shadow-md transition-all active:scale-95 flex items-center gap-2"
+                            className="px-3 sm:px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-[13px] sm:text-sm shadow-sm hover:shadow-md transition-all active:scale-95 flex items-center gap-1.5 sm:gap-2"
                         >
                             <span className="hidden sm:inline">Apply to Sell</span>
                             <span className="sm:hidden">Apply</span>
-                            <ArrowRight className="w-4 h-4" />
+                            <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                         </button>
                     </div>
                 </div>
@@ -123,7 +134,7 @@ export default function LandingPage() {
 
             <main className="flex-grow">
                 {/* Hero Section */}
-                <section className="relative pt-16 pb-12 overflow-hidden bg-[#fafafa] dark:bg-neutral-900">
+                <section className="relative pt-10 md:pt-16 pb-6 md:pb-12 overflow-hidden bg-[#fafafa] dark:bg-neutral-900">
                     <motion.div
                         style={{ y: heroY, opacity: heroOpacity }}
                         className="max-w-[1000px] mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center"
@@ -208,7 +219,7 @@ export default function LandingPage() {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ duration: 1, delay: 1 }}
-                            className="mt-16 flex flex-col items-center justify-center pb-8 border-b-0 border-gray-200 dark:border-neutral-800 w-full relative"
+                            className="mt-10 md:mt-16 flex flex-col items-center justify-center pb-6 md:pb-8 border-b-0 border-gray-200 dark:border-neutral-800 w-full relative"
                         >
                             <span className="text-[10px] uppercase font-bold tracking-widest text-gray-400 dark:text-gray-500 mb-2">See how it works below</span>
                             <ArrowRight className="w-4 h-4 rotate-90 text-gray-400 dark:text-gray-500 animate-bounce" />
@@ -216,14 +227,14 @@ export default function LandingPage() {
                     </motion.div>
                 </section>
 
-                <section className="py-12 bg-white dark:bg-neutral-950 border-y border-gray-100 dark:border-neutral-800 overflow-hidden">
+                <section className="py-8 md:py-12 bg-white dark:bg-neutral-950 border-y border-gray-100 dark:border-neutral-800 overflow-hidden">
                     <div className="max-w-[1000px] mx-auto px-4 sm:px-6 lg:px-8">
                         <motion.div
                             variants={staggerContainer}
                             initial="hidden"
                             whileInView="visible"
                             viewport={{ once: false, margin: "-50px" }}
-                            className="flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16 divide-y md:divide-y-0 md:divide-x divide-gray-200 dark:divide-neutral-800 w-full text-center md:text-left"
+                            className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-16 divide-y md:divide-y-0 md:divide-x divide-gray-200 dark:divide-neutral-800 w-full text-center md:text-left"
                         >
                             {/* Trust Markers */}
                             <motion.div variants={fadeUpVariant} className="flex items-center justify-center md:justify-start gap-4 py-6 md:py-0 w-full md:w-auto">
@@ -256,7 +267,7 @@ export default function LandingPage() {
                 <div ref={scrollSentinelRef} aria-hidden="true" />
 
                 {/* Hero Visual / Demo Section */}
-                <section className="py-16 bg-[#fafafa] dark:bg-neutral-900 relative overflow-hidden" ref={browserRef}>
+                <section className="py-10 md:py-16 bg-[#fafafa] dark:bg-neutral-900 relative overflow-hidden" ref={browserRef}>
                     <div className="max-w-[1000px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                         {/* Background blurry glow */}
                         <motion.div
@@ -315,17 +326,17 @@ export default function LandingPage() {
                 </section>
 
                 {/* Who this is for Section */}
-                <section className="py-20 md:py-28 bg-[#fafafa] dark:bg-neutral-900 border-t border-gray-100 overflow-hidden">
+                <section className="py-14 md:py-28 bg-[#fafafa] dark:bg-neutral-900 border-t border-gray-100 overflow-hidden">
                     <div className="max-w-[1000px] mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="grid md:grid-cols-2 gap-12 items-center">
+                        <div className="grid md:grid-cols-2 gap-10 md:gap-12 items-center">
                             <motion.div
                                 initial={{ opacity: 0, x: -30 }}
                                 whileInView={{ opacity: 1, x: 0 }}
                                 viewport={{ once: false, margin: "-100px" }}
                                 transition={{ duration: 0.6 }}
                             >
-                                <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white font-display mb-6 tracking-tight">Is VenderFlow right for <br /><span className="italic text-emerald-500 font-light">your business?</span></h2>
-                                <p className="text-gray-500 dark:text-gray-400 mb-8 max-w-[400px] leading-relaxed">We are not a hobbyist platform. We restrict access to ambitious businesses serious about growth, brand integrity, and customer experience.</p>
+                                <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white font-display mb-4 md:mb-6 tracking-tight">Is VenderFlow right for <br /><span className="italic text-emerald-500 font-light">your business?</span></h2>
+                                <p className="text-gray-500 dark:text-gray-400 mb-6 md:mb-8 max-w-[400px] leading-relaxed">We are not a hobbyist platform. We restrict access to ambitious businesses serious about growth, brand integrity, and customer experience.</p>
                                 <motion.ul
                                     variants={staggerContainer}
                                     initial="hidden"
@@ -378,17 +389,17 @@ export default function LandingPage() {
                 </section>
 
                 {/* 3-Step How It Works Section */}
-                <section className="py-20 md:py-28 bg-[#fafafa] dark:bg-neutral-900">
+                <section className="py-14 md:py-28 bg-[#fafafa] dark:bg-neutral-900">
                     <div className="max-w-[1000px] mx-auto px-4 sm:px-6 lg:px-8">
                         <motion.div
                             initial={{ opacity: 0, y: 30 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: false, margin: "-100px" }}
                             transition={{ duration: 0.6 }}
-                            className="text-center mb-20"
+                            className="text-center mb-12 md:mb-20"
                         >
                             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white font-display">How it works</h2>
-                            <p className="mt-4 text-[15px] text-gray-500 dark:text-gray-400 max-w-lg mx-auto leading-relaxed">Our onboarding process is designed to filter for quality and set you up for success from day one.</p>
+                            <p className="mt-3 md:mt-4 text-[15px] text-gray-500 dark:text-gray-400 max-w-lg mx-auto leading-relaxed">Our onboarding process is designed to filter for quality and set you up for success from day one.</p>
                         </motion.div>
 
                         <div className="relative">
@@ -402,7 +413,7 @@ export default function LandingPage() {
                                 initial="hidden"
                                 whileInView="visible"
                                 viewport={{ once: false, margin: "-50px" }}
-                                className="grid md:grid-cols-3 gap-12 text-center relative z-10 w-full"
+                                className="grid md:grid-cols-3 gap-8 md:gap-12 text-center relative z-10 w-full"
                             >
                                 {/* Step 1 */}
                                 <motion.div variants={fadeUpVariant} className="flex flex-col items-center">
@@ -439,17 +450,17 @@ export default function LandingPage() {
                 </section>
 
                 {/* What You Get Section */}
-                <section className="py-24 bg-white dark:bg-neutral-950">
+                <section className="py-16 md:py-24 bg-white dark:bg-neutral-950">
                     <div className="max-w-[1000px] mx-auto px-4 sm:px-6 lg:px-8">
                         <motion.div
                             initial={{ opacity: 0, y: 30 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: false, margin: "-100px" }}
                             transition={{ duration: 0.6 }}
-                            className="text-center mb-16"
+                            className="text-center mb-10 md:mb-16"
                         >
                             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white font-display">Complete Commerce Ecosystem</h2>
-                            <p className="mt-4 text-[15px] text-gray-500 dark:text-gray-400 max-w-lg mx-auto leading-relaxed">Everything you need to run an online business without the technical headache. We handle the complexity, you handle the product.</p>
+                            <p className="mt-3 md:mt-4 text-[15px] text-gray-500 dark:text-gray-400 max-w-lg mx-auto leading-relaxed">Everything you need to run an online business without the technical headache. We handle the complexity, you handle the product.</p>
                         </motion.div>
 
                         <motion.div
@@ -522,8 +533,11 @@ export default function LandingPage() {
                     </div>
                 </section>
 
+                {/* FAQ Section */}
+                <FAQ />
+
                 {/* Final CTA Section */}
-                <section className="py-24 relative overflow-hidden bg-[#1a202c] border-t border-[#2d3748]">
+                <section className="py-16 md:py-24 relative overflow-hidden bg-[#1a202c] border-t border-[#2d3748]">
                     <motion.div
                         initial={{ opacity: 0, y: 30 }}
                         whileInView={{ opacity: 1, y: 0 }}
@@ -531,8 +545,8 @@ export default function LandingPage() {
                         transition={{ duration: 0.8 }}
                         className="max-w-[800px] mx-auto px-4 sm:px-6 lg:px-8 text-center text-white"
                     >
-                        <h2 className="text-4xl md:text-5xl font-bold font-display mb-6 tracking-tight">Ready to upgrade your infrastructure?</h2>
-                        <p className="text-[17px] text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed">
+                        <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold font-display mb-4 md:mb-6 tracking-tight">Ready to upgrade your infrastructure?</h2>
+                        <p className="text-[15px] sm:text-[17px] text-gray-400 mb-8 md:mb-10 max-w-2xl mx-auto leading-relaxed">
                             Stop fighting with plugins and piece-meal solutions. Build on a platform designed for volume.
                         </p>
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">

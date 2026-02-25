@@ -99,7 +99,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             {/* Search button */}
             <button
               onClick={() => setIsSearchOpen(true)}
-              className="w-10 h-10 flex items-center justify-center rounded-xl text-gray-600 dark:text-gray-300 active:bg-gray-100 dark:active:bg-neutral-800 transition-colors"
+              className="w-11 h-11 flex items-center justify-center rounded-xl text-gray-600 dark:text-gray-300 active:bg-gray-100 dark:active:bg-neutral-800 transition-colors"
               aria-label="Search"
               style={{ WebkitTapHighlightColor: 'transparent' }}
             >
@@ -109,7 +109,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             {/* Dark mode */}
             <button
               onClick={toggleDarkMode}
-              className="w-10 h-10 flex items-center justify-center rounded-xl text-gray-600 dark:text-gray-300 active:bg-gray-100 dark:active:bg-neutral-800 transition-colors"
+              className="w-11 h-11 flex items-center justify-center rounded-xl text-gray-600 dark:text-gray-300 active:bg-gray-100 dark:active:bg-neutral-800 transition-colors"
               aria-label="Toggle theme"
               title="Toggle theme"
               style={{ WebkitTapHighlightColor: 'transparent' }}
@@ -132,7 +132,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           >
             <button
               onClick={() => setIsSearchOpen(false)}
-              className="w-10 h-10 flex items-center justify-center rounded-xl text-gray-600 dark:text-gray-300 active:bg-gray-100 dark:active:bg-neutral-800 flex-shrink-0"
+              className="w-11 h-11 flex items-center justify-center rounded-xl text-gray-600 dark:text-gray-300 active:bg-gray-100 dark:active:bg-neutral-800 flex-shrink-0"
               style={{ WebkitTapHighlightColor: 'transparent' }}
               title="Close search"
               aria-label="Close search"
