@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { adminDb } from '../lib/admin-api';
+import { Events } from '../lib/analytics';
 // import { createStoreSession } from '../lib/storeAuth'; // Removed
 
 import { Loader2 } from 'lucide-react';
@@ -158,6 +160,60 @@ const AuthCallback = () => {
                         }
                     }
 
+                    // Check if seller record exists, if not create it (Store Creation Point)
+                    // This applies if the mode was 'seller' or if we want to ensure every seller profile has a store
+                    if (currentProfile?.role === 'seller') {
+                        addLog('Checking for seller record...');
+                        const { data: seller } = await supabase
+                            .from('sellers')
+                            .select('id, slug, status')
+                            .eq('id', user.id)
+                            .maybeSingle();
+
+                        if (!seller) {
+                            addLog('Seller record missing. Creating store...');
+                            try {
+                                setStatus('Creating your store...');
+
+                                // Idempotency: Use or generate client_request_id
+                                let clientRequestId = sessionStorage.getItem('seller_creation_request_id');
+                                if (!clientRequestId) {
+                                    clientRequestId = crypto.randomUUID();
+                                    sessionStorage.setItem('seller_creation_request_id', clientRequestId);
+                                }
+
+                                const storeName = sessionStorage.getItem('pending_store_name') || `${user.email?.split('@')[0]}'s Store`;
+                                const storeSlug = sessionStorage.getItem('pending_store_slug') || user.email?.split('@')[0]?.toLowerCase().replace(/[^a-z0-9]/g, '') || `store-${Math.floor(Math.random() * 1000)}`;
+
+                                const result = await adminDb.createSeller({
+                                    store_name: storeName,
+                                    slug: storeSlug,
+                                    client_request_id: clientRequestId,
+                                    utm: JSON.parse(sessionStorage.getItem('utm_params') || '{}')
+                                });
+
+                                addLog(result.created ? 'Store created successfully' : 'Store already exists');
+
+                                // Only trigger local analytics if not already fired by server
+                                // (Server fires it if created is true)
+                                if (!result.created) {
+                                    Events.storeCreated({
+                                        vendor_id: result.id,
+                                        slug: result.slug
+                                    });
+                                }
+
+                                sessionStorage.removeItem('pending_store_name');
+                                sessionStorage.removeItem('pending_store_slug');
+                                sessionStorage.removeItem('seller_creation_request_id');
+                                sessionStorage.removeItem('utm_params');
+                            } catch (createError: any) {
+                                console.error('Failed to create store:', createError);
+                                addLog(`Store creation error: ${createError.message}`);
+                            }
+                        }
+                    }
+
                     // Log the session for OAuth logins
                     try {
                         const { data: sessionData } = await supabase.functions.invoke('log-session', {
@@ -195,11 +251,23 @@ const AuthCallback = () => {
                     const storedRedirect = sessionStorage.getItem('auth_redirect');
                     const authType = sessionStorage.getItem('auth_type');
 
-                    // Determine redirect path
                     let redirectPath = '/';
 
                     if (currentProfile?.role === 'seller') {
-                        redirectPath = '/dashboard';
+                        // We need to access the seller record we fetched earlier
+                        // Since `seller` was scoped inside an if block, let's re-fetch just the status to be safe,
+                        // or better yet, we can execute another quick query here since the role is confirmed.
+                        const { data: routeSeller } = await supabase
+                            .from('sellers')
+                            .select('status')
+                            .eq('id', user.id)
+                            .maybeSingle();
+
+                        if (routeSeller?.status === 'onboarding') {
+                            redirectPath = '/onboarding';
+                        } else {
+                            redirectPath = '/dashboard';
+                        }
                     } else if (currentProfile?.role === 'admin') {
                         redirectPath = '/admin';
                     } else if (authType === 'store_customer') {

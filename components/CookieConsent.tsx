@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Cookie } from 'lucide-react';
+import { initPostHog, track, optOut } from '../lib/analytics';
 
 export default function CookieConsent() {
     const [isVisible, setIsVisible] = useState(false);
@@ -20,6 +21,13 @@ export default function CookieConsent() {
                 const parsed = JSON.parse(consent);
                 setAnalytics(parsed.analytics || false);
                 setMarketing(parsed.marketing || false);
+                // Re-initialize PostHog for returning visitors who already consented
+                if (parsed.analytics && import.meta.env.VITE_POSTHOG_API_KEY) {
+                    initPostHog(
+                        import.meta.env.VITE_POSTHOG_API_KEY,
+                        import.meta.env.VITE_POSTHOG_HOST
+                    );
+                }
             } catch (e) {
                 setIsVisible(true);
             }
@@ -27,24 +35,41 @@ export default function CookieConsent() {
     }, []);
 
     const handleAcceptAll = () => {
-        const consent = { necessary: true, analytics: true, marketing: true, timestamp: new Date().toISOString() };
+        const consent = { necessary: true, analytics: true, marketing: true, timestamp: new Date().toISOString(), version: '1.0' };
         localStorage.setItem('cookie_consent', JSON.stringify(consent));
         setIsVisible(false);
-        // Here you would initialize Google Analytics, Meta Pixel, etc.
+        // Initialize PostHog after consent
+        if (import.meta.env.VITE_POSTHOG_API_KEY) {
+            initPostHog(
+                import.meta.env.VITE_POSTHOG_API_KEY,
+                import.meta.env.VITE_POSTHOG_HOST
+            );
+            track('analytics_consent_given', { method: 'accept_all', version: '1.0' });
+        }
     };
 
     const handleRejectAll = () => {
         // Only necessary cookies are allowed
-        const consent = { necessary: true, analytics: false, marketing: false, timestamp: new Date().toISOString() };
+        const consent = { necessary: true, analytics: false, marketing: false, timestamp: new Date().toISOString(), version: '1.0' };
         localStorage.setItem('cookie_consent', JSON.stringify(consent));
         setIsVisible(false);
+        optOut();
     };
 
     const handleSavePreferences = () => {
-        const consent = { necessary: true, analytics, marketing, timestamp: new Date().toISOString() };
+        const consent = { necessary: true, analytics, marketing, timestamp: new Date().toISOString(), version: '1.0' };
         localStorage.setItem('cookie_consent', JSON.stringify(consent));
         setIsVisible(false);
         setShowPreferences(false);
+        if (analytics && import.meta.env.VITE_POSTHOG_API_KEY) {
+            initPostHog(
+                import.meta.env.VITE_POSTHOG_API_KEY,
+                import.meta.env.VITE_POSTHOG_HOST
+            );
+            track('analytics_consent_given', { method: 'custom', version: '1.0' });
+        } else {
+            optOut();
+        }
     };
 
     if (!isVisible) return null;

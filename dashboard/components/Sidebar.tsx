@@ -8,7 +8,8 @@ import {
   Settings,
   LogOut,
   Zap,
-  MessageSquare
+  MessageSquare,
+  Ticket
 } from 'lucide-react';
 import { signOut } from '../../lib/auth';
 import { useNavigate } from 'react-router-dom';
@@ -32,6 +33,7 @@ const MENU_ITEMS = [
   { id: 'products', label: 'Products', icon: ShoppingBag },
   { id: 'orders', label: 'Orders', icon: ShoppingCart },
   { id: 'sales', label: 'Sales', icon: Tag },
+  { id: 'promotions', label: 'Promotions', icon: Ticket },
   { id: 'reports', label: 'Reports', icon: PieChart },
   { id: 'settings', label: 'Settings', icon: Settings },
   { id: 'support', label: 'Support', icon: MessageSquare },

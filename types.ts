@@ -64,6 +64,22 @@ export interface Order {
   }>;
   shipping_address: Address;
   payment_method: string;
+  promotion_id?: string;
+  discount_amount?: number;
+  created_at: string;
+}
+
+export interface Promotion {
+  id: string;
+  seller_id: string;
+  code: string;
+  type: 'percentage' | 'fixed';
+  value: number;
+  min_order_amount?: number;
+  max_uses?: number;
+  current_uses: number;
+  expires_at?: string;
+  is_active: boolean;
   created_at: string;
 }
 

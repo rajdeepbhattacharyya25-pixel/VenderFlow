@@ -99,7 +99,7 @@ const CheckoutPage = () => {
         setToasts(prev => prev.filter(t => t.id !== id));
     };
 
-    const handlePlaceOrder = async (orderedItems: CartItem[], address: any, paymentMethod: string): Promise<boolean> => {
+    const handlePlaceOrder = async (orderedItems: CartItem[], address: any, paymentMethod: string, promotionId?: string, discountAmount?: number): Promise<boolean> => {
         try {
             const { data: { user } } = await supabase.auth.getUser();
 
@@ -123,12 +123,13 @@ const CheckoutPage = () => {
 
             // Calculate total
             const subtotal = orderedItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
-            const shippingCost = (subtotal >= 2500) ? 0 : 199; // Simple logic mirroring checkout for now
-            const tax = subtotal * 0.12;
-            const total = subtotal + shippingCost + tax;
+            const discountedSubtotal = Math.max(0, subtotal - (discountAmount || 0));
+            const shippingCost = (discountedSubtotal >= 2500) ? 0 : 199; // Simple logic mirroring checkout for now
+            const tax = discountedSubtotal * 0.12;
+            const total = discountedSubtotal + shippingCost + tax;
 
             // Create order in Supabase
-            const { error } = await supabase
+            const { data: order, error } = await supabase
                 .from('orders')
                 .insert({
                     seller_id: seller.id,
@@ -140,6 +141,8 @@ const CheckoutPage = () => {
                         email: user.email // Ensure email is captured from Auth
                     },
                     payment_method: paymentMethod,
+                    promotion_id: promotionId,
+                    discount_amount: discountAmount || 0,
                     items: orderedItems.map(item => ({
                         product_id: item.product.id,
                         name: item.product.name,
@@ -148,13 +151,30 @@ const CheckoutPage = () => {
                         quantity: item.quantity,
                         image: item.product.image,
                     })),
-                });
+                })
+                .select()
+                .single();
 
             if (error) {
                 console.error('Order error details:', error);
                 alert(`Supabase Error: ${error.message} (Code: ${error.code})`);
                 showToast(`Failed to place order: ${error.message}`);
                 return false;
+            }
+
+            // Record Promo Usage
+            if (promotionId && order) {
+                const customerEmail = user.email || 'guest@example.com';
+                try {
+                    await supabase.from('promotion_usages').insert({
+                        promotion_id: promotionId,
+                        order_id: order.id,
+                        customer_email: customerEmail
+                    });
+                    await supabase.rpc('increment_promotion_uses', { promo_id: promotionId });
+                } catch (err) {
+                    console.error("Failed to record promo usage:", err);
+                }
             }
 
             // Clear cart

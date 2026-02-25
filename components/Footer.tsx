@@ -1,15 +1,15 @@
 import React from 'react';
-import { IconFacebook, IconInstagram, IconEmail, IconCreditCard } from './Icons';
+import { IconInstagram, IconTwitter, IconLinkedin, IconCreditCard } from './Icons';
 
 interface FooterProps {
-  onLinkClick: (section: 'shop' | 'support' | 'legal', key: string) => void;
+  onLinkClick: (section: 'shop' | 'company' | 'legal', key: string) => void;
   branding?: {
     storeName: string;
     description: string;
     socials?: {
       instagram?: string;
-      facebook?: string;
       twitter?: string;
+      linkedin?: string;
     };
   };
   categories?: string[];
@@ -30,9 +30,14 @@ export const Footer: React.FC<FooterProps> = ({ onLinkClick, branding, categorie
             {description}
           </p>
           <div className="flex gap-4">
-            {branding?.socials?.facebook && (
-              <a href={branding.socials.facebook} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white transition-all hover:scale-110 shadow-sm hover:shadow-white/10" title="Facebook">
-                <IconFacebook className="w-4 h-4" />
+            {branding?.socials?.twitter && (
+              <a href={branding.socials.twitter} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white transition-all hover:scale-110 shadow-sm hover:shadow-white/10" title="Twitter/X">
+                <IconTwitter className="w-4 h-4" />
+              </a>
+            )}
+            {branding?.socials?.linkedin && (
+              <a href={branding.socials.linkedin} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white transition-all hover:scale-110 shadow-sm hover:shadow-white/10" title="LinkedIn">
+                <IconLinkedin className="w-4 h-4" />
               </a>
             )}
             {branding?.socials?.instagram && (
@@ -40,44 +45,31 @@ export const Footer: React.FC<FooterProps> = ({ onLinkClick, branding, categorie
                 <IconInstagram className="w-4 h-4" />
               </a>
             )}
-            <button className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white transition-all hover:scale-110 shadow-sm hover:shadow-white/10" title="Email">
-              <IconEmail className="w-4 h-4" />
-            </button>
           </div>
         </div>
 
         {/* Column 2: Shop */}
-        <div>
-          <h5 className="font-bold text-sm uppercase tracking-wider mb-6 text-gray-300">Shop</h5>
-          <ul className="text-sm text-gray-400 space-y-4">
-            {categories && categories.length > 0 ? (
-              categories.map((category) => (
+        {categories && categories.length > 0 && (
+          <div>
+            <h5 className="font-bold text-sm uppercase tracking-wider mb-6 text-gray-300">Shop</h5>
+            <ul className="text-sm text-gray-400 space-y-4">
+              {categories.map((category) => (
                 <li key={category}>
-                  <button onClick={() => onLinkClick('shop', category)} className="hover:text-white hover:translate-x-1 transition-all inline-block text-left font-light">
+                  <button onClick={() => onLinkClick('shop', category)} className="hover:text-white hover:translate-x-1 transition-all inline-block text-left font-light py-2 -my-2 outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-sm">
                     {category}
                   </button>
                 </li>
-              ))
-            ) : (
-              <>
-                <li><button onClick={() => onLinkClick('shop', 'Women')} className="hover:text-white hover:translate-x-1 transition-all inline-block text-left font-light">Women's Collection</button></li>
-                <li><button onClick={() => onLinkClick('shop', 'Men')} className="hover:text-white hover:translate-x-1 transition-all inline-block text-left font-light">Men's Collection</button></li>
-                <li><button onClick={() => onLinkClick('shop', 'Kids')} className="hover:text-white hover:translate-x-1 transition-all inline-block text-left font-light">Kids' Collection</button></li>
-                <li><button onClick={() => onLinkClick('shop', 'Accessories')} className="hover:text-white hover:translate-x-1 transition-all inline-block text-left font-light">Accessories</button></li>
-              </>
-            )}
-          </ul>
-        </div>
+              ))}
+            </ul>
+          </div>
+        )}
 
-        {/* Column 3: Support */}
+        {/* Column 3: Company */}
         <div>
-          <h5 className="font-bold text-sm uppercase tracking-wider mb-6 text-gray-300">Support</h5>
+          <h5 className="font-bold text-sm uppercase tracking-wider mb-6 text-gray-300">Company</h5>
           <ul className="text-sm text-gray-400 space-y-4">
-            <li><button onClick={() => onLinkClick('support', 'Contact Us')} className="hover:text-white hover:translate-x-1 transition-all inline-block text-left font-light">Contact Us</button></li>
-            <li><button onClick={() => onLinkClick('support', 'Order Status')} className="hover:text-white hover:translate-x-1 transition-all inline-block text-left font-light">Order Status</button></li>
-            <li><button onClick={() => onLinkClick('support', 'Shipping Policy')} className="hover:text-white hover:translate-x-1 transition-all inline-block text-left font-light">Shipping Policy</button></li>
-            <li><button onClick={() => onLinkClick('support', 'Returns & Refunds')} className="hover:text-white hover:translate-x-1 transition-all inline-block text-left font-light">Returns & Refunds</button></li>
-            <li><button onClick={() => onLinkClick('support', 'Size Guide')} className="hover:text-white hover:translate-x-1 transition-all inline-block text-left font-light">Size Guide</button></li>
+            <li><button onClick={() => onLinkClick('company', 'About Us')} className="hover:text-white hover:translate-x-1 transition-all inline-block text-left font-light py-2 -my-2 outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-sm">About Us</button></li>
+            <li><button onClick={() => onLinkClick('company', 'Contact Us')} className="hover:text-white hover:translate-x-1 transition-all inline-block text-left font-light py-2 -my-2 outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-sm">Contact Us</button></li>
           </ul>
         </div>
 
@@ -85,10 +77,10 @@ export const Footer: React.FC<FooterProps> = ({ onLinkClick, branding, categorie
         <div>
           <h5 className="font-bold text-sm uppercase tracking-wider mb-6 text-gray-300">Legal</h5>
           <ul className="text-sm text-gray-400 space-y-4">
-            <li><button onClick={() => onLinkClick('legal', 'Terms & Conditions')} className="hover:text-gray-200 hover:translate-x-1 transition-all inline-block text-left font-light">Terms & Conditions</button></li>
-            <li><button onClick={() => onLinkClick('legal', 'Privacy Policy')} className="hover:text-gray-200 hover:translate-x-1 transition-all inline-block text-left font-light">Privacy Policy</button></li>
-            <li><button onClick={() => onLinkClick('legal', 'Payment Policy')} className="hover:text-gray-200 hover:translate-x-1 transition-all inline-block text-left font-light">Payment Policy</button></li>
-            <li><button onClick={() => onLinkClick('legal', 'Cookie Policy')} className="hover:text-gray-200 hover:translate-x-1 transition-all inline-block text-left font-light">Cookie Policy</button></li>
+            <li><button onClick={() => onLinkClick('legal', 'terms')} className="hover:text-gray-200 hover:translate-x-1 transition-all inline-block text-left font-light py-2 -my-2 outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-sm">Terms & Conditions</button></li>
+            <li><button onClick={() => onLinkClick('legal', 'privacy')} className="hover:text-gray-200 hover:translate-x-1 transition-all inline-block text-left font-light py-2 -my-2 outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-sm">Privacy Policy</button></li>
+            <li><button onClick={() => onLinkClick('legal', 'payment')} className="hover:text-gray-200 hover:translate-x-1 transition-all inline-block text-left font-light py-2 -my-2 outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-sm">Payment Policy</button></li>
+            <li><button onClick={() => onLinkClick('legal', 'cookie')} className="hover:text-gray-200 hover:translate-x-1 transition-all inline-block text-left font-light py-2 -my-2 outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-sm">Cookie Policy</button></li>
           </ul>
         </div>
 
@@ -104,7 +96,7 @@ export const Footer: React.FC<FooterProps> = ({ onLinkClick, branding, categorie
               placeholder="Enter your email"
               className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-white/30 transition-colors focus:ring-1 focus:ring-white/30"
             />
-            <button className="absolute right-1.5 top-1.5 bottom-1.5 px-4 bg-white text-black text-xs font-bold rounded-md hover:bg-gray-200 transition-colors uppercase tracking-wide">
+            <button className="absolute right-1.5 top-1.5 bottom-1.5 px-4 bg-white dark:bg-emerald-600 text-black dark:text-white text-xs font-bold rounded-md hover:bg-gray-200 dark:hover:bg-emerald-500 transition-colors uppercase tracking-wide">
               Join
             </button>
           </div>

@@ -1,0 +1,17 @@
+{
+  "select count() from events where event = '$pageview' and timestamp > now() - interval 7 day": [
+    [
+      118
+    ]
+  ],
+  "select count(distinct distinct_id) from events where event = '$pageview' and timestamp > now() - interval 7 day": [
+    [
+      3
+    ]
+  ],
+  "select count(distinct person_id) from events where event = '$pageview' and timestamp > now() - interval 7 day": [
+    [
+      3
+    ]
+  ]
+}

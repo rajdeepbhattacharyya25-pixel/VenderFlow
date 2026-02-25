@@ -280,7 +280,7 @@ const AdminDashboard: React.FC = () => {
                 <div className="flex items-center gap-2 md:gap-4 flex-wrap">
                     <button
                         onClick={() => setShowSupportModal(true)}
-                        className="flex items-center gap-2 px-3 md:px-4 py-2 bg-neutral-800 hover:bg-neutral-700 text-white rounded-xl transition-colors font-medium text-xs md:text-sm border border-neutral-700 relative"
+                        className="flex items-center justify-center gap-2 px-3 md:px-4 py-3 md:py-2 min-h-[44px] bg-neutral-800 hover:bg-neutral-700 text-white rounded-xl transition-colors font-medium text-xs md:text-sm border border-neutral-700 relative"
                         style={{ WebkitTapHighlightColor: 'transparent' }}
                     >
                         <MessageSquare size={16} />
@@ -294,7 +294,7 @@ const AdminDashboard: React.FC = () => {
                     </button>
                     <button
                         onClick={() => setShowAnnouncementModal(true)}
-                        className="flex items-center gap-2 px-3 md:px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-colors font-medium text-xs md:text-sm shadow-lg shadow-indigo-500/20"
+                        className="flex items-center justify-center gap-2 px-3 md:px-4 py-3 md:py-2 min-h-[44px] bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-colors font-medium text-xs md:text-sm shadow-lg shadow-indigo-500/20"
                         style={{ WebkitTapHighlightColor: 'transparent' }}
                     >
                         <Megaphone size={16} />
@@ -474,7 +474,7 @@ const AdminDashboard: React.FC = () => {
                             <h2 className="text-xl font-bold text-white">Create Announcement</h2>
                             <button
                                 onClick={() => setShowAnnouncementModal(false)}
-                                className="p-2 hover:bg-neutral-800 rounded-lg transition-colors"
+                                className="w-11 h-11 flex items-center justify-center hover:bg-neutral-800 rounded-lg transition-colors"
                                 aria-label="Close modal"
                             >
                                 <X size={20} className="text-neutral-400" />
@@ -572,7 +572,8 @@ const AdminDashboard: React.FC = () => {
                                                         setSelectedSellerName('');
                                                         setTargetSellerId('');
                                                     }}
-                                                    className="p-1 hover:bg-emerald-500/20 rounded-lg text-emerald-400 transition-colors"
+                                                    className="w-11 h-11 flex items-center justify-center hover:bg-emerald-500/20 rounded-lg text-emerald-400 transition-colors"
+                                                    aria-label="Remove seller"
                                                 >
                                                     <X size={14} />
                                                 </button>

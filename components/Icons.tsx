@@ -14,6 +14,9 @@ import {
   ShieldCheck,
   RefreshCw,
   Facebook,
+  Twitter,
+  Linkedin,
+  Instagram,
   Camera,
   AtSign,
   X,
@@ -65,7 +68,9 @@ export const IconTruck: React.FC<{ className?: string }> = ({ className }) => <T
 export const IconShield: React.FC<{ className?: string }> = ({ className }) => <ShieldCheck className={className} />;
 export const IconReturn: React.FC<{ className?: string }> = ({ className }) => <RefreshCw className={className} />;
 export const IconFacebook: React.FC<{ className?: string }> = ({ className }) => <Facebook className={className} />;
-export const IconInstagram: React.FC<{ className?: string }> = ({ className }) => <Camera className={className} />;
+export const IconTwitter: React.FC<{ className?: string }> = ({ className }) => <Twitter className={className} />;
+export const IconLinkedin: React.FC<{ className?: string }> = ({ className }) => <Linkedin className={className} />;
+export const IconInstagram: React.FC<{ className?: string }> = ({ className }) => <Instagram className={className} />;
 export const IconEmail: React.FC<{ className?: string }> = ({ className }) => <AtSign className={className} />;
 export const IconX: React.FC<{ className?: string }> = ({ className }) => <X className={className} />;
 export const IconCheck: React.FC<{ className?: string }> = ({ className }) => <Check className={className} />;

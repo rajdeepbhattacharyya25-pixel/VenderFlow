@@ -1,10 +1,9 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
 
 @custom-variant dark (&:where(.dark, .dark *));
 
 @config "./tailwind.config.js";
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
 
 :root {
   /* Standard Green/White Theme */
@@ -197,4 +196,32 @@ body {
 /* Prevent pull-to-refresh on mobile */
 html {
   overscroll-behavior: none;
+}
+
+/* Landing Page CTA Styles */
+.hero-cta {
+  padding: 14px 28px;
+  font-weight: 700;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(34, 139, 95, 0.15);
+  transform: translateZ(0);
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+
+.hero-cta:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 18px 40px rgba(34, 139, 95, 0.20);
+}
+
+.microcopy {
+  font-size: 13px;
+  color: #6b7280;
+  margin-top: 8px;
+}
+
+/* Custom View Transition for Theme Toggle */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.6s;
+  animation-timing-function: ease-in-out;
 }
