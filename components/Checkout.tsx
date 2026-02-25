@@ -516,30 +516,30 @@ export const Checkout: React.FC<CheckoutProps> = ({
               <div className="flex gap-4 overflow-x-auto pb-2 hide-scroll">
                 <button
                   onClick={() => setPaymentMethod('card')}
-                  className={`flex items-center gap-2 px-6 py-3 rounded-xl border font-bold text-sm whitespace-nowrap transition-all ${paymentMethod === 'card'
+                  className={`flex items-center gap-2 px-6 py-3 min-h-[44px] rounded-xl border font-bold text-sm whitespace-nowrap transition-all ${paymentMethod === 'card'
                     ? 'bg-gray-900 text-white dark:bg-white dark:text-black border-transparent shadow-md'
                     : 'bg-white dark:bg-surface-dark text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700'
                     }`}
                 >
-                  <IconCreditCard className="w-4 h-4" /> Credit/Debit Card
+                  <IconCreditCard className="w-5 h-5" /> Credit/Debit Card
                 </button>
                 <button
                   onClick={() => setPaymentMethod('upi')}
-                  className={`flex items-center gap-2 px-6 py-3 rounded-xl border font-bold text-sm whitespace-nowrap transition-all ${paymentMethod === 'upi'
+                  className={`flex items-center gap-2 px-6 py-3 min-h-[44px] rounded-xl border font-bold text-sm whitespace-nowrap transition-all ${paymentMethod === 'upi'
                     ? 'bg-gray-900 text-white dark:bg-white dark:text-black border-transparent shadow-md'
                     : 'bg-white dark:bg-surface-dark text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700'
                     }`}
                 >
-                  <IconWallet className="w-4 h-4" /> UPI / Wallets
+                  <IconWallet className="w-5 h-5" /> UPI / Wallets
                 </button>
                 <button
                   onClick={() => setPaymentMethod('cod')}
-                  className={`flex items-center gap-2 px-6 py-3 rounded-xl border font-bold text-sm whitespace-nowrap transition-all ${paymentMethod === 'cod'
+                  className={`flex items-center gap-2 px-6 py-3 min-h-[44px] rounded-xl border font-bold text-sm whitespace-nowrap transition-all ${paymentMethod === 'cod'
                     ? 'bg-gray-900 text-white dark:bg-white dark:text-black border-transparent shadow-md'
                     : 'bg-white dark:bg-surface-dark text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700'
                     }`}
                 >
-                  <IconBanknote className="w-4 h-4" /> Cash on Delivery
+                  <IconBanknote className="w-5 h-5" /> Cash on Delivery
                 </button>
               </div>
 
@@ -674,7 +674,7 @@ export const Checkout: React.FC<CheckoutProps> = ({
                       <button
                         onClick={handleApplyPromo}
                         disabled={checkingPromo || !promoCode.trim()}
-                        className="bg-gray-900 dark:bg-white text-white dark:text-black px-4 py-2 rounded-xl text-sm font-bold hover:bg-gray-800 disabled:opacity-50 transition-colors"
+                        className="bg-gray-900 dark:bg-white text-white dark:text-black px-6 py-3 min-h-[44px] min-w-[80px] rounded-xl text-sm font-bold hover:bg-gray-800 disabled:opacity-50 transition-colors"
                       >
                         {checkingPromo ? '...' : 'Apply'}
                       </button>

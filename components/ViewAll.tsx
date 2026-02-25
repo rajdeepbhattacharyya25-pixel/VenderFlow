@@ -100,7 +100,7 @@ export const ViewAll: React.FC<ViewAllProps> = ({
           <div className="relative flex-1 md:flex-none">
             <button
               onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className={`w-full justify-center flex items-center gap-2 font-medium text-sm px-4 py-2.5 rounded-full border shadow-sm transition-all ${isFilterOpen || selectedCategories.length > 0 || selectedSizes.length > 0 || priceRange !== 'all' ? 'bg-gray-900 text-white border-gray-900 dark:bg-white dark:text-black' : 'bg-gray-50 dark:bg-surface-dark text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-primary/30'}`}
+              className={`w-full justify-center flex items-center gap-2 font-medium text-sm px-4 py-3 min-h-[44px] rounded-full border shadow-sm transition-all ${isFilterOpen || selectedCategories.length > 0 || selectedSizes.length > 0 || priceRange !== 'all' ? 'bg-gray-900 text-white border-gray-900 dark:bg-white dark:text-black' : 'bg-gray-50 dark:bg-surface-dark text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-primary/30'}`}
             >
               <IconFilter className="w-4 h-4" />
               Filters
@@ -135,7 +135,7 @@ export const ViewAll: React.FC<ViewAllProps> = ({
                           <button
                             key={cat}
                             onClick={() => toggleCategory(cat)}
-                            className={`px-3 py-1.5 text-xs rounded-lg border transition-all ${selectedCategories.includes(cat) ? 'bg-primary text-white border-primary' : 'bg-transparent text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700'}`}
+                            className={`px-4 py-2 min-h-[44px] text-sm rounded-lg border transition-all ${selectedCategories.includes(cat) ? 'bg-primary text-white border-primary' : 'bg-transparent text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700'}`}
                           >
                             {cat}
                           </button>
@@ -153,9 +153,9 @@ export const ViewAll: React.FC<ViewAllProps> = ({
                           { val: '2500_5000', label: '₹2,500 - ₹5,000' },
                           { val: 'over_5000', label: 'Over ₹5,000' }
                         ].map(opt => (
-                          <label key={opt.val} className="flex items-center gap-2 cursor-pointer group">
-                            <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${priceRange === opt.val ? 'border-primary bg-primary' : 'border-gray-300 dark:border-gray-600'}`}>
-                              {priceRange === opt.val && <div className="w-1.5 h-1.5 bg-white rounded-full"></div>}
+                          <label key={opt.val} className="flex items-center gap-2 cursor-pointer group min-h-[44px]">
+                            <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${priceRange === opt.val ? 'border-primary bg-primary' : 'border-gray-300 dark:border-gray-600'}`}>
+                              {priceRange === opt.val && <div className="w-2 h-2 bg-white rounded-full"></div>}
                             </div>
                             <input type="radio" name="price" className="hidden" checked={priceRange === opt.val} onChange={() => setPriceRange(opt.val)} />
                             <span className={`text-sm ${priceRange === opt.val ? 'text-gray-900 dark:text-white font-medium' : 'text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-200'}`}>{opt.label}</span>
@@ -172,7 +172,7 @@ export const ViewAll: React.FC<ViewAllProps> = ({
                           <button
                             key={size}
                             onClick={() => toggleSize(size)}
-                            className={`w-10 h-10 flex items-center justify-center text-xs rounded-lg border transition-all ${selectedSizes.includes(size) ? 'bg-primary text-white border-primary' : 'bg-transparent text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700'}`}
+                            className={`w-11 h-11 flex items-center justify-center text-sm rounded-lg border transition-all ${selectedSizes.includes(size) ? 'bg-primary text-white border-primary' : 'bg-transparent text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700'}`}
                           >
                             {size}
                           </button>
@@ -193,7 +193,7 @@ export const ViewAll: React.FC<ViewAllProps> = ({
           <div className="relative flex-1 md:flex-none">
             <button
               onClick={() => setIsSortOpen(!isSortOpen)}
-              className="w-full justify-center flex items-center gap-2 text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary-light transition-colors font-medium text-sm bg-gray-50 dark:bg-surface-dark border border-gray-200 dark:border-gray-700 px-4 py-2.5 rounded-full hover:border-primary/30 dark:hover:border-gray-500 shadow-sm"
+              className="w-full justify-center flex items-center gap-2 text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary-light transition-colors font-medium text-sm bg-gray-50 dark:bg-surface-dark border border-gray-200 dark:border-gray-700 px-4 py-3 min-h-[44px] rounded-full hover:border-primary/30 dark:hover:border-gray-500 shadow-sm"
             >
               Sort <IconChevronDown className={`w-4 h-4 transition-transform ${isSortOpen ? 'rotate-180' : ''}`} />
             </button>
@@ -216,7 +216,7 @@ export const ViewAll: React.FC<ViewAllProps> = ({
                     <button
                       key={opt.val}
                       onClick={() => { setSortBy(opt.val as any); setIsSortOpen(false); }}
-                      className={`w-full text-left px-4 py-3 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex justify-between items-center ${sortBy === opt.val ? 'text-primary dark:text-primary-light font-bold bg-gray-50 dark:bg-gray-800' : 'text-gray-700 dark:text-gray-300'}`}
+                      className={`w-full text-left px-4 py-3 min-h-[44px] text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex justify-between items-center ${sortBy === opt.val ? 'text-primary dark:text-primary-light font-bold bg-gray-50 dark:bg-gray-800' : 'text-gray-700 dark:text-gray-300'}`}
                     >
                       {opt.label}
                       {sortBy === opt.val && <IconCheck className="w-4 h-4" />}
@@ -230,7 +230,7 @@ export const ViewAll: React.FC<ViewAllProps> = ({
       </div>
 
       {filteredProducts.length > 0 ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-x-3 gap-y-6 md:gap-x-5 md:gap-y-8 pb-10">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-x-2 gap-y-4 sm:gap-x-3 sm:gap-y-6 md:gap-x-5 md:gap-y-8 pb-10">
           {filteredProducts.map((product) => (
             <ProductCard
               key={`viewall-${product.id}`}

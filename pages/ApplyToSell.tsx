@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Events } from '../lib/analytics';
 import { TopBar } from '../components/TopBar';
+import { notifyAdmin } from '../lib/notifications';
 import toast from 'react-hot-toast';
 import { ArrowRight, CheckCircle2, ChevronLeft, Store } from 'lucide-react';
 
@@ -64,6 +65,13 @@ export default function ApplyToSell() {
                 }
                 throw error;
             }
+
+            // Trigger admin Telegram notification
+            notifyAdmin({
+                type: 'NEW_SELLER_APPLICATION',
+                message: `New application: ${formData.business_name}`,
+                data: formData
+            });
 
             Events.applicationSubmitted({ category: formData.category });
             setSuccess(true);

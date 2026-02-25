@@ -60,6 +60,23 @@ ${message}${attachmentInfo}
 `;
                 break;
 
+            case "NEW_SELLER_APPLICATION":
+                text = `
+📝 *New Seller Application*
+🏢 Business: ${data?.business_name || "Unknown"}
+👤 Applicant: ${data?.name || "Unknown"}
+📍 City: ${data?.city || "Unknown"}
+📞 Phone: ${data?.phone || "Unknown"}
+📧 Email: ${data?.email || "Unknown"}
+🏷️ Category: ${data?.category || "Unknown"}
+🌐 Online Setup: ${data?.is_selling_online ? 'Yes' : 'No'}
+📈 Est. Sales: ${data?.monthly_sales_range || 'N/A'}
+📱 Instagram: ${data?.instagram || 'None'}
+-------------------
+${data?.message || 'No additional message.'}
+`;
+                break;
+
             case "SYSTEM_ALERT":
                 text = `
 🚨 SYSTEM ALERT

@@ -102,67 +102,64 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView, 
         <div className={`absolute ${compact ? 'top-2 right-2' : 'top-3 right-3'} z-20 flex flex-col gap-2 md:translate-x-10 md:opacity-0 md:group-hover:translate-x-0 md:group-hover:opacity-100 transition-all duration-300`}>
           <button
             onClick={handleWishlistClick}
-            className={`rounded-full shadow-sm hover:shadow-md transition-all transform active:scale-90 ${compact ? 'p-1.5' : 'p-2.5'} ${isWishlisted
+            className={`flex items-center justify-center rounded-full shadow-sm hover:shadow-md transition-all transform active:scale-90 ${compact ? 'w-10 h-10' : 'w-11 h-11'} ${isWishlisted
               ? 'bg-white text-red-500 hover:bg-red-50'
               : 'bg-white text-gray-400 hover:text-red-500'
               }`}
             aria-label="Add to wishlist"
           >
-            <IconHeart className={compact ? "w-3.5 h-3.5" : "w-4 h-4"} fill={isWishlisted} />
+            <IconHeart className={compact ? "w-4 h-4" : "w-5 h-5"} fill={isWishlisted} />
           </button>
-
-          <button
-            onClick={handleShare}
-            className={`rounded-full shadow-sm hover:shadow-md bg-white text-gray-400 hover:text-primary transition-all transform active:scale-90 ${compact ? 'p-1.5' : 'p-2.5'}`}
-            aria-label="Share product"
-          >
-            <IconShare className={compact ? "w-3.5 h-3.5" : "w-4 h-4"} />
-          </button>
-        </div>
-
-        {/* Product Image */}
-        <div className={`w-full h-full ${compact ? 'p-3' : 'p-4'} cursor-pointer flex items-center justify-center overflow-hidden relative`} onClick={() => onQuickView(product)}>
-          {videoMedia && (
-            <div className="absolute top-3 left-3 z-10 bg-black/40 backdrop-blur-md rounded-full p-1.5 shadow-sm opacity-80 group-hover:opacity-0 transition-opacity md:flex hidden">
-              <svg className="w-3 h-3 text-white pl-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
-            </div>
-          )}
-          <img
-            src={product.image}
-            alt={product.name}
-            className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal transform group-hover:scale-105 transition-transform duration-700 ease-out will-change-transform"
-          />
-          {videoMedia && (
-            <video
-              src={videoMedia.file_url}
-              className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-              autoPlay
-              muted
-              loop
-              playsInline
+          {(product.video || product.images?.length > 1) && (
+            <button
+              onClick={handleShare}
+              className={`flex items-center justify-center rounded-full shadow-sm hover:shadow-md transition-all transform active:scale-90 bg-white dark:bg-black/90 text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary-light ${compact ? 'w-10 h-10' : 'w-11 h-11'}`}
+              aria-label="Share product"
+            >
+              <IconShare className={compact ? "w-4 h-4" : "w-5 h-5"} />
+            </button>
+          )}    {/* Product Image */}
+          <div className={`w-full h-full ${compact ? 'p-3' : 'p-4'} cursor-pointer flex items-center justify-center overflow-hidden relative`} onClick={() => onQuickView(product)}>
+            {videoMedia && (
+              <div className="absolute top-3 left-3 z-10 bg-black/40 backdrop-blur-md rounded-full p-1.5 shadow-sm opacity-80 group-hover:opacity-0 transition-opacity md:flex hidden">
+                <svg className="w-3 h-3 text-white pl-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+              </div>
+            )}
+            <img
+              src={product.image}
+              alt={product.name}
+              className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal transform group-hover:scale-105 transition-transform duration-700 ease-out will-change-transform"
             />
-          )}
-        </div>
+            {videoMedia && (
+              <video
+                src={videoMedia.file_url}
+                className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                autoPlay
+                muted
+                loop
+                playsInline
+              />
+            )}
+          </div>
 
-        {/* Bottom Hover Actions */}
-        <div className={`absolute ${compact ? 'inset-x-2 bottom-2' : 'inset-x-3 bottom-3'} flex gap-2 md:translate-y-full md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 transition-all duration-300 delay-75 z-20`}>
-          <button
-            onClick={handleAddClick}
-            className={`flex-1 bg-gray-900/90 dark:bg-black/90 backdrop-blur-sm hover:bg-black text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 transform active:scale-95 ${compact ? 'py-2 text-[10px]' : 'py-3 text-xs'}`}
-          >
-            <IconShoppingBag className={compact ? "w-3 h-3" : "w-3.5 h-3.5"} />
-            Add
-          </button>
-          <button
-            onClick={() => onQuickView(product)}
-            className={`bg-white/90 backdrop-blur-sm hover:bg-white text-gray-900 border border-gray-100 rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center transform active:scale-95 ${compact ? 'w-8 py-2' : 'w-10 py-3'}`}
-            aria-label="Quick view"
-          >
-            <IconEye className={compact ? "w-3.5 h-3.5" : "w-4 h-4"} />
-          </button>
+          <div className={`absolute ${compact ? 'inset-x-2 bottom-2' : 'inset-x-3 bottom-3'} flex gap-2 md:translate-y-full md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 transition-all duration-300 delay-75 z-20`}>
+            <button
+              onClick={handleAddClick}
+              className={`flex-1 bg-gray-900/90 dark:bg-black/90 backdrop-blur-sm hover:bg-black text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 transform active:scale-95 ${compact ? 'py-2.5 text-[11px] min-h-[44px]' : 'py-3 text-sm min-h-[44px]'}`}
+            >
+              <IconShoppingBag className={compact ? "w-4 h-4" : "w-4 h-4"} />
+              Add
+            </button>
+            <button
+              onClick={() => onQuickView(product)}
+              className={`bg-white/90 backdrop-blur-sm hover:bg-white text-gray-900 border border-gray-100 rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center transform active:scale-95 ${compact ? 'w-11 min-h-[44px]' : 'w-12 min-h-[44px]'}`}
+              aria-label="Quick view"
+            >
+              <IconEye className={compact ? "w-4 h-4" : "w-5 h-5"} />
+            </button>
+          </div>
         </div>
       </div>
-
       {/* Product Info */}
       <div className="flex flex-col gap-1 px-1 flex-grow">
         <div className="flex justify-between items-start gap-2">

@@ -1246,7 +1246,7 @@ const SellerStorefront = () => {
     }
 
     return (
-        <div className="min-h-screen flex flex-col font-body pb-[80px] md:pb-0 bg-white dark:bg-neutral-950 transition-colors duration-300" style={themeStyles}>
+        <div className="min-h-screen flex flex-col font-body pb-[80px] md:pb-0 bg-white dark:bg-neutral-950 transition-colors duration-300 overflow-x-hidden" style={themeStyles}>
             {/* Preview Mode Indicator */}
             {isPreviewMode && canViewDrafts && (
                 <div className="w-full bg-amber-500 text-amber-950 text-xs sm:text-sm font-bold py-1.5 px-4 flex items-center justify-center gap-2 z-[60] sticky top-0 shadow-sm shadow-amber-500/20">

@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 
-type NotificationType = 'BACKUP_SUCCESS' | 'BACKUP_FAILED' | 'NEW_MESSAGE' | 'SYSTEM_ALERT';
+type NotificationType = 'BACKUP_SUCCESS' | 'BACKUP_FAILED' | 'NEW_MESSAGE' | 'SYSTEM_ALERT' | 'NEW_SELLER_APPLICATION';
 
 interface NotificationPayload {
     type: NotificationType;
