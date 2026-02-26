@@ -75,9 +75,10 @@ const OfflineOverlay: React.FC = () => {
         setTimeout(() => window.location.reload(), 600);
     };
 
-    return (
-        <div className={`offline-overlay-root ${isOffline ? 'visible' : ''}`}>
+    if (!isOffline && !isSurging) return null;
 
+    return (
+        <div className={`offline-overlay-root visible`}>
             {/* --- PHYSICS LAYER (The Hidden Object) --- */}
             <div className="wifi-physics-layer">
                 <CustomWifiIcon className="wifi-bright-icon" />

@@ -253,9 +253,12 @@ const SellerStorefront = () => {
                 return;
             }
 
-            // Immediate session check if we have the slug
-            const customer = await getCurrentStoreCustomer(sellerSlug);
-            setStoreCustomer(customer);
+            // Immediate session check if we have the slug (non-blocking)
+            getCurrentStoreCustomer(sellerSlug)
+                .then(customer => {
+                    if (customer) setStoreCustomer(customer);
+                })
+                .catch(console.error);
 
             try {
                 const sellerData = await loadSellerBySlug(sellerSlug);
@@ -291,10 +294,13 @@ const SellerStorefront = () => {
 
         const loadData = async () => {
             try {
-                // Check for store-scoped customer session
+                // Check for store-scoped customer session (non-blocking)
                 if (seller?.slug) {
-                    const customer = await getCurrentStoreCustomer(seller.slug);
-                    setStoreCustomer(customer);
+                    getCurrentStoreCustomer(seller.slug)
+                        .then(customer => {
+                            if (customer) setStoreCustomer(customer);
+                        })
+                        .catch(console.error);
                 }
 
                 // Check seller auth for preview mode

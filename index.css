@@ -1,5 +1,5 @@
-@import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -77,22 +77,7 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Smooth theme transitions for all elements */
-*,
-*::before,
-*::after {
-  transition-property: color, background-color, border-color, outline-color, fill, stroke, box-shadow;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 200ms;
-}
 
-/* Preserve explicit transition overrides - don't break animations */
-[class*="transition-all"],
-[class*="transition-transform"],
-[class*="transition-opacity"],
-[class*="animate-"] {
-  transition-property: all;
-}
 
 /* Respect reduced motion preferences */
 @media (prefers-reduced-motion: reduce) {

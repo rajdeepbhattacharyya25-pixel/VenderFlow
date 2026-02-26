@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 
 import './styles/GlowCard.css';
 
@@ -30,7 +30,7 @@ export function GlowCard({
     };
 
     return (
-        <motion.div
+        <m.div
             ref={cardRef}
             onMouseMove={handleMouseMove}
             onMouseEnter={() => setIsHovered(true)}
@@ -53,6 +53,6 @@ export function GlowCard({
             <div className="relative z-10 h-full w-full p-6 md:p-8">
                 {children}
             </div>
-        </motion.div>
+        </m.div>
     );
 }

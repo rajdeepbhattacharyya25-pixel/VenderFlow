@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { motion, useMotionValue, useSpring } from 'framer-motion';
+import { m, useMotionValue, useSpring } from 'framer-motion';
 
 import type { HTMLMotionProps } from 'framer-motion';
 
@@ -57,7 +57,7 @@ export function MagneticButton({
     };
 
     return (
-        <motion.button
+        <m.button
             ref={ref}
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
@@ -74,7 +74,7 @@ export function MagneticButton({
         >
             {/* Optional: Add a subtle inner glow or highlight when hovered */}
             {isHovered && (
-                <motion.div
+                <m.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
@@ -89,6 +89,6 @@ export function MagneticButton({
             <span className="relative z-10 w-full flex items-center justify-center">
                 {children}
             </span>
-        </motion.button>
+        </m.button>
     );
 }
