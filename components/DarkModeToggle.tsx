@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTheme } from 'next-themes';
 import { Moon, Sun } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 
 export function DarkModeToggle() {
     const { theme, setTheme, systemTheme } = useTheme();
@@ -40,7 +40,7 @@ export function DarkModeToggle() {
     };
 
     return (
-        <motion.button
+        <m.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleToggle}
@@ -52,6 +52,6 @@ export function DarkModeToggle() {
             ) : (
                 <Moon className="w-4 h-4" />
             )}
-        </motion.button>
+        </m.button>
     );
 }

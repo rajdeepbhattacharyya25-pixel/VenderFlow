@@ -12,10 +12,11 @@ import CookieConsent from './components/CookieConsent';
 import { initTelegramApp } from './lib/telegram';
 import { capturePage } from './lib/analytics';
 
+import LandingPage from './pages/LandingPage';
+
 // Lazy loaded pages for performance code-splitting
 const AuthCallback = React.lazy(() => import('./pages/AuthCallback'));
 const StaffLogin = React.lazy(() => import('./pages/StaffLogin'));
-const LandingPage = React.lazy(() => import('./pages/LandingPage'));
 const SellerStorefront = React.lazy(() => import('./pages/SellerStorefront'));
 const PreviewStorefront = React.lazy(() => import('./pages/PreviewStorefront'));
 const DashboardLayout = React.lazy(() => import('./dashboard/DashboardLayout'));
@@ -89,61 +90,63 @@ function App() {
         <TelegramInitializer />
 
         <Suspense fallback={<PageLoader />}>
-          <Routes>
-            <Route path="/auth-callback" element={<AuthCallback />} />
-            <Route path="/staff/login" element={<StaffLogin />} />
+          <div className="relative w-full h-full">
+            <Routes>
+              <Route path="/auth-callback" element={<AuthCallback />} />
+              <Route path="/staff/login" element={<StaffLogin />} />
 
-            {/* Protected Seller Dashboard Routes */}
-            <Route element={<SellerGuard />}>
-              <Route path="/onboarding" element={<Onboarding />} />
-              <Route path="/dashboard/*" element={<DashboardLayout />} />
-            </Route>
-
-            {/* Seller Storefront Routes */}
-            <Route path="/store/:sellerSlug/*" element={<SellerStorefront />} />
-
-            {/* Preview Environment Route */}
-            <Route path="/preview/:previewId/*" element={<PreviewStorefront />} />
-
-            {/* Public Cart Page */}
-            <Route path="/cart" element={<CartPage />} />
-
-            {/* Protected Customer Routes */}
-            <Route element={<CustomerAuthGuard />}>
-              <Route path="/checkout" element={<CheckoutPage />} />
-              <Route path="/orders" element={<OrdersPage />} />
-              <Route path="/account" element={<AccountPage />} />
-            </Route>
-
-            {/* Admin Routes */}
-            <Route element={<AdminGuard />}>
-              <Route path="/admin" element={<AdminLayout />}>
-                <Route index element={<AdminDashboard />} />
-                <Route path="applications" element={<SellerApplications />} />
-                <Route path="sellers" element={<SellersList />} />
-                <Route path="seller/:sellerId" element={<SellerDetail />} />
-                <Route path="products" element={<AdminProducts />} />
-                <Route path="orders" element={<AdminOrders />} />
-                <Route path="invites" element={<AdminInvites />} />
-                <Route path="logs" element={<AdminLogs />} />
-                <Route path="settings" element={<AdminSettings />} />
-                <Route path="analytics" element={<AdminAnalytics />} />
+              {/* Protected Seller Dashboard Routes */}
+              <Route element={<SellerGuard />}>
+                <Route path="/onboarding" element={<Onboarding />} />
+                <Route path="/dashboard/*" element={<DashboardLayout />} />
               </Route>
-            </Route>
 
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/apply" element={<ApplyToSell />} />
-            {/* Legal Pages */}
-            <Route path="/terms" element={<TermsPage />} />
-            <Route path="/privacy-policy" element={<PrivacyPage />} />
-            <Route path="/payment-policy" element={<PaymentPage />} />
-            <Route path="/cookie-policy" element={<CookiePage />} />
+              {/* Seller Storefront Routes */}
+              <Route path="/store/:sellerSlug/*" element={<SellerStorefront />} />
 
-            {/* Company Pages */}
-            <Route path="/about" element={<AboutPage />} />
+              {/* Preview Environment Route */}
+              <Route path="/preview/:previewId/*" element={<PreviewStorefront />} />
 
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+              {/* Public Cart Page */}
+              <Route path="/cart" element={<CartPage />} />
+
+              {/* Protected Customer Routes */}
+              <Route element={<CustomerAuthGuard />}>
+                <Route path="/checkout" element={<CheckoutPage />} />
+                <Route path="/orders" element={<OrdersPage />} />
+                <Route path="/account" element={<AccountPage />} />
+              </Route>
+
+              {/* Admin Routes */}
+              <Route element={<AdminGuard />}>
+                <Route path="/admin" element={<AdminLayout />}>
+                  <Route index element={<AdminDashboard />} />
+                  <Route path="applications" element={<SellerApplications />} />
+                  <Route path="sellers" element={<SellersList />} />
+                  <Route path="seller/:sellerId" element={<SellerDetail />} />
+                  <Route path="products" element={<AdminProducts />} />
+                  <Route path="orders" element={<AdminOrders />} />
+                  <Route path="invites" element={<AdminInvites />} />
+                  <Route path="logs" element={<AdminLogs />} />
+                  <Route path="settings" element={<AdminSettings />} />
+                  <Route path="analytics" element={<AdminAnalytics />} />
+                </Route>
+              </Route>
+
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/apply" element={<ApplyToSell />} />
+              {/* Legal Pages */}
+              <Route path="/terms" element={<TermsPage />} />
+              <Route path="/privacy-policy" element={<PrivacyPage />} />
+              <Route path="/payment-policy" element={<PaymentPage />} />
+              <Route path="/cookie-policy" element={<CookiePage />} />
+
+              {/* Company Pages */}
+              <Route path="/about" element={<AboutPage />} />
+
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </div>
         </Suspense>
       </BrowserRouter>
     </ErrorBoundary>

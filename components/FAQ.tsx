@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
 
 interface FAQItemProps {
@@ -19,19 +19,19 @@ const FAQItem: React.FC<FAQItemProps> = ({ question, answer, isOpen, onClick }) 
                 <span className="font-bold text-gray-900 dark:text-white text-base md:text-[17px] pr-4">
                     {question}
                 </span>
-                <motion.div
+                <m.div
                     initial={false}
                     animate={{ rotate: isOpen ? 180 : 0 }}
                     transition={{ duration: 0.3, ease: "easeInOut" }}
                     className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-50 dark:bg-neutral-800 flex items-center justify-center text-gray-500 dark:text-gray-400"
                 >
                     <ChevronDown className="w-4 h-4" />
-                </motion.div>
+                </m.div>
             </button>
 
             <AnimatePresence initial={false}>
                 {isOpen && (
-                    <motion.div
+                    <m.div
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: "auto", opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
@@ -42,7 +42,7 @@ const FAQItem: React.FC<FAQItemProps> = ({ question, answer, isOpen, onClick }) 
                                 {answer}
                             </p>
                         </div>
-                    </motion.div>
+                    </m.div>
                 )}
             </AnimatePresence>
         </div>
@@ -81,7 +81,7 @@ export const FAQ: React.FC = () => {
             <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-emerald-500/5 dark:bg-emerald-500/10 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/3 pointer-events-none" />
 
             <div className="max-w-[800px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-                <motion.div
+                <m.div
                     initial={{ opacity: 0, y: 30 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, margin: "-100px" }}
@@ -95,9 +95,9 @@ export const FAQ: React.FC = () => {
                     <p className="mt-4 text-[15px] md:text-base text-gray-500 dark:text-gray-400 max-w-lg mx-auto leading-relaxed">
                         Everything you need to know about migrating and scaling your business on our platform.
                     </p>
-                </motion.div>
+                </m.div>
 
-                <motion.div
+                <m.div
                     initial="hidden"
                     whileInView="visible"
                     viewport={{ once: true, margin: "-50px" }}
@@ -113,7 +113,7 @@ export const FAQ: React.FC = () => {
                     className="space-y-4"
                 >
                     {faqs.map((faq, index) => (
-                        <motion.div
+                        <m.div
                             key={index}
                             variants={{
                                 hidden: { opacity: 0, y: 20 },
@@ -126,9 +126,9 @@ export const FAQ: React.FC = () => {
                                 isOpen={openIndex === index}
                                 onClick={() => setOpenIndex(openIndex === index ? null : index)}
                             />
-                        </motion.div>
+                        </m.div>
                     ))}
-                </motion.div>
+                </m.div>
             </div>
         </section>
     );
