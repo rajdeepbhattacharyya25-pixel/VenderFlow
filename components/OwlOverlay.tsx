@@ -99,12 +99,14 @@ export const OwlOverlay: React.FC<OwlOverlayProps> = ({
         };
 
         const handlePointerMove = (e: MouseEvent | TouchEvent) => {
-            if (e instanceof MouseEvent) {
-                mouseX = e.clientX;
-                mouseY = e.clientY;
-            } else if (e.touches && e.touches.length > 0) {
-                mouseX = e.touches[0].clientX;
-                mouseY = e.touches[0].clientY;
+            if ('touches' in e) {
+                if (e.touches.length > 0) {
+                    mouseX = e.touches[0].clientX;
+                    mouseY = e.touches[0].clientY;
+                }
+            } else {
+                mouseX = (e as MouseEvent).clientX;
+                mouseY = (e as MouseEvent).clientY;
             }
 
             if (!isTracking) {
@@ -115,6 +117,7 @@ export const OwlOverlay: React.FC<OwlOverlayProps> = ({
 
         window.addEventListener('mousemove', handlePointerMove, { passive: true });
         window.addEventListener('touchmove', handlePointerMove, { passive: true });
+        window.addEventListener('touchstart', handlePointerMove, { passive: true });
 
         // Initial reset
         const resetPupils = () => {
@@ -132,6 +135,7 @@ export const OwlOverlay: React.FC<OwlOverlayProps> = ({
         return () => {
             window.removeEventListener('mousemove', handlePointerMove);
             window.removeEventListener('touchmove', handlePointerMove);
+            window.removeEventListener('touchstart', handlePointerMove);
             cancelAnimationFrame(rafId);
         };
     }, [maxPupilOffset, isCoveringEyes]);
@@ -148,17 +152,16 @@ export const OwlOverlay: React.FC<OwlOverlayProps> = ({
             let coverTimeout: number;
 
             const updateCoverState = (inputNode: HTMLInputElement) => {
-                const hasText = inputNode.value.length > 0;
                 const isFocused = document.activeElement === inputNode;
 
-                if (isFocused || hasText) {
+                if (isFocused) {
                     setIsCoveringEyes(true);
                 } else {
                     // Debounce opening wings slightly to avoid flicker when erasing quickly
                     clearTimeout(coverTimeout);
                     coverTimeout = window.setTimeout(() => {
                         // Double check not focused
-                        if (document.activeElement !== inputNode && inputNode.value.length === 0) {
+                        if (document.activeElement !== inputNode) {
                             setIsCoveringEyes(false);
                         }
                     }, 200);
