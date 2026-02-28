@@ -34,7 +34,7 @@ const MENU_ITEMS = [
   { id: 'orders', label: 'Orders', icon: ShoppingCart },
   { id: 'sales', label: 'Sales', icon: Tag },
   { id: 'promotions', label: 'Promotions', icon: Ticket },
-  { id: 'reports', label: 'Reports', icon: PieChart },
+  { id: 'reports', label: 'Business Analytics', icon: PieChart },
   { id: 'settings', label: 'Settings', icon: Settings },
   { id: 'support', label: 'Support', icon: MessageSquare },
 ];
