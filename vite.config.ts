@@ -7,6 +7,7 @@ import { visualizer } from 'rollup-plugin-visualizer';
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
   return {
+    appType: 'spa',
     server: {
       port: 3000,
       host: '0.0.0.0',
