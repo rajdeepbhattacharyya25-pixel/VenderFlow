@@ -531,8 +531,9 @@ const Settings = () => {
                     <div className="bg-panel rounded-2xl p-8 border border-border shadow-sm animate-fadeIn">
                         {renderHeader('Business Profile', <Building size={20} />)}
 
-                        <div className="flex gap-10">
-                            <div className="flex flex-col items-center gap-4">
+                        <div className="flex flex-col md:flex-row gap-8 md:gap-10">
+                            <div className="flex-shrink-0 flex flex-col gap-4 items-center">
+                                <span className="text-[10px] font-bold text-muted uppercase tracking-wider text-center w-full">Business Logo</span>
                                 <div className="w-32 h-32 rounded-2xl overflow-hidden border-2 border-border bg-bg relative group shadow-sm transition-transform hover:scale-[1.02]">
                                     <img
                                         src={settings.logo_url || "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?q=80&w=2070&auto=format&fit=crop"}
@@ -549,10 +550,9 @@ const Settings = () => {
                                         />
                                     </label>
                                 </div>
-                                <span className="text-[10px] font-bold text-muted uppercase tracking-wider">Business Logo</span>
                             </div>
 
-                            <div className="flex-grow grid grid-cols-2 gap-6">
+                            <div className="flex-grow grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <div className="col-span-1">
                                     <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-2">Business Name</label>
                                     <input
@@ -565,15 +565,17 @@ const Settings = () => {
                                 </div>
                                 <div className="col-span-1">
                                     <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-2">Business Type</label>
-                                    <input
-                                        type="text"
-                                        value={settings.business_type}
-                                        onChange={(e) => setSettings({ ...settings, business_type: e.target.value })}
-                                        className="w-full bg-bg border border-border rounded-xl px-4 py-3 text-text focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none text-sm font-medium"
-                                        placeholder="Retail Store"
-                                    />
+                                    <div className="relative">
+                                        <input
+                                            type="text"
+                                            value={settings.business_type}
+                                            onChange={(e) => setSettings({ ...settings, business_type: e.target.value })}
+                                            className="w-full bg-bg border border-border rounded-xl px-4 py-3 text-text focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none text-sm font-medium"
+                                            placeholder="Retail Store"
+                                        />
+                                    </div>
                                 </div>
-                                <div className="col-span-2">
+                                <div className="col-span-1 sm:col-span-2">
                                     <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-2">Office Address</label>
                                     <div className="relative">
                                         <div className="absolute left-3 top-3.5 text-muted">
@@ -583,7 +585,7 @@ const Settings = () => {
                                             value={settings.address}
                                             onChange={(e) => setSettings({ ...settings, address: e.target.value })}
                                             rows={2}
-                                            className="w-full bg-bg border border-border rounded-xl px-10 py-3 text-text focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none text-sm font-medium resize-none leading-relaxed"
+                                            className="w-full bg-bg border border-border rounded-xl pl-10 pr-4 py-3 text-text focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none text-sm font-medium resize-none leading-relaxed"
                                             placeholder="123 Business Park, Suite 405, Mumbai, IN"
                                         />
                                     </div>
@@ -591,14 +593,14 @@ const Settings = () => {
                                 <div className="col-span-1">
                                     <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-2">Phone Number</label>
                                     <div className="relative">
-                                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted">
+                                        <div className="absolute left-3 top-3.5 text-muted">
                                             <Phone size={16} />
                                         </div>
                                         <input
                                             type="text"
                                             value={settings.phone}
                                             onChange={(e) => setSettings({ ...settings, phone: e.target.value })}
-                                            className="w-full bg-bg border border-border rounded-xl px-10 py-3 text-text focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none text-sm font-medium"
+                                            className="w-full bg-bg border border-border rounded-xl pl-10 pr-4 py-3 text-text focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none text-sm font-medium"
                                             placeholder="+91 98765-43210"
                                         />
                                     </div>
@@ -731,7 +733,7 @@ const Settings = () => {
                                 </div>
                             </div>
 
-                            <div className="mt-8 bg-green-50 border border-green-100 p-5 rounded-2xl flex items-center justify-between">
+                            <div className="mt-8 bg-green-50 border border-green-100 p-5 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                                 <div className="flex items-center gap-4">
                                     <div className="w-10 h-10 bg-green-500/20 text-green-600 rounded-full flex items-center justify-center">
                                         <CheckCircle2 size={24} />
@@ -751,7 +753,7 @@ const Settings = () => {
 
                             {/* Active Sessions List */}
                             <div className="mt-8 bg-panel border border-border rounded-2xl p-8">
-                                <div className="flex items-center justify-between mb-6">
+                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
                                     <div className="flex items-center gap-4">
                                         <div className="w-10 h-10 bg-primary/10 text-primary rounded-xl flex items-center justify-center">
                                             <Users size={20} />
@@ -806,7 +808,7 @@ const Settings = () => {
 
                                 {/* Select All Header */}
                                 {sessions.length > 0 && (
-                                    <div className="flex items-center gap-3 mb-4 pb-3 border-b border-border">
+                                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-4 pb-3 border-b border-border">
                                         <input
                                             type="checkbox"
                                             id="select-all-sessions"
@@ -857,7 +859,7 @@ const Settings = () => {
                                             const isSelected = selectedSessions.has(session.id);
 
                                             return (
-                                                <div key={session.id} className={`flex items-center justify-between p-4 border rounded-xl transition-all ${isCurrent ? 'bg-primary/5 border-primary/20' : isSelected ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800' : 'bg-bg border-border hover:border-gray-300 dark:hover:border-gray-600'}`}>
+                                                <div key={session.id} className={`flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 border rounded-xl transition-all ${isCurrent ? 'bg-primary/5 border-primary/20' : isSelected ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800' : 'bg-bg border-border hover:border-gray-300 dark:hover:border-gray-600'}`}>
                                                     <div className="flex items-center gap-4">
                                                         {/* Checkbox for non-current sessions */}
                                                         {!isCurrent ? (
@@ -1000,7 +1002,7 @@ const Settings = () => {
                     <div className="bg-panel rounded-2xl p-8 border border-border shadow-sm animate-fadeIn">
                         {renderHeader('Billing & Finance', <BillingIcon size={20} />)}
 
-                        <div className="grid grid-cols-2 gap-8 mb-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                             <div>
                                 <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-2">Base Currency</label>
                                 <input
@@ -1053,7 +1055,7 @@ const Settings = () => {
 
                         {/* Preview Environment Banner */}
                         <div className="mb-8 p-6 bg-primary/5 border border-primary/20 rounded-2xl flex flex-col gap-4">
-                            <div className="flex items-center justify-between">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                                 <div>
                                     <h4 className="font-bold text-sm text-primary flex items-center gap-2 mb-1">
                                         <Eye size={16} /> Storefront Previews
@@ -1073,7 +1075,7 @@ const Settings = () => {
                             </div>
 
                             {previewUrl && (
-                                <div className="bg-white dark:bg-black/50 p-3 rounded-xl border border-border flex items-center justify-between">
+                                <div className="bg-white dark:bg-black/50 p-3 rounded-xl border border-border flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
                                     <span className="text-xs font-mono text-muted">{previewUrl}</span>
                                     <a
                                         href={previewUrl}
@@ -1090,7 +1092,7 @@ const Settings = () => {
                                 <div className="mt-4 space-y-2">
                                     <h5 className="font-bold text-xs text-text uppercase tracking-wider mb-2">Active Previews</h5>
                                     {activePreviews.map(preview => (
-                                        <div key={preview.id} className="bg-bg p-4 rounded-xl border border-border flex items-center justify-between">
+                                        <div key={preview.id} className="bg-bg p-4 rounded-xl border border-border flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
                                             <div>
                                                 <div className="text-sm font-medium text-text flex items-center gap-2">
                                                     Preview Link
@@ -1328,7 +1330,7 @@ const Settings = () => {
                                 )}
                             </div>
 
-                            <div className="flex items-center justify-between bg-white dark:bg-neutral-800/50 border border-border rounded-xl p-4">
+                            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white dark:bg-neutral-800/50 border border-border rounded-xl p-4">
                                 <div>
                                     <span className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">Last Succesful Backup</span>
                                     {lastBackupDate ? (
@@ -1338,7 +1340,7 @@ const Settings = () => {
                                     )}
                                 </div>
 
-                                <div className="flex gap-2">
+                                <div className="flex flex-wrap gap-2">
                                     <button
                                         onClick={downloadLocalBackup}
                                         disabled={isBackupRunning}
@@ -1410,7 +1412,7 @@ const Settings = () => {
                                         Latency: {systemStatus.database.latency}ms
                                     </div>
                                 )}
-                                <div className="mt-4 pt-4 border-t border-border flex justify-between text-[10px] font-bold text-muted uppercase tracking-wider">
+                                <div className="mt-4 pt-4 border-t border-border flex flex-wrap gap-2 justify-between text-[10px] font-bold text-muted uppercase tracking-wider">
                                     <span>Cloud Provider: {systemStatus.provider}</span>
                                     <span>Region: {systemStatus.region}</span>
                                 </div>
@@ -1533,7 +1535,6 @@ const Settings = () => {
     return (
         <div className="max-w-[1200px] mx-auto space-y-8 animate-fadeIn pb-20">
             {/* Page Header */}
-            {/* Page Title & Breadcrumbs Only - Icons and Search are in Global Header */}
             <div className="px-2">
                 <h1 className="text-3xl font-display font-black text-gray-900 tracking-tight mb-1">Store Settings</h1>
                 <div className="flex items-center gap-2 text-sm text-muted">
@@ -1544,9 +1545,9 @@ const Settings = () => {
                 </div>
             </div>
 
-            <div className="flex gap-8">
+            <div className="flex flex-col lg:flex-row gap-8">
                 {/* Fixed Navigation Sidebar */}
-                <div className="w-72 flex-shrink-0 space-y-6">
+                <div className="w-full lg:w-72 flex-shrink-0 space-y-6">
                     <div className="bg-panel rounded-3xl p-3 border border-border shadow-soft">
                         <div className="px-4 py-5 mb-2">
                             <h2 className="text-xl font-display font-bold text-text">Settings</h2>
@@ -1572,8 +1573,6 @@ const Settings = () => {
                             ))}
                         </div>
                     </div>
-
-
                 </div>
 
                 {/* Dynamic Main Content Form */}

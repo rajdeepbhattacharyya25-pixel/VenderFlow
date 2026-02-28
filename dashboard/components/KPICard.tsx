@@ -76,22 +76,22 @@ const KPICard: React.FC<KPICardProps> = ({
 
   return (
     <div className={`
-      relative overflow-hidden rounded-2xl p-6 transition-all duration-300
+      relative overflow-hidden rounded-xl p-3 lg:p-4 transition-all duration-300
       ${styles.bg} border ${styles.border}
-      hover:shadow-md hover:-translate-y-1
+      hover:shadow-sm hover:-translate-y-0.5
     `}>
       <div className="flex items-start justify-between relative z-10">
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center gap-2">
-            <div className={`p-2 rounded-lg ${styles.iconBg} ${styles.iconColor} shadow-sm`}>
-              <Icon size={20} strokeWidth={1.5} />
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-1.5">
+            <div className={`p-1 rounded-md ${styles.iconBg} ${styles.iconColor} shadow-sm`}>
+              <Icon size={14} strokeWidth={2} />
             </div>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">{title}</h3>
+            <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">{title}</h3>
           </div>
 
-          <div className="text-[32px] font-display font-bold text-slate-800 dark:text-white tabular-nums leading-none tracking-tight mt-2">
+          <div className="text-xl font-display font-bold text-slate-800 dark:text-white tabular-nums leading-tight tracking-tight mt-0.5">
             {loading ? (
-              <div className="h-8 w-32 bg-slate-200 dark:bg-slate-700 animate-pulse rounded my-1"></div>
+              <div className="h-6 w-24 bg-slate-200 dark:bg-slate-700 animate-pulse rounded my-0.5"></div>
             ) : (
               <>{prefix}{formattedValue}{suffix}</>
             )}
@@ -99,8 +99,8 @@ const KPICard: React.FC<KPICardProps> = ({
         </div>
 
         <div className="flex items-start">
-          {trend === 'up' && <TrendingUp size={20} className="text-emerald-500" />}
-          {trend === 'down' && <TrendingDown size={20} className="text-rose-500" />}
+          {trend === 'up' && <TrendingUp size={16} strokeWidth={2.5} className="text-emerald-500" />}
+          {trend === 'down' && <TrendingDown size={16} strokeWidth={2.5} className="text-rose-500" />}
         </div>
       </div>
     </div>

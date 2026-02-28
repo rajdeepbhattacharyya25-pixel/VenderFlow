@@ -231,17 +231,41 @@ const Dashboard: React.FC<DashboardProps> = ({ theme, onTabChange, sellerSlug })
                     setTopProducts([]);
                 }
 
-                // Fetch Storefront Traffic (isolated to this seller)
+                // Fetch Storefront Traffic from store_page_views table
                 try {
-                    const { data: analyticsData, error: funcError } = await supabase.functions.invoke('seller-analytics', {
-                        body: { widgets: ['traffic'] }
-                    });
+                    const now = new Date();
+                    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+                    const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000).toISOString();
 
-                    if (analyticsData?.traffic) {
-                        setTrafficData(analyticsData.traffic);
-                    }
+                    // Count page views in last 7 days
+                    const { count: thisWeekCount, error: twErr } = await supabase
+                        .from('store_page_views')
+                        .select('*', { count: 'exact', head: true })
+                        .eq('seller_id', user.id)
+                        .gte('created_at', sevenDaysAgo);
+
+                    if (twErr) console.error('Traffic this week error:', twErr);
+
+                    // Count page views in previous 7 days (for trend)
+                    const { count: lastWeekCount, error: lwErr } = await supabase
+                        .from('store_page_views')
+                        .select('*', { count: 'exact', head: true })
+                        .eq('seller_id', user.id)
+                        .gte('created_at', fourteenDaysAgo)
+                        .lt('created_at', sevenDaysAgo);
+
+                    if (lwErr) console.error('Traffic last week error:', lwErr);
+
+                    const current = thisWeekCount ?? 0;
+                    const previous = lastWeekCount ?? 0;
+                    const changePct = previous > 0 ? ((current - previous) / previous) * 100 : 0;
+
+                    setTrafficData({
+                        visitors_7d: current,
+                        change_pct: Math.round(changePct * 10) / 10,
+                    });
                 } catch (analyticsError) {
-                    console.error('Error fetching seller analytics:', analyticsError);
+                    console.error('Error fetching store traffic:', analyticsError);
                 }
 
             }
@@ -439,7 +463,7 @@ const Dashboard: React.FC<DashboardProps> = ({ theme, onTabChange, sellerSlug })
                 </div>
 
                 {/* KPI Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <KPICard
                         title="Total Sales"
                         value={stats.sales}
@@ -491,48 +515,6 @@ const Dashboard: React.FC<DashboardProps> = ({ theme, onTabChange, sellerSlug })
 
             {/* Right Sidebar (Donut + Recent) */}
             <div className="w-full xl:w-[320px] flex-shrink-0 flex flex-col gap-6">
-                {/* Low Stock Alert - Perfect for Small Business Inventory Management */}
-                {/* Mode of Order - Donut Chart */}
-                <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-slate-100 dark:border-slate-700">
-                    <div className="flex justify-between items-center mb-6">
-                        <h3 className="font-bold text-sm text-slate-800 dark:text-white">Mode of Order</h3>
-                        <MoreHorizontal size={16} className="text-slate-400" />
-                    </div>
-
-                    <div className="h-[200px] w-full relative">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                                <Pie
-                                    data={[
-                                        { name: 'Online orders', value: 65 },
-                                        { name: 'Store orders', value: 35 }
-                                    ]}
-                                    innerRadius={60}
-                                    outerRadius={80}
-                                    paddingAngle={0}
-                                    dataKey="value"
-                                    startAngle={90}
-                                    endAngle={-270}
-                                >
-                                    <Cell key="cell-0" fill="#38bdf8" strokeWidth={0} />
-                                    <Cell key="cell-1" fill="#1e293b" strokeWidth={0} />
-                                </Pie>
-                            </PieChart>
-                        </ResponsiveContainer>
-                        {/* Center Text if needed, or leave clean */}
-                    </div>
-
-                    <div className="flex justify-center gap-6 mt-4">
-                        <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded-sm bg-sky-400"></div>
-                            <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Online orders</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded-sm bg-slate-800 dark:bg-slate-200"></div>
-                            <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Store orders</span>
-                        </div>
-                    </div>
-                </div>
 
 
                 <RecentOrders orders={recentOrders} onOrderClick={setSelectedOrder} />

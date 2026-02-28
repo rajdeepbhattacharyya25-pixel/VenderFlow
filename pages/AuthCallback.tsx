@@ -398,9 +398,7 @@ const AuthCallback = () => {
             <div className="relative z-10 text-center">
                 <Loader2 className="w-12 h-12 text-indigo-500 animate-spin mb-6 mx-auto" />
                 <h2 className="text-2xl font-bold text-white mb-2">{status}</h2>
-                <div className="text-gray-500 text-sm max-w-md text-left bg-black/50 p-4 rounded-lg overflow-y-auto max-h-40 font-mono">
-                    {debugLog.map((log, i) => <div key={i}>{log}</div>)}
-                </div>
+                <p className="text-gray-500 text-sm">Please wait while we set things up</p>
             </div>
         </div>
     );
