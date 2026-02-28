@@ -397,6 +397,36 @@ const SellerStorefront = () => {
         };
     }, [seller]);
 
+    // Track storefront page view (for seller dashboard Store Traffic KPI)
+    useEffect(() => {
+        if (!seller || isPreviewMode) return;
+
+        // Session-based dedup: only log once per browser session per store
+        const sessionKey = `pv_${seller.id}`;
+        if (sessionStorage.getItem(sessionKey)) return;
+        sessionStorage.setItem(sessionKey, '1');
+
+        // Generate a simple anonymous visitor id from sessionStorage
+        let visitorId = sessionStorage.getItem('vf_vid');
+        if (!visitorId) {
+            visitorId = crypto.randomUUID();
+            sessionStorage.setItem('vf_vid', visitorId);
+        }
+
+        supabase
+            .from('store_page_views')
+            .insert({
+                seller_id: seller.id,
+                visitor_id: visitorId,
+                page_path: window.location.pathname,
+                referrer: document.referrer || null,
+                user_agent: navigator.userAgent
+            })
+            .then(({ error }) => {
+                if (error) console.error('Page view tracking error:', error);
+            });
+    }, [seller, isPreviewMode]);
+
     // Apply Theme Styles
     const themeStyles = useMemo(() => {
         if (!storeSettings?.theme_config) return {};

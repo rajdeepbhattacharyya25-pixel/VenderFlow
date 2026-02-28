@@ -66,29 +66,39 @@ function App() {
 
         if (data) {
           setSellerSlug(data.slug);
-          setStoreName(data.store_name);
 
           if (data.status === 'suspended') {
             setIsSuspended(true);
           }
 
-          if (data.store_name) {
-            document.title = `${data.store_name} Dashboard`;
-          }
-
-          // Fetch store settings for business logo
+          // Fetch store settings for business logo AND store name
+          // store_settings.store_name is what the seller edits in Settings > Business Profile
+          // sellers.store_name is from onboarding — store_settings takes priority
           try {
             const { data: storeSettings } = await supabase
               .from('store_settings')
-              .select('logo_url')
+              .select('logo_url, store_name')
               .eq('seller_id', user.id)
               .maybeSingle();
 
             if (storeSettings?.logo_url) {
               setBusinessLogo(storeSettings.logo_url);
             }
+
+            // Prefer store_settings name (user-editable) over sellers name (onboarding)
+            const displayName = storeSettings?.store_name || data.store_name;
+            setStoreName(displayName);
+
+            if (displayName) {
+              document.title = `${displayName} Dashboard`;
+            }
           } catch (error) {
             console.error('Error fetching store settings:', error);
+            // Fallback to sellers table name
+            setStoreName(data.store_name);
+            if (data.store_name) {
+              document.title = `${data.store_name} Dashboard`;
+            }
           }
 
           // Fetch Latest Announcement
@@ -255,7 +265,7 @@ function App() {
       {/* Main Content Area */}
       <div
         className={`transition-all duration-300 ease-in-out
-            ${isMobile ? 'ml-0' : sidebarCollapsed ? 'ml-[72px]' : 'ml-[240px]'}
+            ${isMobile ? 'ml-0' : sidebarCollapsed ? 'ml-[180px]' : 'ml-[260px]'}
         `}
       >
         <Header

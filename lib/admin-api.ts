@@ -387,8 +387,7 @@ export const adminDb = {
             // - Each product: ~5KB (metadata, JSON)
             // - Each image: ~500KB average (compressed)
             // - Supabase Free tier: 1GB storage
-            // - Pro tier: 8GB storage (use 8GB as reference)
-            const STORAGE_LIMIT_MB = 8 * 1024; // 8GB in MB
+            const STORAGE_LIMIT_MB = 1 * 1024; // 1GB (Supabase free tier)
             const productStorageMB = ((productCount || 0) * 5) / 1024; // 5KB per product
             const imageStorageMB = ((imageCount || 0) * 500) / 1024; // 500KB per image
             const estimatedStorageMB = productStorageMB + imageStorageMB;
@@ -619,7 +618,7 @@ export const adminDb = {
                 .from('product_media')
                 .select('*', { count: 'exact', head: true });
 
-            const STORAGE_LIMIT_MB = 8 * 1024; // 8GB
+            const STORAGE_LIMIT_MB = 1 * 1024; // 1GB (Supabase free tier)
             const estimatedStorageMB = (((productCount || 0) * 5) + ((imageCount || 0) * 500)) / 1024;
             const storagePercentage = Math.round((estimatedStorageMB / STORAGE_LIMIT_MB) * 100);
 

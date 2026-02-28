@@ -236,14 +236,14 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
     };
 
     return (
-        <header className="h-[80px] flex items-center justify-between px-6 lg:px-10 bg-theme-panel/80 backdrop-blur-md border-b border-muted/5 sticky top-0 z-40 transition-all">
-            <div className="flex items-center gap-4">
+        <header className="h-[80px] flex items-center justify-between px-4 sm:px-6 lg:px-10 bg-white dark:bg-[#1e2235] backdrop-blur-md border-b border-gray-200 dark:border-white/5 sticky top-0 z-40 transition-all">
+            <div className="flex items-center gap-2 sm:gap-4 min-w-0">
                 {isMobile && (
-                    <button onClick={onMenuClick} className="p-2 -ml-2 text-theme-text hover:bg-theme-bg/50 rounded-xl transition-colors" title="Toggle Sidebar">
+                    <button onClick={onMenuClick} className="p-2 -ml-2 text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl transition-colors flex-shrink-0" title="Toggle Sidebar">
                         <Menu size={24} />
                     </button>
                 )}
-                <h1 className="text-xl font-bold tracking-tight text-theme-text animate-in slide-in-from-left-2 duration-300">{getTitle(activeTab)}</h1>
+                <h1 className="text-base sm:text-lg font-bold tracking-tight text-gray-900 dark:text-white animate-in slide-in-from-left-2 duration-300">{getTitle(activeTab)}</h1>
             </div>
 
             <div className="flex items-center gap-4 lg:gap-8">

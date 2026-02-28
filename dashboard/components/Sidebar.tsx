@@ -143,30 +143,27 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, isMobile, activeTab, setAc
       <aside
         className={`fixed top-0 left-0 h-full bg-[#1a1c2e] border-r border-white/5 z-40 transition-all duration-300 ease-in-out flex flex-col shadow-2xl
           ${isMobile
-            ? (collapsed ? '-translate-x-full' : 'translate-x-0 w-[280px]')
-            : (collapsed ? 'w-[72px]' : 'w-[240px]')
+            ? (collapsed ? '-translate-x-full' : 'translate-x-0 w-[260px]')
+            : (collapsed ? 'w-[180px]' : 'w-[260px]')
           }
         `}
       >
         {/* Logo Area */}
-        <div className={`h-[80px] flex items-center ${collapsed ? 'justify-center' : 'px-6'} border-b border-white/5`}>
+        <div className={`h-[70px] flex items-center px-4 border-b border-white/5`}>
           <button
             onClick={() => setActiveTab('dashboard')}
-            className="flex items-center gap-3 text-luxury-text font-display font-bold text-xl tracking-tight hover:opacity-80 transition-opacity text-left w-full group"
+            className="flex items-center gap-2.5 text-luxury-text font-display font-bold tracking-tight hover:opacity-80 transition-opacity text-left w-full group min-w-0"
           >
-            <div className="relative">
+            <div className="relative flex-shrink-0">
               <img
                 src={businessLogo || "/logo.jpg"}
                 alt="Business Logo"
-                className="w-9 h-9 rounded-lg object-cover flex-shrink-0 shadow-soft group-hover:shadow-glow transition-shadow duration-300"
+                className="w-8 h-8 md:w-10 md:h-10 rounded-lg object-cover shadow-soft group-hover:shadow-glow transition-shadow duration-300"
               />
             </div>
-
-            {!collapsed && (
-              <span className="opacity-0 animate-[fadeIn_0.3s_ease-out_forwards] truncate uppercase tracking-widest text-sm text-white">
-                {storeName || 'VenderFlow'}
-              </span>
-            )}
+            <span className="truncate uppercase tracking-widest text-xs md:text-sm text-white">
+              {storeName || 'VenderFlow'}
+            </span>
           </button>
         </div>
 
@@ -185,30 +182,28 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, isMobile, activeTab, setAc
                   if (isMobile && onSidebarClose) onSidebarClose();
                 }}
                 className={`
-                        relative flex items-center h-12 rounded-lg transition-all duration-300 group overflow-hidden
-                        ${collapsed ? 'justify-center w-full px-0' : 'px-4 w-full'}
+                        relative flex items-center h-11 rounded-lg transition-all duration-300 group overflow-hidden
+                        ${collapsed ? 'justify-start w-full px-3' : 'px-4 w-full'}
                         ${isActive
                     ? 'bg-white/10 text-white translate-x-1'
                     : 'text-slate-400 hover:bg-white/5 hover:text-white hover:translate-x-1'
                   }
                     `}
               >
-                <div className="relative z-10 flex items-center">
-                  <Icon size={20} strokeWidth={isActive ? 2.5 : 1.5} className="flex-shrink-0" />
+                <div className="relative z-10 flex items-center gap-3 min-w-0">
+                  <Icon size={18} strokeWidth={isActive ? 2.5 : 1.5} className="flex-shrink-0" />
                   {showBadge && (
-                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse border-2 border-luxury-card" />
+                    <span className="absolute -top-1 left-3 w-2 h-2 bg-red-500 rounded-full animate-pulse border-2 border-luxury-card" />
                   )}
 
-                  {!collapsed && (
-                    <span className={`ml-3 text-[13px] font-medium whitespace-nowrap opacity-0 animate-[fadeIn_0.2s_0.1s_ease-out_forwards]`}>
-                      {item.label}
-                    </span>
-                  )}
+                  <span className="text-[12px] font-medium whitespace-nowrap truncate">
+                    {item.label}
+                  </span>
                 </div>
 
                 {/* Active Indicator Line */}
                 {isActive && collapsed && (
-                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white rounded-r-full" />
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-white rounded-r-full" />
                 )}
 
                 {/* Tooltip for collapsed state */}
@@ -227,29 +222,23 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, isMobile, activeTab, setAc
                 href={`/store/${sellerSlug}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`
-                        flex items-center h-12 rounded-lg transition-all duration-200 w-full group text-slate-400 hover:text-white hover:bg-white/5
-                        ${collapsed ? 'justify-center px-0' : 'px-4'}
-                    `}
+                className="flex items-center gap-3 h-11 rounded-lg transition-all duration-200 w-full group text-slate-400 hover:text-white hover:bg-white/5 px-3"
                 title="View Storefront"
               >
-                <div className="relative">
-                  <ShoppingBag size={20} className="flex-shrink-0" />
+                <div className="relative flex-shrink-0">
+                  <ShoppingBag size={18} className="flex-shrink-0" />
                   <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-green-500 border-2 border-luxury-card"></div>
                 </div>
-                {!collapsed && <span className="ml-3 text-[13px] font-medium whitespace-nowrap">View Store</span>}
+                <span className="text-[12px] font-medium whitespace-nowrap truncate">View Store</span>
               </a>
             )}
 
             <button
               onClick={handleLogout}
-              className={`
-                        flex items-center h-12 rounded-lg transition-all duration-200 w-full group text-slate-400 hover:text-red-400 hover:bg-red-500/10
-                        ${collapsed ? 'justify-center px-0' : 'px-4'}
-                    `}
+              className="flex items-center gap-3 h-11 rounded-lg transition-all duration-200 w-full group text-slate-400 hover:text-red-400 hover:bg-red-500/10 px-3"
             >
-              <LogOut size={20} className="flex-shrink-0" />
-              {!collapsed && <span className="ml-3 text-[13px] font-medium whitespace-nowrap">Logout</span>}
+              <LogOut size={18} className="flex-shrink-0" />
+              <span className="text-[12px] font-medium whitespace-nowrap">Logout</span>
             </button>
           </div>
 

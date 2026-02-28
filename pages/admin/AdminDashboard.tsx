@@ -325,7 +325,7 @@ const AdminDashboard: React.FC = () => {
                                 <div className="flex items-center justify-between text-xs mb-2">
                                     <span className="text-neutral-500">File Storage (Est.)</span>
                                     <span className="text-neutral-400 font-medium">
-                                        {stats.estimatedStorageMB?.toFixed(1) || 0} MB / 8 GB
+                                        {stats.estimatedStorageMB?.toFixed(1) || 0} MB / 1 GB
                                     </span>
                                 </div>
                                 <div className="h-2 bg-neutral-800 rounded-full overflow-hidden mb-3">

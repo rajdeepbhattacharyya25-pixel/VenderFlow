@@ -8,7 +8,7 @@ export interface CompressionResult {
 
 const MAX_IMAGE_SIZE_MB = 10;
 const MAX_COMPRESSED_SIZE_MB = 2;
-const MAX_VIDEO_SIZE_MB = 20;
+const MAX_VIDEO_SIZE_MB = 8;
 
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm'];
