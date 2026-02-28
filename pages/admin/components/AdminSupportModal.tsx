@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { adminDb } from '../../../lib/admin-api';
 import { supabase } from '../../../lib/supabase';
-import { X, MessageSquare, Send, Paperclip, Clock, FileText, Image, Video, Download, CheckCircle } from 'lucide-react';
+import { RealtimeChannel } from '@supabase/supabase-js';
+import { X, MessageSquare, Send, Paperclip, Clock, FileText, Image, Video, Download, CheckCircle, Check, CheckCheck } from 'lucide-react';
 
 interface Ticket {
     id: string;
@@ -32,6 +33,7 @@ interface Message {
     attachment_url?: string;
     attachment_name?: string;
     attachment_type?: string;
+    is_read?: boolean;
 }
 
 interface AdminSupportModalProps {
@@ -46,8 +48,12 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
     const [loading, setLoading] = useState(true);
     const [attachment, setAttachment] = useState<Attachment | null>(null);
     const [uploading, setUploading] = useState(false);
+    const [isTyping, setIsTyping] = useState(false);
+    const [localTyping, setLocalTyping] = useState(false);
+    const [typingChannel, setTypingChannel] = useState<RealtimeChannel | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
     const ALLOWED_TYPES = [
@@ -70,24 +76,78 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
                 t.id === selectedTicket.id ? { ...t, unread_count: 0 } : t
             ));
 
-            const subscription = supabase
-                .channel(`ticket-${selectedTicket.id}`)
+            const channelName = `ticket-${selectedTicket.id}`;
+            const filterString = `ticket_id=eq.${selectedTicket.id}`;
+
+            const channel = supabase
+                .channel(channelName, {
+                    config: { presence: { key: 'admin' } },
+                })
+                .on('presence', { event: 'sync' }, () => {
+                    const state = channel.presenceState();
+                    const opponentTyping = Object.values(state).some(
+                        (presences: any) => presences.some((p: any) => p.role === 'seller' && p.isTyping)
+                    );
+                    setIsTyping(opponentTyping);
+                })
                 .on('postgres_changes', {
                     event: 'INSERT',
                     schema: 'public',
                     table: 'support_messages',
-                    filter: `ticket_id=eq.${selectedTicket.id}`
+                    filter: filterString
                 }, (payload) => {
-                    setMessages(prev => [...prev, payload.new as Message]);
+                    const newMessage = payload.new as Message;
+                    if (newMessage.sender_role === 'seller') {
+                        adminDb.markTicketMessagesAsRead(selectedTicket.id);
+                    }
+                    setMessages(prev => {
+                        if (prev.some(msg => msg.id === newMessage.id)) return prev;
+                        return [...prev, newMessage];
+                    });
                     scrollToBottom();
                 })
-                .subscribe();
+                .on('postgres_changes', {
+                    event: 'UPDATE',
+                    schema: 'public',
+                    table: 'support_messages',
+                    filter: filterString
+                }, (payload) => {
+                    const updatedMessage = payload.new as Message;
+                    setMessages(prev => prev.map(msg => msg.id === updatedMessage.id ? updatedMessage : msg));
+                })
+                .subscribe(async (status) => {
+                    if (status === 'SUBSCRIBED') {
+                        await channel.track({ role: 'admin', isTyping: false });
+                    }
+                });
+
+            setTypingChannel(channel);
 
             return () => {
-                subscription.unsubscribe();
+                channel.unsubscribe();
             };
         }
     }, [selectedTicket]);
+
+    const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setReply(e.target.value);
+
+        if (!localTyping && typingChannel) {
+            setLocalTyping(true);
+            typingChannel.track({ role: 'admin', isTyping: true });
+        }
+
+        if (typingTimeoutRef.current) {
+            clearTimeout(typingTimeoutRef.current);
+        }
+
+        typingTimeoutRef.current = setTimeout(() => {
+            if (typingChannel) {
+                typingChannel.track({ role: 'admin', isTyping: false });
+                setLocalTyping(false);
+            }
+        }, 2000);
+    };
 
     const fetchTickets = async () => {
         const result = await adminDb.listSupportTickets();
@@ -185,6 +245,11 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
         if (result.success) {
             setReply('');
             setAttachment(null);
+
+            if (typingChannel) {
+                typingChannel.track({ role: 'admin', isTyping: false });
+                setLocalTyping(false);
+            }
             // Update the ticket's updated_at in the list to move it to top
             setTickets(prev => {
                 const updated = prev.map(t =>
@@ -465,43 +530,87 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
                             </div>
 
                             {/* Messages Area */}
-                            <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-white dark:bg-neutral-950">
+                            <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 bg-white dark:bg-neutral-950 relative">
                                 {messages.map((msg, idx) => {
                                     const isAdmin = msg.sender_role === 'admin';
                                     const showLabel = idx === 0 || messages[idx - 1].sender_role !== msg.sender_role;
                                     const sellerName = selectedTicket.seller?.store_name || 'Seller';
 
+                                    const currentMsgDate = new Date(msg.created_at).toDateString();
+                                    const prevMsgDate = idx > 0 ? new Date(messages[idx - 1].created_at).toDateString() : null;
+                                    const showDateSeparator = currentMsgDate !== prevMsgDate;
+
                                     return (
-                                        <div key={msg.id || idx} className={`flex flex-col ${isAdmin ? 'items-end' : 'items-start'}`}>
-                                            {/* Sender Label */}
-                                            {showLabel && (
-                                                <div className={`flex items-center gap-2 mb-2 ${isAdmin ? 'flex-row-reverse' : ''}`}>
-                                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${isAdmin ? 'bg-indigo-600 text-white' : 'bg-neutral-300 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300'
-                                                        }`}>
-                                                        {isAdmin ? 'A' : sellerName.charAt(0).toUpperCase()}
-                                                    </div>
-                                                    <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                                                        {isAdmin ? 'Support Agent' : sellerName}
+                                        <React.Fragment key={msg.id || idx}>
+                                            {/* Date Grouping Separator */}
+                                            {showDateSeparator && (
+                                                <div className="flex justify-center my-6">
+                                                    <span className="px-3 py-1 bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 text-xs font-medium rounded-full shadow-sm">
+                                                        {currentMsgDate === new Date().toDateString() ? 'Today' :
+                                                            currentMsgDate === new Date(Date.now() - 86400000).toDateString() ? 'Yesterday' :
+                                                                formatDate(msg.created_at)}
                                                     </span>
                                                 </div>
                                             )}
 
-                                            {/* Message Bubble */}
-                                            <div className={`max-w-[70%] ${isAdmin ? 'ml-10' : 'mr-10'}`}>
-                                                <div className={`rounded-2xl px-5 py-3 ${isAdmin
-                                                    ? 'bg-indigo-600 text-white rounded-br-sm'
-                                                    : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 border-l-4 border-emerald-500 rounded-bl-sm'
-                                                    }`}>
-                                                    {msg.content && !msg.content.startsWith('Attachment:') && (
-                                                        <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                                            <div className={`flex flex-col ${isAdmin ? 'items-end' : 'items-start'}`}>
+                                                {/* Sender Label */}
+                                                {showLabel && (
+                                                    <div className={`flex items-center gap-2 mb-2 ${isAdmin ? 'flex-row-reverse' : ''}`}>
+                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${isAdmin ? 'bg-indigo-600 text-white' : 'bg-neutral-300 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300'
+                                                            }`}>
+                                                            {isAdmin ? 'A' : sellerName.charAt(0).toUpperCase()}
+                                                        </div>
+                                                        <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                                                            {isAdmin ? 'Support Agent' : sellerName}
+                                                        </span>
+                                                    </div>
+                                                )}
+
+                                                {/* Message Bubble */}
+                                                <div className={`max-w-[85%] md:max-w-[70%] ${isAdmin ? 'ml-auto' : 'mr-auto'}`}>
+                                                    <div className={`px-4 py-3 shadow-sm ${isAdmin
+                                                        ? 'bg-indigo-600 text-white rounded-2xl rounded-tr-sm'
+                                                        : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 rounded-2xl rounded-tl-sm'
+                                                        }`}>
+                                                        {msg.content && !msg.content.startsWith('Attachment:') && (
+                                                            <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                                                        )}
+                                                        {renderAttachment(msg)}
+                                                    </div>
+                                                    {/* Read Receipt */}
+                                                    {isAdmin && (
+                                                        <div className="flex justify-end mt-1 px-1">
+                                                            {msg.is_read ? (
+                                                                <CheckCheck size={14} className="text-emerald-500" title="Read" />
+                                                            ) : (
+                                                                <Check size={14} className="text-neutral-400" title="Delivered" />
+                                                            )}
+                                                        </div>
                                                     )}
-                                                    {renderAttachment(msg)}
                                                 </div>
                                             </div>
-                                        </div>
+                                        </React.Fragment>
                                     );
                                 })}
-                                <div ref={messagesEndRef} />
+
+                                {/* Typing Indicator */}
+                                {isTyping && (
+                                    <div className="flex items-start">
+                                        <div className="w-8 h-8 rounded-full bg-neutral-300 dark:bg-neutral-700 flex items-center justify-center text-xs font-bold text-neutral-600 dark:text-neutral-300 mr-2 shrink-0">
+                                            {selectedTicket.seller?.store_name?.charAt(0).toUpperCase() || 'S'}
+                                        </div>
+                                        <div className="bg-neutral-100 dark:bg-neutral-800 rounded-2xl rounded-tl-sm px-4 py-3 max-w-fit shadow-sm">
+                                            <div className="flex space-x-1.5 h-4 items-center">
+                                                <div className="w-1.5 h-1.5 bg-neutral-400 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                                                <div className="w-1.5 h-1.5 bg-neutral-400 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                                                <div className="w-1.5 h-1.5 bg-neutral-400 rounded-full animate-bounce"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div ref={messagesEndRef} className="h-2" />
                             </div>
 
                             {/* Attachment Preview */}
@@ -537,9 +646,10 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
                                     <input
                                         type="text"
                                         value={reply}
-                                        onChange={(e) => setReply(e.target.value)}
+                                        onChange={handleInput}
                                         placeholder="Type your message..."
-                                        className="flex-1 min-w-0 bg-transparent focus:outline-none text-neutral-900 dark:text-white placeholder-neutral-500 py-2"
+                                        aria-label="Message input"
+                                        className="flex-1 min-w-0 bg-transparent focus:outline-none text-neutral-900 dark:text-white placeholder-neutral-500 py-3 md:py-2 text-[16px] md:text-sm"
                                         autoComplete="off"
                                     />
                                     <button
