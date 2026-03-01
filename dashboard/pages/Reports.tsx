@@ -3,10 +3,41 @@ import { supabase } from '../../lib/supabase';
 import { Order } from '../../types';
 import Papa from 'papaparse';
 import {
-    LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
+    LineChart, Line, BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell
 } from 'recharts';
-import { TrendingUp, ShoppingBag, DollarSign, Package, Download, Calendar, Upload, X, ArrowDownRight, ArrowUpRight, BarChart2 } from 'lucide-react';
+import { TrendingUp, ShoppingBag, DollarSign, Package, Download, Calendar, Upload, X, ArrowDownRight, ArrowUpRight, BarChart2, Activity, Zap, Shield, AlertTriangle, Award, Trophy, Medal } from 'lucide-react';
 import { clsx } from 'clsx';
+import AnalyticsGuide from '../components/AnalyticsGuide';
+
+// Custom glassmorphic tooltip
+const CustomTooltip = ({ active, payload, label, formatter }: any) => {
+    if (!active || !payload?.length) return null;
+    return (
+        <div className="backdrop-blur-xl bg-neutral-900/80 border border-white/10 rounded-xl px-4 py-3 shadow-2xl">
+            <p className="text-xs font-medium text-gray-400 mb-1.5">{label}</p>
+            {payload.map((entry: any, i: number) => (
+                <div key={i} className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
+                    <span className="text-sm font-bold text-white">
+                        {formatter ? formatter(entry.value, entry.name)?.[0] : entry.value}
+                    </span>
+                    <span className="text-xs text-gray-400">{formatter ? formatter(entry.value, entry.name)?.[1] : entry.name}</span>
+                </div>
+            ))}
+        </div>
+    );
+};
+
+// Glass card wrapper
+const GlassCard = ({ children, className = '', glowColor = '' }: { children: React.ReactNode, className?: string, glowColor?: string }) => (
+    <div className={clsx(
+        "relative bg-white/[0.03] dark:bg-white/[0.03] backdrop-blur-sm border border-white/[0.08] rounded-2xl p-5 md:p-6 transition-all duration-300 hover:border-white/[0.15] group",
+        glowColor,
+        className
+    )}>
+        {children}
+    </div>
+);
 
 const Reports = () => {
     // Live Data State
@@ -466,6 +497,7 @@ const Reports = () => {
                     )}
 
                     <input type="file" accept=".csv" ref={fileInputRef} onChange={handleFileUpload} className="hidden" title="upload csv" />
+                    <AnalyticsGuide />
                     <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-neutral-700 text-sm font-semibold rounded-lg bg-white dark:bg-neutral-800 dark:text-white">
                         <Upload className="w-4 h-4" /> Import
                     </button>
@@ -534,30 +566,42 @@ const Reports = () => {
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                        <div className="lg:col-span-2 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 shadow-sm">
+                        <div className="lg:col-span-2 bg-white dark:bg-white/[0.03] border border-neutral-200 dark:border-white/[0.08] rounded-2xl p-6 backdrop-blur-sm">
                             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Net Revenue ({chartTitleRange})</h3>
                             <div className="h-[300px] w-full">
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <LineChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#374151" opacity={0.2} />
-                                        <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6B7280' }} dy={10} />
-                                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6B7280' }} tickFormatter={(value) => `₹${value}`} />
-                                        <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} formatter={(value: number) => [`₹${value?.toFixed(0)}`, 'Revenue']} />
-                                        <Line type="monotone" dataKey="revenue" stroke="#4F46E5" strokeWidth={3} dot={{ r: 4, fill: '#4F46E5', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 6, strokeWidth: 0 }} />
-                                    </LineChart>
+                                    <AreaChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                                        <defs>
+                                            <linearGradient id="overviewGradient" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#4F46E5" stopOpacity={0.25} />
+                                                <stop offset="95%" stopColor="#4F46E5" stopOpacity={0} />
+                                            </linearGradient>
+                                        </defs>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#374151" opacity={0.15} />
+                                        <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#6B7280' }} dy={10} />
+                                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#6B7280' }} tickFormatter={(v) => `₹${v}`} />
+                                        <Tooltip content={<CustomTooltip formatter={(v: number) => [`₹${v?.toFixed(0)}`, 'Revenue']} />} />
+                                        <Area type="monotone" dataKey="revenue" stroke="#4F46E5" strokeWidth={2.5} fill="url(#overviewGradient)" dot={false} activeDot={{ r: 5, fill: '#4F46E5', strokeWidth: 2, stroke: '#fff' }} />
+                                    </AreaChart>
                                 </ResponsiveContainer>
                             </div>
                         </div>
-                        <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 shadow-sm">
+                        <div className="bg-white dark:bg-white/[0.03] border border-neutral-200 dark:border-white/[0.08] rounded-2xl p-6 backdrop-blur-sm">
                             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Daily Orders</h3>
                             <div className="h-[300px] w-full">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: -20 }}>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#374151" opacity={0.2} />
-                                        <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6B7280' }} dy={10} />
-                                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6B7280' }} allowDecimals={false} />
-                                        <Tooltip cursor={{ fill: 'rgba(79, 70, 229, 0.05)' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} formatter={(value: number) => [value, 'Orders']} />
-                                        <Bar dataKey="orders" fill="#6366F1" radius={[4, 4, 0, 0]} />
+                                        <defs>
+                                            <linearGradient id="ordersBarGradient" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="0%" stopColor="#6366F1" stopOpacity={1} />
+                                                <stop offset="100%" stopColor="#818CF8" stopOpacity={0.6} />
+                                            </linearGradient>
+                                        </defs>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#374151" opacity={0.15} />
+                                        <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#6B7280' }} dy={10} />
+                                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#6B7280' }} allowDecimals={false} />
+                                        <Tooltip content={<CustomTooltip formatter={(v: number) => [v, 'Orders']} />} cursor={{ fill: 'rgba(99, 102, 241, 0.05)' }} />
+                                        <Bar dataKey="orders" fill="url(#ordersBarGradient)" radius={[6, 6, 0, 0]} />
                                     </BarChart>
                                 </ResponsiveContainer>
                             </div>
@@ -566,170 +610,422 @@ const Reports = () => {
                 </div>
             )}
 
-            {activeTab === 'revenue' && (
-                <div className="animate-[fadeIn_0.3s]">
-                    <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 shadow-sm mb-8">
-                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Smart Revenue Intelligence</h3>
-
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                            <div className="p-4 rounded-xl bg-gray-50 dark:bg-neutral-800">
-                                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Gross Expected</p>
-                                <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">₹{revenueStats.gross.toLocaleString()}</p>
+            {activeTab === 'revenue' && (() => {
+                const healthScore = Math.max(0, Math.min(100, Math.round(100 - revenueStats.refundRate * 5 + (revenueStats.growthRate > 0 ? 15 : -10))));
+                return (
+                    <div className="animate-[fadeIn_0.3s] space-y-6">
+                        {/* Revenue Waterfall Cards */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+                            <div className="relative overflow-hidden bg-white dark:bg-white/[0.03] border border-neutral-200 dark:border-indigo-500/20 rounded-2xl p-6 backdrop-blur-sm group hover:border-indigo-500/40 transition-all duration-300">
+                                <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent pointer-events-none" />
+                                <div className="relative z-10">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center"><DollarSign className="w-4 h-4 text-indigo-400" /></div>
+                                        <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Gross Revenue</p>
+                                    </div>
+                                    <p className="text-3xl font-bold text-gray-900 dark:text-white mb-3">₹{revenueStats.gross.toLocaleString()}</p>
+                                    <div className="h-1 w-full bg-neutral-200 dark:bg-neutral-800 rounded-full overflow-hidden"><div className="h-full bg-gradient-to-r from-indigo-500 to-indigo-400 rounded-full" style={{ width: '100%' }} /></div>
+                                </div>
                             </div>
-                            <div className="p-4 rounded-xl bg-red-50 dark:bg-red-500/10">
-                                <p className="text-sm font-medium text-red-600 dark:text-red-400">Leaked to Refunds</p>
-                                <p className="text-3xl font-bold text-red-600 dark:text-red-400 mt-2">-₹{revenueStats.refunds.toLocaleString()}</p>
+                            <div className="relative overflow-hidden bg-white dark:bg-white/[0.03] border border-neutral-200 dark:border-red-500/20 rounded-2xl p-6 backdrop-blur-sm group hover:border-red-500/40 transition-all duration-300">
+                                <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 to-transparent pointer-events-none" />
+                                <div className="relative z-10">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center"><AlertTriangle className="w-4 h-4 text-red-400" /></div>
+                                        <p className="text-sm font-medium text-red-500 dark:text-red-400">Leaked to Refunds</p>
+                                    </div>
+                                    <p className="text-3xl font-bold text-red-500 dark:text-red-400 mb-3">-₹{revenueStats.refunds.toLocaleString()}</p>
+                                    <div className="h-1 w-full bg-neutral-200 dark:bg-neutral-800 rounded-full overflow-hidden"><div className="h-full bg-gradient-to-r from-red-500 to-red-400 rounded-full" style={{ width: `${revenueStats.gross > 0 ? (revenueStats.refunds / revenueStats.gross * 100) : 0}%` }} /></div>
+                                </div>
                             </div>
-                            <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-500/10">
-                                <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">Actual Realized Net Revenue</p>
-                                <p className="text-3xl font-bold text-emerald-600 mt-2">₹{revenueStats.net.toLocaleString()}</p>
+                            <div className="relative overflow-hidden bg-white dark:bg-white/[0.03] border border-neutral-200 dark:border-emerald-500/20 rounded-2xl p-6 backdrop-blur-sm group hover:border-emerald-500/40 transition-all duration-300">
+                                <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent pointer-events-none" />
+                                <div className="relative z-10">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center"><Zap className="w-4 h-4 text-emerald-400" /></div>
+                                        <p className="text-sm font-medium text-emerald-500 dark:text-emerald-400">Net Revenue</p>
+                                    </div>
+                                    <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400 mb-3">₹{revenueStats.net.toLocaleString()}</p>
+                                    <div className="h-1 w-full bg-neutral-200 dark:bg-neutral-800 rounded-full overflow-hidden"><div className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full" style={{ width: `${revenueStats.gross > 0 ? (revenueStats.net / revenueStats.gross * 100) : 0}%` }} /></div>
+                                </div>
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
-                            <div className="p-4 rounded-xl bg-indigo-50 dark:bg-indigo-500/10">
-                                <p className="text-sm font-medium text-indigo-600 dark:text-indigo-400">Total Orders</p>
-                                <p className="text-3xl font-bold text-indigo-600 dark:text-indigo-300 mt-2">{revenueStats.totalOrders.toLocaleString()}</p>
+                        {/* Order Metrics Row */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+                            <div className="bg-white dark:bg-white/[0.03] border border-neutral-200 dark:border-white/[0.08] rounded-2xl p-5 backdrop-blur-sm">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Orders</p>
+                                        <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400 mt-1">{revenueStats.totalOrders.toLocaleString()}</p>
+                                    </div>
+                                    <div className="w-12 h-12 rounded-xl bg-indigo-500/10 flex items-center justify-center"><ShoppingBag className="w-5 h-5 text-indigo-400" /></div>
+                                </div>
                             </div>
-                            <div className="p-4 rounded-xl bg-red-50 dark:bg-red-500/10">
-                                <p className="text-sm font-medium text-red-600 dark:text-red-400">Refunded Orders</p>
-                                <p className="text-3xl font-bold text-red-600 dark:text-red-400 mt-2">{revenueStats.refundedOrders}</p>
+                            <div className="bg-white dark:bg-white/[0.03] border border-neutral-200 dark:border-white/[0.08] rounded-2xl p-5 backdrop-blur-sm">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Refunded Orders</p>
+                                        <p className="text-2xl font-bold text-red-500 dark:text-red-400 mt-1">{revenueStats.refundedOrders}</p>
+                                    </div>
+                                    <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center"><Package className="w-5 h-5 text-red-400" /></div>
+                                </div>
                             </div>
-                            <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-500/10">
-                                <p className="text-sm font-medium text-amber-600 dark:text-amber-400">Refund Rate</p>
-                                <p className="text-3xl font-bold text-amber-600 dark:text-amber-400 mt-2">{revenueStats.refundRate.toFixed(1)}%</p>
+                            <div className="bg-white dark:bg-white/[0.03] border border-neutral-200 dark:border-white/[0.08] rounded-2xl p-5 backdrop-blur-sm">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Refund Rate</p>
+                                        <p className="text-2xl font-bold text-amber-500 dark:text-amber-400 mt-1">{revenueStats.refundRate.toFixed(1)}%</p>
+                                    </div>
+                                    <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center"><Shield className="w-5 h-5 text-amber-400" /></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Revenue Trend Area Chart */}
+                        <div className="bg-white dark:bg-white/[0.03] border border-neutral-200 dark:border-white/[0.08] rounded-2xl p-6 backdrop-blur-sm">
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Revenue Trend ({chartTitleRange})</h3>
+                            <div className="h-[320px] w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <AreaChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                                        <defs>
+                                            <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
+                                                <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                                            </linearGradient>
+                                        </defs>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#374151" opacity={0.15} />
+                                        <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#6B7280' }} dy={10} />
+                                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#6B7280' }} tickFormatter={(v) => `₹${v}`} />
+                                        <Tooltip content={<CustomTooltip formatter={(v: number) => [`₹${v?.toFixed(0)}`, 'Revenue']} />} />
+                                        <Area type="monotone" dataKey="revenue" stroke="#6366f1" strokeWidth={2.5} fill="url(#revenueGradient)" dot={false} activeDot={{ r: 5, fill: '#6366f1', strokeWidth: 2, stroke: '#fff' }} />
+                                    </AreaChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+
+                        {/* Revenue Health Indicator */}
+                        <div className="bg-white dark:bg-white/[0.03] border border-neutral-200 dark:border-white/[0.08] rounded-2xl p-6 backdrop-blur-sm">
+                            <div className="flex items-center justify-between mb-4">
+                                <div>
+                                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">Revenue Health</h3>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Based on refund rate, growth trajectory, and order volume</p>
+                                </div>
+                                <span className={clsx("text-2xl font-bold", healthScore >= 70 ? "text-emerald-500" : healthScore >= 40 ? "text-amber-500" : "text-red-500")}>{healthScore}/100</span>
+                            </div>
+                            <div className="h-3 w-full bg-neutral-200 dark:bg-neutral-800 rounded-full overflow-hidden">
+                                <div
+                                    className="h-full rounded-full transition-all duration-700 ease-out"
+                                    style={{
+                                        width: `${healthScore}%`,
+                                        background: `linear-gradient(90deg, #ef4444 0%, #f59e0b 40%, #10b981 70%, #059669 100%)`
+                                    }}
+                                />
+                            </div>
+                            <div className="flex justify-between mt-2 text-xs text-gray-400">
+                                <span>Critical</span><span>Needs Attention</span><span>Healthy</span><span>Excellent</span>
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
+                );
+            })()}
 
             {activeTab === 'products' && (
-                <div className="animate-[fadeIn_0.3s]">
-                    <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 shadow-sm mb-8">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Product Intelligence Deep Dive</h3>
+                <div className="animate-[fadeIn_0.3s] space-y-6">
+                    {topProducts.length === 0 ? (
+                        <div className="text-center py-16 bg-white dark:bg-white/[0.03] rounded-2xl border border-neutral-200 dark:border-white/[0.08] border-dashed">
+                            <Package className="w-12 h-12 text-neutral-400 mx-auto mb-4" />
+                            <p className="text-neutral-500 dark:text-neutral-400 font-medium text-lg">No product data available</p>
+                            <p className="text-neutral-400 dark:text-neutral-500 text-sm mt-1">Import data or wait for orders in the selected period.</p>
                         </div>
-
-                        {topProducts.length === 0 ? (
-                            <div className="text-center py-10 bg-neutral-50 dark:bg-neutral-800/50 rounded-xl border border-dashed border-neutral-200 dark:border-neutral-700">
-                                <Package className="w-10 h-10 text-neutral-400 mx-auto mb-3" />
-                                <p className="text-neutral-500 dark:text-neutral-400 font-medium">No product data available in the selected period.</p>
+                    ) : (
+                        <>
+                            {/* Top 3 Product Spotlight */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+                                {topProducts.slice(0, 3).map((product: any, idx: number) => {
+                                    const contrib = revenueStats.gross > 0 ? (product.revenue / revenueStats.gross * 100) : 0;
+                                    const rankColors = [
+                                        { border: 'border-amber-500/30 hover:border-amber-500/50', bg: 'from-amber-500/10', icon: 'text-amber-400', label: '#1' },
+                                        { border: 'border-gray-400/30 hover:border-gray-400/50', bg: 'from-gray-400/10', icon: 'text-gray-400', label: '#2' },
+                                        { border: 'border-orange-600/30 hover:border-orange-600/50', bg: 'from-orange-600/10', icon: 'text-orange-500', label: '#3' }
+                                    ];
+                                    const rank = rankColors[idx];
+                                    return (
+                                        <div key={idx} className={clsx("relative overflow-hidden bg-white dark:bg-white/[0.03] border rounded-2xl p-5 backdrop-blur-sm transition-all duration-300", rank.border)}>
+                                            <div className={clsx("absolute inset-0 bg-gradient-to-br to-transparent pointer-events-none", rank.bg)} />
+                                            <div className="relative z-10">
+                                                <div className="flex items-center justify-between mb-3">
+                                                    <span className={clsx("text-xs font-bold px-2.5 py-1 rounded-full bg-white/5 border border-white/10", rank.icon)}>{rank.label}</span>
+                                                    <Award className={clsx("w-5 h-5", rank.icon)} />
+                                                </div>
+                                                <h4 className="text-sm font-semibold text-gray-900 dark:text-white truncate mb-2">{product.name}</h4>
+                                                <div className="flex items-center justify-between">
+                                                    <div>
+                                                        <p className="text-xs text-gray-400">Units Sold</p>
+                                                        <p className="text-lg font-bold text-gray-900 dark:text-white">{product.units.toLocaleString()}</p>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <p className="text-xs text-gray-400">Contribution</p>
+                                                        <p className="text-lg font-bold text-indigo-500 dark:text-indigo-400">{contrib.toFixed(1)}%</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
                             </div>
-                        ) : (
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left border-collapse min-w-[800px]">
-                                    <thead>
-                                        <tr className="border-b border-neutral-200 dark:border-neutral-800 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
-                                            <th className="pb-3 px-4 font-medium">Product Name</th>
-                                            <th className="pb-3 px-4 font-medium text-right">Units Sold</th>
-                                            <th className="pb-3 px-4 font-medium text-right">Refund %</th>
-                                            <th className="pb-3 px-4 font-medium text-right">ASP</th>
-                                            <th className="pb-3 px-4 font-medium text-right">Gross Revenue</th>
-                                            <th className="pb-3 px-4 font-medium text-right">Contribution %</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {topProducts.map((product: any, idx: number) => {
-                                            const totalUnits = product.units + product.refunded_units;
-                                            const refundRate = totalUnits > 0 ? (product.refunded_units / totalUnits) * 100 : 0;
-                                            const asp = product.units > 0 ? (product.revenue / product.units) : 0;
-                                            const contrib = revenueStats.gross > 0 ? (product.revenue / revenueStats.gross) * 100 : 0;
 
-                                            return (
-                                                <tr key={idx} className="border-b border-neutral-100 dark:border-neutral-800/50 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
-                                                    <td className="py-4 px-4 font-medium text-sm text-gray-900 dark:text-white">
-                                                        {product.name}
-                                                    </td>
-                                                    <td className="py-4 px-4 text-right text-sm font-medium text-gray-600 dark:text-gray-300">
-                                                        {product.units}
-                                                    </td>
-                                                    <td className="py-4 px-4 text-right text-sm font-medium">
-                                                        <span className={clsx("px-2 py-1 rounded inline-flex font-bold", refundRate > 10 ? "bg-red-100 text-red-700" : "text-gray-600 dark:text-gray-400")}>
-                                                            {refundRate.toFixed(1)}%
-                                                        </span>
-                                                    </td>
-                                                    <td className="py-4 px-4 text-right text-sm font-medium text-gray-600 dark:text-gray-300">
-                                                        ₹{asp.toFixed(2)}
-                                                    </td>
-                                                    <td className="py-4 px-4 text-right text-sm font-bold text-gray-900 dark:text-white">
-                                                        ₹{product.revenue.toLocaleString()}
-                                                    </td>
-                                                    <td className="py-4 px-4 text-right">
-                                                        <div className="flex items-center justify-end gap-2">
-                                                            <span className="text-xs text-gray-500">{contrib.toFixed(1)}%</span>
-                                                            <div className="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
-                                                                <div className="h-full bg-indigo-500" style={{ width: `${contrib}%` }}></div>
+                            {/* Product Performance Table */}
+                            <div className="bg-white dark:bg-white/[0.03] border border-neutral-200 dark:border-white/[0.08] rounded-2xl p-6 backdrop-blur-sm">
+                                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Product Performance</h3>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left border-collapse min-w-[800px]">
+                                        <thead>
+                                            <tr className="border-b border-neutral-200 dark:border-white/[0.08] text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
+                                                <th className="pb-3 px-4 font-medium">Product</th>
+                                                <th className="pb-3 px-4 font-medium text-right">Units</th>
+                                                <th className="pb-3 px-4 font-medium text-right">Refund %</th>
+                                                <th className="pb-3 px-4 font-medium text-right">ASP</th>
+                                                <th className="pb-3 px-4 font-medium text-right">Revenue</th>
+                                                <th className="pb-3 px-4 font-medium text-right">Share</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {topProducts.map((product: any, idx: number) => {
+                                                const totalUnits = product.units + product.refunded_units;
+                                                const refundRate = totalUnits > 0 ? (product.refunded_units / totalUnits) * 100 : 0;
+                                                const asp = product.units > 0 ? (product.revenue / product.units) : 0;
+                                                const contrib = revenueStats.gross > 0 ? (product.revenue / revenueStats.gross) * 100 : 0;
+                                                const maxUnits = topProducts[0]?.units || 1;
+
+                                                return (
+                                                    <tr key={idx} className="border-b border-neutral-100 dark:border-white/[0.04] hover:bg-indigo-50/50 dark:hover:bg-white/[0.02] transition-colors">
+                                                        <td className="py-4 px-4">
+                                                            <div className="flex items-center gap-3">
+                                                                <span className="text-xs font-bold text-gray-400 w-5">{idx + 1}</span>
+                                                                <span className="font-medium text-sm text-gray-900 dark:text-white">{product.name}</span>
                                                             </div>
+                                                        </td>
+                                                        <td className="py-4 px-4 text-right">
+                                                            <div className="flex items-center justify-end gap-2">
+                                                                <span className="text-sm font-medium text-gray-600 dark:text-gray-300">{product.units.toLocaleString()}</span>
+                                                                <div className="w-12 h-1.5 bg-neutral-200 dark:bg-neutral-700 rounded-full overflow-hidden">
+                                                                    <div className="h-full bg-indigo-400 rounded-full" style={{ width: `${(product.units / maxUnits) * 100}%` }} />
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td className="py-4 px-4 text-right">
+                                                            <span className={clsx(
+                                                                "text-xs font-bold px-2.5 py-1 rounded-full",
+                                                                refundRate > 10 ? "bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400" :
+                                                                    refundRate > 5 ? "bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400" :
+                                                                        "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                                                            )}>
+                                                                {refundRate.toFixed(1)}%
+                                                            </span>
+                                                        </td>
+                                                        <td className="py-4 px-4 text-right text-sm font-medium text-gray-600 dark:text-gray-300">₹{asp.toFixed(0)}</td>
+                                                        <td className="py-4 px-4 text-right text-sm font-bold text-gray-900 dark:text-white">₹{product.revenue.toLocaleString()}</td>
+                                                        <td className="py-4 px-4 text-right">
+                                                            <div className="flex items-center justify-end gap-2">
+                                                                <span className="text-xs font-semibold text-gray-500">{contrib.toFixed(1)}%</span>
+                                                                <div className="w-16 h-1.5 bg-neutral-200 dark:bg-neutral-700 rounded-full overflow-hidden">
+                                                                    <div className="h-full bg-gradient-to-r from-indigo-500 to-cyan-400 rounded-full transition-all duration-500" style={{ width: `${contrib}%` }} />
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            {/* Revenue Distribution Chart */}
+                            <div className="bg-white dark:bg-white/[0.03] border border-neutral-200 dark:border-white/[0.08] rounded-2xl p-6 backdrop-blur-sm">
+                                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Revenue Distribution</h3>
+                                <div className="h-[300px] w-full">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={topProducts.slice(0, 8).map((p: any) => ({ name: p.name.length > 20 ? p.name.slice(0, 20) + '…' : p.name, revenue: p.revenue }))} layout="vertical" margin={{ top: 5, right: 30, left: 80, bottom: 5 }}>
+                                            <defs>
+                                                <linearGradient id="barGradient" x1="0" y1="0" x2="1" y2="0">
+                                                    <stop offset="0%" stopColor="#6366f1" />
+                                                    <stop offset="100%" stopColor="#22d3ee" />
+                                                </linearGradient>
+                                            </defs>
+                                            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#374151" opacity={0.1} />
+                                            <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#6B7280' }} tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`} />
+                                            <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#9CA3AF' }} width={80} />
+                                            <Tooltip content={<CustomTooltip formatter={(v: number) => [`₹${v?.toLocaleString()}`, 'Revenue']} />} />
+                                            <Bar dataKey="revenue" fill="url(#barGradient)" radius={[0, 6, 6, 0]} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
+
+                            {/* Refund Risk Matrix */}
+                            {topProducts.filter((p: any) => {
+                                const total = p.units + p.refunded_units;
+                                return total > 0 && (p.refunded_units / total) * 100 > 10;
+                            }).length > 0 && (
+                                    <div className="bg-white dark:bg-white/[0.03] border border-red-500/20 rounded-2xl p-6 backdrop-blur-sm">
+                                        <div className="flex items-center gap-3 mb-5">
+                                            <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center"><AlertTriangle className="w-4 h-4 text-red-400" /></div>
+                                            <div>
+                                                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Refund Risk Matrix</h3>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400">Products with refund rate exceeding 10%</p>
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            {topProducts.filter((p: any) => {
+                                                const total = p.units + p.refunded_units;
+                                                return total > 0 && (p.refunded_units / total) * 100 > 10;
+                                            }).map((product: any, idx: number) => {
+                                                const total = product.units + product.refunded_units;
+                                                const rate = (product.refunded_units / total) * 100;
+                                                return (
+                                                    <div key={idx} className="p-4 rounded-xl bg-red-50/50 dark:bg-red-500/5 border border-red-200/50 dark:border-red-500/10">
+                                                        <div className="flex items-center justify-between mb-2">
+                                                            <h4 className="text-sm font-semibold text-gray-900 dark:text-white">{product.name}</h4>
+                                                            <span className="text-xs font-bold text-red-500 bg-red-100 dark:bg-red-500/20 px-2 py-0.5 rounded-full">{rate.toFixed(1)}%</span>
                                                         </div>
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-                    </div>
+                                                        <p className="text-xs text-gray-500 dark:text-gray-400">{product.refunded_units} units refunded out of {total} total — ₹{product.refund_amount?.toLocaleString() || 0} lost</p>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+                        </>
+                    )}
                 </div>
             )}
 
-            {activeTab === 'trends' && (
-                <div className="animate-[fadeIn_0.3s]">
-                    <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 shadow-sm mb-8">
-                        <div className="flex justify-between items-center mb-6">
-                            <div>
-                                <h3 className="text-xl font-bold text-gray-900 dark:text-white">Trend Intelligence</h3>
-                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Moving Averages reduce daily noise to reveal actual business trajectory.</p>
+            {activeTab === 'trends' && (() => {
+                const lastRevenue = chartData[chartData.length - 1]?.revenue || 0;
+                const lastMa3 = chartData[chartData.length - 1]?.ma3 || 0;
+                const lastMa7 = chartData[chartData.length - 1]?.ma7 || 0;
+                const prevMa7 = chartData[chartData.length - 3]?.ma7 || lastMa7;
+                const momentum = lastMa3 > 0 ? ((lastRevenue - lastMa3) / lastMa3 * 100) : 0;
+                const weeklyDir = lastMa7 > prevMa7 ? 'Up' : lastMa7 < prevMa7 ? 'Down' : 'Flat';
+                const revenueValues = chartData.map((d: any) => d.revenue).filter(Boolean);
+                const mean = revenueValues.length > 0 ? revenueValues.reduce((a: number, b: number) => a + b, 0) / revenueValues.length : 0;
+                const variance = revenueValues.length > 0 ? revenueValues.reduce((sum: number, v: number) => sum + Math.pow(v - mean, 2), 0) / revenueValues.length : 0;
+                const stdDev = Math.sqrt(variance);
+                const volatility = mean > 0 ? Math.min(100, Math.round((stdDev / mean) * 100)) : 0;
+
+                return (
+                    <div className="animate-[fadeIn_0.3s] space-y-6">
+                        {/* Header with Trend Badges */}
+                        <div className="bg-white dark:bg-white/[0.03] border border-neutral-200 dark:border-white/[0.08] rounded-2xl p-6 backdrop-blur-sm">
+                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                                <div>
+                                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">Trend Intelligence</h3>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Moving Averages reduce daily noise to reveal actual business trajectory.</p>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                    <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-gray-400/60" /><span className="text-xs text-gray-400">Daily</span></div>
+                                    <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-sky-400" /><span className="text-xs text-gray-400">3-Day MA</span></div>
+                                    <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-violet-500" /><span className="text-xs text-gray-400">7-Day MA</span></div>
+                                </div>
+                            </div>
+
+                            <div className="h-[450px] w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                                        <defs>
+                                            <linearGradient id="trendGradient7" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.2} />
+                                                <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+                                            </linearGradient>
+                                            <linearGradient id="trendGradient3" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.1} />
+                                                <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0} />
+                                            </linearGradient>
+                                        </defs>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#374151" opacity={0.1} />
+                                        <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#6B7280' }} dy={10} />
+                                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#6B7280' }} tickFormatter={(v) => `₹${v}`} />
+                                        <Tooltip content={<CustomTooltip formatter={(v: number, name: string) => [`₹${(v || 0).toFixed(0)}`, name === 'revenue' ? 'Daily Net' : name === 'ma3' ? '3-Day MA' : '7-Day MA']} />} />
+                                        <Area type="monotone" dataKey="revenue" name="Daily Net Revenue" stroke="#94a3b8" strokeWidth={1.5} fill="none" dot={false} opacity={0.5} />
+                                        <Area type="monotone" dataKey="ma3" name="3-Day Trend" stroke="#0ea5e9" strokeWidth={2} fill="url(#trendGradient3)" dot={false} activeDot={{ r: 4, fill: '#0ea5e9', strokeWidth: 2, stroke: '#fff' }} />
+                                        <Area type="monotone" dataKey="ma7" name="7-Day Meta-Trend" stroke="#8b5cf6" strokeWidth={3} fill="url(#trendGradient7)" dot={false} activeDot={{ r: 5, fill: '#8b5cf6', strokeWidth: 2, stroke: '#fff' }} />
+                                    </AreaChart>
+                                </ResponsiveContainer>
                             </div>
                         </div>
 
-                        <div className="h-[400px] w-full">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <LineChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#374151" opacity={0.2} />
-                                    <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6B7280' }} dy={10} />
-                                    <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6B7280' }} tickFormatter={(value) => `₹${value}`} />
-                                    <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} formatter={(value: number, name: string) => [`₹${(value || 0).toFixed(0)}`, name === 'revenue' ? 'Daily Net' : name === 'ma3' ? '3-Day Moving Avg' : '7-Day Moving Avg']} />
-                                    <Legend wrapperStyle={{ paddingTop: '20px' }} iconType="circle" />
-
-                                    <Line yAxisId="left" type="monotone" dataKey="revenue" name="Daily Net Revenue" stroke="#cbd5e1" strokeWidth={2} dot={false} activeDot={false} opacity={0.6} />
-                                    <Line yAxisId="left" type="monotone" dataKey="ma3" name="3-Day Trend" stroke="#0ea5e9" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
-                                    <Line yAxisId="left" type="monotone" dataKey="ma7" name="7-Day Meta-Trend" stroke="#8b5cf6" strokeWidth={3} dot={false} activeDot={{ r: 6 }} />
-                                </LineChart>
-                            </ResponsiveContainer>
+                        {/* Trend Insight Cards */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+                            <div className="bg-white dark:bg-white/[0.03] border border-neutral-200 dark:border-white/[0.08] rounded-2xl p-5 backdrop-blur-sm">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <div className="w-8 h-8 rounded-lg bg-sky-500/10 flex items-center justify-center"><Activity className="w-4 h-4 text-sky-400" /></div>
+                                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Short-term Momentum</p>
+                                </div>
+                                <div className="flex items-end gap-2">
+                                    <p className={clsx("text-2xl font-bold", momentum >= 0 ? "text-emerald-500" : "text-red-500")}>{momentum > 0 ? '+' : ''}{momentum.toFixed(1)}%</p>
+                                    {momentum >= 0 ? <ArrowUpRight className="w-5 h-5 text-emerald-400 mb-1" /> : <ArrowDownRight className="w-5 h-5 text-red-400 mb-1" />}
+                                </div>
+                                <p className="text-xs text-gray-400 mt-2">Current vs 3-day average</p>
+                            </div>
+                            <div className="bg-white dark:bg-white/[0.03] border border-neutral-200 dark:border-white/[0.08] rounded-2xl p-5 backdrop-blur-sm">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center"><TrendingUp className="w-4 h-4 text-violet-400" /></div>
+                                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Weekly Trend Direction</p>
+                                </div>
+                                <p className={clsx("text-2xl font-bold", weeklyDir === 'Up' ? "text-emerald-500" : weeklyDir === 'Down' ? "text-red-500" : "text-gray-400")}>{weeklyDir === 'Up' ? '↗ Upward' : weeklyDir === 'Down' ? '↘ Downward' : '→ Flat'}</p>
+                                <p className="text-xs text-gray-400 mt-2">Based on 7-day moving average</p>
+                            </div>
+                            <div className="bg-white dark:bg-white/[0.03] border border-neutral-200 dark:border-white/[0.08] rounded-2xl p-5 backdrop-blur-sm">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center"><Zap className="w-4 h-4 text-amber-400" /></div>
+                                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Volatility Score</p>
+                                </div>
+                                <div className="flex items-end gap-2">
+                                    <p className={clsx("text-2xl font-bold", volatility < 30 ? "text-emerald-500" : volatility < 60 ? "text-amber-500" : "text-red-500")}>{volatility}/100</p>
+                                    <span className={clsx("text-xs font-semibold px-2 py-0.5 rounded-full mb-1", volatility < 30 ? "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400" : volatility < 60 ? "bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400" : "bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400")}>
+                                        {volatility < 30 ? 'Stable' : volatility < 60 ? 'Moderate' : 'High'}
+                                    </span>
+                                </div>
+                                <p className="text-xs text-gray-400 mt-2">Revenue coefficient of variation</p>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                );
+            })()}
 
         </div>
     );
 };
 
-// Helper component for metric cards
+// Enhanced metric card with glass-morphism
 const MetricCard = ({ title, value, icon, bgClass, trend }: { title: string, value: string | number, icon: React.ReactNode, bgClass: string, trend?: number }) => (
-    <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 md:p-6 shadow-sm hover:shadow-md transition-shadow">
-        <div className="flex items-start justify-between mb-2">
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{title}</p>
-            <div className={clsx("w-10 h-10 rounded-xl flex items-center justify-center shrink-0", bgClass)}>
-                {icon}
+    <div className="relative bg-white dark:bg-white/[0.03] border border-neutral-200 dark:border-white/[0.08] rounded-2xl p-5 md:p-6 shadow-sm hover:shadow-lg dark:hover:border-white/[0.15] transition-all duration-300 backdrop-blur-sm overflow-hidden group">
+        <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none" />
+        <div className="relative z-10">
+            <div className="flex items-start justify-between mb-3">
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{title}</p>
+                <div className={clsx("w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-110", bgClass)}>
+                    {icon}
+                </div>
             </div>
+            <div className="flex items-end gap-3">
+                <h3 className="text-2xl lg:text-3xl font-display font-bold text-gray-900 dark:text-white">{value}</h3>
+                {trend !== undefined && (
+                    <span className={clsx(
+                        "text-xs font-semibold px-2.5 py-1 rounded-full mb-1 flex items-center gap-1",
+                        trend > 0 ? "text-emerald-700 bg-emerald-100 dark:bg-emerald-500/20 dark:text-emerald-400" :
+                            trend < 0 ? "text-red-700 bg-red-100 dark:bg-red-500/20 dark:text-red-400" :
+                                "text-gray-700 bg-gray-100 dark:bg-gray-800 dark:text-gray-400"
+                    )}>
+                        {trend > 0 ? <ArrowUpRight className="w-3 h-3" /> : trend < 0 ? <ArrowDownRight className="w-3 h-3" /> : null}
+                        {trend > 0 ? '+' : ''}{trend.toFixed(1)}%
+                    </span>
+                )}
+            </div>
+            {trend !== undefined && <p className="text-xs text-gray-400 mt-2">vs previous period</p>}
         </div>
-        <div className="flex items-end gap-3">
-            <h3 className="text-2xl lg:text-3xl font-display font-bold text-gray-900 dark:text-white">{value}</h3>
-            {trend !== undefined && (
-                <span className={clsx(
-                    "text-xs font-semibold px-2 py-0.5 rounded-full mb-1",
-                    trend > 0 ? "text-emerald-700 bg-emerald-100 dark:bg-emerald-500/20 dark:text-emerald-400" :
-                        trend < 0 ? "text-red-700 bg-red-100 dark:bg-red-500/20 dark:text-red-400" :
-                            "text-gray-700 bg-gray-100 dark:bg-gray-800 dark:text-gray-400"
-                )}>
-                    {trend > 0 ? '+' : ''}{trend.toFixed(1)}%
-                </span>
-            )}
-        </div>
-        {trend !== undefined && <p className="text-xs text-gray-400 mt-2">vs previous period</p>}
     </div>
 );
 

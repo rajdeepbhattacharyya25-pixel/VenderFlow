@@ -625,7 +625,7 @@ export const Checkout: React.FC<CheckoutProps> = ({
                 {items.map((item, idx) => (
                   <div key={idx} className="flex gap-4">
                     <div className="w-16 h-20 bg-white dark:bg-gray-800 rounded-lg overflow-hidden shrink-0 border border-gray-200 dark:border-gray-600">
-                      <img src={item.product.image} alt="" className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal" />
+                      <img src={item.product.image} alt={item.product.name} className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal" />
                     </div>
                     <div className="flex-grow">
                       <p className="text-sm font-bold text-gray-900 dark:text-white line-clamp-1">{item.product.name}</p>

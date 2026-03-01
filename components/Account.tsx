@@ -440,6 +440,7 @@ export const Account: React.FC<AccountProps> = ({ onNavigate, showToast, onLogou
         onChange={handleFileChange}
         className="hidden"
         accept="image/*"
+        aria-label="Upload profile photo"
       />
 
       <div className="mb-8">
@@ -466,7 +467,7 @@ export const Account: React.FC<AccountProps> = ({ onNavigate, showToast, onLogou
         <div className="flex flex-col lg:flex-row gap-10">
           {/* Avatar Area */}
           <div className="flex flex-col items-center gap-4 shrink-0">
-            <div className="relative group cursor-pointer" onClick={handlePhotoClick}>
+            <div className="relative group cursor-pointer" onClick={handlePhotoClick} role="button" tabIndex={0} aria-label="Change profile photo" onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handlePhotoClick(); }}>
               <div className="w-32 h-32 rounded-full bg-gray-50 dark:bg-gray-800 p-1 shadow-sm transition-all group-hover:shadow-md overflow-hidden border-2 border-gray-100 dark:border-gray-700">
                 {profile.avatar ? (
                   <img src={profile.avatar} alt="Profile" className="w-full h-full object-cover rounded-full" />
@@ -696,6 +697,7 @@ export const Account: React.FC<AccountProps> = ({ onNavigate, showToast, onLogou
                     <button
                       onClick={() => handleOpenEditAddress(addr)}
                       className="text-gray-400 hover:text-primary p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-full transition-colors"
+                      aria-label={`Edit ${addr.type} address`}
                     >
                       <IconEdit className="w-4 h-4" />
                     </button>
@@ -746,6 +748,7 @@ export const Account: React.FC<AccountProps> = ({ onNavigate, showToast, onLogou
                   <button
                     onClick={() => handleRemoveCard(card.id)}
                     className="text-gray-300 hover:text-red-500 transition-colors p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full"
+                    aria-label={`Remove card ending in ${card.last4}`}
                   >
                     <IconTrash className="w-4 h-4" />
                   </button>
@@ -780,6 +783,8 @@ export const Account: React.FC<AccountProps> = ({ onNavigate, showToast, onLogou
                 <button
                   onClick={() => setNotifications(prev => ({ ...prev, delivery: !prev.delivery }))}
                   className={`w-12 h-6 rounded-full relative transition-colors duration-300 ${notifications.delivery ? 'bg-green-800' : 'bg-gray-200 dark:bg-gray-700'}`}
+                  aria-label="Toggle delivery updates notifications"
+                  aria-pressed={notifications.delivery ? "true" : "false"}
                 >
                   <span className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow transition-transform duration-300 ${notifications.delivery ? 'translate-x-6' : 'translate-x-0'}`} />
                 </button>
@@ -793,6 +798,8 @@ export const Account: React.FC<AccountProps> = ({ onNavigate, showToast, onLogou
                 <button
                   onClick={() => setNotifications(prev => ({ ...prev, offers: !prev.offers }))}
                   className={`w-12 h-6 rounded-full relative transition-colors duration-300 ${notifications.offers ? 'bg-green-800' : 'bg-gray-200 dark:bg-gray-700'}`}
+                  aria-label="Toggle offers and promotions notifications"
+                  aria-pressed={notifications.offers ? "true" : "false"}
                 >
                   <span className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow transition-transform duration-300 ${notifications.offers ? 'translate-x-6' : 'translate-x-0'}`} />
                 </button>
@@ -862,6 +869,7 @@ export const Account: React.FC<AccountProps> = ({ onNavigate, showToast, onLogou
               <button
                 onClick={() => setIsAddressModalOpen(false)}
                 className="p-2 bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-gray-500 dark:text-gray-400"
+                aria-label="Close address modal"
               >
                 <IconX className="w-5 h-5" />
               </button>
@@ -974,6 +982,7 @@ export const Account: React.FC<AccountProps> = ({ onNavigate, showToast, onLogou
                   <button
                     onClick={() => handleDeleteAddress(editingAddress.id)}
                     className="px-4 py-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 font-bold rounded-xl hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                    aria-label="Delete this address"
                   >
                     <IconTrash className="w-5 h-5" />
                   </button>
@@ -1004,6 +1013,7 @@ export const Account: React.FC<AccountProps> = ({ onNavigate, showToast, onLogou
               <button
                 onClick={() => setIsCardModalOpen(false)}
                 title="Close Modal"
+                aria-label="Close card modal"
                 className="p-2 bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-gray-500 dark:text-gray-400"
               >
                 <IconX className="w-5 h-5" />
@@ -1058,6 +1068,7 @@ export const Account: React.FC<AccountProps> = ({ onNavigate, showToast, onLogou
                     checked={editingCard.isDefault}
                     onChange={(e) => setEditingCard(prev => ({ ...prev, isDefault: e.target.checked }))}
                     className="sr-only"
+                    aria-label="Set as primary payment method"
                   />
                   <div className={`w-10 h-6 rounded-full transition-colors duration-300 ${editingCard.isDefault ? 'bg-primary' : 'bg-gray-200 dark:bg-gray-700'}`}></div>
                   <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 shadow-sm ${editingCard.isDefault ? 'translate-x-4' : 'translate-x-0'}`}></div>

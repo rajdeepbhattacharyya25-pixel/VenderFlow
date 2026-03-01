@@ -152,6 +152,7 @@ export const Cart: React.FC<CartProps> = ({
                     checked={isSelected}
                     onChange={() => toggleItemSelection(getItemKey(item))}
                     className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary/20 cursor-pointer"
+                    aria-label={`Select ${item.product.name}`}
                   />
                 </div>
 
@@ -207,6 +208,7 @@ export const Cart: React.FC<CartProps> = ({
                         className="w-11 h-11 md:w-8 md:h-8 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors rounded-l-xl text-lg font-medium disabled:opacity-30"
                         disabled={item.quantity <= 1}
                         style={{ WebkitTapHighlightColor: 'transparent' }}
+                        aria-label={`Decrease quantity of ${item.product.name}`}
                       >
                         −
                       </button>
@@ -216,6 +218,7 @@ export const Cart: React.FC<CartProps> = ({
                         className="w-11 h-11 md:w-8 md:h-8 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors rounded-r-xl text-lg font-medium disabled:opacity-30 disabled:cursor-not-allowed"
                         disabled={isLowStock}
                         style={{ WebkitTapHighlightColor: 'transparent' }}
+                        aria-label={`Increase quantity of ${item.product.name}`}
                       >
                         +
                       </button>
@@ -243,6 +246,7 @@ export const Cart: React.FC<CartProps> = ({
                       <button
                         onClick={() => onAddToCart(product)}
                         className="absolute bottom-2 right-2 w-8 h-8 bg-white dark:bg-surface-dark shadow-md rounded-full flex items-center justify-center text-gray-900 dark:text-white hover:bg-primary hover:text-white dark:hover:bg-white dark:hover:text-black transition-colors"
+                        aria-label={`Add ${product.name} to cart`}
                       >
                         <IconShoppingBag className="w-4 h-4" />
                       </button>

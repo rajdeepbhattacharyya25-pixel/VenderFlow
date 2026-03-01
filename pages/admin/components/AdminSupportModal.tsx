@@ -379,6 +379,7 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
                 onChange={handleFileSelect}
                 accept="image/*,application/pdf,video/*"
                 className="hidden"
+                aria-label="Attach file"
             />
 
             <div
@@ -393,6 +394,7 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
                             onClick={onClose}
                             className="md:hidden p-2 hover:bg-neutral-200 dark:hover:bg-neutral-800 rounded-lg text-neutral-500"
                             title="Close"
+                            aria-label="Close support panel"
                         >
                             <X size={20} />
                         </button>
@@ -487,6 +489,7 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
                         onClick={onClose}
                         className="absolute top-4 right-4 z-10 p-2 bg-white dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded-full shadow-md text-neutral-500 transition-colors hidden md:flex"
                         title="Close"
+                        aria-label="Close support panel"
                     >
                         <X size={20} />
                     </button>
@@ -500,6 +503,7 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
                                         onClick={() => setSelectedTicket(null)}
                                         className="md:hidden p-2 hover:bg-neutral-200 dark:hover:bg-neutral-800 rounded-lg text-neutral-500"
                                         title="Back"
+                                        aria-label="Back to ticket list"
                                     >
                                         ←
                                     </button>
@@ -658,6 +662,7 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
                                         disabled={uploading}
                                         className="p-2 text-neutral-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors disabled:opacity-50"
                                         title="Attach file (PDF, Image, Video - max 10MB)"
+                                        aria-label="Attach file"
                                     >
                                         {uploading ? (
                                             <div className="w-5 h-5 border-2 border-neutral-400 border-t-transparent rounded-full animate-spin" />

@@ -457,6 +457,7 @@ const Support: React.FC = () => {
                 onChange={handleFileSelect}
                 accept="image/*,application/pdf,video/*"
                 className="hidden"
+                aria-label="Attach file"
             />
 
             {/* Tickets Sidebar */}
@@ -473,6 +474,7 @@ const Support: React.FC = () => {
                         }}
                         className="p-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors"
                         title="New Ticket"
+                        aria-label="Create new ticket"
                     >
                         <Plus size={20} />
                     </button>
@@ -584,6 +586,7 @@ const Support: React.FC = () => {
                                 onClick={() => setIsCreatingTicket(false)}
                                 className="lg:hidden p-2 hover:bg-neutral-200 dark:hover:bg-neutral-800 rounded-lg"
                                 title="Back"
+                                aria-label="Back to tickets"
                             >
                                 <X size={24} />
                             </button>
@@ -635,6 +638,7 @@ const Support: React.FC = () => {
                                     onClick={() => setSelectedTicket(null)}
                                     className="lg:hidden w-10 h-10 flex items-center justify-center hover:bg-neutral-200 dark:hover:bg-neutral-800 rounded-full text-neutral-500 transition-colors"
                                     title="Back"
+                                    aria-label="Back to ticket list"
                                 >
                                     <X size={20} />
                                 </button>
@@ -809,6 +813,7 @@ const Support: React.FC = () => {
                                     disabled={uploading || selectedTicket.status === 'closed'}
                                     className="p-2 text-neutral-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors disabled:opacity-50 shrink-0 relative z-20"
                                     title="Attach file (PDF, Image, Video - max 10MB)"
+                                    aria-label="Attach file"
                                 >
                                     {uploading ? (
                                         <div className="w-5 h-5 border-2 border-neutral-400 border-t-transparent rounded-full animate-spin" />

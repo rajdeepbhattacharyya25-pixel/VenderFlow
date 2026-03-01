@@ -18,6 +18,7 @@ export function ContactUsModal({ isOpen, onClose }: ContactUsModalProps) {
                 <button
                     onClick={onClose}
                     className="absolute top-4 right-4 p-2 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 bg-neutral-100 dark:bg-neutral-800 rounded-full transition-colors"
+                    aria-label="Close contact modal"
                 >
                     <X className="w-5 h-5" />
                 </button>
