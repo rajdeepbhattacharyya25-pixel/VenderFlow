@@ -314,7 +314,7 @@ export const Orders: React.FC<OrdersProps> = ({ onNavigate, onAddToCart, showToa
                                 <div className="flex gap-2 mb-4 overflow-x-auto hide-scroll py-2">
                                     {order.items.map((item, i) => (
                                         <div key={i} className="w-14 h-14 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700 flex items-center justify-center shrink-0 p-1">
-                                            <img src={item.image} alt="" className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal opacity-90" />
+                                            <img src={item.image} alt={item.product_name} className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal opacity-90" />
                                         </div>
                                     ))}
                                 </div>

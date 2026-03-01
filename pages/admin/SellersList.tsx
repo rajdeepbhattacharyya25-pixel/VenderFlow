@@ -315,6 +315,7 @@ const SellersList: React.FC = () => {
                         onClick={() => loadSellers()}
                         className="p-2 hover:bg-neutral-800 rounded-xl transition-colors"
                         title="Refresh"
+                        aria-label="Refresh sellers list"
                     >
                         <RefreshCw size={18} className={`text-neutral-400 ${loading ? 'animate-spin' : ''}`} />
                     </button>
@@ -339,6 +340,7 @@ const SellersList: React.FC = () => {
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="w-full bg-neutral-950 border border-neutral-800 rounded-xl py-3 md:py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all"
+                            aria-label="Search sellers by name or slug"
                         />
                     </div>
                     <button
@@ -357,6 +359,7 @@ const SellersList: React.FC = () => {
                     <span>Show:</span>
                     <select
                         title="Records per page"
+                        aria-label="Records per page"
                         className="bg-neutral-950 border border-neutral-800 rounded-lg px-2 py-1 outline-none text-neutral-300"
                         value={limit}
                         disabled
@@ -432,6 +435,7 @@ const SellersList: React.FC = () => {
                                             onClick={toggleSelectAll}
                                             className="w-11 h-11 flex items-center justify-center hover:bg-neutral-700 rounded transition-colors"
                                             title={allSelected ? "Deselect all" : "Select all"}
+                                            aria-label={allSelected ? "Deselect all sellers" : "Select all sellers"}
                                         >
                                             {allSelected ? (
                                                 <CheckSquare size={18} className="text-indigo-500" />
@@ -480,6 +484,7 @@ const SellersList: React.FC = () => {
                                                     onClick={() => toggleSelect(seller.id)}
                                                     className="w-11 h-11 flex items-center justify-center hover:bg-neutral-700 rounded transition-colors"
                                                     title={selectedIds.has(seller.id) ? "Deselect" : "Select"}
+                                                    aria-label={selectedIds.has(seller.id) ? `Deselect ${seller.store_name}` : `Select ${seller.store_name}`}
                                                 >
                                                     {selectedIds.has(seller.id) ? (
                                                         <CheckSquare size={18} className="text-indigo-500" />
@@ -497,6 +502,7 @@ const SellersList: React.FC = () => {
                                                         onClick={() => setMessageModalSeller(seller)}
                                                         className="w-11 h-11 flex items-center justify-center hover:bg-indigo-500/20 rounded-lg text-neutral-500 hover:text-indigo-400 transition-all opacity-0 group-hover:opacity-100"
                                                         title="Send message"
+                                                        aria-label={`Send message to ${seller.store_name}`}
                                                     >
                                                         <MessageSquare size={14} />
                                                     </button>
@@ -536,6 +542,7 @@ const SellersList: React.FC = () => {
                                                         onClick={() => navigate(`/admin/seller/${seller.id}`)}
                                                         className="w-11 h-11 flex items-center justify-center hover:bg-neutral-700 rounded-lg text-neutral-400 hover:text-white transition-all"
                                                         title="View profile"
+                                                        aria-label={`View profile for ${seller.store_name}`}
                                                     >
                                                         <Eye size={16} />
                                                     </button>
@@ -545,6 +552,7 @@ const SellersList: React.FC = () => {
                                                         rel="noopener noreferrer"
                                                         className="w-11 h-11 flex items-center justify-center hover:bg-neutral-700 rounded-lg text-neutral-400 hover:text-white transition-all"
                                                         title="View storefront"
+                                                        aria-label={`View storefront for ${seller.store_name}`}
                                                     >
                                                         <ExternalLink size={16} />
                                                     </a>
@@ -553,6 +561,7 @@ const SellersList: React.FC = () => {
                                                             onClick={() => handleQuickStatusChange(seller, 'suspended')}
                                                             className="w-11 h-11 flex items-center justify-center hover:bg-red-500/10 rounded-lg text-neutral-400 hover:text-red-500 transition-all"
                                                             title="Suspend"
+                                                            aria-label={`Suspend ${seller.store_name}`}
                                                         >
                                                             <UserX size={16} />
                                                         </button>
@@ -561,6 +570,7 @@ const SellersList: React.FC = () => {
                                                             onClick={() => handleQuickStatusChange(seller, 'active')}
                                                             className="w-11 h-11 flex items-center justify-center hover:bg-emerald-500/10 rounded-lg text-neutral-400 hover:text-emerald-500 transition-all"
                                                             title="Activate"
+                                                            aria-label={`Activate ${seller.store_name}`}
                                                         >
                                                             <UserCheck size={16} />
                                                         </button>
@@ -586,6 +596,7 @@ const SellersList: React.FC = () => {
                                 onClick={() => setPage(p => Math.max(1, p - 1))}
                                 disabled={page === 1}
                                 className="w-11 h-11 md:w-8 md:h-8 flex items-center justify-center border border-neutral-800 rounded-lg text-neutral-500 hover:bg-neutral-800 disabled:opacity-30 disabled:cursor-not-allowed"
+                                aria-label="Previous page"
                             >
                                 <ChevronLeft size={16} />
                             </button>
@@ -617,6 +628,7 @@ const SellersList: React.FC = () => {
                                 onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                                 disabled={page === totalPages}
                                 className="w-11 h-11 md:w-8 md:h-8 flex items-center justify-center border border-neutral-800 rounded-lg text-neutral-500 hover:bg-neutral-800 disabled:opacity-30 disabled:cursor-not-allowed"
+                                aria-label="Next page"
                             >
                                 <ChevronRight size={16} />
                             </button>
@@ -645,6 +657,7 @@ const SellersList: React.FC = () => {
                                     }}
                                     className="w-11 h-11 flex items-center justify-center hover:bg-neutral-800 rounded-lg text-neutral-400 hover:text-white transition-colors"
                                     title="Close"
+                                    aria-label="Close message modal"
                                 >
                                     <X size={20} />
                                 </button>

@@ -439,7 +439,7 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
                                                     {item.image_url ? (
                                                         <img
                                                             src={item.image_url}
-                                                            alt=""
+                                                            alt={`Preview of ${item.name}`}
                                                             className="w-8 h-8 rounded object-cover bg-gray-100 dark:bg-white/10"
                                                             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                                                         />

@@ -787,7 +787,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
                                                         title={item.type === 'video' ? 'Video' : `Photo ${item.index + 1}`}
                                                     >
                                                         {item.type === 'image' ? (
-                                                            <img src={item.src} alt="" className="w-full h-full object-cover" />
+                                                            <img src={item.src} alt={`Product variant ${item.index + 1}`} className="w-full h-full object-cover" />
                                                         ) : (
                                                             <div className="w-full h-full bg-black flex items-center justify-center">
                                                                 <Video size={16} className="text-white" />

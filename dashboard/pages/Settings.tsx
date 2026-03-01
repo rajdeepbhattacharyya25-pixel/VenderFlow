@@ -547,6 +547,7 @@ const Settings = () => {
                                             accept="image/*"
                                             onChange={handleLogoUpload}
                                             className="hidden"
+                                            aria-label="Upload business logo"
                                         />
                                     </label>
                                 </div>
@@ -635,11 +636,13 @@ const Settings = () => {
                                         <input
                                             type="password"
                                             placeholder="Current Password"
+                                            aria-label="Current Password"
                                             className="w-full bg-panel border border-border rounded-xl px-4 py-3 text-text focus:ring-2 focus:ring-primary/20 outline-none text-sm"
                                         />
                                         <input
                                             type="password"
                                             placeholder="New Password"
+                                            aria-label="New Password"
                                             className="w-full bg-panel border border-border rounded-xl px-4 py-3 text-text focus:ring-2 focus:ring-primary/20 outline-none text-sm"
                                         />
                                         <button className="w-full bg-bg border border-border hover:bg-bg/80 text-text font-bold py-3 rounded-xl transition-all text-sm mt-2 shadow-sm">
@@ -667,6 +670,7 @@ const Settings = () => {
                                                         disabled={timeoutUnit === 'never'}
                                                         className="w-full bg-bg border border-border rounded-xl px-4 py-2 text-text focus:outline-none focus:border-primary transition-colors pl-10 disabled:opacity-50 disabled:cursor-not-allowed"
                                                         placeholder={timeoutUnit === 'never' ? 'Infinite' : 'Enter duration'}
+                                                        aria-label="Session timeout duration"
                                                     />
                                                     <Clock size={16} className="absolute left-3 top-2.5 text-muted" />
                                                 </div>
@@ -682,6 +686,7 @@ const Settings = () => {
                                                         if (unit === 'minutes' && (timeoutVal === '' || typeof timeoutVal !== 'number')) setTimeoutVal(60);
                                                     }}
                                                     className="bg-bg border border-border rounded-xl px-4 py-2 text-text text-sm focus:outline-none focus:border-primary transition-colors cursor-pointer hover:bg-bg/80"
+                                                    aria-label="Session timeout unit"
                                                 >
                                                     <option value="minutes">Minutes</option>
                                                     <option value="hours">Hours</option>
@@ -800,6 +805,7 @@ const Settings = () => {
                                             onClick={fetchSessions}
                                             className="p-2 hover:bg-bg rounded-lg text-muted hover:text-primary transition-colors"
                                             title="Refresh List"
+                                            aria-label="Refresh session list"
                                         >
                                             <RefreshCw size={16} className={loadingSessions ? "animate-spin" : ""} />
                                         </button>
@@ -970,20 +976,24 @@ const Settings = () => {
                                                     notifications: { ...settings.notifications, [`${item.id}_email`]: e.target.checked }
                                                 } as any)}
                                                 className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
+                                                aria-label={`${item.label} email notification`}
                                             />
                                         </div>
                                         <div className="flex flex-col items-center gap-1.5">
                                             <Smartphone size={14} className="text-muted" />
-                                            <div
+                                            <button
+                                                type="button"
                                                 onClick={() => setSettings({
                                                     ...settings,
                                                     notifications: { ...settings.notifications, [`${item.id}_push`]: !(settings.notifications as any)[`${item.id}_push`] }
                                                 } as any)}
                                                 className={`w-5 h-5 rounded flex items-center justify-center cursor-pointer transition-colors ${(settings.notifications as any)[`${item.id}_push`] ? 'bg-green-500' : 'bg-gray-200'
                                                     }`}
+                                                aria-label={`${item.label} push notification`}
+                                                aria-pressed={(settings.notifications as any)[`${item.id}_push`] ? "true" : "false"}
                                             >
                                                 <div className="w-2 h-2 bg-white rounded-full"></div>
-                                            </div>
+                                            </button>
                                         </div>
                                     </div>
                                 </div>

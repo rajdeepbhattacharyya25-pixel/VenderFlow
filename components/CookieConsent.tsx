@@ -121,7 +121,7 @@ export default function CookieConsent() {
                     <>
                         <div className="flex items-center justify-between mb-4 pb-3 border-b border-neutral-100 dark:border-neutral-800">
                             <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">Cookie Preferences</h3>
-                            <button onClick={() => setShowPreferences(false)} className="text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300">
+                            <button onClick={() => setShowPreferences(false)} className="text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300" aria-label="Close cookie preferences">
                                 <X className="w-4 h-4" />
                             </button>
                         </div>
@@ -133,7 +133,7 @@ export default function CookieConsent() {
                                     <p className="text-[10px] text-neutral-500 dark:text-neutral-400">Required for the website to function correctly (e.g., cart, authentication, theme). Cannot be disabled.</p>
                                 </div>
                                 <div className="relative inline-block w-8 shrink-0 select-none align-middle mt-1">
-                                    <input type="checkbox" checked={true} readOnly className="sr-only" />
+                                    <input type="checkbox" checked={true} readOnly className="sr-only" aria-label="Strictly necessary cookies (always enabled)" />
                                     <div className="block h-4 w-7 rounded-full bg-emerald-600 opacity-60"></div>
                                     <div className="absolute top-0.5 left-[14px] h-3 w-3 rounded-full bg-white transition-transform"></div>
                                 </div>
@@ -145,7 +145,7 @@ export default function CookieConsent() {
                                     <p className="text-[10px] text-neutral-500 dark:text-neutral-400">Helps us understand how visitors interact with the site by collecting and reporting information anonymously.</p>
                                 </div>
                                 <label className="relative inline-block w-8 shrink-0 cursor-pointer select-none align-middle mt-1">
-                                    <input type="checkbox" checked={analytics} onChange={(e) => setAnalytics(e.target.checked)} className="peer sr-only" />
+                                    <input type="checkbox" checked={analytics} onChange={(e) => setAnalytics(e.target.checked)} className="peer sr-only" aria-label="Analytics and performance cookies" />
                                     <div className="block h-4 w-7 rounded-full bg-neutral-200 dark:bg-neutral-700 peer-checked:bg-emerald-600 transition-colors"></div>
                                     <div className="absolute top-0.5 left-0.5 h-3 w-3 rounded-full bg-white transition-transform peer-checked:translate-x-3 shadow-sm"></div>
                                 </label>
@@ -157,7 +157,7 @@ export default function CookieConsent() {
                                     <p className="text-[10px] text-neutral-500 dark:text-neutral-400">Used to deliver advertisements more relevant to you and your interests across different platforms.</p>
                                 </div>
                                 <label className="relative inline-block w-8 shrink-0 cursor-pointer select-none align-middle mt-1">
-                                    <input type="checkbox" checked={marketing} onChange={(e) => setMarketing(e.target.checked)} className="peer sr-only" />
+                                    <input type="checkbox" checked={marketing} onChange={(e) => setMarketing(e.target.checked)} className="peer sr-only" aria-label="Marketing and advertising cookies" />
                                     <div className="block h-4 w-7 rounded-full bg-neutral-200 dark:bg-neutral-700 peer-checked:bg-emerald-600 transition-colors"></div>
                                     <div className="absolute top-0.5 left-0.5 h-3 w-3 rounded-full bg-white transition-transform peer-checked:translate-x-3 shadow-sm"></div>
                                 </label>
