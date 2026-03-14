@@ -141,16 +141,20 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
                 if (error) throw error;
 
                 if (data.user) {
-                    // Log the session
+                    // Log the session (non-blocking, 5s timeout)
                     try {
-                        const { data: sessionData, error: sessionFnError } = await supabase.functions.invoke('log-session', {
+                        const sessionPromise = supabase.functions.invoke('log-session', {
                             body: { device_info: navigator.userAgent }
                         });
+                        const timeoutPromise = new Promise((_, reject) =>
+                            setTimeout(() => reject(new Error('log-session timeout')), 5000)
+                        );
+                        const { data: sessionData } = await Promise.race([sessionPromise, timeoutPromise]) as any;
                         if (sessionData?.session_id) {
                             localStorage.setItem('current_session_id', sessionData.session_id);
                         }
                     } catch (sessionError) {
-                        console.error('Failed to log session:', sessionError);
+                        console.error('log-session skipped:', sessionError);
                     }
 
                     const { data: profile, error: profileError } = await supabase
@@ -178,6 +182,12 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
 
                             if (!createError) {
                                 currentProfile = newProfile;
+                                // Also create a pending seller record so they can bypass the guard and reach Onboarding
+                                await supabase.from('sellers').insert({
+                                    id: data.user.id,
+                                    store_name: data.user.email?.split('@')[0] || 'My Store',
+                                    status: 'pending'
+                                });
                             } else {
                                 console.error("LoginModal profile creation failed:", createError);
                             }
@@ -230,7 +240,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
                             <div className="mx-auto w-10 h-10 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center mb-3">
                                 <Lock className="w-5 h-5 text-stone-100" strokeWidth={1.2} />
                             </div>
-                            <h3 className="text-2xl font-display font-medium text-white mb-1.5 tracking-tight">
+                            <h3 className="text-2xl font-heading font-medium text-white mb-1.5 tracking-tight">
                                 {isSignUp ? 'Create Account' : (mode === 'seller' ? 'Vendor Portal' : 'Welcome Back')}
                             </h3>
                             <p className="text-stone-500 text-[9px] font-bold uppercase tracking-[0.3em]">

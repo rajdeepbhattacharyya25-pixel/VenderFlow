@@ -4,9 +4,19 @@ export interface Seller {
     id: string;
     store_name: string;
     slug: string;
-    plan: 'free' | 'pro' | 'enterprise';
+    plan: 'free' | 'pro' | 'premium' | 'enterprise';
     status: 'pending' | 'active' | 'suspended';
     is_active: boolean;
+    kyc_status: 'none' | 'submitted' | 'pending' | 'approved' | 'rejected';
+    kyc_data: any;
+    trial_ends_at: string | null;
+    plan_started_at: string | null;
+    plan_ends_at: string | null;
+    telegram_message_quota_remaining: number;
+    email_quota_remaining: number;
+    razorpay_account_id: string | null;
+    payout_status: 'pending' | 'active' | 'rejected';
+    commission_percent: number;
     created_at: string;
     updated_at: string;
 }
@@ -41,7 +51,7 @@ export function getSellerSlug(): string | null {
 export async function loadSellerBySlug(slug: string): Promise<Seller | null> {
     const { data, error } = await supabase
         .from('sellers')
-        .select('id, store_name, slug, plan, status, is_active, created_at, updated_at')
+        .select('*')
         .eq('slug', slug)
         .single();
 
@@ -67,7 +77,7 @@ export async function loadSellerBySlug(slug: string): Promise<Seller | null> {
 export async function loadSellerById(id: string): Promise<Seller | null> {
     const { data, error } = await supabase
         .from('sellers')
-        .select('id, store_name, slug, plan, status, is_active, created_at, updated_at')
+        .select('*')
         .eq('id', id)
         .single();
 

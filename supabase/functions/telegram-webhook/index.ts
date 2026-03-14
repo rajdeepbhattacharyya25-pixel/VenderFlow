@@ -48,9 +48,9 @@ serve(async (req) => {
 
                 if (command === "/start") {
                     try {
-                        let siteUrl = Deno.env.get("SITE_URL") ?? 'https://venderflow.vercel.app';
+                        let siteUrl = Deno.env.get("SITE_URL") ?? 'https://vendorflow.vercel.app';
                         if (siteUrl.includes('localhost') || siteUrl.startsWith('http://')) {
-                            siteUrl = 'https://venderflow.vercel.app';
+                            siteUrl = 'https://vendorflow.vercel.app';
                         }
                         const webAppUrl = `${siteUrl}/admin`;
 
@@ -485,7 +485,7 @@ async function handleLogin(chatId: number, commandArgs: string) {
 
     // Manually construct the redirect - force it to point to auth-callback
     // Manually construct the redirect - force it to point to auth-callback
-    const SITE_URL = Deno.env.get("SITE_URL") ?? 'https://venderflow.vercel.app';
+    const SITE_URL = Deno.env.get("SITE_URL") ?? 'https://vendorflow.vercel.app';
     const redirectUrl = `${SITE_URL}/auth-callback`;
     let magicLink = baseLink;
 

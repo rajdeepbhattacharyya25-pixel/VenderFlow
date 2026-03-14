@@ -1,16 +1,24 @@
 import React, { Suspense, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
+import Lenis from 'lenis';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+gsap.registerPlugin(ScrollTrigger);
 
 import SellerGuard from './components/admin/SellerGuard';
 import AdminGuard from './components/admin/AdminGuard';
 import CustomerAuthGuard from './components/CustomerAuthGuard';
 import TelegramInitializer from './components/TelegramInitializer';
 import OfflineOverlay from './components/OfflineOverlay';
+import ClickSpark from './components/react-bits/ClickSpark';
+import { CustomCursor } from './components/CustomCursor';
 import ErrorBoundary from './components/ErrorBoundary';
 import CookieConsent from './components/CookieConsent';
 import { initTelegramApp } from './lib/telegram';
-import { capturePage } from './lib/analytics';
+import { capturePage, initPostHog, identify, optOut } from './lib/analytics';
+import { supabase } from './lib/supabase';
 
 import LandingPage from './pages/LandingPage';
 
@@ -37,7 +45,11 @@ const NotFound = React.lazy(() => import('./pages/NotFound'));
 const AdminAnalytics = React.lazy(() => import('@/pages/admin/AdminAnalytics'));
 const ApplyToSell = React.lazy(() => import('./pages/ApplyToSell'));
 const SellerApplications = React.lazy(() => import('./pages/admin/SellerApplications'));
-const Onboarding = React.lazy(() => import('./pages/Onboarding'));
+const AdminPayoutControls = React.lazy(() => import('./pages/admin/AdminPayoutControls'));
+const AdminDisputes = React.lazy(() => import('./pages/admin/AdminDisputes'));
+const Onboarding = React.lazy(() => import('@/pages/Onboarding'));
+const NotificationHub = React.lazy(() => import('@/pages/admin/NotificationHub'));
+
 
 // Legal Pages
 const TermsPage = React.lazy(() => import('./pages/legal/TermsPage'));
@@ -47,6 +59,13 @@ const CookiePage = React.lazy(() => import('./pages/legal/CookiePage'));
 
 // Company Pages
 const AboutPage = React.lazy(() => import('./pages/AboutPage'));
+
+// Blog Pages
+const BlogIndex = React.lazy(() => import('@/pages/blog/BlogIndex'));
+const BlogPost = React.lazy(() => import('@/pages/blog/BlogPost'));
+
+// Alternative Pages (SEO)
+const AlternativePage = React.lazy(() => import('./pages/alternatives/AlternativePage'));
 
 // Fires capturePage() on every route change (consent-gated inside capturePage)
 function RouteChangeTracker() {
@@ -66,7 +85,55 @@ const PageLoader = () => (
 
 function App() {
   React.useEffect(() => {
+    // Initialize Analytics
+    const POSTHOG_KEY = import.meta.env.VITE_NEXT_PUBLIC_POSTHOG_KEY || import.meta.env.VITE_POSTHOG_KEY;
+    const POSTHOG_HOST = import.meta.env.VITE_POSTHOG_HOST || 'https://app.posthog.com';
+
+    if (POSTHOG_KEY) {
+      initPostHog(POSTHOG_KEY as string, POSTHOG_HOST as string);
+    }
+
+    // Subscribe to Auth changes to identify users
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user) {
+        // Run asynchronously without holding the auth lock
+        void (async () => {
+          try {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('role, plan')
+              .eq('id', session.user.id)
+              .maybeSingle();
+
+            identify(session.user.id, {
+              email: session.user.email ? 'REDACTED' : undefined,
+              role: profile?.role || 'vendor',
+              plan: profile?.plan || 'free'
+            });
+          } catch (e) {
+            console.error("Profile ident error:", e);
+          }
+        })();
+      } else if (event === 'SIGNED_OUT') {
+        optOut(); // Or posthog.reset() to clear anonymous ID linkage
+      }
+    });
+
     initTelegramApp();
+
+    // Initialize Lenis for premium smooth scrolling
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      smoothWheel: true,
+    });
+
+    // Sync Lenis with GSAP ScrollTrigger
+    lenis.on('scroll', ScrollTrigger.update);
+    gsap.ticker.add((time: number) => {
+      lenis.raf(time * 1000);
+    });
+    gsap.ticker.lagSmoothing(0);
 
     // Register Service Worker for Push Notifications
     if ('serviceWorker' in navigator) {
@@ -78,11 +145,17 @@ function App() {
           console.error('Service Worker registration failed:', error);
         });
     }
+
+    return () => {
+      lenis.destroy();
+      authListener.subscription.unsubscribe();
+    };
   }, []);
 
   return (
     <ErrorBoundary>
       <BrowserRouter>
+        <CustomCursor />
         <RouteChangeTracker />
         <Toaster position="top-right" />
         <OfflineOverlay />
@@ -130,6 +203,9 @@ function App() {
                   <Route path="logs" element={<AdminLogs />} />
                   <Route path="settings" element={<AdminSettings />} />
                   <Route path="analytics" element={<AdminAnalytics />} />
+                  <Route path="notifications" element={<NotificationHub />} />
+                  <Route path="payouts" element={<AdminPayoutControls />} />
+                  <Route path="disputes" element={<AdminDisputes />} />
                 </Route>
               </Route>
 
@@ -143,6 +219,15 @@ function App() {
 
               {/* Company Pages */}
               <Route path="/about" element={<AboutPage />} />
+
+              {/* Blog Pages */}
+              <Route path="/blog" element={<BlogIndex />} />
+              <Route path="/blog/:slug" element={<BlogPost />} />
+
+              {/* Alternative Pages (SEO) */}
+              <Route path="/shopify-alternative" element={<AlternativePage competitor="Shopify" />} />
+              <Route path="/woocommerce-alternative" element={<AlternativePage competitor="WooCommerce" />} />
+              <Route path="/amazon-seller-alternative" element={<AlternativePage competitor="Amazon" />} />
 
               <Route path="*" element={<NotFound />} />
             </Routes>

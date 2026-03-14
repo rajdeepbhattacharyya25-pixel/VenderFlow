@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 const corsHeaders = {
-    'Access-Control-Allow-Origin': Deno.env.get('ALLOWED_ORIGIN') ?? 'https://venderflow.vercel.app',
+    'Access-Control-Allow-Origin': Deno.env.get('ALLOWED_ORIGIN') ?? 'https://vendorflow.vercel.app',
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
@@ -104,7 +104,7 @@ async function handleStart(message: any, config: any, supabase: any) {
     const parts = text.split(' ');
 
     // Determine the Storefront URL to show in the bot
-    const siteUrl = Deno.env.get("PUBLIC_APP_URL") ?? Deno.env.get("SITE_URL") ?? "https://venderflow.vercel.app";
+    const siteUrl = Deno.env.get("PUBLIC_APP_URL") ?? Deno.env.get("SITE_URL") ?? "https://vendorflow.vercel.app";
     const dashboardUrl = `${siteUrl}/dashboard`;
 
     // We provide the web app option in the welcome message anyway, it's very convenient
@@ -123,7 +123,7 @@ async function handleStart(message: any, config: any, supabase: any) {
 
         await sendMessage(config.bot_token, chatId, `✅ <b>Connected Successfully!</b>\n\nYour store <b>${config.bot_username || 'Bot'}</b> is now linked.\nTry /help to see what I can do or open your dashboard below:`, keyboard);
     } else {
-        await sendMessage(config.bot_token, chatId, "👋 Welcome to VenderFlow Seller Bot!\n\nPlease use the 'Connect' button in your Seller Dashboard to link this chat, or open the dashboard below to manage your store.", keyboard);
+        await sendMessage(config.bot_token, chatId, "👋 Welcome to VendorFlow Seller Bot!\n\nPlease use the 'Connect' button in your Seller Dashboard to link this chat, or open the dashboard below to manage your store.", keyboard);
     }
 }
 

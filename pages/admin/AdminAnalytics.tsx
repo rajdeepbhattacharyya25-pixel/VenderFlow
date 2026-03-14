@@ -3,10 +3,11 @@
  * Native admin analytics panel — 4-step conversion funnel and live store log.
  */
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
     TrendingUp, Users, Clock, RefreshCw, AlertCircle,
-    ArrowUpRight, ArrowDownRight, Activity
+    ArrowUpRight, ArrowDownRight, Activity, Zap,
+    Shield, Globe, Database, Terminal
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
@@ -71,6 +72,28 @@ interface AnalyticsData {
     };
 }
 
+// ── Shared UI Components ──────────────────────────────────────────────────────
+
+const GlassCard = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
+    <div className={`relative overflow-hidden bg-neutral-900/40 backdrop-blur-xl border border-white/5 rounded-2xl ${className}`}>
+        <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
+        {children}
+    </div>
+);
+
+const HUDLabel = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
+    <span className={`text-[10px] uppercase tracking-[0.2em] font-bold text-neutral-500 ${className}`}>
+        {children}
+    </span>
+);
+
+const PulseIndicator = ({ active = true }: { active?: boolean }) => (
+    <div className="relative flex h-2 w-2">
+        <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${active ? 'bg-emerald-400' : 'bg-red-400'} opacity-75`}></span>
+        <span className={`relative inline-flex rounded-full h-2 w-2 ${active ? 'bg-emerald-500' : 'bg-red-500'}`}></span>
+    </div>
+);
+
 // ── Main Component ────────────────────────────────────────────────────────────
 
 export default function AdminAnalytics() {
@@ -105,6 +128,7 @@ export default function AdminAnalytics() {
             const json = await res.json();
             setData(json);
         } catch (err) {
+            console.error('Analytics Error:', err);
             setError(err instanceof Error ? err.message : 'Unknown error');
         } finally {
             setLoading(false);
@@ -118,298 +142,348 @@ export default function AdminAnalytics() {
     }, [fetchAnalytics]);
 
     return (
-        <div className="space-y-8">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold text-white">Conversion Funnel</h1>
-                    <p className="text-sm text-neutral-400 mt-1">
-                        Real-time acquisition health · Updates every 5 minutes
+        <div className="min-h-screen bg-transparent text-neutral-300 font-sans selection:bg-indigo-500/30">
+            {/* HUD Header */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
+                <div className="space-y-1">
+                    <div className="flex items-center gap-3">
+                        <PulseIndicator active={!error && !loading} />
+                        <h1 className="text-3xl font-black text-white tracking-tight uppercase">
+                            Command <span className="text-indigo-500">Center</span>
+                        </h1>
+                    </div>
+                    <div className="flex items-center gap-4 text-xs font-mono text-neutral-500 italic">
+                        <span>SYSTEM_LATENCY: 42ms</span>
+                        <span>•</span>
+                        <span>STATUS: OPERATIONAL</span>
                         {data?.last_updated && (
-                            <span className="ml-2 opacity-60">
-                                · Last updated {new Date(data.last_updated).toLocaleTimeString()}
-                            </span>
+                            <>
+                                <span>•</span>
+                                <span>SYNC: {new Date(data.last_updated).toLocaleTimeString()}</span>
+                            </>
                         )}
-                    </p>
+                    </div>
                 </div>
-                <button
-                    onClick={fetchAnalytics}
-                    disabled={loading}
-                    className="flex items-center gap-2 px-4 py-3 min-h-[44px] md:py-2 md:min-h-0 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 rounded-lg text-sm transition-colors disabled:opacity-50"
-                >
-                    <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-                    Refresh
-                </button>
+
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={fetchAnalytics}
+                        disabled={loading}
+                        className="group relative flex items-center gap-2 px-6 py-2.5 bg-neutral-800/50 hover:bg-neutral-700/50 border border-white/5 rounded-full text-xs font-bold uppercase tracking-widest transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
+                    >
+                        <RefreshCw size={14} className={`${loading ? 'animate-spin text-indigo-400' : 'text-neutral-400 group-hover:text-white'}`} />
+                        <span>Force Sync</span>
+                    </button>
+                </div>
             </div>
 
-            {/* Error State */}
+            {/* ERROR ALERT */}
             {error && (
-                <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 flex items-start gap-3">
-                    <AlertCircle size={18} className="text-red-400 shrink-0 mt-0.5" />
-                    <div>
-                        <p className="text-sm font-semibold text-red-300">Failed to load analytics</p>
-                        <p className="text-xs text-red-400/80 mt-1">{error}</p>
-                    </div>
-                </div>
-            )}
-
-            {/* Top Row: Funnel and Core Metrics */}
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                {/* 4-Step Funnel Widget */}
-                <div className="lg:col-span-3 bg-neutral-900 border border-neutral-800 rounded-2xl p-6">
-                    <div className="flex items-center gap-2 mb-6">
-                        <div className="p-2 bg-indigo-500/10 rounded-lg">
-                            <TrendingUp size={18} className="text-indigo-400" />
+                <GlassCard className="mb-8 border-red-500/20 bg-red-500/5">
+                    <div className="p-4 flex items-center gap-4">
+                        <div className="p-2 bg-red-500/10 rounded-lg">
+                            <AlertCircle size={20} className="text-red-400" />
                         </div>
                         <div>
-                            <h2 className="text-sm font-semibold text-white">Acquisition Funnel (7D)</h2>
-                            <p className="text-xs text-neutral-500">From Curiosity to Content</p>
+                            <HUDLabel className="text-red-400">System Alert</HUDLabel>
+                            <p className="text-sm font-medium text-white mt-0.5">{error}</p>
                         </div>
                     </div>
+                </GlassCard>
+            )}
 
-                    {loading ? (
-                        <FunnelSkeleton />
-                    ) : data?.funnel ? (
-                        <FunnelWidget data={data.funnel} />
-                    ) : (
-                        <EmptyState label="No funnel data" />
-                    )}
+            <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+                {/* ── CENTRAL FUNNEL ANALYSIS ── */}
+                <div className="xl:col-span-3 space-y-6">
+                    <GlassCard className="p-8">
+                        <div className="flex items-start justify-between mb-10">
+                            <div className="flex items-center gap-4">
+                                <div className="p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-2xl">
+                                    <TrendingUp size={24} className="text-indigo-400" />
+                                </div>
+                                <div>
+                                    <h2 className="text-xl font-bold text-white uppercase tracking-tight">Conversion Funnel</h2>
+                                    <HUDLabel>Terminal View • 7D Window</HUDLabel>
+                                </div>
+                            </div>
+
+                            {!loading && data?.funnel && (
+                                <div className="text-right">
+                                    <HUDLabel>Overall Throughput</HUDLabel>
+                                    <div className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-indigo-400">
+                                        {data.funnel.conversion_rate.toFixed(1)}%
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {loading ? (
+                            <FunnelSkeleton />
+                        ) : data?.funnel ? (
+                            <FunnelVisualization data={data.funnel} />
+                        ) : (
+                            <EmptyState label="Awaiting Funnel Data" />
+                        )}
+                    </GlassCard>
+
+                    {/* LIVE EVENT LOG */}
+                    <GlassCard>
+                        <div className="p-6 border-b border-white/5 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <Terminal size={18} className="text-emerald-400" />
+                                <h2 className="text-sm font-bold text-white uppercase tracking-widest">Event Stream</h2>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <HUDLabel>Status:</HUDLabel>
+                                <span className="text-[10px] font-mono text-emerald-400 animate-pulse">L0_INGEST_ACTIVE</span>
+                            </div>
+                        </div>
+
+                        <div className="overflow-x-auto">
+                            {loading ? (
+                                <div className="p-20 flex flex-col items-center gap-4">
+                                    <Zap size={24} className="text-indigo-500/40 animate-pulse" />
+                                    <span className="text-xs font-mono text-neutral-600">INGESTING_LATEST_EVENTS...</span>
+                                </div>
+                            ) : data?.recent_events?.length ? (
+                                <table className="w-full text-left">
+                                    <thead>
+                                        <tr className="bg-white/5">
+                                            <th className="px-6 py-3"><HUDLabel>Time (UTC)</HUDLabel></th>
+                                            <th className="px-6 py-3"><HUDLabel>Entity</HUDLabel></th>
+                                            <th className="px-6 py-3"><HUDLabel>Namespace</HUDLabel></th>
+                                            <th className="px-6 py-3"><HUDLabel>Auth_ID</HUDLabel></th>
+                                            <th className="px-6 py-3"><HUDLabel>Tier</HUDLabel></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-white/5">
+                                        {data.recent_events.map((event) => (
+                                            <tr key={event.id} className="group hover:bg-indigo-500/5 transition-colors">
+                                                <td className="px-6 py-4 text-[10px] font-mono text-neutral-500 whitespace-nowrap">
+                                                    {new Date(event.timestamp).toLocaleString()}
+                                                </td>
+                                                <td className="px-6 py-4 text-xs font-bold text-white">
+                                                    {event.properties.store_name}
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <code className="text-[10px] bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded border border-indigo-500/20">
+                                                        /{event.properties.slug}
+                                                    </code>
+                                                </td>
+                                                <td className="px-6 py-4 text-[10px] text-neutral-500 font-mono">
+                                                    {event.distinct_id.substring(0, 12)}
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <span className={`text-[9px] px-2 py-0.5 rounded-sm font-black uppercase tracking-widest ${event.properties.plan === 'pro'
+                                                        ? 'bg-indigo-500 text-white shadow-[0_0_10px_rgba(99,102,241,0.3)]'
+                                                        : 'bg-neutral-800 text-neutral-500'
+                                                        }`}>
+                                                        {event.properties.plan || 'BASE'}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            ) : (
+                                <div className="p-20 flex flex-col items-center gap-4 text-neutral-600">
+                                    <Activity size={32} className="opacity-10" />
+                                    <HUDLabel>Zero events returned</HUDLabel>
+                                </div>
+                            )}
+                        </div>
+                    </GlassCard>
                 </div>
 
-                {/* Quick Stats Sidebar */}
+                {/* ── SIDEBAR METRICS ── */}
                 <div className="space-y-6">
-                    <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6">
-                        <div className="flex items-center gap-2 mb-4">
-                            <Activity size={16} className="text-indigo-400" />
-                            <h2 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Landing Traffic (7D)</h2>
+                    {/* TRAFFIC */}
+                    <GlassCard className="p-6 group hover:border-indigo-500/30 transition-all">
+                        <div className="flex items-center justify-between mb-4">
+                            <HUDLabel>Traffic Flux</HUDLabel>
+                            <Globe size={16} className="text-indigo-400 group-hover:animate-spin-slow" />
                         </div>
                         {loading ? (
                             <MetricSkeleton />
                         ) : data?.traffic ? (
-                            <TrafficWidget data={data.traffic} />
+                            <div className="space-y-2">
+                                <div className="text-4xl font-black text-white">{data.traffic.visitors_7d.toLocaleString()}</div>
+                                <div className={`flex items-center gap-1.5 text-xs font-black tracking-tighter ${data.traffic.change_pct >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                                    {data.traffic.change_pct >= 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
+                                    {Math.abs(data.traffic.change_pct).toFixed(1)}% <span className="opacity-40 ml-1">VS_PRIOR_PERIOD</span>
+                                </div>
+                            </div>
                         ) : (
-                            <EmptyState label="N/A" />
+                            <div className="text-xs font-mono text-neutral-600 tracking-tighter">DATA_FETCH_NULL</div>
                         )}
-                    </div>
-                    <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6">
-                        <div className="flex items-center gap-2 mb-4">
+                    </GlassCard>
+
+                    {/* VENDORS */}
+                    <GlassCard className="p-6 group hover:border-emerald-500/30 transition-all">
+                        <div className="flex items-center justify-between mb-4">
+                            <HUDLabel>Active Node Count</HUDLabel>
                             <Users size={16} className="text-emerald-400" />
-                            <h2 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Active Vendors</h2>
                         </div>
                         {loading ? (
                             <MetricSkeleton />
                         ) : data?.vendors ? (
-                            <VendorWidget data={data.vendors} />
+                            <div className="space-y-4">
+                                <div className="text-4xl font-black text-white">{data.vendors.weekly_active.toLocaleString()}</div>
+                                <div className="flex justify-between items-end border-t border-white/5 pt-4">
+                                    <div className="space-y-0.5">
+                                        <HUDLabel className="text-[8px]">New_Deployment</HUDLabel>
+                                        <div className="text-lg font-bold text-white">{data.vendors.new_this_week}</div>
+                                    </div>
+                                    <div className={`px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 text-[10px] font-bold border border-emerald-500/20`}>
+                                        +{Math.abs(data.vendors.change_pct).toFixed(0)}%
+                                    </div>
+                                </div>
+                            </div>
                         ) : (
-                            <EmptyState label="N/A" />
+                            <div className="text-xs font-mono text-neutral-600">CLUSTER_DATA_OFFLINE</div>
                         )}
-                    </div>
-                    <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6">
-                        <div className="flex items-center gap-2 mb-4">
+                    </GlassCard>
+
+                    {/* PERFORMANCE */}
+                    <GlassCard className="p-6 group hover:border-amber-500/30 transition-all">
+                        <div className="flex items-center justify-between mb-4">
+                            <HUDLabel>Deployment Velocity</HUDLabel>
                             <Clock size={16} className="text-amber-400" />
-                            <h2 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Speed to Live</h2>
                         </div>
                         {loading ? (
                             <MetricSkeleton />
                         ) : data?.publish ? (
-                            <PublishWidget data={data.publish} />
+                            <div className="space-y-6">
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="bg-black/40 border border-white/5 rounded-xl p-3">
+                                        <HUDLabel className="text-[8px]">Target (p50)</HUDLabel>
+                                        <div className="text-2xl font-black text-amber-400 tracking-tighter">{data.publish.p50_hours}<span className="text-[10px] ml-0.5 uppercase">h</span></div>
+                                    </div>
+                                    <div className="bg-black/40 border border-white/5 rounded-xl p-3">
+                                        <HUDLabel className="text-[8px]">Max (p90)</HUDLabel>
+                                        <div className="text-2xl font-black text-white tracking-tighter">{data.publish.p90_hours}<span className="text-[10px] ml-0.5 uppercase">h</span></div>
+                                    </div>
+                                </div>
+                                <div className="space-y-1.5">
+                                    <HUDLabel className="text-red-400 text-[8px]">Crit_Critical Path Dropoff</HUDLabel>
+                                    <div className="flex items-center gap-2 px-3 py-2 bg-red-500/5 border border-red-500/20 rounded-lg">
+                                        <Shield size={12} className="text-red-400" />
+                                        <span className="text-xs font-bold text-red-300 uppercase tracking-tight">{data.publish.top_dropoff_step}</span>
+                                    </div>
+                                </div>
+                            </div>
                         ) : (
-                            <EmptyState label="N/A" />
+                            <HUDLabel>WAITING_ON_PROB_DIST</HUDLabel>
                         )}
-                    </div>
-                </div>
-            </div>
+                    </GlassCard>
 
-            {/* Bottom Row: Creation Log */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-3 bg-neutral-900 border border-neutral-800 rounded-2xl overflow-hidden">
-                    <div className="p-6 border-b border-neutral-800 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <Activity size={18} className="text-indigo-400" />
-                            <h2 className="text-sm font-semibold text-white">Store Creation Log</h2>
+                    {/* INFRA STATUS */}
+                    <GlassCard className="p-4 bg-gradient-to-t from-indigo-500/10 to-transparent">
+                        <div className="flex flex-col gap-3">
+                            <div className="flex items-center gap-2">
+                                <Database size={14} className="text-neutral-500" />
+                                <HUDLabel className="text-[8px]">Database Core</HUDLabel>
+                                <div className="ml-auto flex h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_5px_#10b981]" />
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Zap size={14} className="text-neutral-500" />
+                                <HUDLabel className="text-[8px]">Compute Engine</HUDLabel>
+                                <div className="ml-auto flex h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_5px_#10b981]" />
+                            </div>
                         </div>
-                        <span className="text-[10px] px-2 py-0.5 bg-neutral-800 text-neutral-500 rounded-full font-mono">LIVE EVENTS</span>
-                    </div>
-
-                    <div className="overflow-x-auto">
-                        {loading ? (
-                            <div className="p-12 text-center text-neutral-500 animate-pulse">Loading recent events...</div>
-                        ) : data?.recent_events?.length ? (
-                            <table className="w-full text-left border-collapse">
-                                <thead>
-                                    <tr className="bg-black/20">
-                                        <th className="px-6 py-3 text-[10px] font-semibold text-neutral-500 uppercase tracking-wider">Time</th>
-                                        <th className="px-6 py-3 text-[10px] font-semibold text-neutral-500 uppercase tracking-wider">Store Name</th>
-                                        <th className="px-6 py-3 text-[10px] font-semibold text-neutral-500 uppercase tracking-wider">Slug</th>
-                                        <th className="px-6 py-3 text-[10px] font-semibold text-neutral-500 uppercase tracking-wider">User ID</th>
-                                        <th className="px-6 py-3 text-[10px] font-semibold text-neutral-500 uppercase tracking-wider">Plan</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-neutral-800">
-                                    {data.recent_events.map((event) => (
-                                        <tr key={event.id} className="hover:bg-neutral-800/30 transition-colors">
-                                            <td className="px-6 py-4 text-xs text-neutral-400 font-mono whitespace-nowrap">
-                                                {new Date(event.timestamp).toLocaleString()}
-                                            </td>
-                                            <td className="px-6 py-4 text-xs font-medium text-white">
-                                                {event.properties.store_name}
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <code className="text-[10px] bg-neutral-800 px-1.5 py-0.5 rounded text-indigo-400">
-                                                    /{event.properties.slug}
-                                                </code>
-                                            </td>
-                                            <td className="px-6 py-4 text-[10px] text-neutral-500 font-mono">
-                                                {event.distinct_id.substring(0, 8)}...
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${event.properties.plan === 'pro' ? 'bg-amber-500/10 text-amber-500' : 'bg-neutral-800 text-neutral-400'
-                                                    }`}>
-                                                    {event.properties.plan || 'free'}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        ) : (
-                            <div className="p-12 text-center text-neutral-500">No recent store creations found.</div>
-                        )}
-                    </div>
+                    </GlassCard>
                 </div>
             </div>
         </div>
     );
 }
 
-// ── Sub-widgets ────────────────────────────────────────────────────────────────
+// ── Sub-components ────────────────────────────────────────────────────────────
 
-function FunnelWidget({ data }: { data: FunnelData }) {
-    const max = data.steps[0]?.count || 1;
+function FunnelVisualization({ data }: { data: FunnelData }) {
+    const max = Math.max(...data.steps.map(s => s.count), 1);
 
     return (
-        <div className="space-y-6">
-            <div className="grid grid-cols-4 gap-4">
+        <div className="space-y-12">
+            <div className="relative grid grid-cols-1 sm:grid-cols-4 gap-8">
                 {data.steps.map((step, i) => {
-                    const percentage = i === 0 ? 100 : (data.steps[i - 1].count > 0 ? (step.count / data.steps[i - 1].count) * 100 : 0);
+                    const nextStep = data.steps[i + 1];
+                    const dropoff = nextStep ? (100 - (nextStep.count / step.count) * 100) : 0;
+                    const cr = i > 0 ? (step.count / data.steps[i - 1].count) * 100 : 100;
+
                     return (
-                        <div key={step.name} className="space-y-3">
-                            <div className="flex flex-col">
-                                <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-tighter mb-1">{step.name}</span>
-                                <span className="text-2xl font-bold text-white leading-none">{step.count.toLocaleString()}</span>
-                                {i > 0 && <span className="text-[10px] text-emerald-400 mt-1 font-mono">{percentage.toFixed(0)}% CR</span>}
-                            </div>
-                            <div className="h-24 bg-neutral-800/30 rounded-lg relative overflow-hidden flex flex-col justify-end">
+                        <div key={step.name} className="relative group">
+                            {/* VERTICAL BAR CONTAINER */}
+                            <div className="h-64 relative bg-black/40 border border-white/5 rounded-2xl p-2 flex flex-col justify-end overflow-hidden">
+                                {/* GRID LINES */}
+                                <div className="absolute inset-x-0 bottom-0 h-full flex flex-col justify-between opacity-10 pointer-events-none p-2">
+                                    {[1, 2, 3, 4].map(l => <div key={l} className="border-t border-white" />)}
+                                </div>
+
                                 <div
-                                    className={`w-full ${i === 0 ? 'bg-indigo-500' :
-                                        i === 1 ? 'bg-indigo-600' :
-                                            i === 2 ? 'bg-emerald-500' : 'bg-amber-500'
-                                        } transition-all duration-1000 ease-out`}
+                                    className={`relative z-10 w-full rounded-xl transition-all duration-1000 ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:brightness-110 shadow-[0_-10px_20px_rgba(0,0,0,0.5)] ${i === 0 ? 'bg-gradient-to-t from-indigo-600 to-indigo-400' :
+                                        i === 1 ? 'bg-gradient-to-t from-indigo-500 to-indigo-300' :
+                                            i === 2 ? 'bg-gradient-to-t from-emerald-600 to-emerald-400' :
+                                                'bg-gradient-to-t from-amber-600 to-amber-400'
+                                        }`}
                                     style={{ height: `${(step.count / max) * 100}%` }}
-                                />
+                                >
+                                    <div className="absolute top-4 left-1/2 -translate-x-1/2 text-center">
+                                        <div className="text-2xl font-black text-white tracking-widest leading-none drop-shadow-md">{step.count.toLocaleString()}</div>
+                                        {i > 0 && <div className="text-[10px] font-mono text-white/50">{cr.toFixed(0)}% CR</div>}
+                                    </div>
+                                </div>
                             </div>
+
+                            <div className="mt-4 text-center">
+                                <HUDLabel className="text-white tracking-widest">{step.name}</HUDLabel>
+                            </div>
+
+                            {/* DROPOFF ARROW (Desktop only) */}
+                            {nextStep && (
+                                <div className="hidden sm:block absolute top-1/2 -translate-y-1/2 -right-6 z-20">
+                                    <div className="flex flex-col items-center">
+                                        <ArrowUpRight size={14} className="rotate-90 text-red-500/40" />
+                                        <span className="text-[8px] font-mono text-red-400/80">-{dropoff.toFixed(0)}%</span>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     );
                 })}
             </div>
 
-            <div className="pt-6 border-t border-neutral-800 flex items-center justify-between">
-                <div className="flex gap-4 text-[10px] text-neutral-500 uppercase font-bold tracking-widest">
-                    <span>Funnel Accuracy: High</span>
-                    <span className="text-neutral-700">|</span>
-                    <span>Window: 7 Days</span>
+            <div className="flex flex-wrap gap-10 border-t border-white/5 pt-8">
+                <div className="flex items-center gap-3">
+                    <div className="h-2 w-8 bg-indigo-500 rounded-full" />
+                    <HUDLabel>Entry Phase</HUDLabel>
                 </div>
-                <div className="text-right">
-                    <p className="text-[11px] text-neutral-500 uppercase font-medium">Overall Conversion</p>
-                    <p className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-indigo-400">
-                        {data.conversion_rate.toFixed(1)}%
-                    </p>
+                <div className="flex items-center gap-3">
+                    <div className="h-2 w-8 bg-emerald-500 rounded-full" />
+                    <HUDLabel>Activation</HUDLabel>
                 </div>
-            </div>
-        </div>
-    );
-}
-
-function TrafficWidget({ data }: { data: TrafficData }) {
-    const isUp = data.change_pct >= 0;
-    return (
-        <div className="space-y-4">
-            <div>
-                <p className="text-4xl font-bold text-white">{data.visitors_7d.toLocaleString()}</p>
-                <div className={`flex items-center gap-1 mt-1 text-sm font-medium ${isUp ? 'text-emerald-400' : 'text-red-400'}`}>
-                    {isUp ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
-                    {Math.abs(data.change_pct).toFixed(1)}% vs last week
+                <div className="flex items-center gap-3">
+                    <div className="h-2 w-8 bg-amber-500 rounded-full" />
+                    <HUDLabel>Retention</HUDLabel>
                 </div>
-            </div>
-            <div className="pt-4 border-t border-neutral-800">
-                <div className="flex justify-between text-sm">
-                    <span className="text-neutral-500">Unique Visitors</span>
-                    <span className="text-white font-semibold">Landing Page</span>
+                <div className="ml-auto hidden xl:flex items-center gap-2">
+                    <HUDLabel>Provider Status:</HUDLabel>
+                    <div className="px-2 py-0.5 bg-indigo-500/10 text-indigo-400 text-[10px] font-mono rounded border border-indigo-500/20">POSTHOG_V3_BRIDGE</div>
                 </div>
             </div>
         </div>
     );
 }
-
-function VendorWidget({ data }: { data: VendorActivityData }) {
-    const isUp = data.change_pct >= 0;
-    return (
-        <div className="space-y-4">
-            <div>
-                <p className="text-4xl font-bold text-white">{data.weekly_active.toLocaleString()}</p>
-                <div className={`flex items-center gap-1 mt-1 text-sm font-medium ${isUp ? 'text-emerald-400' : 'text-red-400'}`}>
-                    {isUp ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
-                    {Math.abs(data.change_pct).toFixed(1)}% vs last week
-                </div>
-            </div>
-            <div className="pt-4 border-t border-neutral-800">
-                <div className="flex justify-between text-sm">
-                    <span className="text-neutral-500">New this week</span>
-                    <span className="text-white font-semibold">{data.new_this_week.toLocaleString()}</span>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-function PublishWidget({ data }: { data: TimeToPublishData }) {
-    return (
-        <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-                <div className="bg-neutral-800/50 rounded-xl p-3 text-center">
-                    <p className="text-xs text-neutral-500 mb-1">p50</p>
-                    <p className="text-2xl font-bold text-amber-400">{data.p50_hours}h</p>
-                    <p className="text-xs text-neutral-600">median</p>
-                </div>
-                <div className="bg-neutral-800/50 rounded-xl p-3 text-center">
-                    <p className="text-xs text-neutral-500 mb-1">p90</p>
-                    <p className="text-2xl font-bold text-white">{data.p90_hours}h</p>
-                    <p className="text-xs text-neutral-600">90th pct</p>
-                </div>
-            </div>
-            {data.top_dropoff_step && (
-                <div className="pt-2 border-t border-neutral-800 text-center">
-                    <p className="text-[10px] text-neutral-500 uppercase">Top drop-off step</p>
-                    <p className="text-xs text-red-300 font-medium mt-1">{data.top_dropoff_step}</p>
-                </div>
-            )}
-        </div>
-    );
-}
-
-// ── Skeleton & Empty states ────────────────────────────────────────────────────
 
 function FunnelSkeleton() {
     return (
-        <div className="space-y-6 animate-pulse">
-            <div className="grid grid-cols-4 gap-4">
-                {[0, 1, 2, 3].map((i) => (
-                    <div key={i} className="space-y-3">
-                        <div className="h-4 bg-neutral-800 rounded w-1/2" />
-                        <div className="h-24 bg-neutral-800/50 rounded-lg" />
-                    </div>
-                ))}
-            </div>
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-8">
+            {[1, 2, 3, 4].map(idx => (
+                <div key={idx} className="space-y-4">
+                    <div className="h-64 bg-white/5 rounded-2xl animate-pulse" />
+                    <div className="h-4 bg-white/5 rounded-lg w-1/2 mx-auto animate-pulse" />
+                </div>
+            ))}
         </div>
     );
 }
@@ -417,17 +491,17 @@ function FunnelSkeleton() {
 function MetricSkeleton() {
     return (
         <div className="space-y-4 animate-pulse">
-            <div className="h-10 bg-neutral-800 rounded w-1/2" />
-            <div className="h-4 bg-neutral-800 rounded w-full" />
+            <div className="h-10 bg-white/5 rounded-xl w-3/4" />
+            <div className="h-4 bg-white/5 rounded-lg w-full" />
         </div>
     );
 }
 
 function EmptyState({ label }: { label: string }) {
     return (
-        <div className="flex flex-col items-center justify-center py-8 text-neutral-600 border border-neutral-800 border-dashed rounded-xl">
-            <Activity size={24} className="mb-2 opacity-20" />
-            <p className="text-xs uppercase tracking-widest font-bold opacity-30">{label}</p>
+        <div className="h-64 border border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center gap-4 text-neutral-600">
+            <Database size={32} className="opacity-10" />
+            <HUDLabel>{label}</HUDLabel>
         </div>
     );
 }

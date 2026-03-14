@@ -1,6 +1,6 @@
-# VenderFlow Deployment & Rollback Guide
+# VendorFlow Deployment & Rollback Guide
 
-This guide outlines the standard operating procedure for deploying updates to VenderFlow and safely rolling them back in case of critical bugs. We utilize **Vercel** for our production infrastructure to ensure zero-downtime deployments and instant rollbacks.
+This guide outlines the standard operating procedure for deploying updates to VendorFlow and safely rolling them back in case of critical bugs. We utilize **Vercel** for our production infrastructure to ensure zero-downtime deployments and instant rollbacks.
 
 ## 🚀 1. The Development Workflow (Going from Code to Staging)
 
@@ -31,7 +31,7 @@ You should **never push code directly to the `main` branch**. Always use feature
 
 **What Happens Next?**
 As soon as you push your branch, Vercel detects the new branch and automatically builds a **Preview Deployment**.
-Vercel assigns a unique, secure URL (e.g., `venderflow-your-feature-name-1a2b3c.vercel.app`) to this build.
+Vercel assigns a unique, secure URL (e.g., `vendorflow-your-feature-name-1a2b3c.vercel.app`) to this build.
 
 * **Action:** Go to your Vercel Dashboard or check the GitHub Pull Request for this URL. Test the update thoroughly on this Preview URL before it reaches any real users.
 
@@ -52,7 +52,7 @@ Once the Preview URL has been tested and verified to have zero glitches, you are
 
 **What Happens Next?**
 Vercel automatically detects the update to the `main` branch. It pulls the new code, builds it, and quietly prepares it on the server.
-Once the build is 100% complete, Vercel **instantly** points the live production domain (`venderflow.com`) to the new deployment.
+Once the build is 100% complete, Vercel **instantly** points the live production domain (`vendorflow.com`) to the new deployment.
 
 * **Zero Downtime:** Your users will experience no downtime.
 * **Seamless Update:** The next time a user visits or refreshes the page, they will receive the new update automatically.
@@ -65,7 +65,7 @@ If a critical bug makes it into production (e.g., the storefront crashes, checko
 
 ### Step-by-Step Rollback
 
-1. Open the [Vercel Dashboard](https://vercel.com/dashboard) and navigate to the **VenderFlow** project.
+1. Open the [Vercel Dashboard](https://vercel.com/dashboard) and navigate to the **VendorFlow** project.
 2. Click on the **Deployments** tab.
 3. You will see a chronological list of all deployments. The top one is your current, broken production version.
 4. Locate the **previous deployment** (the one just below it, which you know was stable and working).

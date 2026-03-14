@@ -4,6 +4,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { applyRateLimit } from '../_shared/rate-limiter.ts';
+import { captureServerEvent } from '../_shared/posthog-edge.ts';
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': Deno.env.get('ALLOWED_ORIGIN') ?? '*',
@@ -35,8 +36,6 @@ serve(async (req) => {
         const supabaseUrl = Deno.env.get('SUPABASE_URL')!
         const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!
         const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-        const posthogApiKey = Deno.env.get('POSTHOG_API_KEY')!
-        const posthogHost = Deno.env.get('POSTHOG_HOST') || 'https://app.posthog.com'
 
         const userClient = createClient(supabaseUrl, supabaseKey, {
             global: { headers: { Authorization: authHeader } }
@@ -137,30 +136,21 @@ serve(async (req) => {
             .eq('id', user.id)
 
         // 5. Fire Analytics Server-Side (Only if new)
-        if (isNew && posthogApiKey) {
-            try {
-                await fetch(`${posthogHost}/capture/`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        api_key: posthogApiKey,
-                        event: 'store_created',
-                        distinct_id: user.id,
-                        properties: {
-                            seller_id: seller.id,
-                            user_id: user.id,
-                            slug: seller.slug,
-                            store_name: seller.store_name,
-                            client_request_id: clientReqId,
-                            plan: 'free',
-                            ...utm
-                        }
-                    })
-                })
-            } catch (phError) {
-                console.error('PostHog Capture Error:', phError);
-                // Non-blocking
-            }
+        if (isNew) {
+            await captureServerEvent(user.id, 'store_created', {
+                seller_id: seller.id,
+                user_id: user.id,
+                slug: seller.slug,
+                store_name: seller.store_name,
+                client_request_id: clientReqId,
+                plan: 'free',
+                ...utm
+            });
+            await captureServerEvent(user.id, 'vendor_signup_completed', {
+                vendor_id: seller.id,
+                plan: 'free',
+                signup_method: 'create-seller'
+            });
         }
 
         // 6. Audit Log

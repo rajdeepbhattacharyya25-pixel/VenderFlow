@@ -16,18 +16,23 @@ import {
     Menu,
     Command,
     X,
-    TrendingUp
+    TrendingUp,
+    ShieldAlert,
+    Gavel,
+    Sparkles
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import CommandPalette from './components/CommandPalette';
 import NotificationCenter from './components/NotificationCenter';
+import FinancialOracle from './components/FinancialOracle';
 import { notifyAdmin } from '../../lib/notifications';
 
 const AdminLayout: React.FC = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [isMobile, setIsMobile] = useState(false);
     const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+    const [isOracleOpen, setIsOracleOpen] = useState(false);
     const navigate = useNavigate();
 
     // Responsive detection
@@ -173,6 +178,9 @@ const AdminLayout: React.FC = () => {
         { icon: ShoppingCart, label: 'Orders', path: '/admin/orders', shortcut: 'R O' },
         { icon: Mail, label: 'Invites', path: '/admin/invites', shortcut: 'R I' },
         { icon: FileText, label: 'Audit Logs', path: '/admin/logs', shortcut: 'R L' },
+        { icon: Gavel, label: 'Disputes', path: '/admin/disputes', shortcut: 'R J' },
+        { icon: ShieldAlert, label: 'Payout Safety', path: '/admin/payouts', shortcut: 'R G' },
+        { icon: Bell, label: 'Notification Hub', path: '/admin/notifications', shortcut: 'R N' },
         { icon: TrendingUp, label: 'Analytics', path: '/admin/analytics', shortcut: 'R A' },
         { icon: Settings, label: 'Settings', path: '/admin/settings' },
     ];
@@ -258,7 +266,7 @@ const AdminLayout: React.FC = () => {
 
                     <div className="pt-4 mt-4 border-t border-neutral-800">
                         <button
-                            onClick={handleLogout}
+                            onClick={() => handleLogout()}
                             className="w-full flex items-center p-3 rounded-xl text-neutral-400 hover:bg-red-500/10 hover:text-red-500 transition-all duration-200"
                             style={{ WebkitTapHighlightColor: 'transparent' }}
                         >
@@ -322,8 +330,20 @@ const AdminLayout: React.FC = () => {
                         >
                             <PlusCircle size={18} />
                         </button>
+
+                        <button
+                            onClick={() => setIsOracleOpen(true)}
+                            className="w-11 h-11 flex items-center justify-center bg-indigo-500/10 text-indigo-400 rounded-lg hover:bg-indigo-500/20 transition-all group relative overflow-hidden"
+                            aria-label="Ask Financial Oracle"
+                            title="Consult Financial Oracle"
+                            style={{ WebkitTapHighlightColor: 'transparent' }}
+                        >
+                            <Sparkles size={20} className="group-hover:scale-110 transition-transform" />
+                            <span className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </button>
+
                         <NotificationCenter />
-                        <img src="/logo.jpg" alt="VenderFlow Logo" className="w-8 h-8 rounded-full border border-white/10 object-cover hidden md:block" />
+                        <img src="/logo.jpg" alt="VendorFlow Logo" className="w-8 h-8 rounded-full border border-white/10 object-cover hidden md:block" />
                     </div>
                 </header>
 
@@ -331,6 +351,12 @@ const AdminLayout: React.FC = () => {
                     <Outlet />
                 </main>
             </div>
+
+            {/* Financial Oracle Sidebar */}
+            <FinancialOracle 
+                isOpen={isOracleOpen} 
+                onClose={() => setIsOracleOpen(false)} 
+            />
         </div>
     );
 };

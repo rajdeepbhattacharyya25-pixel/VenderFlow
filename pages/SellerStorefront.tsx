@@ -3,6 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import Fuse from 'fuse.js';
 import { TopBar } from '../components/TopBar';
 import { Navbar } from '../components/Navbar';
+import { CompleteTheLook } from '../components/CompleteTheLook';
 import { BenefitsBar } from '../components/BenefitsBar';
 import { Hero } from '../components/Hero';
 import { Footer } from '../components/Footer';
@@ -22,7 +23,7 @@ import { HeroSkeleton, ScrollableSectionSkeleton } from '../components/Skeleton'
 import { supabase } from '../lib/supabase';
 import { Seller, loadSellerBySlug, setCurrentSeller, isSellerAccessible, checkStoreMembership, joinStore } from '../lib/seller';
 import { canAddToCart, setCartSeller, getCartSeller, clearCart, getCartItems, saveCartItems } from '../lib/cart';
-import { Store, AlertTriangle, ArrowLeft, AlertCircle } from 'lucide-react';
+import { Store, AlertCircle, AlertTriangle, TrendingUp, Zap, Sparkles, ArrowLeft } from 'lucide-react';
 import { clearStoreSession, StoreCustomer, getCurrentStoreCustomer, establishStoreSession } from '../lib/storeAuth';
 import { LoginModal } from '../components/LoginModal';
 import StoreRegister from './StoreRegister';
@@ -100,7 +101,9 @@ const SellerStorefront = () => {
         if (storeSettings) console.log("Debugging Store Settings:", storeSettings);
     }, [storeSettings]);
     const [isLoading, setIsLoading] = useState(true);
-    const [maintenanceMode, setMaintenanceMode] = useState(false); // Add Maintenance State
+    const [maintenanceMode, setMaintenanceMode] = useState(false);
+    const [isSearching, setIsSearching] = useState(false);
+    const [allProducts, setAllProducts] = useState<Product[]>([]);
 
     useEffect(() => {
         const checkMaintenance = async () => {
@@ -346,6 +349,7 @@ const SellerStorefront = () => {
                     };
                 });
 
+                setAllProducts(mappedProducts);
                 setProducts(mappedProducts);
                 setRecommendedProducts([...mappedProducts].sort(() => 0.5 - Math.random()).slice(0, 4));
                 setPopularProducts([...mappedProducts].sort(() => 0.5 - Math.random()).slice(0, 4));
@@ -632,7 +636,6 @@ const SellerStorefront = () => {
         const uniqueLower: string[] = Array.from(new Set(cats.map(c => c.toLowerCase())));
         return uniqueLower.map(c => c.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '));
     }, [products]);
-
     const showToast = (message: string) => {
         const id = Date.now();
         setToasts(prev => [...prev, { id, message }]);
@@ -673,20 +676,52 @@ const SellerStorefront = () => {
         setIsLoginModalOpen(true);
     };
 
-    const handleSearch = (query: string) => {
+    const handleSearch = async (query: string) => {
         if (!query.trim()) {
+            setProducts(allProducts);
             return;
         }
 
-        const fuse = new Fuse(products, {
-            keys: ['name', 'description'],
-            threshold: 0.4,
-            includeScore: true,
-            ignoreLocation: true
-        });
+        setIsSearching(true);
+        try {
+            // Try Magic Search (AI Semantic Search)
+            const { data, error } = await supabase.functions.invoke('semantic-search', {
+                body: { query, threshold: 0.3 }
+            });
 
-        const filtered = fuse.search(query).map(result => result.item);
-        setProducts(filtered);
+            if (data?.products && data.products.length > 0) {
+                // Map DB results to Page Products (handle field naming if different)
+                const mappedResults = data.products.map((p: any) => {
+                    const original = allProducts.find(op => op.id === p.id);
+                    return original || {
+                        ...p,
+                        image: p.image || 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=400',
+                        sizes: ['Standard']
+                    };
+                });
+                handleOpenCollection("Magic Search", mappedResults, `Found matching items for "${query}"`);
+            } else {
+                // Fallback to Fuse.js if AI Search returns nothing or fails
+                const fuse = new Fuse(allProducts, {
+                    keys: ['name', 'description', 'category'],
+                    threshold: 0.4,
+                    includeScore: true,
+                });
+                const filtered = fuse.search(query).map(result => result.item);
+                handleOpenCollection("Search Results", filtered, `Results for "${query}"`);
+            }
+        } catch (err) {
+            console.error("Magic Search failed:", err);
+            // Fallback to local search
+            const fuse = new Fuse(allProducts, {
+                keys: ['name', 'description', 'category'],
+                threshold: 0.4,
+            });
+            const filtered = fuse.search(query).map(result => result.item);
+            handleOpenCollection("Search Results", filtered);
+        } finally {
+            setIsSearching(false);
+        }
     };
 
     const handleQuickView = (product: Product) => {
@@ -970,7 +1005,7 @@ const SellerStorefront = () => {
         handleOpenCollection(category, filtered);
     };
 
-    const handleFooterLinkClick = (section: 'shop' | 'support' | 'legal', key: string) => {
+    const handleFooterLinkClick = (section: 'shop' | 'company' | 'legal', key: string) => {
         if (section === 'shop') {
             if (key === 'New Arrivals') {
                 handleOpenCollection(key, products);
@@ -982,7 +1017,7 @@ const SellerStorefront = () => {
                 handleOpenCollection(key, filtered);
             }
         } else {
-            const contentMap = section === 'support' ? FOOTER_CONTENT.support : FOOTER_CONTENT.legal;
+            const contentMap = section === 'company' ? FOOTER_CONTENT.support : FOOTER_CONTENT.legal;
             const content = contentMap[key as keyof typeof contentMap] || "";
             setInfoModalData({ title: key, content });
             setIsInfoModalOpen(true);
@@ -1047,17 +1082,27 @@ const SellerStorefront = () => {
                 );
             case 'cart':
                 return (
-                    <Cart
-                        items={cartItems}
-                        wishlistProducts={wishlistedProducts}
-                        onRemove={removeFromCart}
-                        onUpdateQuantity={updateCartQuantity}
-                        onNavigateHome={() => handleNavigate('home')}
-                        onNavigateWishlist={() => handleNavigate('wishlist')}
-                        onMoveToWishlist={moveToWishlist}
-                        onAddToCart={addToCart}
-                        onCheckout={handleCheckout}
-                    />
+                    <>
+                        <Cart
+                            items={cartItems}
+                            wishlistProducts={wishlistedProducts}
+                            onRemove={removeFromCart}
+                            onUpdateQuantity={updateCartQuantity}
+                            onNavigateHome={() => handleNavigate('home')}
+                            onNavigateWishlist={() => handleNavigate('wishlist')}
+                            onMoveToWishlist={moveToWishlist}
+                            onAddToCart={addToCart}
+                            onCheckout={handleCheckout}
+                        />
+                        <div className="max-w-7xl mx-auto px-4 md:px-8 -mt-20 mb-20">
+                            <CompleteTheLook 
+                                cartItems={cartItems}
+                                allProducts={allProducts}
+                                onAddToCart={addToCart}
+                                onQuickView={handleQuickView}
+                            />
+                        </div>
+                    </>
                 );
             case 'storeLogin':
                 // Redirect to home and show login modal
@@ -1119,7 +1164,7 @@ const SellerStorefront = () => {
                     <>
                         {storeCustomer && (
                             <div className="w-full text-center py-6 bg-gradient-to-r from-emerald-50 via-white to-emerald-50 dark:from-neutral-900 dark:via-neutral-900 dark:to-neutral-900 border-b border-emerald-100 dark:border-white/10 transition-colors">
-                                <h1 className="text-2xl md:text-3xl font-display font-semibold text-gray-900 dark:text-gray-50 min-h-[1.5em] flex items-center justify-center gap-2">
+                                <h1 className="text-2xl md:text-3xl font-heading font-semibold text-gray-900 dark:text-gray-50 min-h-[1.5em] flex items-center justify-center gap-2">
                                     {isNameHydrating ? (
                                         <span className="animate-pulse">Welcome...</span>
                                     ) : (
@@ -1209,7 +1254,7 @@ const SellerStorefront = () => {
                                 <div className="relative overflow-hidden rounded-3xl mx-auto max-w-6xl border border-gray-200 dark:border-neutral-800 transition-colors">
                                     {/* Header with gradient */}
                                     <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 dark:from-emerald-800 dark:to-emerald-900 px-8 md:px-16 pt-12 pb-10 text-center">
-                                        <h2 className="text-3xl md:text-4xl font-display font-semibold text-white mb-3 tracking-tight">
+                                        <h2 className="text-3xl md:text-4xl font-heading font-semibold text-white mb-3 tracking-tight">
                                             Explore Our Collections
                                         </h2>
                                         <p className="text-emerald-100 dark:text-emerald-200 text-base md:text-lg max-w-lg mx-auto leading-relaxed">
@@ -1268,7 +1313,7 @@ const SellerStorefront = () => {
                     <div className="w-20 h-20 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
                         <AlertCircle size={40} className="text-amber-500" />
                     </div>
-                    <h1 className="text-2xl font-bold text-white mb-2 font-display">Store Maintenance</h1>
+                    <h1 className="text-2xl font-bold text-white mb-2 font-heading">Store Maintenance</h1>
                     <p className="text-neutral-400 mb-6">
                         This store is currently unavailable due to platform maintenance. Please check back soon.
                     </p>

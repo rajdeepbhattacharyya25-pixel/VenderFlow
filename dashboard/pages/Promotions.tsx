@@ -86,7 +86,7 @@ const Promotions = () => {
         <div className="flex flex-col gap-6 animate-[fadeIn_0.5s_ease-out]">
             <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h1 className="text-2xl font-display font-bold text-text mb-1">Discount Codes</h1>
+                    <h1 className="text-2xl font-heading font-bold text-text mb-1">Discount Codes</h1>
                     <p className="text-muted text-sm">Create and manage promotions to drive sales.</p>
                 </div>
                 <div className="flex gap-3">

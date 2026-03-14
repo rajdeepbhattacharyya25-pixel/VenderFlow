@@ -13,7 +13,7 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                display: ['var(--font-display)', 'Playfair Display', 'serif'],
+                heading: ['"Space Grotesk"', 'var(--font-heading)', 'Playfair Display', 'serif'],
                 body: ['var(--font-body)', 'Inter', 'sans-serif'],
             },
             colors: {

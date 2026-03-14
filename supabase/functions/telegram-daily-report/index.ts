@@ -75,7 +75,7 @@ serve(async (req) => {
             throw new Error('Telegram credentials missing in environment');
         }
 
-        const message = `📊 *VenderFlow Weekly Report*
+        const message = `📊 *VendorFlow Weekly Report*
 _Last 7 Days Summary_
 
 👁️ *Landing Traffic:* ${uniqueVisitors} unique visitors

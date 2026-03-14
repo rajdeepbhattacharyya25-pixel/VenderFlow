@@ -11,8 +11,8 @@ interface CartItem {
 interface CartProps {
   items: CartItem[];
   wishlistProducts: Product[];
-  onRemove: (productId: number, size: string) => void;
-  onUpdateQuantity: (productId: number, size: string, delta: number) => void;
+  onRemove: (productId: string, size: string) => void;
+  onUpdateQuantity: (productId: string, size: string, delta: number) => void;
   onNavigateHome: () => void;
   onNavigateWishlist: () => void;
   onMoveToWishlist: (product: Product, size: string) => void;
@@ -79,7 +79,7 @@ export const Cart: React.FC<CartProps> = ({
         <div className="bg-gray-50 dark:bg-gray-800 p-8 rounded-full mb-6 transition-colors shadow-inner">
           <IconShoppingBag className="w-16 h-16 text-gray-300 dark:text-gray-600" />
         </div>
-        <h2 className="text-3xl font-display font-bold text-gray-900 dark:text-white mb-3 transition-colors">Your Bag is Empty</h2>
+        <h2 className="text-3xl font-heading font-bold text-gray-900 dark:text-white mb-3 transition-colors">Your Bag is Empty</h2>
         <p className="text-gray-500 dark:text-gray-400 mb-8 max-w-sm transition-colors leading-relaxed">
           Looks like you haven't added anything yet.
           {wishlistProducts.length > 0 && " Check your wishlist to save items for later!"}
@@ -111,7 +111,7 @@ export const Cart: React.FC<CartProps> = ({
       {/* Header & Select All */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-display font-bold text-gray-900 dark:text-white transition-colors">Shopping Bag <span className="text-gray-400 dark:text-gray-500 font-sans text-xl font-normal">({items.length})</span></h1>
+          <h1 className="text-3xl font-heading font-bold text-gray-900 dark:text-white transition-colors">Shopping Bag <span className="text-gray-400 dark:text-gray-500 font-sans text-xl font-normal">({items.length})</span></h1>
         </div>
 
         <div className="flex items-center gap-3">
@@ -167,7 +167,7 @@ export const Cart: React.FC<CartProps> = ({
                 <div className="flex-grow flex flex-col justify-between py-0.5">
                   <div className="flex justify-between items-start gap-2">
                     <div>
-                      <h3 className="font-bold text-gray-900 dark:text-white font-display text-lg leading-tight mb-1 transition-colors">{item.product.name}</h3>
+                      <h3 className="font-bold text-gray-900 dark:text-white font-heading text-lg leading-tight mb-1 transition-colors">{item.product.name}</h3>
                       <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                         <span>Size: {item.size}</span>
                         {isLowStock && <span className="text-orange-500 text-xs font-bold bg-orange-50 dark:bg-orange-900/20 px-1.5 rounded">Low Stock</span>}
@@ -234,7 +234,7 @@ export const Cart: React.FC<CartProps> = ({
             <div className="mt-12 pt-12 border-t border-gray-100 dark:border-gray-800 animate-in slide-in-from-bottom-8 duration-700">
               <div className="flex items-center gap-2 mb-6">
                 <IconHeart className="w-5 h-5 text-red-500" fill />
-                <h3 className="text-xl font-bold font-display text-gray-900 dark:text-white">Your Wishlist</h3>
+                <h3 className="text-xl font-bold font-heading text-gray-900 dark:text-white">Your Wishlist</h3>
               </div>
 
               {/* Horizontal Scroll Wishlist */}
@@ -263,7 +263,7 @@ export const Cart: React.FC<CartProps> = ({
         {/* Order Summary Sidebar */}
         <div className="lg:w-1/3">
           <div className="bg-gray-50 dark:bg-surface-dark rounded-2xl p-6 sticky top-24 border border-transparent dark:border-gray-700 transition-colors">
-            <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-4 font-display transition-colors">Order Summary</h3>
+            <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-4 font-heading transition-colors">Order Summary</h3>
 
             {/* Free Shipping Progress */}
             {remainingForFreeShipping > 0 ? (

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Bell, Sun, Moon, Menu, ShoppingBag, AlertCircle, User, Package, Settings as SettingsIcon, ChevronRight, FileText, MessageSquare, ExternalLink } from 'lucide-react';
 import { Theme } from '../types';
 import { supabase } from '../../lib/supabase';
+import { AnimatedIcon } from '../../components/AnimatedIcon';
 
 interface HeaderProps {
     theme: Theme;
@@ -240,7 +241,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
             <div className="flex items-center gap-2 sm:gap-4 min-w-0">
                 {isMobile && (
                     <button onClick={onMenuClick} className="p-2 -ml-2 text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl transition-colors flex-shrink-0" title="Toggle Sidebar">
-                        <Menu size={24} />
+                        <AnimatedIcon icon={Menu} animation="tilt" trigger="hover" size={24} />
                     </button>
                 )}
                 <h1 className="text-base sm:text-lg font-bold tracking-tight text-gray-900 dark:text-white animate-in slide-in-from-left-2 duration-300">{getTitle(activeTab)}</h1>
@@ -255,7 +256,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
                         ${searchFocused ? 'w-[400px] border-text/20 ring-4 ring-text/5 bg-theme-panel shadow-lg' : 'w-[280px] hover:border-text/10'}
                     `}
                     >
-                        <Search size={18} className={`transition-colors duration-300 ${searchFocused ? 'text-primary' : 'text-theme-muted'}`} />
+                        <AnimatedIcon icon={Search} animation="pulse" trigger="hover" size={18} iconClassName={`transition-colors duration-300 ${searchFocused ? 'text-primary' : 'text-theme-muted'}`} />
                         <input
                             type="text"
                             placeholder="Search everything (products, settings, orders)..."
@@ -347,7 +348,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
                             className={`relative p-2.5 rounded-2xl hover:bg-theme-bg border border-transparent hover:border-muted/10 transition-all text-theme-text group ${showNotifications ? 'bg-theme-bg border-muted/20' : ''}`}
                             title="Notifications"
                         >
-                            <Bell size={20} className="group-hover:scale-110 transition-transform" />
+                            <AnimatedIcon icon={Bell} animation="shake" trigger="hover" size={20} iconClassName="group-hover:scale-110 transition-transform" />
                             {unreadCount > 0 && (
                                 <span className="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-panel animate-pulse shadow-sm"></span>
                             )}

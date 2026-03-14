@@ -1,8 +1,11 @@
 import React, { useState, useRef } from 'react';
-import { m, AnimatePresence, useScroll, useTransform } from 'framer-motion';
+import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { useGSAP } from '@gsap/react';
 import { Plus } from 'lucide-react';
 
-import './styles/GlowCard.css';
+gsap.registerPlugin(ScrollTrigger);
 
 interface FAQItemProps {
     question: string;
@@ -15,113 +18,125 @@ interface FAQItemProps {
 const FAQCard: React.FC<FAQItemProps> = ({ question, answer, isOpen, onClick, index }) => {
     const paddedIndex = (index + 1).toString().padStart(2, '0');
     const cardRef = useRef<HTMLDivElement>(null);
-    const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
     const [isHovered, setIsHovered] = useState(false);
+    const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
     const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
         if (!cardRef.current) return;
         const rect = cardRef.current.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        setMousePosition({ x, y });
+        setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
     };
 
     return (
-        <m.div
+        <motion.div
             layout
             ref={cardRef}
             onClick={onClick}
-            onMouseMove={handleMouseMove}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
-            style={{
-                '--glow-x': `${mousePosition.x}px`,
-                '--glow-y': `${mousePosition.y}px`,
-                '--glow-opacity': isHovered ? 1 : 0,
-                '--glow-color': 'rgba(16, 185, 129, 0.15)',
-            } as React.CSSProperties}
-            className={`glow-card-container relative cursor-pointer rounded-3xl overflow-hidden transition-all duration-500 shadow-xl border ${isOpen
-                ? 'bg-emerald-600 text-white border-emerald-500 shadow-emerald-500/20'
-                : 'bg-white dark:bg-neutral-900 border-transparent dark:border-neutral-800 text-gray-900 dark:text-white hover:border-emerald-500/30 shadow-black/5 dark:shadow-black/20'
+            onMouseMove={handleMouseMove}
+            className={`relative cursor-pointer rounded-3xl overflow-hidden transition-all duration-500 border group ${isOpen
+                ? 'bg-[#111] text-white border-white/20'
+                : 'bg-[#0a0a0a] border-white/10 text-white hover:border-white/20'
                 }`}
+            style={{ boxShadow: '0 4px 20px rgba(204, 255, 0, 0.08), 0 1px 6px rgba(0,0,0,0.5)' }}
         >
-            {/* Dynamic Glow Spotlight */}
-            <div
-                className="glow-card-effect pointer-events-none absolute -inset-px transition-opacity duration-300"
-                style={{ zIndex: 0 }}
+            {/* Animated Glowing Border - Acid Green */}
+            <motion.div
+                className="absolute inset-0 border border-[#CCFF00] z-20 pointer-events-none rounded-3xl"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: isHovered && !isOpen ? 1 : 0 }}
+                transition={{ duration: 0.2 }}
             />
 
-            <div className="relative z-10">
-                <m.div layout className="p-6 md:p-8 flex flex-col md:flex-row md:items-start justify-between gap-4 md:gap-6">
-                    <div className="flex items-start gap-4 flex-1">
-                        <span className={`text-sm md:text-base font-bold font-display opacity-40 shrink-0 mt-0.5 ${isOpen ? 'text-emerald-100' : 'text-gray-400 dark:text-gray-500'}`}>
+            {/* Cursor-following lime green spotlight */}
+            <div
+                className="absolute inset-0 z-0 pointer-events-none transition-opacity duration-300 rounded-3xl"
+                style={{
+                    opacity: isHovered ? 1 : 0,
+                    background: `radial-gradient(circle 280px at ${mousePos.x}px ${mousePos.y}px, rgba(204, 255, 0, 0.12), transparent 70%)`
+                }}
+            />
+
+            {/* Glassmorphic Background Layer */}
+            <div className={`absolute inset-0 bg-gradient-to-br from-[#ccff00]/5 to-transparent backdrop-blur-sm z-0 transition-opacity duration-300 pointer-events-none ${isHovered && !isOpen ? 'opacity-100' : 'opacity-0'}`} />
+
+            <div className="relative z-10 w-full">
+                <motion.div layout className="p-5 md:p-6 flex flex-row items-center justify-between gap-3 md:gap-4 w-full">
+                    <div className="flex items-center gap-3 flex-1">
+                        <span className={`text-sm font-bold font-heading opacity-40 shrink-0 ${isOpen ? 'text-[#ccff00]' : 'text-white/40'}`}>
                             {paddedIndex}
                         </span>
-                        <m.span layout className="font-bold text-[17px] md:text-xl md:leading-snug">
+                        <motion.span layout className="font-bold text-base md:text-lg md:leading-snug text-white">
                             {question}
-                        </m.span>
+                        </motion.span>
                     </div>
 
-                    <m.div
+                    <motion.div
                         animate={{ rotate: isOpen ? 45 : 0 }}
                         transition={{ duration: 0.3, ease: "backOut" }}
-                        className={`flex-shrink-0 w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-colors self-end md:self-auto mt-4 md:mt-0 ${isOpen ? 'bg-white/20 text-white' : 'bg-gray-50 dark:bg-neutral-800 text-gray-400 border border-gray-100 dark:border-neutral-700/50'
-                            }`}
+                        className="flex-shrink-0 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center transition-colors bg-white/5 text-white/70 border border-white/10 hover:bg-white/10 hover:text-white"
                     >
-                        <Plus className="w-5 h-5" />
-                    </m.div>
-                </m.div>
+                        <Plus className="w-4 h-4 md:w-5 md:h-5" />
+                    </motion.div>
+                </motion.div>
 
                 <AnimatePresence initial={false}>
                     {isOpen && (
-                        <m.div
+                        <motion.div
                             initial={{ opacity: 0, height: 0 }}
                             animate={{ opacity: 1, height: 'auto' }}
                             exit={{ opacity: 0, height: 0 }}
                             transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                         >
-                            <div className="px-6 md:px-8 pb-8 md:pb-10 pt-0 ml-0 md:ml-10">
-                                <m.p
+                            <div className="px-5 md:px-6 pb-6 pt-0 ml-0 md:ml-8">
+                                <motion.p
                                     initial={{ y: 20, opacity: 0 }}
                                     animate={{ y: 0, opacity: 1 }}
                                     transition={{ delay: 0.1, duration: 0.4 }}
-                                    className={`text-[15px] md:text-[17px] leading-relaxed max-w-3xl ${isOpen ? 'text-emerald-50' : 'text-gray-500 dark:text-gray-400'
-                                        }`}
+                                    className="text-sm leading-relaxed max-w-3xl text-white/60"
                                 >
                                     {answer}
-                                </m.p>
+                                </motion.p>
                             </div>
-                        </m.div>
+                        </motion.div>
                     )}
                 </AnimatePresence>
             </div>
-        </m.div>
+        </motion.div>
     );
 };
 
 export const FAQ: React.FC = () => {
     const [openIndex, setOpenIndex] = useState<number | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
+    const cardAreaRef = useRef<HTMLDivElement>(null);
 
-    // We use Framer Motion's useScroll to check progress as the user scrolls.
+    // Track card area for progress bar
     const { scrollYProgress } = useScroll({
+        target: cardAreaRef,
+        offset: ["start end", "end 0.55"]
+    });
+
+    // Heading reveal trigger
+    const { scrollYProgress: revealScroll } = useScroll({
         target: containerRef,
-        offset: ["start center", "end end"]
+        offset: ["start 0.2", "end 0.2"]
     });
 
     const progressBarWidth = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
 
     const faqs = [
         {
-            question: "What makes VenderFlow different from other platforms?",
-            answer: "VenderFlow is strictly curated. We only accept established, high-volume sellers and brands. This allows us to offer premium infrastructure, faster performance, and dedicated support without the noise and slow-downs caused by millions of drop-shipping or hobbyist stores."
+            question: "What makes VendorFlow different from other platforms?",
+            answer: "VendorFlow is strictly curated. We only accept established, high-volume sellers and brands. This allows us to offer premium infrastructure, faster performance, and dedicated support without the noise and slow-downs caused by millions of drop-shipping or hobbyist stores."
         },
         {
             question: "How long does the application and vetting process take?",
             answer: "Our vetting team reviews all applications within 24-48 hours. We look at your current sales volume, brand presentation, and product quality. If approved, you will be assigned a dedicated onboarding specialist who can get your store live in under a week."
         },
         {
-            question: "Can I migrate my existing store to VenderFlow?",
+            question: "Can I migrate my existing store to VendorFlow?",
             answer: "Yes. Our team handles the heavy lifting of migrating your products, customer data, and order history from major platforms like Shopify, WooCommerce, and Magento. We ensure a seamless transition with zero downtime for your customers."
         },
         {
@@ -130,73 +145,102 @@ export const FAQ: React.FC = () => {
         },
         {
             question: "Do I own my customer data?",
-            answer: "Absolutely. You own 100% of your customer data, marketing lists, and order histories. VenderFlow simply provides the high-performance infrastructure to process and store it securely."
+            answer: "Absolutely. You own 100% of your customer data, marketing lists, and order histories. VendorFlow simply provides the high-performance infrastructure to process and store it securely."
         }
     ];
 
     return (
-        <section ref={containerRef} className="py-24 md:py-32 bg-[#fafafa] dark:bg-neutral-950 border-t border-gray-100 dark:border-neutral-800 relative">
-            {/* Minimal Background Accent */}
-            <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-emerald-500/5 dark:bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none -translate-y-1/2 translate-x-1/3" />
+        <section ref={containerRef} className="py-16 md:py-24 bg-[#050505] relative z-30">
+            <div className="max-w-[1200px] mx-auto px-4 sm:px-6 relative z-10 flex flex-col lg:flex-row gap-8 lg:gap-16 items-start">
 
-            <div className="max-w-[1000px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10 flex flex-col lg:flex-row gap-12 lg:gap-24 items-start">
-
-                {/* Left Side Header - Sticky */}
-                <m.div
-                    initial={{ opacity: 0, x: -30 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: false, margin: "-100px" }}
-                    transition={{ duration: 0.6 }}
-                    className="w-full lg:w-[35%] lg:sticky lg:top-32"
+                {/* Left Side Header - Sticky & Vertically Centered */}
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
+                    viewport={{ once: true }}
+                    className="w-full lg:w-[45%] lg:sticky lg:top-[20vh] py-12 lg:py-0"
                 >
-                    <span className="inline-block py-1.5 px-3.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-[11px] uppercase font-bold tracking-widest text-emerald-600 dark:text-emerald-400 mb-6 border border-emerald-100 dark:border-emerald-500/20 shadow-sm">FAQ</span>
-                    <h2 className="text-3xl md:text-5xl font-bold text-gray-900 dark:text-white font-display tracking-tight mb-6 leading-[1.1]">
-                        Commonly Asked Questions
-                    </h2>
-                    <p className="text-[15px] md:text-base text-gray-500 dark:text-gray-400 leading-relaxed mb-8">
+                    <span className="inline-block self-start py-1 px-4 rounded-full bg-[#ccff00]/10 text-xs uppercase font-bold tracking-widest text-[#ccff00] mb-8 border border-[#ccff00]/20">
+                        FAQ System
+                    </span>
+
+                    <div className="flex flex-col gap-1 mb-10">
+                        {['Commonly', 'Asked', 'Questions'].map((word, i) => {
+                            const start = i * 0.02;
+                            const end = 0.04 + (i * 0.02);
+                            const revealAmount = useTransform(revealScroll, [start, end], [0, 100]);
+
+                            return (
+                                <div key={i} className="relative inline-block overflow-hidden py-1">
+                                    <h2 className="text-[38px] sm:text-4xl md:text-5xl lg:text-6xl font-black text-white font-heading tracking-tighter leading-tight uppercase m-0">
+                                        {word}
+                                    </h2>
+
+                                    {/* The Scrubbable Neon Mask - Wiping Right-to-Left */}
+                                    <motion.div
+                                        style={{
+                                            clipPath: useTransform(revealAmount, (v) => `inset(0 ${v}% 0 0)`),
+                                        }}
+                                        className="absolute inset-0 bg-[#ccff00] z-10 pointer-events-none"
+                                    />
+
+                                    {/* Trailing Edge Velocity Blur */}
+                                    <motion.div
+                                        style={{
+                                            right: useTransform(revealAmount, (v) => `${v}%`),
+                                            opacity: useTransform(revealAmount, [0, 5, 95, 100], [0, 1, 1, 0])
+                                        }}
+                                        className="absolute top-0 bottom-0 w-[40px] bg-gradient-to-l from-[#ccff00]/60 to-transparent blur-md z-20 pointer-events-none translate-x-full"
+                                    />
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    <p className="text-sm md:text-lg text-white/50 leading-relaxed max-w-sm font-light border-l-4 border-[#ccff00] pl-6 py-2 italic">
                         Everything you need to know about migrating and scaling your business on our platform.
                     </p>
 
-                    {/* Animated Scroll Progress Bar */}
-                    <div className="hidden lg:block w-full max-w-[280px] h-1.5 bg-gray-200 dark:bg-neutral-800 rounded-full overflow-hidden mt-4">
-                        <m.div
-                            className="h-full bg-gradient-to-r from-emerald-600 to-emerald-400 rounded-full"
+                    {/* Visual Progress Indicator */}
+                    <div className="hidden lg:block w-full max-w-[300px] h-[2px] bg-white/10 overflow-hidden mt-12 rounded-full">
+                        <motion.div
+                            className="h-full bg-[#ccff00] shadow-[0_0_15px_#ccff00]"
                             style={{ width: progressBarWidth }}
                         />
                     </div>
-                </m.div>
+                </motion.div>
 
                 {/* Right Side - Stacked Deck Layout */}
-                <div className="w-full lg:w-[65%] flex flex-col relative pb-32">
-                    {faqs.map((faq, index) => {
-                        return (
-                            <m.div
-                                key={index}
-                                initial={{ opacity: 0, y: 50 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: false, margin: "-100px" }}
-                                transition={{
-                                    duration: 0.6,
-                                    delay: index * 0.1,
-                                    ease: [0.22, 1, 0.36, 1]
-                                }}
-                                className="sticky w-full"
-                                style={{
-                                    top: `${(index * 24) + 100}px`,
-                                    zIndex: index + 1,
-                                    marginBottom: index === faqs.length - 1 ? 0 : '16px',
-                                }}
-                            >
-                                <FAQCard
-                                    index={index}
-                                    question={faq.question}
-                                    answer={faq.answer}
-                                    isOpen={openIndex === index}
-                                    onClick={() => setOpenIndex(openIndex === index ? null : index)}
-                                />
-                            </m.div>
-                        );
-                    })}
+                <div className="w-full lg:w-[60%] relative">
+                    <div className="relative">
+                        {/* Initial spacer */}
+                        <div className="h-[60vh]" />
+                        {/* Card area */}
+                        <div ref={cardAreaRef}>
+                            {faqs.map((faq, index) => (
+                                <React.Fragment key={index}>
+                                    <motion.div
+                                        className="sticky"
+                                        style={{ top: `calc(45vh + ${index * 6}px)`, zIndex: index + 1 }}
+                                        initial={{ opacity: 0, y: 40 }}
+                                        whileInView={{ opacity: 1, y: 0 }}
+                                        viewport={{ once: true, amount: 0.15 }}
+                                        transition={{ duration: 0.5, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
+                                    >
+                                        <FAQCard
+                                            index={index}
+                                            question={faq.question}
+                                            answer={faq.answer}
+                                            isOpen={openIndex === index}
+                                            onClick={() => setOpenIndex(openIndex === index ? null : index)}
+                                        />
+                                    </motion.div>
+                                    {/* Spacer after each card */}
+                                    <div className="h-[50vh]" />
+                                </React.Fragment>
+                            ))}
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>

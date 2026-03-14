@@ -107,6 +107,36 @@ const SellerDetail: React.FC = () => {
         setShowConfirmModal(true);
     };
 
+    const handleApproveKYC = async () => {
+        if (!seller) return;
+        setActionLoading(true);
+        try {
+            const { error } = await supabase.from('sellers').update({ kyc_status: 'approved' }).eq('id', seller.id);
+            if (error) throw error;
+            setSeller({ ...seller, kyc_status: 'approved' });
+        } catch (err) {
+            console.error('Error approving KYC:', err);
+            setError('Failed to approve KYC');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleRejectKYC = async () => {
+        if (!seller) return;
+        setActionLoading(true);
+        try {
+            const { error } = await supabase.from('sellers').update({ kyc_status: 'rejected' }).eq('id', seller.id);
+            if (error) throw error;
+            setSeller({ ...seller, kyc_status: 'rejected' });
+        } catch (err) {
+            console.error('Error rejecting KYC:', err);
+            setError('Failed to reject KYC');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[400px]">
@@ -153,6 +183,7 @@ const SellerDetail: React.FC = () => {
             {/* Header */}
             <div className="flex items-center gap-4">
                 <button
+                    aria-label="Go back to sellers list"
                     onClick={() => navigate('/admin/sellers')}
                     className="p-2 hover:bg-neutral-800 rounded-xl transition-colors"
                 >
@@ -197,49 +228,79 @@ const SellerDetail: React.FC = () => {
                 </div>
             </div>
 
-            {/* Seller Info */}
-            <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6">
-                <h2 className="text-lg font-bold text-white mb-4">Seller Information</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="flex items-center gap-3">
-                        <Store className="w-5 h-5 text-neutral-500" />
-                        <div>
-                            <p className="text-xs text-neutral-500 uppercase tracking-wider">Store Name</p>
-                            <p className="text-white font-medium">{seller.store_name}</p>
+            {/* KYC & Subscription Details */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6">
+                    <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-3">
+                            <Shield className={`w-5 h-5 ${seller.kyc_status === 'approved' ? 'text-emerald-500' : 'text-amber-500'}`} />
+                            <h2 className="text-lg font-bold text-white">Identity Verification</h2>
                         </div>
+                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase border ${getStatusColor(seller.kyc_status)}`}>
+                            {seller.kyc_status}
+                        </span>
                     </div>
-                    <div className="flex items-center gap-3">
-                        <User className="w-5 h-5 text-neutral-500" />
-                        <div>
-                            <p className="text-xs text-neutral-500 uppercase tracking-wider">Slug</p>
-                            <p className="text-white font-medium font-mono">{seller.slug}</p>
+
+                    <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <p className="text-[10px] uppercase text-neutral-500 font-bold mb-1">GST Number</p>
+                                <p className="text-white font-mono text-sm">{seller.kyc_data?.gst_number || 'Not Provided'}</p>
+                            </div>
+                            <div>
+                                <p className="text-[10px] uppercase text-neutral-500 font-bold mb-1">PAN Number</p>
+                                <p className="text-white font-mono text-sm">{seller.kyc_data?.pan_number || 'Not Provided'}</p>
+                            </div>
                         </div>
+
+                        {seller.kyc_status === 'pending' && (
+                            <div className="flex gap-2 pt-4">
+                                <button
+                                    onClick={() => handleApproveKYC()}
+                                    className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all"
+                                >
+                                    Approve Identification
+                                </button>
+                                <button
+                                    onClick={() => handleRejectKYC()}
+                                    className="py-2 px-4 bg-red-600/10 text-red-500 border border-red-500/20 rounded-lg text-xs font-bold hover:bg-red-600/20 transition-all"
+                                >
+                                    Reject
+                                </button>
+                            </div>
+                        )}
                     </div>
-                    <div className="flex items-center gap-3">
-                        <Calendar className="w-5 h-5 text-neutral-500" />
-                        <div>
-                            <p className="text-xs text-neutral-500 uppercase tracking-wider">Joined</p>
-                            <p className="text-white font-medium">
-                                {new Date(seller.created_at).toLocaleDateString('en-US', {
-                                    year: 'numeric',
-                                    month: 'long',
-                                    day: 'numeric'
-                                })}
-                            </p>
+                </div>
+
+                <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6">
+                    <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-3">
+                            <TrendingUp className="w-5 h-5 text-indigo-400" />
+                            <h2 className="text-lg font-bold text-white">Subscription Usage</h2>
                         </div>
+                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase border ${getPlanColor(seller.plan)}`}>
+                            {seller.plan}
+                        </span>
                     </div>
-                    <div className="flex items-center gap-3">
-                        <Clock className="w-5 h-5 text-neutral-500" />
-                        <div>
-                            <p className="text-xs text-neutral-500 uppercase tracking-wider">Last Updated</p>
-                            <p className="text-white font-medium">
-                                {new Date(seller.updated_at).toLocaleDateString('en-US', {
-                                    year: 'numeric',
-                                    month: 'long',
-                                    day: 'numeric'
-                                })}
-                            </p>
+
+                    <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <p className="text-[10px] uppercase text-neutral-500 font-bold mb-1">Telegram Quota</p>
+                                <p className="text-white font-bold">{seller.telegram_message_quota_remaining?.toLocaleString() || 0} left</p>
+                            </div>
+                            <div>
+                                <p className="text-[10px] uppercase text-neutral-500 font-bold mb-1">Email Quota</p>
+                                <p className="text-white font-bold">{seller.email_quota_remaining?.toLocaleString() || 0} left</p>
+                            </div>
                         </div>
+
+                        {seller.trial_ends_at && new Date(seller.trial_ends_at) > new Date() && (
+                            <div className="p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-xl">
+                                <p className="text-[10px] text-indigo-400 font-bold uppercase mb-0.5">Trial Period Active</p>
+                                <p className="text-xs text-white">Ends on {new Date(seller.trial_ends_at).toLocaleDateString()}</p>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

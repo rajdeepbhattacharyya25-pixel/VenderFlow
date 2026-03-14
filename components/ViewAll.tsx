@@ -9,7 +9,7 @@ interface ViewAllProps {
   subtitle?: string;
   onQuickView: (product: Product) => void;
   onToggleWishlist: (product: Product) => void;
-  isWishlisted: (id: number) => boolean;
+  isWishlisted: (id: string) => boolean;
   onAddToCart: (product: Product) => void;
 }
 
@@ -60,7 +60,7 @@ export const ViewAll: React.FC<ViewAllProps> = ({
       switch (sortBy) {
         case 'price_asc': return a.price - b.price;
         case 'price_desc': return b.price - a.price;
-        case 'newest': return b.id - a.id; // Assuming higher ID is newer
+        case 'newest': return (b.created_at || b.id).localeCompare(a.created_at || a.id);
         case 'popular': default: return b.reviews - a.reviews;
       }
     });
@@ -88,7 +88,7 @@ export const ViewAll: React.FC<ViewAllProps> = ({
       {/* Changed md:static to md:relative to ensure z-index stacking context is maintained on desktop */}
       <div className="flex flex-col md:flex-row items-end md:items-center justify-between gap-4 mb-8 sticky top-[65px] md:static z-30 bg-white/95 dark:bg-background-dark/95 backdrop-blur-sm md:backdrop-blur-none py-4 md:py-0 -mx-4 px-4 md:mx-0 md:px-0 transition-all border-b md:border-none border-gray-100 dark:border-gray-800 md:bg-transparent">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white font-display transition-colors">{title}</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white font-heading transition-colors">{title}</h1>
           <p className="text-gray-500 dark:text-gray-400 text-sm mt-1 transition-colors">
             {subtitle || `Showing ${filteredProducts.length} items`}
           </p>

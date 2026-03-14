@@ -27,7 +27,7 @@ serve(async (req) => {
       console.error('Error fetching sellers for sitemap:', error);
     }
 
-    const baseUrl = 'https://venderflow.vercel.app';
+    const baseUrl = 'https://vendorflow.vercel.app';
     const today = new Date().toISOString().split('T')[0];
 
     let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;

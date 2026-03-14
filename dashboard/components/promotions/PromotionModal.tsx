@@ -57,7 +57,7 @@ const PromotionModal: React.FC<PromotionModalProps> = ({ isOpen, onClose, promot
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
             <div className="bg-panel border border-muted/20 w-full max-w-lg rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
                 <div className="p-5 border-b border-muted/10 flex justify-between items-center shrink-0">
-                    <h2 className="text-xl font-display font-semibold text-text flex items-center gap-2">
+                    <h2 className="text-xl font-heading font-semibold text-text flex items-center gap-2">
                         <Tag className="text-chart-line" size={20} />
                         {promotion ? 'Edit Promotion' : 'Create Promotion'}
                     </h2>

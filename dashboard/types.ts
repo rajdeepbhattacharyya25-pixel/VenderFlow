@@ -12,7 +12,7 @@ export interface Product {
   discount_price?: number;
   is_active: boolean;
   has_variants: boolean;
-  status?: 'draft' | 'live';
+  status?: 'active' | 'pending' | 'rejected' | 'draft';
   created_at: string;
   updated_at: string;
   // Virtual / Joined fields for UI convenience

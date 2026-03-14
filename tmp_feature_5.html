@@ -1,0 +1,136 @@
+<html class="dark"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ccff00",
+                        "background-light": "#f8f8f5",
+                        "background-dark": "#050505",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(204, 255, 0, 0.1);
+        }
+        .text-glow {
+            text-shadow: 0 0 20px rgba(204, 255, 0, 0.4);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-dark font-display text-slate-100 antialiased overflow-hidden">
+<div class="relative flex h-screen w-full flex-col bg-background-dark overflow-hidden">
+<!-- Top Navigation (derived from BottomNavBar style) -->
+<div class="flex items-center bg-background-dark/80 backdrop-blur-md p-4 pb-2 justify-between sticky top-0 z-50">
+<div class="text-slate-100 flex size-12 shrink-0 items-center justify-center">
+<span class="material-symbols-outlined">arrow_back</span>
+</div>
+<h2 class="text-slate-100 text-sm font-medium uppercase tracking-widest flex-1 text-center">Feature Showcase</h2>
+<div class="flex w-12 items-center justify-end">
+<button class="flex size-12 cursor-pointer items-center justify-center rounded-lg text-slate-100">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</div>
+</div>
+<!-- Main Content Area -->
+<div class="flex-1 px-6 pt-8 pb-32 relative flex flex-col">
+<!-- Index Badge -->
+<div class="mb-4">
+<span class="text-primary text-6xl font-black tracking-tighter opacity-90 text-glow">05</span>
+</div>
+<!-- Glassmorphic Feature Card -->
+<div class="glass-card rounded-3xl p-8 flex-1 flex flex-col justify-between shadow-2xl relative overflow-hidden">
+<div class="absolute -top-24 -right-24 size-64 bg-primary/10 blur-[100px] rounded-full"></div>
+<div class="relative z-10">
+<h1 class="text-slate-100 text-3xl font-bold leading-tight mb-4">Simplified Logistics</h1>
+<p class="text-slate-400 text-lg font-normal leading-relaxed">
+                        Shiprocket integration built-in. Automatic courier comparison and real-time tracking for every order.
+                    </p>
+</div>
+<!-- Visual Interface Element (Minimalist Map/Tracking) -->
+<div class="relative mt-8 flex-1 flex items-center justify-center">
+<div class="w-full h-48 rounded-2xl bg-slate-900/50 border border-slate-800 p-4 overflow-hidden relative">
+<!-- Abstract Map UI -->
+<div class="absolute inset-0 opacity-20" data-alt="Minimalist dark themed city map UI" data-location="San Francisco" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuD9VLY1huVT2mIfZy6z02R033ZvNTvWUV7GLvy6_HnNwK-sZP3bWV4p4Uh8xTnkbvb-XoRVkNS-Nhb8Occa0hX3GnEBWT-IFsb0pPI0tNHhLu5v7-KOyvKSiayTLp8HcOjaPp-7rVc72N60hXxjnSeQNE05q6whiT0e0p5ezpugm5GwMx6fOr06DkfP6Bpkt_uzM5MsSGa8PAuBrij3CYuESQJqSdze_eYheSIzNrbhZAaLglH_n-UYwhS2oAKvKs9h-phBDuAA1HQ'); background-size: cover;"></div>
+<!-- Pulse Point -->
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
+<div class="size-4 bg-primary rounded-full relative">
+<div class="absolute inset-0 bg-primary rounded-full animate-ping opacity-75"></div>
+</div>
+<div class="mt-2 bg-background-dark/90 px-3 py-1 rounded-full border border-primary/30 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[14px]">local_shipping</span>
+<span class="text-[10px] font-bold text-white uppercase tracking-tighter">In Transit</span>
+</div>
+</div>
+<!-- Courier Stats Overlay -->
+<div class="absolute bottom-4 left-4 right-4 flex gap-2">
+<div class="flex-1 bg-white/5 backdrop-blur-md rounded-lg p-2 border border-white/10">
+<div class="text-[8px] text-slate-500 uppercase">Est. Delivery</div>
+<div class="text-xs font-bold text-slate-200">24 Oct, 2023</div>
+</div>
+<div class="flex-1 bg-white/5 backdrop-blur-md rounded-lg p-2 border border-white/10">
+<div class="text-[8px] text-slate-500 uppercase">Carrier</div>
+<div class="text-xs font-bold text-slate-200">Shiprocket Air</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Vertical Progress Indicator (Right Side) -->
+<div class="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-3">
+<div class="size-1.5 rounded-full bg-slate-700"></div>
+<div class="size-1.5 rounded-full bg-slate-700"></div>
+<div class="size-1.5 rounded-full bg-slate-700"></div>
+<div class="size-1.5 rounded-full bg-slate-700"></div>
+<div class="h-8 w-1.5 rounded-full bg-primary shadow-[0_0_10px_rgba(204,255,0,0.8)]"></div>
+</div>
+</div>
+<!-- Sticky Footer CTA Hint -->
+<div class="fixed bottom-24 left-0 right-0 px-6">
+<button class="w-full bg-primary py-4 rounded-2xl flex items-center justify-center gap-2 group">
+<span class="text-black font-bold text-lg uppercase tracking-tight">Get Started with VendorFlow</span>
+<span class="material-symbols-outlined text-black font-bold">arrow_forward</span>
+</button>
+</div>
+<!-- Navigation Bar -->
+<div class="fixed bottom-0 w-full bg-background-dark/80 backdrop-blur-xl border-t border-slate-800/50">
+<div class="flex gap-2 px-6 pb-8 pt-4">
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-500" href="#">
+<span class="material-symbols-outlined">home</span>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-500" href="#">
+<span class="material-symbols-outlined">monitoring</span>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">widgets</span>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-500" href="#">
+<span class="material-symbols-outlined">group</span>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-500" href="#">
+<span class="material-symbols-outlined">person</span>
+</a>
+</div>
+</div>
+</div>
+</body></html>

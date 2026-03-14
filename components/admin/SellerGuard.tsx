@@ -10,65 +10,160 @@ const SellerGuard: React.FC = () => {
     const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const location = useLocation();
+    const [debugLogs, setDebugLogs] = useState<string[]>([]);
+    const [retryCount, setRetryCount] = useState(0);
+    
+    const addLog = (msg: string) => {
+        console.log(`[SellerGuard] ${msg}`);
+        setDebugLogs(prev => [...prev.slice(-4), `${new Date().toLocaleTimeString([], { hour12: false, minute: '2-digit', second: '2-digit' })} ${msg}`]);
+    };
+
+    const handleRetry = () => {
+        setIsLoading(true);
+        setIsAuthorized(null);
+        setRetryCount(prev => prev + 1);
+    };
 
     useEffect(() => {
+        let isMounted = true;
+
+        const withTimeout = <T,>(promise: PromiseLike<T> | Promise<T>, ms: number, label: string): Promise<T> => {
+            return Promise.race([
+                Promise.resolve(promise),
+                new Promise<T>((_, reject) => setTimeout(() => reject(new Error(`Timeout: ${label}`)), ms))
+            ]);
+        };
+
         const checkSellerAuth = async () => {
             try {
-                // 1. Check basic auth
-                const { data: { user } } = await supabase.auth.getUser();
+                // 1. Check user - Use getUser() for guaranteed server check
+                addLog('Verifying user session...');
+                const { data: { user }, error: userError } = await withTimeout(
+                    supabase.auth.getUser(),
+                    15000,
+                    'getUser'
+                );
+                
+                if (!isMounted) return;
 
-                if (!user) {
+                if (userError || !user) {
+                    addLog(userError ? `Auth Error: ${userError.message}` : 'No active session');
                     setIsAuthorized(false);
-                    setIsLoading(false);
                     return;
                 }
 
-                // 2. Check if user is a seller or admin
-                // First check if they are an admin
-                const { data: adminData } = await supabase.rpc('is_admin');
+                addLog(`User: ${user.email}`);
 
-                if (adminData) {
+                // 2. Check Role
+                const profileResponse = await withTimeout(
+                    supabase.from('profiles').select('role').eq('id', user.id).maybeSingle(),
+                    15000,
+                    'profiles role'
+                ) as any;
+
+                if (!isMounted) return;
+
+                const role = profileResponse.data?.role;
+                addLog(`Role: ${role || 'none'}`);
+
+                if (role === 'admin') {
+                    addLog('Admin access');
                     setIsAuthorized(true);
-                    setIsLoading(false);
                     return;
                 }
 
-                // Check if they have a seller profile
-                const { data: sellerData, error } = await supabase
-                    .from('sellers')
-                    .select('id, status')
-                    .eq('id', user.id)
-                    .single();
+                // 3. Check Seller Status
+                const sellerResponse = await withTimeout(
+                    supabase.from('sellers').select('id, status').eq('id', user.id).maybeSingle(),
+                    15000,
+                    'sellers status'
+                ) as any;
 
-                if (sellerData && (sellerData.status === 'active' || sellerData.status === 'pending')) {
+                if (!isMounted) return;
+
+                const sellerData = sellerResponse.data;
+                addLog(`Status: ${sellerData?.status || 'missing'}`);
+
+                if (sellerData && (sellerData.status === 'active' || sellerData.status === 'pending' || sellerData.status === 'onboarding')) {
+                    addLog('Access granted');
                     setIsAuthorized(true);
                 } else {
-                    console.warn('User is authenticated but not a valid seller');
+                    addLog('Access denied (invalid status)');
                     setIsAuthorized(false);
                 }
-            } catch (error) {
-                console.error('Seller guard check failed:', error);
+            } catch (error: any) {
+                const isAbortError = error?.name === 'AbortError' || 
+                                   error?.message?.toLowerCase().includes('abort') ||
+                                   error?.message?.toLowerCase().includes('canceled');
+
+                if (!isMounted || isAbortError) {
+                    if (isAbortError) console.debug('SellerGuard check aborted');
+                    return;
+                }
+
+                addLog(`Err: ${error.message || 'Unknown'}`);
+                console.error('SellerGuard error:', error);
                 setIsAuthorized(false);
             } finally {
-                setIsLoading(false);
+                if (isMounted) {
+                    setIsLoading(false);
+                }
             }
         };
 
         checkSellerAuth();
-    }, []);
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+            if (isMounted && (event === 'SIGNED_IN' || event === 'SIGNED_OUT')) {
+                addLog(`Auth event: ${event}`);
+                checkSellerAuth();
+            }
+        });
+
+        return () => {
+            isMounted = false;
+            subscription.unsubscribe();
+        };
+    }, [retryCount]);
 
     if (isLoading) {
         return (
             <div className="min-h-screen bg-white dark:bg-neutral-950 flex flex-col items-center justify-center p-4">
                 <Loader2 className="w-10 h-10 text-indigo-600 animate-spin mb-4" />
-                <p className="text-neutral-500">Verifying access...</p>
+                <p className="text-neutral-500">Verifying security setup...</p>
+                <div className="mt-8 text-[10px] font-mono text-gray-500 space-y-1">
+                    {debugLogs.map((log, i) => <div key={i}>{log}</div>)}
+                </div>
             </div>
         );
     }
 
     if (!isAuthorized) {
-        // Render the Login UI directly at /dashboard URL instead of redirecting
-        return <DashboardLogin />;
+        return (
+            <div className="relative">
+                <DashboardLogin />
+                <div className="fixed bottom-4 left-4 z-[9999] bg-black/95 text-[10px] text-green-400 p-3 rounded-lg border border-green-500/30 font-mono max-w-[280px] shadow-2xl backdrop-blur-md">
+                    <div className="flex justify-between items-center border-b border-green-900 mb-2 pb-1">
+                        <span className="font-bold">Access Debug Panel</span>
+                        <button 
+                            onClick={handleRetry}
+                            className="bg-green-500/10 hover:bg-green-500/20 text-green-400 px-2 py-0.5 rounded border border-green-500/20 transition-colors pointer-events-auto"
+                        >
+                            Retry Auth
+                        </button>
+                    </div>
+                    <div className="space-y-1">
+                        {debugLogs.length === 0 ? <div className="animate-pulse">Waiting for logs...</div> : debugLogs.map((log, i) => (
+                            <div key={i} className="truncate select-text opacity-90">{log}</div>
+                        ))}
+                    </div>
+                    <div className={`mt-2 pt-2 border-t border-green-900/50 flex justify-between items-center font-bold ${isAuthorized ? 'text-green-500' : 'text-red-400'}`}>
+                        <span>Final Result:</span>
+                        <span>{isAuthorized ? 'Authorized' : 'Denied'}</span>
+                    </div>
+                </div>
+            </div>
+        );
     }
 
     return <Outlet />;

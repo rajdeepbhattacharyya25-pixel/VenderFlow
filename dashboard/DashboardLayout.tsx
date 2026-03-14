@@ -9,6 +9,7 @@ import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 import Support from './pages/Support';
 import Promotions from './pages/Promotions';
+import Billing from './pages/Billing';
 import { Theme } from './types';
 
 
@@ -24,8 +25,24 @@ function App() {
   const [theme, setTheme] = useState<Theme>('light');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [activeTab, setActiveTab] = useState('dashboard');
+  
+  // Initialize activeTab from URL search params
+  const [activeTab, setActiveTab] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('tab') || 'dashboard';
+  });
+
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // Sync activeTab with URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('tab') !== activeTab) {
+      params.set('tab', activeTab);
+      const newUrl = `${window.location.pathname}?${params.toString()}`;
+      window.history.replaceState({ tab: activeTab }, '', newUrl);
+    }
+  }, [activeTab]);
   const [sellerSlug, setSellerSlug] = useState<string | null>(null);
   const [businessLogo, setBusinessLogo] = useState<string | null>(null);
   const [isSuspended, setIsSuspended] = useState(false);
@@ -183,7 +200,7 @@ function App() {
       case 'dashboard':
         return <Dashboard theme={theme} onTabChange={setActiveTab} sellerSlug={sellerSlug} />;
       case 'products':
-        return <Products searchTerm={searchTerm} />;
+        return <Products {...{ searchTerm }} />;
       case 'orders':
         return <Orders searchTerm={searchTerm} />;
       case 'sales':
@@ -196,6 +213,8 @@ function App() {
         return <Promotions />;
       case 'support':
         return <Support />;
+      case 'billing':
+        return <Billing />;
       default:
         return <Dashboard theme={theme} onTabChange={setActiveTab} sellerSlug={sellerSlug} />;
     }

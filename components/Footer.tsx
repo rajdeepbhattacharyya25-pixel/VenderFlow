@@ -1,4 +1,4 @@
-import React from 'react';
+import { Link } from 'react-router-dom';
 import { IconInstagram, IconTwitter, IconLinkedin, IconCreditCard } from './Icons';
 
 interface FooterProps {
@@ -25,7 +25,10 @@ export const Footer: React.FC<FooterProps> = ({ onLinkClick, branding, categorie
 
         {/* Column 1: Brand */}
         <div className="w-full lg:max-w-xs">
-          <h4 className="font-display font-bold text-xl md:text-2xl mb-4 md:mb-6 tracking-tight uppercase">{storeName}</h4>
+          <div className="flex items-center gap-3 mb-4 md:mb-6">
+            <img src="/logo.jpg" alt={storeName} className="w-8 h-8 md:w-10 md:h-10 rounded-full object-cover shadow-sm" />
+            <h4 className="font-heading font-bold text-xl md:text-2xl tracking-tight uppercase m-0">{storeName}</h4>
+          </div>
           <p className="text-xs md:text-sm text-gray-400 leading-relaxed mb-6 font-light">
             {description}
           </p>
@@ -49,7 +52,7 @@ export const Footer: React.FC<FooterProps> = ({ onLinkClick, branding, categorie
         </div>
 
         {/* Link Columns Container */}
-        <div className="w-full lg:flex-1 grid grid-cols-2 sm:grid-cols-3 gap-8 md:gap-8">
+        <div className="w-full lg:flex-1 grid grid-cols-2 sm:grid-cols-4 gap-8 md:gap-8">
           {/* Column 2: Shop */}
           {categories && categories.length > 0 && (
             <div>
@@ -72,6 +75,7 @@ export const Footer: React.FC<FooterProps> = ({ onLinkClick, branding, categorie
             <ul className="text-xs md:text-sm text-gray-400">
               <li><button onClick={() => onLinkClick('company', 'About Us')} className="hover:text-white hover:translate-x-1 transition-all inline-block text-left font-light w-full py-2 outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-sm">About Us</button></li>
               <li><button onClick={() => onLinkClick('company', 'Contact Us')} className="hover:text-white hover:translate-x-1 transition-all inline-block text-left font-light w-full py-2 outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-sm">Contact Us</button></li>
+              <li><button onClick={() => onLinkClick('company', 'Blog')} className="hover:text-white hover:translate-x-1 transition-all inline-block text-left font-light w-full py-2 outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-sm">Blog</button></li>
             </ul>
           </div>
 
@@ -83,6 +87,16 @@ export const Footer: React.FC<FooterProps> = ({ onLinkClick, branding, categorie
               <li><button onClick={() => onLinkClick('legal', 'Privacy Policy')} className="hover:text-gray-200 hover:translate-x-1 transition-all inline-block text-left font-light w-full py-2 outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-sm">Privacy Policy</button></li>
               <li><button onClick={() => onLinkClick('legal', 'Payment Policy')} className="hover:text-gray-200 hover:translate-x-1 transition-all inline-block text-left font-light w-full py-2 outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-sm">Payment Policy</button></li>
               <li><button onClick={() => onLinkClick('legal', 'Cookie Policy')} className="hover:text-gray-200 hover:translate-x-1 transition-all inline-block text-left font-light w-full py-2 outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-sm">Cookie Policy</button></li>
+            </ul>
+          </div>
+
+          {/* Column 5: Compare */}
+          <div className={`${categories && categories.length > 0 ? '' : 'col-span-1'}`}>
+            <h5 className="font-bold text-xs md:text-sm uppercase tracking-wider mb-3 md:mb-5 text-gray-300">Compare</h5>
+            <ul className="text-xs md:text-sm text-gray-400">
+              <li><Link to="/shopify-alternative" className="hover:text-gray-200 hover:translate-x-1 transition-all inline-block text-left font-light w-full py-2 outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-sm">Shopify Alternative</Link></li>
+              <li><Link to="/woocommerce-alternative" className="hover:text-gray-200 hover:translate-x-1 transition-all inline-block text-left font-light w-full py-2 outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-sm">WooCommerce Alternative</Link></li>
+              <li><Link to="/amazon-seller-alternative" className="hover:text-gray-200 hover:translate-x-1 transition-all inline-block text-left font-light w-full py-2 outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-sm">Amazon Alternative</Link></li>
             </ul>
           </div>
         </div>

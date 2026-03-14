@@ -90,7 +90,7 @@ const StaffLogin = () => {
             </div>
 
             <p className="mt-8 text-xs text-muted font-medium">
-                VenderFlow Secure Staff Access
+                VendorFlow Secure Staff Access
             </p>
         </div>
     );

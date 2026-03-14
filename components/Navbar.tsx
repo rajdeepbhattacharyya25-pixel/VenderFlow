@@ -6,18 +6,19 @@ import { NotificationBell } from './NotificationBell';
 interface NavbarProps {
   onNavigate: (view: 'home' | 'wishlist' | 'cart' | 'account' | 'orders' | 'viewAll' | 'storeLogin' | 'storeRegister') => void;
   onCategoryClick: (category: string) => void;
-  onSearch: (query: string) => void;
+  onSearch: (query: string) => void | Promise<void>;
   wishlistCount: number;
   cartCount: number;
   isDarkMode: boolean;
   toggleDarkMode: () => void;
-  user?: { email: string } | null;
-  email: string;
+  user?: any;
   onLogin?: () => void;
   storeName?: string;
   storeLogo?: string;
   categories?: string[];
   isAdmin?: boolean;
+  products?: any[];
+  onProductSelect?: (product: any) => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -30,7 +31,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   toggleDarkMode,
   user,
   onLogin,
-  storeName = "VenderFlow",
+  storeName = "VendorFlow",
   storeLogo,
   categories = ["Women", "Men", "Kids", "Accessories"],
   isAdmin = false
@@ -89,7 +90,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             {storeLogo && (
               <img src={storeLogo} alt={storeName} className="h-8 w-8 object-cover rounded-lg flex-shrink-0" />
             )}
-            <span className="text-lg font-bold font-display text-gray-900 dark:text-white truncate max-w-[140px]">
+            <span className="text-lg font-bold font-heading text-gray-900 dark:text-white truncate max-w-[140px]">
               {storeName}
             </span>
           </button>
@@ -173,7 +174,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div className="flex items-center gap-4">
             <button onClick={() => handleNavClick('home')} className="flex items-center gap-2 hover:opacity-90 transition-opacity">
               {storeLogo && <img src={storeLogo} alt={storeName} className="h-8 w-auto object-contain rounded-md" />}
-              <span className="text-2xl font-bold font-display text-emerald-700 dark:text-white tracking-tighter">
+              <span className="text-2xl font-bold font-heading text-emerald-700 dark:text-white tracking-tighter">
                 {storeName}
               </span>
             </button>
@@ -254,12 +255,20 @@ export const Navbar: React.FC<NavbarProps> = ({
 
               {user ? (
                 <div className="flex items-center gap-3">
-                  {isAdmin && (
+                  {isAdmin ? (
                     <a
                       href="/admin"
                       className="flex items-center gap-2 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-colors shadow-sm"
                     >
-                      Dashboard
+                      Admin
+                    </a>
+                  ) : (
+                    <a
+                      href="/dashboard"
+                      className="flex items-center gap-2 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-all shadow-sm hover:scale-105 active:scale-95 group"
+                    >
+                      <span>Dashboard</span>
+                      <div className="w-1.5 h-1.5 bg-white/40 rounded-full group-hover:bg-white transition-colors" />
                     </a>
                   )}
                   <NotificationBell />
@@ -271,9 +280,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <button
                   onClick={onLogin}
                   className="hover:text-emerald-600 transition-colors font-bold text-sm"
-                  aria-label="Login"
+                  aria-label="Seller Login"
                 >
-                  Login
+                  Seller Login
                 </button>
               )}
 

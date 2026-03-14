@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Product } from '../types';
 import { IconX, IconStar, IconStarHalf, IconCheck, IconHeart, IconShield, IconTruck, IconReturn } from './Icons';
+import { ReviewSummaries } from './ReviewSummaries';
 
 interface QuickViewModalProps {
   product: Product | null;
@@ -169,7 +170,7 @@ export const QuickViewModal: React.FC<QuickViewModalProps> = ({ product, isOpen,
               )}
             </div>
 
-            <h2 className="text-4xl md:text-5xl font-display font-medium text-stone-950 dark:text-stone-50 transition-colors leading-[1.1] tracking-tight">
+            <h2 className="text-4xl md:text-5xl font-heading font-medium text-stone-950 dark:text-stone-50 transition-colors leading-[1.1] tracking-tight">
               {product.name}
             </h2>
 
@@ -196,6 +197,9 @@ export const QuickViewModal: React.FC<QuickViewModalProps> = ({ product, isOpen,
                 </span>
               </div>
             </div>
+
+            {/* AI Review Summary */}
+            <ReviewSummaries productId={product.id} />
           </div>
 
           <p className="text-base text-stone-600 dark:text-stone-400 leading-relaxed mb-10 transition-colors font-light">

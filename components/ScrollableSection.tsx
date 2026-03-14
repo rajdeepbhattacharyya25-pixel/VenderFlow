@@ -11,9 +11,10 @@ interface ScrollableSectionProps {
   onViewAll: () => void;
   onQuickView: (product: Product) => void;
   onToggleWishlist: (product: Product) => void;
-  isWishlisted: (id: number) => boolean;
+  isWishlisted: (id: string) => boolean;
   onAddToCart: (product: Product) => void;
   compact?: boolean;
+  backgroundVariant?: 'default' | 'gradient';
 }
 
 export const ScrollableSection: React.FC<ScrollableSectionProps> = ({
@@ -100,7 +101,7 @@ export const ScrollableSection: React.FC<ScrollableSectionProps> = ({
               <span className={`text-xs font-bold uppercase tracking-wider ${badge === "Curated For You" ? "text-orange-500" : badgeColor}`}>{badge}</span>
             </div>
           )}
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-white font-display transition-colors">{title}</h2>
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-white font-heading transition-colors">{title}</h2>
         </div>
 
         <div className="flex items-center gap-2">

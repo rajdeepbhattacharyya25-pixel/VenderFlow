@@ -1,0 +1,16 @@
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+const API_KEY = "[SECRET]";
+const genAI = new GoogleGenerativeAI(API_KEY);
+
+async function test() {
+  try {
+    const model = genAI.getGenerativeModel({ model: "gemini-embedding-2-preview" });
+    const result = await model.embedContent("Hello world");
+    console.log("SUCCESS: Embedding generated. Dimensions:", result.embedding.values.length);
+  } catch (error: any) {
+    console.error("FAILURE:", error.message);
+  }
+}
+
+test();

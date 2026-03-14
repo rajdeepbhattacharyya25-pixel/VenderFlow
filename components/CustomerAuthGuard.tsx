@@ -10,8 +10,8 @@ const CustomerAuthGuard: React.FC = () => {
     useEffect(() => {
         const checkAuth = async () => {
             try {
-                const { data: { user } } = await supabase.auth.getUser();
-                setIsAuthenticated(!!user);
+                const { data } = await supabase.auth.getSession();
+                setIsAuthenticated(!!data.session?.user);
             } catch (error) {
                 console.error('Auth check failed:', error);
                 setIsAuthenticated(false);
