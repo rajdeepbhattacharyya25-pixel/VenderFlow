@@ -30,11 +30,11 @@ export function ContactUsModal({ isOpen, onClose }: ContactUsModalProps) {
                         </div>
                     </div>
 
-                    <h2 className="text-2xl font-bold font-display text-center text-neutral-900 dark:text-white mb-2">
+                    <h2 className="text-2xl font-bold font-heading text-center text-neutral-900 dark:text-white mb-2">
                         Get in Touch
                     </h2>
                     <p className="text-center text-neutral-500 dark:text-neutral-400 mb-8">
-                        Have questions about selling on VenderFlow? Our team is here to help you get started.
+                        Have questions about selling on VendorFlow? Our team is here to help you get started.
                     </p>
 
                     <div className="space-y-4">
@@ -54,7 +54,7 @@ export function ContactUsModal({ isOpen, onClose }: ContactUsModalProps) {
                         </a>
 
                         <a
-                            href="mailto:support@venderflow.com"
+                            href="mailto:support@vendorflow.com"
                             className="flex items-center gap-4 p-4 rounded-xl border border-neutral-100 dark:border-neutral-800 hover:border-blue-500/30 dark:hover:border-blue-500/30 bg-neutral-50 dark:bg-neutral-800/50 hover:bg-blue-50 dark:hover:bg-blue-950/20 transition-all group"
                         >
                             <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -62,7 +62,7 @@ export function ContactUsModal({ isOpen, onClose }: ContactUsModalProps) {
                             </div>
                             <div>
                                 <h3 className="font-semibold text-neutral-900 dark:text-white">Email Us</h3>
-                                <p className="text-sm text-neutral-500 dark:text-neutral-400">support@venderflow.com</p>
+                                <p className="text-sm text-neutral-500 dark:text-neutral-400">support@vendorflow.com</p>
                             </div>
                         </a>
 

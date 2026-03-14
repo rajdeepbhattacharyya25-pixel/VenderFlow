@@ -89,7 +89,7 @@ const KPICard: React.FC<KPICardProps> = ({
             <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">{title}</h3>
           </div>
 
-          <div className="text-xl font-display font-bold text-slate-800 dark:text-white tabular-nums leading-tight tracking-tight mt-0.5">
+          <div className="text-xl font-heading font-bold text-slate-800 dark:text-white tabular-nums leading-tight tracking-tight mt-0.5">
             {loading ? (
               <div className="h-6 w-24 bg-slate-200 dark:bg-slate-700 animate-pulse rounded my-0.5"></div>
             ) : (

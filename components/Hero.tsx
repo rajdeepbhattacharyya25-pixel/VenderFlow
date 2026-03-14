@@ -26,7 +26,7 @@ export const Hero: React.FC<HeroProps> = ({ onShopCollection, settings }) => {
               <span className="text-[10px] md:text-xs font-bold uppercase tracking-wider text-gray-800 dark:text-gray-200">New Collection 2024</span>
             </div>
 
-            <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white leading-[1.1] mb-4 md:mb-6 font-display transition-colors">
+            <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white leading-[1.1] mb-4 md:mb-6 font-heading tracking-tighter transition-colors">
               Elevate Your <br />
               <span className="italic font-light text-gray-700 dark:text-gray-300">Everyday</span> Style
             </h1>

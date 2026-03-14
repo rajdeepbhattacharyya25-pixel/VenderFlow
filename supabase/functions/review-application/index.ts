@@ -1,6 +1,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { applyRateLimit } from '../_shared/rate-limiter.ts';
+import { captureServerEvent } from '../_shared/posthog-edge.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': Deno.env.get('ALLOWED_ORIGIN') ?? '*',
@@ -27,8 +28,6 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    const posthogApiKey = Deno.env.get('POSTHOG_API_KEY')!
-    const posthogHost = Deno.env.get('POSTHOG_HOST') || 'https://app.posthog.com'
 
     // Client for auth check
     const userClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!, {
@@ -135,46 +134,29 @@ serve(async (req) => {
         .eq('status', 'pending');
 
       // 5. Analytics
-      if (posthogApiKey) {
-        try {
-          const events: any[] = [
-            {
-              event: 'application_approved',
-              distinct_id: targetUserId,
-              properties: {
-                application_id: application.id,
-                seller_id: seller.id
-              }
-            }
-          ];
+      await captureServerEvent(targetUserId, 'application_approved', {
+        application_id: application.id,
+        seller_id: seller.id
+      });
+      await captureServerEvent(user.id, 'seller_approved', {
+        admin_id: user.id,
+        vendor_id: seller.id
+      });
 
-          if (isNewUser) {
-            events.push({
-              event: 'store_created',
-              distinct_id: targetUserId,
-              properties: {
-                seller_id: seller.id,
-                user_id: targetUserId,
-                slug: seller.slug,
-                store_name: seller.store_name,
-                application_id: application.id,
-                plan: 'free'
-              }
-            });
-          }
-
-          // Send events in parallel
-          await Promise.all(events.map(ev =>
-            fetch(`${posthogHost}/capture/`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ api_key: posthogApiKey, ...ev })
-            })
-          ));
-
-        } catch (phError) {
-          console.error('PostHog Capture Error:', phError);
-        }
+      if (isNewUser) {
+        await captureServerEvent(targetUserId, 'store_created', {
+          seller_id: seller.id,
+          user_id: targetUserId,
+          slug: seller.slug,
+          store_name: seller.store_name,
+          application_id: application.id,
+          plan: 'free'
+        });
+        await captureServerEvent(targetUserId, 'vendor_signup_completed', {
+          vendor_id: seller.id,
+          plan: 'free',
+          signup_method: 'approved_application'
+        });
       }
 
       // 6. Audit

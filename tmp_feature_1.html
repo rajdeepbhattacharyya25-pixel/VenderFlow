@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ccff00",
+                        "background-light": "#f8f8f5",
+                        "background-dark": "#050505",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .glass {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
+<div class="relative flex min-h-screen w-full flex-col overflow-x-hidden">
+<!-- Header / Navigation Placeholder -->
+<div class="flex items-center bg-background-light dark:bg-background-dark p-4 pb-2 justify-between sticky top-0 z-50">
+<div class="text-slate-900 dark:text-slate-100 flex size-10 shrink-0 items-center justify-center">
+<span class="material-symbols-outlined">arrow_back_ios</span>
+</div>
+<h2 class="text-slate-900 dark:text-slate-100 text-sm font-semibold tracking-tight flex-1 text-center">Feature Breakdown</h2>
+<div class="flex w-10 items-center justify-end">
+<button class="flex cursor-pointer items-center justify-center text-slate-900 dark:text-slate-100">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</div>
+</div>
+<!-- Main Content Area -->
+<div class="flex flex-col px-6 pt-8 pb-24">
+<!-- Badge -->
+<div class="flex mb-6">
+<div class="flex h-7 items-center justify-center rounded-full bg-primary/10 px-4 border border-primary/20">
+<p class="text-primary text-[10px] font-bold tracking-widest uppercase">Why VendorFlow?</p>
+</div>
+</div>
+<!-- Headline -->
+<h1 class="text-slate-900 dark:text-white text-3xl font-bold leading-tight tracking-tight mb-10">
+                5 Reasons Sellers <br/>Choose VendorFlow
+            </h1>
+<!-- Vertical Layout Container -->
+<div class="flex gap-4">
+<!-- Progress Indicator (Far Right concept adapted for mobile left/side) -->
+<div class="flex flex-col items-center gap-4 py-2">
+<div class="w-2 h-2 rounded-full bg-primary shadow-[0_0_10px_rgba(204,255,0,0.8)]"></div>
+<div class="w-1 h-1 rounded-full bg-white/20"></div>
+<div class="w-1 h-1 rounded-full bg-white/20"></div>
+<div class="w-1 h-1 rounded-full bg-white/20"></div>
+<div class="w-1 h-1 rounded-full bg-white/20"></div>
+</div>
+<!-- Featured Card -->
+<div class="flex-1">
+<div class="glass rounded-2xl p-6 flex flex-col gap-6 relative overflow-hidden">
+<!-- Top Glow Decoration -->
+<div class="absolute -top-12 -right-12 w-24 h-24 bg-primary/10 blur-3xl"></div>
+<div class="flex flex-col gap-1">
+<span class="text-primary text-4xl font-black tracking-tighter opacity-50">01</span>
+<h3 class="text-white text-xl font-bold tracking-tight">Own Your Brand &amp; Store</h3>
+</div>
+<p class="text-slate-400 text-base leading-relaxed">
+                            Your identity, your rules. Build a loyal customer base with a dedicated branded storefront that reflects your unique vision.
+                        </p>
+<!-- Dashboard Mockup Element -->
+<div class="w-full aspect-[4/3] glass rounded-xl overflow-hidden border border-white/5 p-3 flex flex-col gap-2">
+<div class="flex items-center justify-between mb-2">
+<div class="w-12 h-2 bg-white/10 rounded-full"></div>
+<div class="flex gap-1">
+<div class="w-2 h-2 rounded-full bg-red-500/50"></div>
+<div class="w-2 h-2 rounded-full bg-yellow-500/50"></div>
+<div class="w-2 h-2 rounded-full bg-green-500/50"></div>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-2">
+<div class="h-16 rounded-lg bg-primary/5 border border-primary/10 flex items-center justify-center">
+<div class="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-sm">storefront</span>
+</div>
+</div>
+<div class="h-16 rounded-lg bg-white/5 border border-white/5 flex items-center justify-center">
+<span class="material-symbols-outlined text-white/20">analytics</span>
+</div>
+</div>
+<div class="h-20 w-full bg-white/5 rounded-lg border border-white/5 p-3 space-y-2">
+<div class="w-full h-1 bg-white/10 rounded-full"></div>
+<div class="w-3/4 h-1 bg-white/10 rounded-full"></div>
+<div class="w-1/2 h-1 bg-white/10 rounded-full"></div>
+<div class="pt-2 flex justify-end">
+<div class="w-10 h-4 rounded bg-primary/30"></div>
+</div>
+</div>
+</div>
+<button class="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-xl h-12 bg-primary text-black text-sm font-bold tracking-tight hover:brightness-110 transition-all">
+                            Explore Customization
+                        </button>
+</div>
+</div>
+</div>
+<!-- Footer Spacing -->
+<div class="mt-12 text-center">
+<p class="text-white/30 text-xs font-medium uppercase tracking-[0.2em]">Next: Direct Customer Connection</p>
+<span class="material-symbols-outlined text-white/20 mt-2">keyboard_double_arrow_down</span>
+</div>
+</div>
+<!-- Bottom Navigation Bar -->
+<div class="fixed bottom-0 w-full z-50 border-t border-white/10 bg-background-dark/80 backdrop-blur-md px-4 pb-6 pt-3">
+<div class="flex gap-2">
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-white/50" href="#">
+<div class="flex h-8 items-center justify-center">
+<span class="material-symbols-outlined">home</span>
+</div>
+<p class="text-[10px] font-medium leading-normal tracking-wide">Home</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-primary" href="#">
+<div class="flex h-8 items-center justify-center">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">auto_awesome</span>
+</div>
+<p class="text-[10px] font-medium leading-normal tracking-wide">Features</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-white/50" href="#">
+<div class="flex h-8 items-center justify-center">
+<span class="material-symbols-outlined">verified_user</span>
+</div>
+<p class="text-[10px] font-medium leading-normal tracking-wide">Benefits</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-white/50" href="#">
+<div class="flex h-8 items-center justify-center">
+<span class="material-symbols-outlined">account_circle</span>
+</div>
+<p class="text-[10px] font-medium leading-normal tracking-wide">Account</p>
+</a>
+</div>
+</div>
+</div>
+</body></html>

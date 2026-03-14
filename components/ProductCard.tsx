@@ -164,7 +164,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView, 
       <div className="flex flex-col gap-1 px-1 flex-grow">
         <div className="flex justify-between items-start gap-2">
           <h3
-            className={`font-bold text-gray-900 dark:text-gray-100 font-display group-hover:text-primary dark:group-hover:text-primary-light transition-colors cursor-pointer leading-tight line-clamp-2 ${compact ? 'text-xs md:text-sm' : 'text-sm md:text-base'}`}
+            className={`font-bold text-gray-900 dark:text-gray-100 font-heading group-hover:text-primary dark:group-hover:text-primary-light transition-colors cursor-pointer leading-tight line-clamp-2 ${compact ? 'text-xs md:text-sm' : 'text-sm md:text-base'}`}
             onClick={() => onQuickView(product)}
           >
             {product.name}

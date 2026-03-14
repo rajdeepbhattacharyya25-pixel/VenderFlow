@@ -11,9 +11,18 @@ const AdminGuard: React.FC = () => {
     const location = useLocation();
 
     useEffect(() => {
+        // Helper to prevent silent hangs in database calls
+        const withTimeout = <T,>(promise: PromiseLike<T> | Promise<T>, ms: number, label: string): Promise<T> => {
+            return Promise.race([
+                Promise.resolve(promise),
+                new Promise<T>((_, reject) => setTimeout(() => reject(new Error(`Timeout: ${label}`)), ms))
+            ]);
+        };
+
         const checkAdmin = async () => {
             try {
-                const { data: { user } } = await supabase.auth.getUser();
+                const sessionResponse = await withTimeout(supabase.auth.getSession(), 5000, 'getSession');
+                const user = sessionResponse.data?.session?.user;
 
                 if (!user) {
                     setIsAuthenticated(false);
@@ -25,11 +34,13 @@ const AdminGuard: React.FC = () => {
                 setIsAuthenticated(true);
 
                 // Check Admin Role
-                const { data: profile, error } = await supabase
-                    .from('profiles')
-                    .select('role')
-                    .eq('id', user.id)
-                    .single();
+                const profileResponse = await withTimeout(
+                    supabase.from('profiles').select('role').eq('id', user.id).single(),
+                    5000, 'profiles role'
+                ) as any;
+
+                const profile = profileResponse.data;
+                const error = profileResponse.error;
 
                 if (error || !profile || profile.role !== 'admin') {
                     setIsAdmin(false);
@@ -40,10 +51,12 @@ const AdminGuard: React.FC = () => {
                 setIsAdmin(true);
 
                 // Check 2FA Enforcement
-                const { data: settings } = await supabase
-                    .from('platform_settings')
-                    .select('enforce_2fa')
-                    .single();
+                const settingsResponse = await withTimeout(
+                    supabase.from('platform_settings').select('enforce_2fa').single(),
+                    5000, 'platform_settings enforce_2fa'
+                ) as any;
+
+                const settings = settingsResponse.data;
 
                 if (settings?.enforce_2fa) {
                     const { data: factors } = await supabase.auth.mfa.listFactors();
@@ -67,8 +80,18 @@ const AdminGuard: React.FC = () => {
                     }
                 }
 
-            } catch (error) {
+            } catch (error: any) {
                 console.error('Error checking admin role:', error);
+
+                // Show visible error to user before redirecting
+                toast.error(`Admin guard check failed: ${error?.message || 'Unknown error'}`, {
+                    duration: 6000,
+                    style: {
+                        background: '#333',
+                        color: '#fff',
+                    }
+                });
+
                 setIsAuthenticated(false);
                 setIsAdmin(false);
             } finally {

@@ -34,7 +34,7 @@ const NoInternet = () => {
                             <span>Offline</span>
                         </div>
 
-                        <h1 className="text-4xl md:text-5xl lg:text-7xl font-display font-medium text-gray-900 dark:text-gray-50 leading-[1.1]">
+                        <h1 className="text-4xl md:text-5xl lg:text-7xl font-heading font-medium text-gray-900 dark:text-gray-50 leading-[1.1]">
                             No Internet <br className="hidden lg:block" />
                             <span className="text-gray-400 dark:text-gray-600">Connection</span>
                         </h1>

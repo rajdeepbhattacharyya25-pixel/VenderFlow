@@ -166,7 +166,7 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
         const blob = new Blob([TEMPLATE_CSV], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.download = 'venderflow_product_template.csv';
+        link.download = 'vendorflow_product_template.csv';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -239,15 +239,43 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) throw new Error('Not authenticated. Please log in again.');
 
-            const total = validProducts.length;
+            // 1. Check Quota
+            const { data: seller, error: sellerError } = await supabase
+                .from('sellers')
+                .select('plan, product_count')
+                .eq('id', user.id)
+                .single();
+
+            if (sellerError || !seller) throw new Error('Failed to fetch seller details');
+
+            const limits: Record<string, number> = { 'free': 10, 'pro': 200, 'premium': 999999 };
+            const currentLimit = limits[seller.plan as keyof typeof limits] || 10;
+            const remaining = currentLimit - seller.product_count;
+
+            if (remaining <= 0) {
+                alert(`Limit Reached: You have no remaining product slots on the ${seller.plan} plan.`);
+                setUploading(false);
+                return;
+            }
+
+            const toUpload = validProducts.slice(0, remaining);
+            if (toUpload.length < validProducts.length) {
+                if (!confirm(`Quota Limit: You only have ${remaining} slots left, but you're trying to upload ${validProducts.length} products. Only the first ${remaining} will be imported. Continue?`)) {
+                    setUploading(false);
+                    return;
+                }
+            }
+
+            const total = toUpload.length;
             setUploadProgress({ current: 0, total });
 
+            const productStatus = seller.plan === 'free' ? 'pending' : 'active';
             const result: UploadResult = { success: 0, failed: 0, failures: [] };
 
             // Batch insert: up to 50 products at a time
             const BATCH_SIZE = 50;
             for (let i = 0; i < total; i += BATCH_SIZE) {
-                const batch = validProducts.slice(i, i + BATCH_SIZE);
+                const batch = toUpload.slice(i, i + BATCH_SIZE);
 
                 const productsToInsert = batch.map(p => ({
                     name: p.name,
@@ -258,6 +286,7 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
                     is_active: p.is_active,
                     has_variants: false,
                     seller_id: user.id,
+                    status: productStatus
                 }));
 
                 const { data: inserted, error: insertError } = await supabase
@@ -306,6 +335,13 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
                     if (mediaRows.length > 0) {
                         await supabase.from('product_media').insert(mediaRows);
                     }
+
+                    // Increment product count atomically for successfully inserted batch
+                    await supabase.rpc('increment_seller_quota', {
+                        seller_id_param: user.id,
+                        column_param: 'product_count',
+                        amount_param: inserted.length
+                    });
 
                     result.success += inserted.length;
                 }

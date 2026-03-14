@@ -9,11 +9,15 @@ import {
 } from 'lucide-react';
 import { ToastContainer } from '../../components/Toast';
 
-const Orders = () => {
+interface OrdersProps {
+    searchTerm?: string;
+}
+
+const Orders = ({ searchTerm = '' }: OrdersProps) => {
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
     const [filterStatus, setFilterStatus] = useState<string>('all');
-    const [searchQuery, setSearchQuery] = useState('');
+    const [searchQuery, setSearchQuery] = useState(searchTerm);
     const [toasts, setToasts] = useState<{ id: number, message: string }[]>([]);
 
     // Notification state
@@ -165,7 +169,7 @@ const Orders = () => {
 
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
                 <div>
-                    <h1 className="text-3xl font-display font-bold text-gray-900 dark:text-white mb-2">Orders</h1>
+                    <h1 className="text-3xl font-heading font-bold text-gray-900 dark:text-white mb-2">Orders</h1>
                     <p className="text-gray-500 dark:text-gray-400">Manage your shipments and track deliverables</p>
                 </div>
                 <div className="flex gap-2">
@@ -189,7 +193,7 @@ const Orders = () => {
                 ].map((stat, i) => (
                     <div key={i} className={`${stat.bg} p-4 rounded-xl border border-transparent hover:border-black/5 transition-all`}>
                         <p className={`text-sm font-bold opacity-70 ${stat.color}`}>{stat.label}</p>
-                        <p className={`text-2xl font-display font-bold ${stat.color}`}>{stat.count !== undefined ? stat.count : stat.value}</p>
+                        <p className={`text-2xl font-heading font-bold ${stat.color}`}>{stat.count !== undefined ? stat.count : stat.value}</p>
                     </div>
                 ))}
             </div>
@@ -277,7 +281,7 @@ const Orders = () => {
                                 <div className="flex flex-col items-end justify-between min-w-[150px] gap-4 pl-4 border-l border-gray-100 dark:border-gray-800">
                                     <div className="text-right">
                                         <p className="text-xs text-gray-500 uppercase font-bold">Total</p>
-                                        <p className="text-xl font-display font-bold text-primary dark:text-white">₹{order.total.toLocaleString()}</p>
+                                        <p className="text-xl font-heading font-bold text-primary dark:text-white">₹{order.total.toLocaleString()}</p>
                                     </div>
 
                                     <div className="relative group/menu">

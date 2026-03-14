@@ -1,0 +1,21 @@
+/* Custom Cursor Styles */
+.custom-cursor-container {
+    transform: translate3d(var(--cursor-x), var(--cursor-y), 0);
+    will-change: transform;
+}
+
+.custom-cursor-svg {
+    filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.45));
+}
+
+.custom-cursor-motion-wrapper {
+    transform-origin: top left;
+}
+
+/* Ensure default cursor is hidden globally when custom cursor is active, but only on devices with fine pointers */
+@media (pointer: fine) and (hover: hover) {
+    .custom-cursor-active,
+    .custom-cursor-active * {
+        cursor: none !important;
+    }
+}

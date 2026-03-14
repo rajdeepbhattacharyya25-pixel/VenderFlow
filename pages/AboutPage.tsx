@@ -17,9 +17,9 @@ export default function AboutPage() {
             <header className="sticky top-0 z-50 bg-slate-50/90 dark:bg-neutral-900/90 backdrop-blur-md border-b border-gray-200 dark:border-neutral-800 transition-all">
                 <div className="max-w-[1600px] mx-auto px-4 md:px-8 h-16 md:h-20 flex items-center justify-between">
                     <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
-                        <img src="/logo.jpg" alt="VenderFlow" className="h-8 md:h-10 w-auto rounded-lg" />
-                        <span className="text-xl md:text-2xl font-bold font-display text-emerald-700 dark:text-emerald-500 tracking-tight">
-                            VenderFlow
+                        <img src="/logo.jpg" alt="VendorFlow" className="h-8 md:h-10 w-auto rounded-lg" />
+                        <span className="text-xl md:text-2xl font-bold font-heading text-emerald-700 dark:text-emerald-500 tracking-tight">
+                            VendorFlow
                         </span>
                     </div>
                 </div>
@@ -27,8 +27,8 @@ export default function AboutPage() {
 
             <main className="flex-grow max-w-[1000px] mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
                 <div className="text-center mb-16">
-                    <h1 className="text-4xl md:text-6xl font-bold font-display text-gray-900 dark:text-white mb-6 tracking-tight">
-                        About VenderFlow
+                    <h1 className="text-4xl md:text-6xl font-bold font-heading text-gray-900 dark:text-white mb-6 tracking-tight">
+                        About VendorFlow
                     </h1>
                     <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto leading-relaxed">
                         The fully-managed, curated infrastructure empowering ambitious independent brands to scale without friction.
@@ -41,13 +41,13 @@ export default function AboutPage() {
                     <section className="bg-slate-50 dark:bg-neutral-900/50 p-8 md:p-12 rounded-3xl border border-gray-100 dark:border-white/5">
                         <h2 className="text-3xl font-bold text-gray-900 dark:text-white mt-0 mb-6">Our Mission</h2>
                         <p className="text-gray-600 dark:text-gray-300">
-                            VenderFlow was built with a singular focus: to elevate the standard of independent e-commerce. We observed that talented creators and premium brands often struggled with the disjointed, fragmented tools required to run a high-volume storefront. VenderFlow unites inventory, storefront design, secure payments, and profound analytics into one cohesive, enterprise-grade platform. We handle the infrastructure so our merchants can focus on what they do best: creating exceptional products.
+                            VendorFlow was built with a singular focus: to elevate the standard of independent e-commerce. We observed that talented creators and premium brands often struggled with the disjointed, fragmented tools required to run a high-volume storefront. VendorFlow unites inventory, storefront design, secure payments, and profound analytics into one cohesive, enterprise-grade platform. We handle the infrastructure so our merchants can focus on what they do best: creating exceptional products.
                         </p>
                     </section>
 
                     {/* How It Works: Sellers */}
                     <section>
-                        <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-8 border-b border-gray-200 dark:border-neutral-800 pb-4">For Sellers: The VenderFlow Advantage</h2>
+                        <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-8 border-b border-gray-200 dark:border-neutral-800 pb-4">For Sellers: The VendorFlow Advantage</h2>
                         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mt-8">
                             <div className="bg-white dark:bg-neutral-900 p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-white/5">
                                 <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl flex items-center justify-center mb-6">
@@ -100,7 +100,7 @@ export default function AboutPage() {
                                 </div>
                                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">Secure, Global Payouts</h3>
                                 <p className="text-gray-600 dark:text-gray-400 text-sm">
-                                    Powered by industry-leading financial infrastructure, VenderFlow automatically settles your funds securely while mitigating fraud risk natively.
+                                    Powered by industry-leading financial infrastructure, VendorFlow automatically settles your funds securely while mitigating fraud risk natively.
                                 </p>
                             </div>
                         </div>
@@ -114,21 +114,21 @@ export default function AboutPage() {
                                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold">1</div>
                                 <div>
                                     <h3 className="text-xl font-bold text-gray-900 dark:text-white m-0 mb-2">Curated Trust</h3>
-                                    <p className="text-gray-600 dark:text-gray-400 m-0">VenderFlow strictly vets every merchant on our platform. When you buy from a VenderFlow-hosted storefront, you are buying from a verified, legitimate brand.</p>
+                                    <p className="text-gray-600 dark:text-gray-400 m-0">VendorFlow strictly vets every merchant on our platform. When you buy from a VendorFlow-hosted storefront, you are buying from a verified, legitimate brand.</p>
                                 </div>
                             </div>
                             <div className="flex gap-6 items-start">
                                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold">2</div>
                                 <div>
                                     <h3 className="text-xl font-bold text-gray-900 dark:text-white m-0 mb-2">Frictionless Checkout</h3>
-                                    <p className="text-gray-600 dark:text-gray-400 m-0">Say goodbye to clunky, multi-page checkouts. VenderFlow's system is optimized for speed, supporting mobile wallets and saving your preferences securely for next time.</p>
+                                    <p className="text-gray-600 dark:text-gray-400 m-0">Say goodbye to clunky, multi-page checkouts. VendorFlow's system is optimized for speed, supporting mobile wallets and saving your preferences securely for next time.</p>
                                 </div>
                             </div>
                             <div className="flex gap-6 items-start">
                                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold">3</div>
                                 <div>
                                     <h3 className="text-xl font-bold text-gray-900 dark:text-white m-0 mb-2">Transparent Support</h3>
-                                    <p className="text-gray-600 dark:text-gray-400 m-0">Track your orders visually, communicate directly with merchants, and leverage the VenderFlow infrastructure to ensure a smooth, reliable consumer experience.</p>
+                                    <p className="text-gray-600 dark:text-gray-400 m-0">Track your orders visually, communicate directly with merchants, and leverage the VendorFlow infrastructure to ensure a smooth, reliable consumer experience.</p>
                                 </div>
                             </div>
                         </div>
@@ -148,11 +148,11 @@ export default function AboutPage() {
                             }
                         } else if (section === 'company') {
                             if (key === 'About Us') navigate('/about');
-                            if (key === 'Contact Us') window.location.href = 'mailto:support@venderflow.com';
+                            if (key === 'Contact Us') window.location.href = 'mailto:support@vendorflow.com';
                         }
                     }}
                     branding={{
-                        storeName: "VenderFlow",
+                        storeName: "VendorFlow",
                         description: "The premier platform for ambitious independent brands and creators.",
                         socials: {
                             instagram: "https://www.instagram.com/_rajdeep.007_/",

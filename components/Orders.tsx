@@ -154,7 +154,7 @@ export const Orders: React.FC<OrdersProps> = ({ onNavigate, onAddToCart, showToa
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
                     <div>
                         <div className="flex items-center gap-3 mb-1">
-                            <h1 className="text-2xl md:text-3xl font-display font-bold text-gray-900 dark:text-white">Order {selectedOrder.id}</h1>
+                            <h1 className="text-2xl md:text-3xl font-heading font-bold text-gray-900 dark:text-white">Order {selectedOrder.id}</h1>
                             <span className={`text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wide 
                             ${selectedOrder.status === 'delivered' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
                                     selectedOrder.status === 'shipping' || selectedOrder.status === 'shipped' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
@@ -268,7 +268,7 @@ export const Orders: React.FC<OrdersProps> = ({ onNavigate, onAddToCart, showToa
         <div className="max-w-4xl mx-auto px-4 md:px-8 pt-8 pb-24 animate-in slide-in-from-bottom-4 duration-500">
             <section>
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
-                    <h2 className="text-xl font-bold font-display text-gray-900 dark:text-white flex items-center gap-2 transition-colors">
+                    <h2 className="text-xl font-bold font-heading text-gray-900 dark:text-white flex items-center gap-2 transition-colors">
                         <IconShoppingBag className="w-5 h-5 text-primary dark:text-primary-light" /> My Orders
                     </h2>
 

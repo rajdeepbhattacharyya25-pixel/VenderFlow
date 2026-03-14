@@ -31,6 +31,7 @@ export interface Product {
   stock?: number;
   stock_quantity?: number;
   status?: 'draft' | 'live';
+  created_at?: string;
 }
 
 export interface NavLink {

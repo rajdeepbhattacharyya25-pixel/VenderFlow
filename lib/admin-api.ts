@@ -440,6 +440,15 @@ export const adminDb = {
                 console.error("Failed to fetch DB metrics:", rpcError);
             }
 
+            // 8. Total Wallet Balances (New for Payout System)
+            const { data: walletData, error: walletError } = await supabase
+                .from('seller_wallets')
+                .select('available_balance, reserve_balance, negative_balance');
+
+            const totalAvailable = walletData?.reduce((acc, w) => acc + (w.available_balance || 0), 0) || 0;
+            const totalReserves = walletData?.reduce((acc, w) => acc + (w.reserve_balance || 0), 0) || 0;
+            const totalNegative = walletData?.reduce((acc, w) => acc + (w.negative_balance || 0), 0) || 0;
+
             return {
                 totalSellers: sellerCount || 0,
                 sellerChange: sellerChange,
@@ -455,7 +464,10 @@ export const adminDb = {
                 estimatedStorageMB: Math.round(estimatedStorageMB * 10) / 10,
                 storagePercentage: Math.round(storagePercentage * 10) / 10,
                 healthIssues: healthIssues,
-                databaseSize: databaseSize
+                databaseSize: databaseSize,
+                totalAvailable,
+                totalReserves,
+                totalNegative
             };
         } catch (error) {
             console.error('Error fetching admin stats:', error);
@@ -473,7 +485,10 @@ export const adminDb = {
                 estimatedStorageMB: 0,
                 storagePercentage: 0,
                 healthIssues: ['Unable to fetch system data'],
-                databaseSize: 'Unknown'
+                databaseSize: 'Unknown',
+                totalAvailable: 0,
+                totalReserves: 0,
+                totalNegative: 0
             };
         }
     },
@@ -1022,5 +1037,311 @@ export const adminDb = {
             ...data.data,
             created: data.created
         };
+    },
+
+    // ===================================================================
+    // Financial Monitoring & Safety
+    // ===================================================================
+
+    /**
+     * Get unacknowledged system alerts (invariant mismatches, outbox failures, etc.)
+     */
+    async getSystemAlerts(limit = 20) {
+        try {
+            const { data, error } = await supabase
+                .from('system_alerts')
+                .select('*')
+                .eq('acknowledged', false)
+                .order('created_at', { ascending: false })
+                .limit(limit);
+
+            if (error) throw error;
+            return data || [];
+        } catch (error) {
+            console.error('Error fetching system alerts:', error);
+            return [];
+        }
+    },
+
+    /**
+     * Acknowledge a system alert
+     */
+    async acknowledgeAlert(alertId: string) {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            const { error } = await supabase
+                .from('system_alerts')
+                .update({
+                    acknowledged: true,
+                    acknowledged_by: user?.id,
+                    acknowledged_at: new Date().toISOString()
+                })
+                .eq('id', alertId);
+
+            if (error) throw error;
+            return true;
+        } catch (error) {
+            console.error('Error acknowledging alert:', error);
+            return false;
+        }
+    },
+
+    /**
+     * Get latest reconciliation run status and discrepancies
+     */
+    async getReconciliationStatus() {
+        try {
+            const { data: latestRun, error } = await supabase
+                .from('reconciliation_runs')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .single();
+
+            if (error && error.code !== 'PGRST116') throw error;
+
+            let discrepancies: any[] = [];
+            if (latestRun) {
+                const { data: discs } = await supabase
+                    .from('reconciliation_discrepancies')
+                    .select('*')
+                    .eq('run_id', latestRun.id)
+                    .eq('status', 'open')
+                    .order('discrepancy_amount', { ascending: false });
+                discrepancies = discs || [];
+            }
+
+            return {
+                latestRun: latestRun || null,
+                openDiscrepancies: discrepancies,
+                isHealthy: latestRun ? latestRun.discrepancy_count === 0 : true
+            };
+        } catch (error) {
+            console.error('Error fetching reconciliation status:', error);
+            return { latestRun: null, openDiscrepancies: [], isHealthy: true };
+        }
+    },
+
+    /**
+     * Get latest financial invariant snapshot
+     */
+    async getFinancialInvariantStatus() {
+        try {
+            const { data, error } = await supabase
+                .from('invariant_snapshots')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .single();
+
+            if (error && error.code !== 'PGRST116') throw error;
+            return data || null;
+        } catch (error) {
+            console.error('Error fetching invariant status:', error);
+            return null;
+        }
+    },
+
+    /**
+     * Get seller risk overview (aggregated stats for admin)
+     */
+    async getSellerRiskOverview() {
+        try {
+            const { data, error } = await supabase
+                .from('seller_risk_scores')
+                .select('risk_level, payouts_frozen, requires_manual_review');
+
+            if (error) throw error;
+
+            const scores = data || [];
+            return {
+                total: scores.length,
+                normal: scores.filter(s => s.risk_level === 'normal').length,
+                elevated: scores.filter(s => s.risk_level === 'elevated').length,
+                high: scores.filter(s => s.risk_level === 'high').length,
+                critical: scores.filter(s => s.risk_level === 'critical').length,
+                frozenPayouts: scores.filter(s => s.payouts_frozen).length,
+                pendingReview: scores.filter(s => s.requires_manual_review).length
+            };
+        } catch (error) {
+            console.error('Error fetching risk overview:', error);
+            return { total: 0, normal: 0, elevated: 0, high: 0, critical: 0, frozenPayouts: 0, pendingReview: 0 };
+        }
+    },
+
+    /**
+     * Get outbox job status overview
+     */
+    async getOutboxStatus() {
+        try {
+            const { data, error } = await supabase
+                .from('outbox_jobs')
+                .select('status, job_type');
+
+            if (error) throw error;
+
+            const jobs = data || [];
+            return {
+                total: jobs.length,
+                pending: jobs.filter(j => j.status === 'pending').length,
+                processing: jobs.filter(j => j.status === 'processing').length,
+                completed: jobs.filter(j => j.status === 'completed').length,
+                failed: jobs.filter(j => j.status === 'failed').length,
+                blockedKyc: jobs.filter(j => j.status === 'blocked_kyc').length
+            };
+        } catch (error) {
+            console.error('Error fetching outbox status:', error);
+            return { total: 0, pending: 0, processing: 0, completed: 0, failed: 0, blockedKyc: 0 };
+        }
+    },
+
+    // ===================================================================
+    // Option C: Dispute Management & Payout Gating
+    // ===================================================================
+
+    /**
+     * Get system-wide configuration (e.g., payouts_enabled)
+     */
+    async getSystemConfig() {
+        const { data, error } = await supabase
+            .from('system_config')
+            .select('*')
+            .eq('key', 'payouts_enabled')
+            .single();
+        if (error && error.code !== 'PGRST116') throw error;
+        
+        // Return a flattened object for compatibility with components
+        return {
+            ...data,
+            payouts_enabled: data?.value === true || data?.value === 'true'
+        };
+    },
+
+    /**
+     * Update global payout safety toggle
+     */
+    async updateGlobalPayoutToggle(enabled: boolean) {
+        const { data: { user } } = await supabase.auth.getUser();
+        const { error } = await supabase
+            .from('system_config')
+            .update({ 
+                value: enabled,
+                updated_at: new Date().toISOString()
+            })
+            .eq('key', 'payouts_enabled');
+
+        if (error) throw error;
+
+        // Log the action
+        if (user) {
+            await supabase.from('admin_audit_logs').insert({
+                admin_id: user.id,
+                action: enabled ? 'global_payout_enable' : 'global_payout_disable',
+                target_type: 'system',
+                reason: `Global payout toggle set to ${enabled}`
+            });
+        }
+        return true;
+    },
+
+    /**
+     * List disputes for the admin dashboard
+     */
+    async getDisputes(params: { status?: string; limit?: number } = {}) {
+        let query = supabase
+            .from('disputes')
+            .select('*, sellers(store_name)')
+            .order('created_at', { ascending: false });
+
+        if (params.status && params.status !== 'all') {
+            query = query.eq('status', params.status);
+        }
+
+        if (params.limit) {
+            query = query.limit(params.limit);
+        }
+
+        const { data, error } = await query;
+        if (error) throw error;
+        return data;
+    },
+
+    /**
+     * Analyze a dispute using AI
+     */
+    async analyzeDispute(disputeId: string) {
+        const { data, error } = await supabase.functions.invoke('analyze-dispute', {
+            body: { dispute_id: disputeId }
+        });
+
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+
+        return data;
+    },
+
+    /**
+     * Update a dispute's status or notes
+     */
+    async updateDispute(disputeId: string, updates: { status?: string; admin_notes?: string }) {
+        const { error } = await supabase
+            .from('disputes')
+            .update({ ...updates, updated_at: new Date().toISOString() })
+            .eq('id', disputeId);
+        if (error) throw error;
+        return true;
+    },
+
+    /**
+     * Update a seller's payout status (Manual Hold/Release)
+     */
+    async updateSellerPayoutStatus(sellerId: string, status: 'active' | 'held_manual', reason: string) {
+        const { data, error } = await supabase.rpc('admin_update_payout_status', {
+            p_seller_id: sellerId,
+            p_new_status: status,
+            p_reason: reason
+        });
+        if (error) throw error;
+        return data;
+    },
+
+    /**
+     * Get high-risk sellers (those with held payouts or high risk scores)
+     */
+    async getHighRiskSellers() {
+        // Query through sellers hub to get all related data in one go
+        const { data, error } = await supabase
+            .from('sellers')
+            .select('*, seller_security_settings!inner(*), seller_risk_scores(*)')
+            .neq('seller_security_settings.payout_status', 'active')
+            .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+
+        // Map the hub result back to the flat format expected by HighRiskSeller interface
+        return (data || []).map(seller => ({
+            ...seller.seller_security_settings,
+            id: seller.id, // Use seller.id as the primary identifier
+            seller_id: seller.id,
+            sellers: {
+                store_name: seller.store_name,
+                slug: seller.slug
+            },
+            seller_risk_scores: seller.seller_risk_scores
+        }));
+    },
+
+    /**
+     * Get admin specific audit logs (for sensitive actions)
+     */
+    async getAdminAuditLogs(limit = 100) {
+        const { data, error } = await supabase
+            .from('admin_audit_logs')
+            .select('*, profiles(full_name)')
+            .order('created_at', { ascending: false })
+            .limit(limit);
+        
+        if (error) throw error;
+        return data;
     }
 };

@@ -20,7 +20,7 @@ Trust bullets under CTA:
 
 ## 3. Add "Who this is for" section
 
-Headline: `Is VenderFlow right for you?`
+Headline: `Is VendorFlow right for you?`
 Bullets:
 
 - Local businesses going online
@@ -30,7 +30,7 @@ Bullets:
 
 ## 4. Add "What you get" section
 
-Headline: `When you join VenderFlow, you get:`
+Headline: `When you join VendorFlow, you get:`
 Bullets:
 
 - Your own branded online store
@@ -43,7 +43,7 @@ Bullets:
 
 Add text:
 
-- “150+ businesses trust VenderFlow”
+- “150+ businesses trust VendorFlow”
 - Real testimonial (1 line)
 - “Stores launched in under 24 hours”
 - “99.95% uptime”
@@ -51,14 +51,14 @@ Add text:
 ## 6. Improve Demo Section
 
 Above demo:
-Headline: `See how sellers launch and sell on VenderFlow`
+Headline: `See how sellers launch and sell on VendorFlow`
 Caption: `Real dashboard. Real stores. Real results.`
 
 ## 7. Add Final CTA Section
 
 Before footer:
 Headline: `Ready to join?`
-Sub: `Apply to become a VenderFlow seller and launch your professional store.`
+Sub: `Apply to become a VendorFlow seller and launch your professional store.`
 Button: `[ Apply to Sell ]`
 
 ## 8. Small UI Improvements

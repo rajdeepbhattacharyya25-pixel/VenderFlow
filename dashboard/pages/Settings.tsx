@@ -12,6 +12,7 @@ import { useAutoBackup } from '../../hooks/useAutoBackup';
 import { TwoFactorSetup } from '../../components/TwoFactorSetup';
 import { TelegramSettings } from '../components/TelegramSettings';
 import { SharedAccessPanel } from '../components/SharedAccessPanel';
+import { AIContentHelper } from '../components/AIContentHelper';
 
 type TabType = 'profile' | 'security' | 'access' | 'notifications' | 'billing' | 'appearance' | 'shipping' | 'data' | 'status';
 
@@ -62,6 +63,10 @@ interface StoreSettings {
     shipping_fee: number;
     free_shipping_threshold: number;
     logo_url?: string;
+    theme_config?: {
+        hero?: HeroSettings;
+    };
+    enforce_2fa?: boolean;
 }
 
 interface Session {
@@ -70,7 +75,8 @@ interface Session {
     ip_address: string;
     device_info: string;
     last_active: string;
-    location?: string; // We'll fetch this client-side if not in DB
+    location?: string;
+    ua_string?: string;
 }
 
 interface SystemStatus {
@@ -80,6 +86,13 @@ interface SystemStatus {
     storage: { status: 'online' | 'offline' | 'checking' };
     region: string;
     provider: string;
+}
+
+interface ApiUsage {
+    provider: string;
+    count: number;
+    limit: number;
+    threshold: number;
 }
 
 const DEFAULT_HERO: HeroSettings = {
@@ -154,6 +167,9 @@ const Settings = () => {
         region: 'us-east-1',
         provider: 'Supabase'
     });
+
+    const [apiUsage, setApiUsage] = useState<ApiUsage[]>([]);
+    const [loadingApiUsage, setLoadingApiUsage] = useState(false);
 
     const [sessions, setSessions] = useState<Session[]>([]);
     const [loadingSessions, setLoadingSessions] = useState(false);
@@ -316,6 +332,47 @@ const Settings = () => {
                 supabase.removeChannel(channel);
             }
         });
+
+        // 5. Check API Usage
+        fetchApiUsage();
+    };
+
+    const fetchApiUsage = async () => {
+        setLoadingApiUsage(true);
+        try {
+            const startOfMonth = new Date();
+            startOfMonth.setDate(1);
+            startOfMonth.setHours(0, 0, 0, 0);
+
+            // Fetch limits config
+            const { data: configs, error: configErr } = await supabase
+                .from('api_limits_config')
+                .select('*');
+
+            if (configErr) throw configErr;
+
+            // Fetch usage counts for each provider
+            const usageData = await Promise.all((configs || []).map(async (config) => {
+                const { count, error: countErr } = await supabase
+                    .from('api_usage_logs')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('provider', config.provider)
+                    .gte('created_at', startOfMonth.toISOString());
+
+                return {
+                    provider: config.provider,
+                    count: count || 0,
+                    limit: config.monthly_limit,
+                    threshold: config.alert_threshold_pct
+                };
+            }));
+
+            setApiUsage(usageData);
+        } catch (error) {
+            console.error('Error fetching API usage:', error);
+        } finally {
+            setLoadingApiUsage(false);
+        }
     };
 
     const { lastBackupDate, connectAndBackup, performBackup, isBackupRunning, backupStatus, downloadLocalBackup } = useAutoBackup(false);
@@ -567,6 +624,26 @@ const Settings = () => {
                                 <div className="col-span-1">
                                     <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-2">Business Type</label>
                                     <div className="relative">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <label className="block text-[10px] font-bold text-muted uppercase tracking-wider">Business Type</label>
+                                            <AIContentHelper
+                                                type="store"
+                                                context={{
+                                                    keywords: settings.store_name,
+                                                    businessType: settings.business_type
+                                                }}
+                                                onApply={(data) => {
+                                                    setSettings({
+                                                        ...settings,
+                                                        business_type: data.categories[0] || settings.business_type,
+                                                        hero: {
+                                                            ...settings.hero,
+                                                            description: data.storeDescription
+                                                        }
+                                                    });
+                                                }}
+                                            />
+                                        </div>
                                         <input
                                             type="text"
                                             value={settings.business_type}
@@ -1457,6 +1534,76 @@ const Settings = () => {
                                     </div>
                                 </div>
                             </div>
+
+                            <div className="bg-bg/50 p-6 rounded-2xl border border-border">
+                                <div className="flex items-center justify-between mb-6">
+                                    <div className="flex items-center gap-3 text-primary">
+                                        <Globe size={20} />
+                                        <h4 className="font-bold text-sm">Third-party API Usage</h4>
+                                    </div>
+                                    <button
+                                        onClick={fetchApiUsage}
+                                        className="text-muted hover:text-primary transition-colors"
+                                        title="Refresh API Usage"
+                                    >
+                                        <RefreshCw size={14} className={loadingApiUsage ? "animate-spin" : ""} />
+                                    </button>
+                                </div>
+
+                                <div className="space-y-6">
+                                    {loadingApiUsage && apiUsage.length === 0 ? (
+                                        <div className="flex items-center justify-center py-4">
+                                            <Loader2 className="animate-spin text-muted" size={20} />
+                                        </div>
+                                    ) : apiUsage.length > 0 ? (
+                                        apiUsage.map((api) => {
+                                            const usagePct = (api.count / api.limit) * 100;
+                                            const isCritical = usagePct >= api.threshold;
+
+                                            return (
+                                                <div key={api.provider} className="space-y-2">
+                                                    <div className="flex justify-between items-center text-xs">
+                                                        <span className="font-bold uppercase tracking-wider text-text">
+                                                            {api.provider.replace('_', ' ')}
+                                                        </span>
+                                                        <span className={`font-medium ${isCritical ? 'text-red-500' : 'text-muted'}`}>
+                                                            {api.count.toLocaleString()} / {api.limit.toLocaleString()} reqs
+                                                        </span>
+                                                    </div>
+                                                    <div className="h-2 w-full bg-border rounded-full overflow-hidden">
+                                                        <div
+                                                            className={`h-full transition-all duration-1000 ${usagePct >= 95 ? 'bg-red-500' :
+                                                                usagePct >= api.threshold ? 'bg-orange-500' :
+                                                                    'bg-primary'
+                                                                }`}
+                                                            style={{ width: `${Math.min(usagePct, 100)}%` }}
+                                                        />
+                                                    </div>
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="text-[10px] text-muted">
+                                                            Alert Threshold: {api.threshold}%
+                                                        </span>
+                                                        <span className={`text-[10px] font-bold ${isCritical ? 'text-red-500 animate-pulse' : 'text-green-600'}`}>
+                                                            {isCritical ? 'CRITICAL LIMIT' : 'HEALTHY'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })
+                                    ) : (
+                                        <p className="text-xs text-muted italic text-center py-2">No API configuration found.</p>
+                                    )}
+                                </div>
+
+                                <div className="mt-6 p-4 bg-primary/5 rounded-xl border border-primary/10">
+                                    <div className="flex gap-3">
+                                        <Info size={14} className="text-primary flex-shrink-0 mt-0.5" />
+                                        <p className="text-[10px] text-muted leading-relaxed">
+                                            Usage stats reset on the 1st of every month. Critical alerts are automatically sent to the Admin Telegram bot when reaching the threshold.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 );
@@ -1546,7 +1693,7 @@ const Settings = () => {
         <div className="max-w-[1200px] mx-auto space-y-8 animate-fadeIn pb-20">
             {/* Page Header */}
             <div className="px-2">
-                <h1 className="text-3xl font-display font-black text-gray-900 tracking-tight mb-1">Store Settings</h1>
+                <h1 className="text-3xl font-heading font-black text-gray-900 tracking-tight mb-1">Store Settings</h1>
                 <div className="flex items-center gap-2 text-sm text-muted">
                     <Building size={14} />
                     <span>Management Dashboard</span>
@@ -1560,7 +1707,7 @@ const Settings = () => {
                 <div className="w-full lg:w-72 flex-shrink-0 space-y-6">
                     <div className="bg-panel rounded-3xl p-3 border border-border shadow-soft">
                         <div className="px-4 py-5 mb-2">
-                            <h2 className="text-xl font-display font-bold text-text">Settings</h2>
+                            <h2 className="text-xl font-heading font-bold text-text">Settings</h2>
                             <p className="text-xs text-muted mt-1 leading-relaxed">Manage your store and account</p>
                         </div>
 

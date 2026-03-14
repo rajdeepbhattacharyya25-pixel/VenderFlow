@@ -17,6 +17,8 @@ let _consentGranted = false;
 
 // Sensitive pages — session recording is disabled on these routes
 const SENSITIVE_PATHS = ['/checkout', '/account', '/auth-callback'];
+// Pages where we allow session recording
+const RECORDING_PATHS = ['/dashboard', '/onboarding', '/admin', '/store'];
 
 // ── Init ────────────────────────────────────────────────────────────────────────
 export function initPostHog(
@@ -30,6 +32,14 @@ export function initPostHog(
         window.location.pathname.startsWith(p)
     );
 
+    const isDashboard = RECORDING_PATHS.some((p) =>
+        window.location.pathname.startsWith(p)
+    );
+
+    // Only record 5% sample on dashboard, and never on sensitive pages
+    const isSampledIn = Math.random() < 0.05;
+    const disableRecording = isSensitivePage || !isDashboard || !isSampledIn;
+
     posthog.init(apiKey, {
         api_host: apiHost,
         capture_pageview: false, // We call capturePage() manually on route change
@@ -40,19 +50,24 @@ export function initPostHog(
         session_recording: {
             maskAllInputs: true,          // Mask all <input> by default
             maskInputFn: (text, element) => {
-                // Extra masking for payment + password fields
+                // Extra masking for payment, password, and PII fields
                 const el = element as HTMLElement;
                 const type = (el as HTMLInputElement).type?.toLowerCase();
+                const name = (el as HTMLInputElement).name?.toLowerCase() || '';
                 const dataSensitive = el.dataset?.sensitive;
-                if (type === 'password' || type === 'creditcard' || dataSensitive) {
+
+                const isPII = name.includes('email') || name.includes('phone') || name.includes('card') || name.includes('name');
+                const isAuthOrPayment = type === 'password' || type === 'creditcard';
+
+                if (isAuthOrPayment || isPII || dataSensitive) {
                     return '*'.repeat(text.length);
                 }
                 return text;
             },
         },
 
-        // Only record configured % of sessions; disable on sensitive pages
-        disable_session_recording: isSensitivePage,
+        // Disable session recording based on logic above
+        disable_session_recording: disableRecording,
 
         // Bootstrap feature flags (session replay toggle handled via flag)
         bootstrap: {},
@@ -160,6 +175,46 @@ export const Events = {
     firstPublishClicked: () => track('first_publish_clicked'),
     customDomainAdded: () => track('custom_domain_added'),
     paymentSetupCompleted: () => track('payment_setup_completed'),
+
+    // --- NEW EVENT CATALOG: VENDOR & PRODUCT FLOWS ---
+    vendorSignupCompleted: (props: { vendor_id: string; plan: string; signup_method: string }) =>
+        track('vendor_signup_completed', props),
+    vendorOnboardStepCompleted: (props: { vendor_id: string; step_name: string }) =>
+        track('vendor_onboard_step_completed', props),
+    productCreated: (props: { vendor_id: string; product_id: string; category: string; price: number }) =>
+        track('product_created', props),
+    productPublished: (props: { vendor_id: string; product_id: string }) =>
+        track('product_published', props),
+    productBulkUpload: (props: { vendor_id: string; file_size: number; row_count: number }) =>
+        track('product_bulk_upload', props),
+
+    // --- NEW EVENT CATALOG: STOREFRONT & ORDERS ---
+    orderCreated: (props: { order_id: string; buyer_id: string; vendor_id: string; order_value: number; items_count: number }) =>
+        track('order_created', props),
+    orderStatusUpdated: (props: { order_id: string; new_status: string; previous_status: string }) =>
+        track('order_status_updated', props),
+    firstOrderReceived: (props: { vendor_id: string; order_id: string }) =>
+        track('first_order_received', props),
+    couponCreated: (props: { vendor_id: string; coupon_id: string; type: string; discount: number }) =>
+        track('coupon_created', props),
+    inventoryUpdated: (props: { vendor_id: string; product_id: string; old_stock: number; new_stock: number }) =>
+        track('inventory_updated', props),
+
+    // --- NEW EVENT CATALOG: ADMIN & DASHBOARD ---
+    dashboardOpened: (props: { vendor_id: string; section: string }) =>
+        track('dashboard_opened', props),
+    analyticsReportExported: (props: { vendor_id: string; report_type: string; format: string }) =>
+        track('analytics_report_exported', props),
+    adminLogin: (props: { admin_id: string }) =>
+        track('admin_login', props),
+    sellerApproved: (props: { admin_id: string; vendor_id: string }) =>
+        track('seller_approved', props),
+    sellerSuspended: (props: { admin_id: string; vendor_id: string; reason: string }) =>
+        track('seller_suspended', props),
+    systemAlertTriggered: (props: { alert_type: string; severity: string }) =>
+        track('system_alert_triggered', props),
+    notificationBroadcastSent: (props: { admin_id: string; audience_size: number }) =>
+        track('notification_broadcast_sent', props),
 
     // Errors
     checkoutError: (errorCode: string) =>

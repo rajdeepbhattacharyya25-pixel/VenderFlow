@@ -25,7 +25,7 @@ const NotFound = () => {
             {/* Positioned absolutely to sync with the beam which is page-relative */}
             <div className="wifi-physics-layer">
                 {/* The Target: 404 Text */}
-                <h1 className="four-oh-four-target text-[120px] md:text-[180px] font-display font-bold leading-none tracking-tighter select-none">
+                <h1 className="four-oh-four-target text-[120px] md:text-[180px] font-heading font-bold leading-none tracking-tighter select-none">
                     404
                 </h1>
 

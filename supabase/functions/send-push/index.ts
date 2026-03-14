@@ -4,14 +4,14 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
 
 // Initialize Web Push
 const vapidDetails = {
-    subject: 'mailto:admin@venderflow.com',
+    subject: 'mailto:admin@vendorflow.com',
     publicKey: Deno.env.get('VAPID_PUBLIC_KEY')!,
     privateKey: Deno.env.get('VAPID_PRIVATE_KEY')!,
 };
 
 Deno.serve(async (req) => {
     if (req.method === 'OPTIONS') {
-        return new Response('ok', { headers: { 'Access-Control-Allow-Origin': Deno.env.get('ALLOWED_ORIGIN') ?? 'https://venderflow.vercel.app' } });
+        return new Response('ok', { headers: { 'Access-Control-Allow-Origin': Deno.env.get('ALLOWED_ORIGIN') ?? 'https://vendorflow.vercel.app' } });
     }
 
     try {

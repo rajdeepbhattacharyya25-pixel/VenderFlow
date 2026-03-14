@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 const corsHeaders = {
-    'Access-Control-Allow-Origin': Deno.env.get('ALLOWED_ORIGIN') ?? 'https://venderflow.vercel.app',
+    'Access-Control-Allow-Origin': Deno.env.get('ALLOWED_ORIGIN') ?? 'https://vendorflow.vercel.app',
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
@@ -84,7 +84,7 @@ serve(async (req) => {
 
             // C.2. Set Chat Menu Button (Magic Feature)
             // This automatically adds the "Open Dashboard" button to the user's bot
-            const finalAppUrl = app_url || Deno.env.get("PUBLIC_APP_URL") || "https://venderflow.vercel.app";
+            const finalAppUrl = app_url || Deno.env.get("PUBLIC_APP_URL") || "https://vendorflow.vercel.app";
 
             console.log("Setting Menu Button URL to:", finalAppUrl);
 
@@ -147,7 +147,7 @@ serve(async (req) => {
             }
 
             // Send Message
-            const message = `🔔 **Test Notification**\n\nThis is a test message from your VenderFlow dashboard.\n\nTime: ${new Date().toLocaleString()}`;
+            const message = `🔔 **Test Notification**\n\nThis is a test message from your VendorFlow dashboard.\n\nTime: ${new Date().toLocaleString()}`;
 
             const sendRes = await fetch(`https://api.telegram.org/bot${config.bot_token}/sendMessage`, {
                 method: 'POST',

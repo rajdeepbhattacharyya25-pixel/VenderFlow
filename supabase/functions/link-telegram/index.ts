@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
-    "Access-Control-Allow-Origin": Deno.env.get('ALLOWED_ORIGIN') ?? "https://venderflow.vercel.app",
+    "Access-Control-Allow-Origin": Deno.env.get('ALLOWED_ORIGIN') ?? "https://vendorflow.vercel.app",
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
@@ -122,7 +122,7 @@ serve(async (req) => {
             }
 
             // Generate Magic Link
-            const SITE_URL = Deno.env.get('SITE_URL') ?? 'https://venderflow.vercel.app';
+            const SITE_URL = Deno.env.get('SITE_URL') ?? 'https://vendorflow.vercel.app';
             let redirectPath = '/dashboard';
             if (profile.role === 'admin') redirectPath = '/admin';
 

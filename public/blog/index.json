@@ -1,0 +1,49 @@
+[
+    {
+        "slug": "mobile-ai-infrastructure-update",
+        "title": "VendorFlow 2026: The Mobile-First & AI Infrastructure Update",
+        "description": "We're pushing the boundaries of marketplace technology with a native-feel mobile experience, AI-powered dispute resolution, and adaptive performance architecture.",
+        "date": "2026-03-13",
+        "author": "VendorFlow Team",
+        "coverImage": "https://images.unsplash.com/photo-1512428559087-560fa5ceab42?auto=format&fit=crop&w=1200&q=80",
+        "isFeatured": true,
+        "category": "Marketplace Guides"
+    },
+    {
+        "slug": "vendorflow-seo-overview",
+        "title": "VendorFlow — Next-Gen Multi-Vendor Marketplace Platform | Build a Scalable Storefront",
+        "description": "VendorFlow helps you launch and scale multi-vendor marketplaces with a conversion-first storefront, powerful seller dashboard, and admin oversight. Learn features, architecture, and why it's an alternative to legacy platforms.",
+        "date": "2026-03-06",
+        "author": "VendorFlow Team",
+        "coverImage": "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=1200&q=80",
+        "isFeatured": false,
+        "category": "Marketplace Guides"
+    },
+    {
+        "slug": "scaling-your-marketplace",
+        "title": "10 Proven Strategies for Scaling Your Multi-Vendor Marketplace in 2026",
+        "description": "Scaling a marketplace requires more than just more products. Learn how to manage vendor growth, optimize logistics, and maintain quality at scale.",
+        "date": "2026-03-05",
+        "author": "Sarah Miller",
+        "coverImage": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80",
+        "category": "Marketplace Guides"
+    },
+    {
+        "slug": "onboarding-first-vendors",
+        "title": "The Ultimate Guide to Onboarding Your First 100 Vendors",
+        "description": "The 'chicken and egg' problem is real. Here is the step-by-step tutorial on how to attract and retain high-quality sellers to your new platform.",
+        "date": "2026-03-04",
+        "author": "David Chen",
+        "coverImage": "https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1200&q=80",
+        "category": "Tutorials"
+    },
+    {
+        "slug": "headless-ecommerce-future",
+        "title": "Why Headless is the Future of Enterprise E-Commerce",
+        "description": "Explore the technical benefits of decoupled architectures and how they empower brand flexibility and performance.",
+        "date": "2026-03-03",
+        "author": "Alex Rivera",
+        "coverImage": "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=1200&q=80",
+        "category": "Tech & Architecture"
+    }
+]

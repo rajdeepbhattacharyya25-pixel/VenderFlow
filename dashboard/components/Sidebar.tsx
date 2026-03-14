@@ -9,11 +9,13 @@ import {
   LogOut,
   Zap,
   MessageSquare,
-  Ticket
+  Ticket,
+  CreditCard
 } from 'lucide-react';
 import { signOut } from '../../lib/auth';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
+import { AnimatedIcon } from '../../components/AnimatedIcon';
 
 
 
@@ -36,6 +38,7 @@ const MENU_ITEMS = [
   { id: 'promotions', label: 'Promotions', icon: Ticket },
   { id: 'reports', label: 'Business Analytics', icon: PieChart },
   { id: 'settings', label: 'Settings', icon: Settings },
+  { id: 'billing', label: 'Billing & Plans', icon: CreditCard },
   { id: 'support', label: 'Support', icon: MessageSquare },
 ];
 
@@ -152,7 +155,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, isMobile, activeTab, setAc
         <div className={`h-[70px] flex items-center px-4 border-b border-white/5`}>
           <button
             onClick={() => setActiveTab('dashboard')}
-            className="flex items-center gap-2.5 text-luxury-text font-display font-bold tracking-tight hover:opacity-80 transition-opacity text-left w-full group min-w-0"
+            className="flex items-center gap-2.5 text-luxury-text font-heading font-bold tracking-tight hover:opacity-80 transition-opacity text-left w-full group min-w-0"
           >
             <div className="relative flex-shrink-0">
               <img
@@ -162,7 +165,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, isMobile, activeTab, setAc
               />
             </div>
             <span className="truncate uppercase tracking-widest text-xs md:text-sm text-white">
-              {storeName || 'VenderFlow'}
+              {storeName || 'VendorFlow'}
             </span>
           </button>
         </div>
@@ -191,7 +194,13 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, isMobile, activeTab, setAc
                     `}
               >
                 <div className="relative z-10 flex items-center gap-3 min-w-0">
-                  <Icon size={18} strokeWidth={isActive ? 2.5 : 1.5} className="flex-shrink-0" />
+                  <AnimatedIcon
+                    icon={Icon}
+                    animation="scale"
+                    trigger="hover"
+                    size={18}
+                    className="flex-shrink-0"
+                  />
                   {showBadge && (
                     <span className="absolute -top-1 left-3 w-2 h-2 bg-red-500 rounded-full animate-pulse border-2 border-luxury-card" />
                   )}
@@ -226,7 +235,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, isMobile, activeTab, setAc
                 title="View Storefront"
               >
                 <div className="relative flex-shrink-0">
-                  <ShoppingBag size={18} className="flex-shrink-0" />
+                  <AnimatedIcon icon={ShoppingBag} animation="bounce" trigger="hover" size={18} className="flex-shrink-0" />
                   <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-green-500 border-2 border-luxury-card"></div>
                 </div>
                 <span className="text-[12px] font-medium whitespace-nowrap truncate">View Store</span>
@@ -237,7 +246,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, isMobile, activeTab, setAc
               onClick={handleLogout}
               className="flex items-center gap-3 h-11 rounded-lg transition-all duration-200 w-full group text-slate-400 hover:text-red-400 hover:bg-red-500/10 px-3"
             >
-              <LogOut size={18} className="flex-shrink-0" />
+              <AnimatedIcon icon={LogOut} animation="tilt" trigger="hover" size={18} className="flex-shrink-0" />
               <span className="text-[12px] font-medium whitespace-nowrap">Logout</span>
             </button>
           </div>

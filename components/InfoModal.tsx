@@ -36,7 +36,7 @@ export const InfoModal: React.FC<InfoModalProps> = ({ isOpen, onClose, title, co
         
         {/* Header */}
         <div className="flex justify-between items-center p-6 border-b border-gray-100 dark:border-gray-700">
-          <h3 className="text-xl md:text-2xl font-display font-bold text-gray-900 dark:text-white">{title}</h3>
+          <h3 className="text-xl md:text-2xl font-heading font-bold text-gray-900 dark:text-white">{title}</h3>
           <button 
             onClick={onClose}
             className="p-2 bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-gray-500 dark:text-gray-400"

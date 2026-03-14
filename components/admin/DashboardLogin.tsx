@@ -1,13 +1,31 @@
 import React from 'react';
 import { LoginModal } from '../LoginModal';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '../../lib/supabase';
 
 const DashboardLogin = () => {
     const navigate = useNavigate();
 
     // If user closes modal, redirect to home
-    const handleClose = () => {
-        navigate('/');
+    // If user closes modal manually, redirect to home.
+    // However, if they just logged in, SellerGuard will re-render and DashboardLogin 
+    // will be unmounted before this can trigger a problematic redirect.
+    const handleClose = async () => {
+        // We only redirect if we are still on this page AND modal is closing.
+        // Check if there's a session before redirecting.
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session) {
+            console.log("[DashboardLogin] Session found, skipping redirect.");
+            return;
+        }
+
+        setTimeout(() => {
+            if (window.location.pathname.startsWith('/dashboard')) {
+                console.log("[DashboardLogin] No session found, redirecting home.");
+                navigate('/');
+            }
+        }, 300);
     };
 
     return (

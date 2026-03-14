@@ -415,7 +415,7 @@ export const Account: React.FC<AccountProps> = ({ onNavigate, showToast, onLogou
         <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
           <IconUser className="w-10 h-10 text-gray-400" />
         </div>
-        <h2 className="text-2xl font-display font-bold text-gray-900 dark:text-white mb-3">Login to your account</h2>
+        <h2 className="text-2xl font-heading font-bold text-gray-900 dark:text-white mb-3">Login to your account</h2>
         <p className="text-gray-500 dark:text-gray-400 mb-8 max-w-xs mx-auto">
           Sign in to access your orders, saved addresses, and wishlist.
         </p>
@@ -444,13 +444,13 @@ export const Account: React.FC<AccountProps> = ({ onNavigate, showToast, onLogou
       />
 
       <div className="mb-8">
-        <h1 className="text-3xl font-display font-bold text-gray-900 dark:text-white transition-colors">My Account</h1>
+        <h1 className="text-3xl font-heading font-bold text-gray-900 dark:text-white transition-colors">My Account</h1>
       </div>
 
       {/* Personal Information Section */}
       <div className="bg-white dark:bg-surface-dark rounded-[2rem] p-6 md:p-10 shadow-sm border border-gray-100 dark:border-gray-700/50 mb-10 transition-colors">
         <div className="flex justify-between items-start mb-8">
-          <h2 className="text-xl font-bold font-display text-gray-900 dark:text-white flex items-center gap-3">
+          <h2 className="text-xl font-bold font-heading text-gray-900 dark:text-white flex items-center gap-3">
             <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary">
               <IconUser className="w-5 h-5" />
             </div>
@@ -586,10 +586,12 @@ export const Account: React.FC<AccountProps> = ({ onNavigate, showToast, onLogou
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider pl-1">Date of Birth</label>
+              <label htmlFor="dob-input" className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider pl-1">Date of Birth</label>
               <input
+                id="dob-input"
                 type="date"
                 name="dob"
+                title="Date of Birth"
                 value={profile.dob}
                 onChange={handleInputChange}
                 className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 dark:focus:ring-primary/40 focus:border-primary outline-none transition-all text-gray-500 dark:text-gray-400"
@@ -665,7 +667,7 @@ export const Account: React.FC<AccountProps> = ({ onNavigate, showToast, onLogou
                 <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-full flex items-center justify-center">
                   <IconMapPin className="w-5 h-5" />
                 </div>
-                <h3 className="font-bold font-display text-gray-900 dark:text-white text-xl">Addresses</h3>
+                <h3 className="font-bold font-heading text-gray-900 dark:text-white text-xl">Addresses</h3>
               </div>
               <button
                 onClick={handleOpenAddAddress}
@@ -719,7 +721,7 @@ export const Account: React.FC<AccountProps> = ({ onNavigate, showToast, onLogou
                 <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 rounded-full flex items-center justify-center">
                   <IconCreditCard className="w-5 h-5" />
                 </div>
-                <h3 className="font-bold font-display text-gray-900 dark:text-white text-xl">Payments</h3>
+                <h3 className="font-bold font-heading text-gray-900 dark:text-white text-xl">Payments</h3>
               </div>
               <button
                 onClick={handleOpenAddCard}
@@ -771,7 +773,7 @@ export const Account: React.FC<AccountProps> = ({ onNavigate, showToast, onLogou
               <div className="w-10 h-10 bg-orange-50 dark:bg-orange-900/20 text-orange-500 rounded-full flex items-center justify-center">
                 <IconBell className="w-5 h-5" />
               </div>
-              <h3 className="font-bold font-display text-gray-900 dark:text-white text-xl">Notifications</h3>
+              <h3 className="font-bold font-heading text-gray-900 dark:text-white text-xl">Notifications</h3>
             </div>
 
             <div className="space-y-6">
@@ -784,7 +786,7 @@ export const Account: React.FC<AccountProps> = ({ onNavigate, showToast, onLogou
                   onClick={() => setNotifications(prev => ({ ...prev, delivery: !prev.delivery }))}
                   className={`w-12 h-6 rounded-full relative transition-colors duration-300 ${notifications.delivery ? 'bg-green-800' : 'bg-gray-200 dark:bg-gray-700'}`}
                   aria-label="Toggle delivery updates notifications"
-                  aria-pressed={notifications.delivery ? "true" : "false"}
+                  aria-pressed={notifications.delivery}
                 >
                   <span className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow transition-transform duration-300 ${notifications.delivery ? 'translate-x-6' : 'translate-x-0'}`} />
                 </button>
@@ -799,7 +801,7 @@ export const Account: React.FC<AccountProps> = ({ onNavigate, showToast, onLogou
                   onClick={() => setNotifications(prev => ({ ...prev, offers: !prev.offers }))}
                   className={`w-12 h-6 rounded-full relative transition-colors duration-300 ${notifications.offers ? 'bg-green-800' : 'bg-gray-200 dark:bg-gray-700'}`}
                   aria-label="Toggle offers and promotions notifications"
-                  aria-pressed={notifications.offers ? "true" : "false"}
+                  aria-pressed={notifications.offers}
                 >
                   <span className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow transition-transform duration-300 ${notifications.offers ? 'translate-x-6' : 'translate-x-0'}`} />
                 </button>
@@ -809,7 +811,7 @@ export const Account: React.FC<AccountProps> = ({ onNavigate, showToast, onLogou
 
           {/* Help Section - NEW COLORFUL BUTTONS */}
           <div className="bg-white dark:bg-surface-dark p-8 rounded-[2rem] border border-gray-100 dark:border-gray-700/50 shadow-sm transition-colors h-full text-center">
-            <h3 className="font-bold font-display text-gray-900 dark:text-white text-2xl mb-2">Need Help? Reach Us Easily</h3>
+            <h3 className="font-bold font-heading text-gray-900 dark:text-white text-2xl mb-2">Need Help? Reach Us Easily</h3>
             <p className="text-gray-500 dark:text-gray-400 text-sm mb-8 max-w-sm mx-auto">
               Our customer success team is here to assist you. We usually respond within a few hours during business hours.
             </p>
@@ -863,7 +865,7 @@ export const Account: React.FC<AccountProps> = ({ onNavigate, showToast, onLogou
 
           <div className="bg-white dark:bg-surface-dark w-full max-w-lg rounded-t-2xl md:rounded-2xl shadow-2xl p-6 md:p-8 animate-in slide-in-from-bottom-10 md:zoom-in-95 duration-200 relative">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold font-display text-gray-900 dark:text-white">
+              <h3 className="text-xl font-bold font-heading text-gray-900 dark:text-white">
                 {editingAddress.id === 0 ? 'Add New Address' : 'Edit Address'}
               </h3>
               <button
@@ -1009,7 +1011,7 @@ export const Account: React.FC<AccountProps> = ({ onNavigate, showToast, onLogou
 
           <div className="bg-white dark:bg-surface-dark w-full max-w-sm rounded-t-2xl md:rounded-2xl shadow-2xl p-6 md:p-8 animate-in slide-in-from-bottom-10 md:zoom-in-95 duration-200 relative">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold font-display text-gray-900 dark:text-white">Add Card</h3>
+              <h3 className="text-xl font-bold font-heading text-gray-900 dark:text-white">Add Card</h3>
               <button
                 onClick={() => setIsCardModalOpen(false)}
                 title="Close Modal"

@@ -45,7 +45,8 @@ import {
   ArrowLeft,
   Wallet,
   Banknote,
-  Plus
+  Plus,
+  Sparkles
 } from 'lucide-react';
 
 export const IconPlus: React.FC<{ className?: string }> = ({ className }) => <Plus className={className} />;
@@ -105,3 +106,4 @@ export const IconZap: React.FC<{ className?: string }> = ({ className }) => <Zap
 export const IconArrowLeft: React.FC<{ className?: string }> = ({ className }) => <ArrowLeft className={className} />;
 export const IconWallet: React.FC<{ className?: string }> = ({ className }) => <Wallet className={className} />;
 export const IconBanknote: React.FC<{ className?: string }> = ({ className }) => <Banknote className={className} />;
+export const IconSparkles: React.FC<{ className?: string }> = ({ className }) => <Sparkles className={className} />;

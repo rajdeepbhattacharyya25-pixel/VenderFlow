@@ -8,13 +8,14 @@ import BulkActionBar from '../components/products/BulkActionBar';
 import BulkUploadModal from '../components/products/BulkUploadModal';
 import { Product } from '../types';
 import { supabase } from '../../lib/supabase';
+import { Seller } from '../../lib/seller';
 import { uploadProductImage } from '../lib/storage';
 
 interface ProductsProps {
     searchTerm?: string;
 }
 
-const Products: React.FC<ProductsProps> = ({ searchTerm = '' }) => {
+export default function Products({ searchTerm = '' }: ProductsProps) {
     const [products, setProducts] = useState<Product[]>([]);
     const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -22,6 +23,7 @@ const Products: React.FC<ProductsProps> = ({ searchTerm = '' }) => {
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
     const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
     const [showSidePanel, setShowSidePanel] = useState(true);
+    const [seller, setSeller] = useState<Seller | null>(null);
 
     // Initial Load
     useEffect(() => {
@@ -44,6 +46,15 @@ const Products: React.FC<ProductsProps> = ({ searchTerm = '' }) => {
                 .eq('seller_id', user.id);
 
             if (error) throw error;
+
+            // Fetch seller data for validation
+            const { data: sellerData } = await supabase
+                .from('sellers')
+                .select('*')
+                .eq('id', user.id)
+                .single();
+
+            if (sellerData) setSeller(sellerData as Seller);
 
             const mappedProducts = (data || []).map((p: any) => {
                 // Ensure we use the proper media objects
@@ -112,13 +123,38 @@ const Products: React.FC<ProductsProps> = ({ searchTerm = '' }) => {
         if (!user) throw new Error('Not authenticated');
 
         try {
+            // 1. Check Seller Plan & Quota
+            const { data: seller, error: sellerError } = await supabase
+                .from('sellers')
+                .select('plan, product_count')
+                .eq('id', user.id)
+                .single();
+
+            if (sellerError || !seller) throw new Error('Failed to fetch seller details');
+
+            const limits: Record<string, number> = {
+                'free': 10,
+                'pro': 200,
+                'premium': 999999
+            };
+
+            const currentLimit = limits[seller.plan as keyof typeof limits] || 10;
+            if (seller.product_count >= currentLimit) {
+                alert(`Limit Reached: You can only have ${currentLimit} products on the ${seller.plan} plan. Please upgrade to add more.`);
+                return;
+            }
+
+            // 2. Determine Status (Free tier needs approval)
+            const status = seller.plan === 'free' ? 'pending' : 'active';
+
             const { data, error } = await supabase
                 .from('products')
                 .insert([{
                     name: 'New Product',
                     price: 0,
                     is_active: false,
-                    seller_id: user.id
+                    seller_id: user.id,
+                    status: status
                 }])
                 .select()
                 .single();
@@ -126,6 +162,13 @@ const Products: React.FC<ProductsProps> = ({ searchTerm = '' }) => {
             if (error) throw error;
 
             if (data) {
+                // 3. Increment product count atomically
+                await supabase.rpc('increment_seller_quota', {
+                    seller_id_param: user.id,
+                    column_param: 'product_count',
+                    amount_param: 1
+                });
+
                 // Construct full object matching our UI type
                 const newProduct: Product = {
                     ...data,
@@ -136,15 +179,21 @@ const Products: React.FC<ProductsProps> = ({ searchTerm = '' }) => {
                 setIsModalOpen(true);
             }
         } catch (error) {
-            console.error('Error creating draft:', error);
+            console.error('Error creating product:', error);
             alert('Failed to initialize new product');
         }
     };
 
     const handleDelete = async (id: string) => {
         if (confirm('Are you sure you want to delete this product?')) {
+            const { data: { user } } = await supabase.auth.getUser();
             const { error } = await supabase.from('products').delete().eq('id', id);
-            if (!error) {
+            if (!error && user) {
+                await supabase.rpc('decrement_seller_quota', {
+                    seller_id_param: user.id,
+                    column_param: 'product_count',
+                    amount_param: 1
+                });
                 fetchProducts();
                 setSelectedIds(selectedIds.filter(sid => sid !== id));
             } else {
@@ -157,6 +206,12 @@ const Products: React.FC<ProductsProps> = ({ searchTerm = '' }) => {
         try {
             const productId = editingProduct?.id;
             if (!productId) return;
+
+            // 1. Validation for Publication
+            if (productData.is_active && !seller?.razorpay_account_id) {
+                alert('You must link your Razorpay account in Billing before publishing products.');
+                return;
+            }
 
             // 1. Update Product Table
             const { error: productError } = await supabase
@@ -241,8 +296,18 @@ const Products: React.FC<ProductsProps> = ({ searchTerm = '' }) => {
             switch (action) {
                 case 'delete':
                     if (confirm(`Are you sure you want to delete ${selectedIds.length} products?`)) {
+                        const { data: { user } } = await supabase.auth.getUser();
                         const { error } = await supabase.from('products').delete().in('id', selectedIds);
                         if (error) throw error;
+
+                        if (user) {
+                            await supabase.rpc('decrement_seller_quota', {
+                                seller_id_param: user.id,
+                                column_param: 'product_count',
+                                amount_param: selectedIds.length
+                            });
+                        }
+
                         alert('Products deleted successfully');
                         fetchProducts();
                         setSelectedIds([]);
@@ -252,6 +317,12 @@ const Products: React.FC<ProductsProps> = ({ searchTerm = '' }) => {
                 case 'status':
                 case 'archive':
                     const activate = action === 'status';
+
+                    if (activate && !seller?.razorpay_account_id) {
+                        alert('You must link your Razorpay account in Billing before publishing products.');
+                        return;
+                    }
+
                     const { error: updateError } = await supabase
                         .from('products')
                         .update({ is_active: activate })
@@ -397,6 +468,4 @@ const Products: React.FC<ProductsProps> = ({ searchTerm = '' }) => {
 
         </div>
     );
-};
-
-export default Products;
+}

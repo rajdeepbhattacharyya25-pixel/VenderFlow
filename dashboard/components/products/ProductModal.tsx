@@ -6,6 +6,9 @@ import { uploadProductImage } from '../../lib/storage';
 import { compressImage } from '../../lib/imageUtils';
 import { ProductMedia } from '../../types';
 import ImageEditorModal from './ImageEditorModal';
+import { AIContentHelper } from '../AIContentHelper';
+import { SellerSuccessAI } from './SellerSuccessAI';
+import { AuditResult } from '../../lib/success-ai';
 
 interface ProductModalProps {
     isOpen: boolean;
@@ -19,7 +22,7 @@ interface ProductFormData {
     description: string;
     category: string;
     is_active: boolean;
-    status: 'draft' | 'live';
+    status: 'draft' | 'active' | 'pending' | 'rejected';
     images: string[];
     videoUrl: string | null;
     variantImages: Record<string, string>; // variant name to image URL
@@ -119,7 +122,8 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
                     '2': 'photos',
                     '3': 'variants',
                     '4': 'pricing',
-                    '5': 'stock'
+                    '5': 'stock',
+                    '6': 'success'
                 };
                 setActiveSection(sectionMap[e.key]);
             }
@@ -374,6 +378,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
         { id: 'variants', label: 'Variants', shortcut: 'Alt + 3' },
         { id: 'pricing', label: 'Pricing', shortcut: 'Alt + 4' },
         { id: 'stock', label: 'Stock', shortcut: 'Alt + 5' },
+        { id: 'success', label: 'Success AI', shortcut: 'Alt + 6' },
     ];
 
     const modal = createPortal(
@@ -447,7 +452,24 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-gray-900 dark:text-gray-100">Description</label>
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-sm font-medium text-gray-900 dark:text-gray-100">Description</label>
+                                        <AIContentHelper
+                                            type="product"
+                                            context={{
+                                                name: formData.name,
+                                                category: formData.category,
+                                                keywords: formData.name // Use name as seed keywords
+                                            }}
+                                            onApply={(data) => {
+                                                updateField('description', data.description);
+                                                if (data.suggestedCategory && !formData.category) {
+                                                    updateField('category', data.suggestedCategory.toLowerCase());
+                                                }
+                                                // If we had a tags field we'd apply data.tags too
+                                            }}
+                                        />
+                                    </div>
                                     <textarea
                                         value={formData.description}
                                         onChange={(e) => updateField('description', e.target.value)}
@@ -529,8 +551,8 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
                                         <div className="flex gap-3">
                                             <button
                                                 type="button"
-                                                onClick={() => updateField('status', 'live')}
-                                                className={`flex-1 p-3 rounded-xl border-2 transition-all ${formData.status === 'live'
+                                                onClick={() => updateField('status', 'active')}
+                                                className={`flex-1 p-3 rounded-xl border-2 transition-all ${formData.status === 'active'
                                                     ? 'border-green-500 bg-green-500/10 text-green-600 dark:text-green-400'
                                                     : 'border-gray-200 dark:border-slate-600 text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-slate-500'
                                                     }`}
@@ -1053,12 +1075,12 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
                                     <p className="text-xs text-gray-400 dark:text-gray-500">Leave empty if not on sale</p>
                                 </div>
 
-                                {formData.sellingPrice > 0 && formData.discountPrice && formData.discountPrice < formData.sellingPrice && (
+                                {formData.price > 0 && formData.discountPrice && formData.discountPrice < formData.price && (
                                     <div className="p-4 bg-green-500/10 rounded-xl border border-green-500/20">
                                         <div className="flex items-center justify-between">
                                             <span className="text-sm text-green-600 font-medium">Discount</span>
                                             <span className="text-lg font-bold text-green-600">
-                                                {Math.round(((formData.sellingPrice - formData.discountPrice) / formData.sellingPrice) * 100)}% OFF
+                                                {Math.round(((formData.price - formData.discountPrice) / formData.price) * 100)}% OFF
                                             </span>
                                         </div>
                                     </div>
@@ -1150,6 +1172,28 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
                                         </p>
                                     </div>
                                 )}
+                            </div>
+                        )}
+
+                        {/* SUCCESS AI */}
+                        {activeSection === 'success' && (
+                            <div className="max-w-xl animate-[fadeIn_0.2s_ease-out]">
+                                <SellerSuccessAI 
+                                    product={{
+                                        name: formData.name,
+                                        description: formData.description,
+                                        category: formData.category,
+                                        images: formData.images,
+                                        hasVariants: formData.hasVariants,
+                                        price: formData.price
+                                    }}
+                                    onApplyOptimization={(optimized) => {
+                                        updateField('name', optimized.name);
+                                        updateField('description', optimized.description);
+                                        setActiveSection('basic');
+                                        alert("AI optimizations applied! Check the Basic Info tab.");
+                                    }}
+                                />
                             </div>
                         )}
                     </div>

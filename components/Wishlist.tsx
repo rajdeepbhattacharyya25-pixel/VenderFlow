@@ -29,7 +29,7 @@ export const Wishlist: React.FC<WishlistProps> = ({ products, onQuickView, onTog
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [filterBy, setFilterBy] = useState<FilterOption>('all');
   const [alertsEnabled, setAlertsEnabled] = useState(false);
-  const [showShareTooltip, setShowShareTooltip] = useState<number | null>(null);
+  const [showShareTooltip, setShowShareTooltip] = useState<string | null>(null);
 
   // --- Logic for Sorting & Filtering ---
   const processedProducts = useMemo(() => {
@@ -46,7 +46,7 @@ export const Wishlist: React.FC<WishlistProps> = ({ products, onQuickView, onTog
         case 'price-low': return a.price - b.price;
         case 'price-high': return b.price - a.price;
         case 'popular': return b.reviews - a.reviews;
-        case 'newest': default: return b.id - a.id;
+        case 'newest': default: return (b.created_at || '').localeCompare(a.created_at || '');
       }
     });
 
@@ -88,7 +88,7 @@ export const Wishlist: React.FC<WishlistProps> = ({ products, onQuickView, onTog
         <div className="w-24 h-24 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-6 animate-pulse">
           <IconHeart className="w-10 h-10 text-red-500" />
         </div>
-        <h2 className="text-3xl font-display font-bold text-gray-900 dark:text-white mb-3">Your Wishlist is Empty</h2>
+        <h2 className="text-3xl font-heading font-bold text-gray-900 dark:text-white mb-3">Your Wishlist is Empty</h2>
         <p className="text-gray-500 dark:text-gray-400 mb-8 max-w-sm leading-relaxed">
           Keep track of items you love. Tap the heart icon to add items here.
         </p>
@@ -108,7 +108,7 @@ export const Wishlist: React.FC<WishlistProps> = ({ products, onQuickView, onTog
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10 animate-in slide-in-from-top-4 duration-500">
         <div>
-          <h1 className="text-3xl md:text-4xl font-bold font-display text-gray-900 dark:text-white mb-2">
+          <h1 className="text-3xl md:text-4xl font-bold font-heading text-gray-900 dark:text-white mb-2">
             My Wishlist <span className="text-gray-400 font-sans text-2xl font-medium ml-2">({products.length})</span>
           </h1>
           <p className="text-gray-500 dark:text-gray-400 text-sm">
@@ -128,6 +128,8 @@ export const Wishlist: React.FC<WishlistProps> = ({ products, onQuickView, onTog
             <span className="text-xs font-bold uppercase text-gray-400 tracking-wider">Alerts</span>
             <button
               onClick={() => setAlertsEnabled(!alertsEnabled)}
+              aria-label={alertsEnabled ? "Disable price alerts" : "Enable price alerts"}
+              title={alertsEnabled ? "Disable price alerts" : "Enable price alerts"}
               className={`relative w-10 h-5 rounded-full transition-colors ${alertsEnabled ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`}
             >
               <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-md transform transition-transform ${alertsEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
@@ -141,6 +143,8 @@ export const Wishlist: React.FC<WishlistProps> = ({ products, onQuickView, onTog
         <select
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value as SortOption)}
+          aria-label="Sort wishlist items"
+          title="Sort wishlist"
           className="appearance-none bg-gray-50 dark:bg-surface-dark border border-transparent hover:border-gray-200 dark:hover:border-gray-600 rounded-full px-5 py-2 text-sm font-medium text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
         >
           <option value="newest">Newest Added</option>
@@ -189,7 +193,7 @@ const WishlistItem: React.FC<{
 }> = ({ product, onQuickView, onRemove, onShare, showTooltip }) => {
 
   // Smart Triggers Logic (Mocked for Demo)
-  const isLowStock = product.id % 3 === 0; // Randomly low stock
+  const isLowStock = product.id.length % 3 === 0; // Randomly low stock
   const isTrending = product.rating > 4.7;
   const hasPriceDrop = product.originalPrice && product.originalPrice > product.price;
   const discount = product.originalPrice ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) : 0;
@@ -255,7 +259,7 @@ const WishlistItem: React.FC<{
         </div>
 
         <h3
-          className="font-bold text-gray-900 dark:text-white font-display text-lg leading-tight mb-1 cursor-pointer hover:text-primary dark:hover:text-primary-light transition-colors line-clamp-1"
+          className="font-bold text-gray-900 dark:text-white font-heading text-lg leading-tight mb-1 cursor-pointer hover:text-primary dark:hover:text-primary-light transition-colors line-clamp-1"
           onClick={() => onQuickView(product)}
         >
           {product.name}
@@ -280,6 +284,8 @@ const WishlistItem: React.FC<{
           </button>
           <button
             onClick={onShare}
+            aria-label="Share product"
+            title="Share product"
             className="md:hidden p-2.5 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
           >
             <IconShare className="w-5 h-5" />

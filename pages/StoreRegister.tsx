@@ -110,7 +110,7 @@ export const StoreRegister: React.FC<StoreRegisterProps> = ({ seller, onSuccess 
                             <div className="absolute inset-0 bg-gradient-to-tr from-stone-900 to-stone-800 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
                             <Store className="w-10 h-10 text-stone-50 relative z-10" strokeWidth={1.2} />
                         </div>
-                        <h1 className="text-5xl sm:text-6xl font-display font-medium text-stone-950 mb-6 tracking-tight leading-tight">
+                        <h1 className="text-5xl sm:text-6xl font-heading font-medium text-stone-950 mb-6 tracking-tight leading-tight">
                             Join {seller.store_name}
                         </h1>
                         <div className="flex items-center justify-center gap-6">

@@ -249,7 +249,7 @@ export const Checkout: React.FC<CheckoutProps> = ({
             <IconCheck className="w-10 h-10 text-green-600 dark:text-green-400" />
           </div>
 
-          <h2 className="text-3xl font-display font-bold text-gray-900 dark:text-white mb-2">Order Confirmed!</h2>
+          <h2 className="text-3xl font-heading font-bold text-gray-900 dark:text-white mb-2">Order Confirmed!</h2>
           <p className="text-gray-500 dark:text-gray-400 mb-8">
             Thank you for your purchase. Your order <span className="font-bold text-gray-900 dark:text-white">#FS-{Math.floor(Math.random() * 10000)}</span> has been placed successfully.
           </p>
@@ -316,7 +316,7 @@ export const Checkout: React.FC<CheckoutProps> = ({
 
           {/* 1. Address Section */}
           <section>
-            <h2 className="text-xl font-display font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+            <h2 className="text-xl font-heading font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
               <span className="w-7 h-7 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-sm text-gray-600 dark:text-gray-300">1</span>
               Delivery Address
             </h2>
@@ -464,7 +464,7 @@ export const Checkout: React.FC<CheckoutProps> = ({
 
           {/* 2. Delivery Method */}
           <section>
-            <h2 className="text-xl font-display font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+            <h2 className="text-xl font-heading font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
               <span className="w-7 h-7 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-sm text-gray-600 dark:text-gray-300">2</span>
               Delivery Method
             </h2>
@@ -507,7 +507,7 @@ export const Checkout: React.FC<CheckoutProps> = ({
 
           {/* 3. Payment Method */}
           <section>
-            <h2 className="text-xl font-display font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+            <h2 className="text-xl font-heading font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
               <span className="w-7 h-7 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-sm text-gray-600 dark:text-gray-300">3</span>
               Payment Method
             </h2>
@@ -616,7 +616,7 @@ export const Checkout: React.FC<CheckoutProps> = ({
             {/* Summary Card */}
             <div className="bg-gray-50 dark:bg-surface-dark rounded-2xl p-6 border border-gray-100 dark:border-gray-700">
               <div className="flex justify-between items-center mb-6">
-                <h3 className="font-bold font-display text-lg text-gray-900 dark:text-white">Order Summary</h3>
+                <h3 className="font-bold font-heading text-lg text-gray-900 dark:text-white">Order Summary</h3>
                 <button onClick={onNavigateCart} className="text-xs font-bold text-primary dark:text-primary-light hover:underline">Edit Bag</button>
               </div>
 
