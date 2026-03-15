@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Bell, Sun, Moon, Menu, ShoppingBag, AlertCircle, User, Package, Settings as SettingsIcon, ChevronRight, FileText, MessageSquare, ExternalLink } from 'lucide-react';
+import { Search, Bell, Sun, Moon, Menu, ShoppingBag, AlertCircle, User, Package, Settings as SettingsIcon, ChevronRight, FileText, MessageSquare, ExternalLink, X } from 'lucide-react';
 import { Theme } from '../types';
 import { supabase } from '../../lib/supabase';
 import { AnimatedIcon } from '../../components/AnimatedIcon';
@@ -26,6 +26,7 @@ interface Notification {
     link?: string;
     is_read: boolean;
     created_at: string;
+    user_id: string;
 }
 
 interface SearchResult {
@@ -44,11 +45,17 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
 
+    const [toastNotification, setToastNotification] = useState<Notification | null>(null);
+
     // Fetch notifications
     useEffect(() => {
+        let mounted = true;
+        let currentUserId = '';
+
         const fetchNotifications = async () => {
             const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
+            if (!user || !mounted) return;
+            currentUserId = user.id;
 
             const { data, error } = await supabase
                 .from('notifications')
@@ -72,12 +79,18 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
                 event: 'INSERT',
                 schema: 'public',
                 table: 'notifications'
-            }, () => {
-                fetchNotifications();
+            }, (payload) => {
+                const newNotification = payload.new as Notification;
+                if (currentUserId && newNotification.user_id === currentUserId) {
+                    fetchNotifications();
+                    setToastNotification(newNotification);
+                    setTimeout(() => setToastNotification(null), 5000);
+                }
             })
             .subscribe();
 
         return () => {
+            mounted = false;
             channel.unsubscribe();
         };
     }, []);
@@ -237,23 +250,60 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
     };
 
     return (
-        <header className="h-[80px] flex items-center justify-between px-4 sm:px-6 lg:px-10 bg-white dark:bg-[#1e2235] backdrop-blur-md border-b border-gray-200 dark:border-white/5 sticky top-0 z-40 transition-all">
+        <header className="h-[80px] flex items-center justify-between px-4 sm:px-6 lg:px-10 bg-theme-panel backdrop-blur-md border-b border-theme-border/50 sticky top-0 z-40 transition-all">
             <div className="flex items-center gap-2 sm:gap-4 min-w-0">
                 {isMobile && (
-                    <button onClick={onMenuClick} className="p-2 -ml-2 text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl transition-colors flex-shrink-0" title="Toggle Sidebar">
+                    <button onClick={onMenuClick} className="p-2 -ml-2 text-theme-text hover:bg-theme-bg rounded-xl transition-colors flex-shrink-0" title="Toggle Sidebar">
                         <AnimatedIcon icon={Menu} animation="tilt" trigger="hover" size={24} />
                     </button>
                 )}
-                <h1 className="text-base sm:text-lg font-bold tracking-tight text-gray-900 dark:text-white animate-in slide-in-from-left-2 duration-300">{getTitle(activeTab)}</h1>
+                <h1 className="text-base sm:text-lg font-bold tracking-tight text-theme-text animate-in slide-in-from-left-2 duration-300">{getTitle(activeTab)}</h1>
             </div>
+
+            {/* Toast Notification */}
+            {toastNotification && (
+                <div className="fixed top-24 right-4 sm:right-10 z-[100] w-80 bg-theme-panel border border-theme-border/50 rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-right-8 fade-in duration-300">
+                    <div className="flex bg-theme-bg/50">
+                        <div className={`w-1 rounded-l-2xl ${
+                            toastNotification.type === 'order' ? 'bg-green-500' :
+                            toastNotification.type === 'warning' ? 'bg-red-500' :
+                            toastNotification.type === 'support' ? 'bg-indigo-500' :
+                            toastNotification.type === 'customer' ? 'bg-teal-500' :
+                            'bg-blue-500'
+                        }`}></div>
+                        <div className="flex-1 p-4 flex gap-3">
+                            <div className={`mt-0.5 ${
+                                toastNotification.type === 'order' ? 'text-green-500' :
+                                toastNotification.type === 'warning' ? 'text-red-500' :
+                                toastNotification.type === 'support' ? 'text-indigo-500' :
+                                toastNotification.type === 'customer' ? 'text-teal-500' :
+                                'text-blue-500'
+                            }`}>
+                                {getNotificationIcon(toastNotification.type)}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <h4 className="text-sm font-bold text-theme-text mb-0.5">{toastNotification.title}</h4>
+                                <p className="text-xs text-theme-muted line-clamp-2">{toastNotification.message}</p>
+                            </div>
+                            <button 
+                                onClick={() => setToastNotification(null)}
+                                title="Close notification"
+                                className="text-theme-muted hover:text-theme-text transition-colors p-1"
+                            >
+                                <X size={14} />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <div className="flex items-center gap-4 lg:gap-8">
                 {/* Global Search */}
                 <div className="relative z-50">
                     <div
                         className={`
-                        hidden sm:flex items-center bg-theme-bg/50 border border-muted/10 rounded-2xl px-4 py-2.5 transition-all duration-300 ease-out
-                        ${searchFocused ? 'w-[400px] border-text/20 ring-4 ring-text/5 bg-theme-panel shadow-lg' : 'w-[280px] hover:border-text/10'}
+                        hidden sm:flex items-center bg-theme-bg/50 border border-theme-border/10 rounded-2xl px-4 py-2.5 transition-all duration-300 ease-out
+                        ${searchFocused ? 'w-[400px] border-theme-text/20 ring-4 ring-theme-text/5 bg-theme-panel shadow-lg' : 'w-[280px] hover:border-theme-text/10'}
                     `}
                     >
                         <AnimatedIcon icon={Search} animation="pulse" trigger="hover" size={18} iconClassName={`transition-colors duration-300 ${searchFocused ? 'text-primary' : 'text-theme-muted'}`} />
@@ -262,7 +312,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
                             placeholder="Search everything (products, settings, orders)..."
                             value={searchTerm}
                             onChange={(e) => onSearchChange(e.target.value)}
-                            className="bg-transparent border-none outline-none text-sm text-theme-text placeholder-muted/60 w-full ml-3 font-medium"
+                            className="bg-transparent border-none outline-none text-sm text-theme-text placeholder-theme-muted/60 w-full ml-3 font-medium"
                             onFocus={() => setSearchFocused(true)}
                             onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
                         />
@@ -271,14 +321,14 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
 
                     {/* Search Results Dropdown */}
                     {searchFocused && searchTerm.length >= 2 && searchResults.length > 0 && (
-                        <div className="absolute top-full left-0 w-full mt-2 bg-theme-panel border border-muted/10 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                        <div className="absolute top-full left-0 w-full mt-2 bg-theme-panel border border-theme-border/10 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                             <div className="max-h-[400px] overflow-y-auto py-2">
                                 <div className="px-4 py-2 text-[10px] font-bold text-theme-muted uppercase tracking-wider bg-theme-bg/50">Top Results</div>
                                 {searchResults.map((result) => (
                                     <button
                                         key={result.id}
                                         onClick={result.action}
-                                        className="w-full text-left px-4 py-3 hover:bg-theme-bg/50 flex items-center gap-3 transition-colors border-b border-muted/5 last:border-0 group"
+                                        className="w-full text-left px-4 py-3 hover:bg-theme-bg/50 flex items-center gap-3 transition-colors border-b border-theme-border/5 last:border-0 group"
                                     >
                                         <div className={`p-2 rounded-lg ${result.type === 'product' ? 'bg-orange-500/10 text-orange-600' :
                                             result.type === 'order' ? 'bg-blue-500/10 text-blue-600' :
@@ -296,7 +346,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
                                     </button>
                                 ))}
                             </div>
-                            <div className="p-3 bg-theme-bg/30 text-center border-t border-muted/10">
+                            <div className="p-3 bg-theme-bg/30 text-center border-t border-theme-border/10">
                                 <span className="text-[10px] text-theme-muted">Press Enter to see all results</span>
                             </div>
                         </div>
@@ -320,7 +370,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
                     {/* Theme Toggle */}
                     <button
                         onClick={toggleTheme}
-                        className="relative w-[60px] h-8 rounded-full bg-theme-panel border-2 border-muted/5 hover:border-muted/10 transition-all flex items-center px-1 group shadow-sm overflow-hidden"
+                        className="relative w-[60px] h-8 rounded-full bg-theme-panel border-2 border-theme-border/5 hover:border-theme-border/10 transition-all flex items-center px-1 group shadow-sm overflow-hidden"
                         aria-label="Toggle Theme"
                     >
                         <div className="absolute inset-0 flex justify-between items-center px-2 pointer-events-none opacity-40">
@@ -330,7 +380,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
                         <div
                             className={`w-6 h-6 rounded-lg shadow-lg transform transition-all duration-500 ease-in-out flex items-center justify-center z-10
                         ${theme === 'dark' ?
-                                    'translate-x-[26px] bg-gradient-to-tr from-indigo-600 to-indigo-600 rotate-0 shadow-indigo-500/30' :
+                                    'translate-x-[26px] bg-indigo-600 rotate-0 shadow-indigo-500/30' :
                                     'translate-x-0 bg-gradient-to-tr from-orange-400 to-yellow-300 rotate-[360deg] shadow-orange-400/30'}
                     `}
                         >
@@ -345,12 +395,12 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
                     <div className="relative z-50">
                         <button
                             onClick={() => setShowNotifications(!showNotifications)}
-                            className={`relative p-2.5 rounded-2xl hover:bg-theme-bg border border-transparent hover:border-muted/10 transition-all text-theme-text group ${showNotifications ? 'bg-theme-bg border-muted/20' : ''}`}
+                            className={`relative p-2.5 rounded-2xl hover:bg-theme-bg border border-transparent hover:border-theme-border/10 transition-all text-theme-text group ${showNotifications ? 'bg-theme-bg border-theme-border/20' : ''}`}
                             title="Notifications"
                         >
                             <AnimatedIcon icon={Bell} animation="shake" trigger="hover" size={20} iconClassName="group-hover:scale-110 transition-transform" />
                             {unreadCount > 0 && (
-                                <span className="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-panel animate-pulse shadow-sm"></span>
+                                <span className="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-theme-panel animate-pulse shadow-sm"></span>
                             )}
                         </button>
 
@@ -360,9 +410,9 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
                                     className="fixed inset-0 z-[60] bg-black/15 backdrop-blur-[2px]"
                                     onClick={() => setShowNotifications(false)}
                                 />
-                                <div className="absolute right-0 mt-4 w-96 max-w-[calc(100vw-2rem)] bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-3xl shadow-2xl z-[70] overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
-                                    <div className="p-5 border-b border-gray-100 dark:border-slate-700/50 flex justify-between items-center bg-gray-50/80 dark:bg-slate-800/50">
-                                        <h4 className="font-bold text-sm tracking-tight text-gray-900 dark:text-white">
+                                <div className="absolute right-0 mt-4 w-96 max-w-[calc(100vw-2rem)] bg-theme-panel border border-theme-border/50 rounded-3xl shadow-2xl z-[70] overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+                                    <div className="p-5 border-b border-theme-border/20 flex justify-between items-center bg-theme-bg/80">
+                                        <h4 className="font-bold text-sm tracking-tight text-theme-text">
                                             Notifications
                                             {unreadCount > 0 && (
                                                 <span className="ml-2 text-xs bg-red-500 text-white px-2 py-0.5 rounded-full">{unreadCount}</span>
@@ -370,14 +420,14 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
                                         </h4>
                                         <button
                                             onClick={markAllAsRead}
-                                            className="text-[10px] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest hover:text-gray-900 dark:hover:text-white transition-colors bg-white dark:bg-slate-700 px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-slate-600"
+                                            className="text-[10px] text-theme-muted font-bold uppercase tracking-widest hover:text-theme-text transition-colors bg-theme-bg px-2.5 py-1.5 rounded-lg border border-theme-border/50"
                                         >
                                             Mark all read
                                         </button>
                                     </div>
                                     <div className="max-h-[440px] overflow-y-auto hide-scroll">
                                         {notifications.length === 0 ? (
-                                            <div className="p-8 text-center text-gray-400 dark:text-gray-500">
+                                            <div className="p-8 text-center text-theme-muted">
                                                 <Bell size={32} className="mx-auto mb-2 opacity-50" />
                                                 <p className="text-sm">No notifications yet</p>
                                             </div>
@@ -385,7 +435,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
                                             notifications.map(n => (
                                                 <div
                                                     key={n.id}
-                                                    className={`p-4 hover:bg-gray-50 dark:hover:bg-slate-800/60 transition-colors border-b border-gray-100 dark:border-slate-700/30 flex gap-4 cursor-pointer group relative ${!n.is_read ? 'bg-blue-50/50 dark:bg-blue-950/20' : ''}`}
+                                                    className={`p-4 hover:bg-theme-bg/50 transition-colors border-b border-theme-border/20 flex gap-4 cursor-pointer group relative ${!n.is_read ? 'bg-blue-500/5 dark:bg-blue-500/10' : ''}`}
                                                     onClick={() => {
                                                         if (n.link) {
                                                             const tab = n.link.split('/').pop();
@@ -398,8 +448,8 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
                                                         {getNotificationIcon(n.type)}
                                                     </div>
                                                     <div className="flex-1 min-w-0">
-                                                        <p className="text-[13px] font-medium text-gray-800 dark:text-gray-200 leading-snug mb-1 line-clamp-2">{n.message}</p>
-                                                        <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">{formatTimeAgo(n.created_at)}</span>
+                                                        <p className="text-[13px] font-medium text-theme-text/90 leading-snug mb-1 line-clamp-2">{n.message}</p>
+                                                        <span className="text-[10px] font-bold text-theme-muted uppercase tracking-wider">{formatTimeAgo(n.created_at)}</span>
                                                     </div>
                                                     {!n.is_read && (
                                                         <div className="w-2 h-2 rounded-full bg-blue-500 absolute right-4 top-1/2 -translate-y-1/2"></div>
@@ -408,13 +458,13 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
                                             ))
                                         )}
                                     </div>
-                                    <div className="p-4 bg-gray-50/80 dark:bg-slate-800/50 text-center border-t border-gray-100 dark:border-slate-700/50">
+                                    <div className="p-4 bg-theme-bg/80 text-center border-t border-theme-border/20">
                                         <button
                                             onClick={() => {
                                                 setActiveTab('settings');
                                                 setShowNotifications(false);
                                             }}
-                                            className="text-xs font-bold text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-all tracking-wide uppercase"
+                                            className="text-xs font-bold text-theme-muted hover:text-theme-text transition-all tracking-wide uppercase"
                                         >
                                             View All Activity
                                         </button>
@@ -426,7 +476,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
 
                     {/* Avatar / Business Logo */}
                     <button
-                        className="w-11 h-11 rounded-2xl overflow-hidden border-2 border-muted/5 shadow-sm hover:border-text/20 hover:scale-105 transition-all duration-300 p-0.5 bg-theme-panel"
+                        className="w-11 h-11 rounded-2xl overflow-hidden border-2 border-theme-border/5 shadow-sm hover:border-theme-text/20 hover:scale-105 transition-all duration-300 p-0.5 bg-theme-panel"
                         title="Business Profile"
                     >
                         <div className="w-full h-full rounded-xl overflow-hidden">

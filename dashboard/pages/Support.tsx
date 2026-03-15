@@ -449,7 +449,7 @@ const Support: React.FC = () => {
     };
 
     return (
-        <div className="h-[calc(100vh-100px)] flex bg-neutral-100 dark:bg-neutral-950 rounded-3xl overflow-hidden border border-neutral-200 dark:border-neutral-800">
+        <div className="h-[calc(100dvh-100px)] flex bg-neutral-100 dark:bg-neutral-950 rounded-3xl overflow-hidden border border-neutral-200 dark:border-neutral-800">
             {/* Hidden File Input */}
             <input
                 type="file"

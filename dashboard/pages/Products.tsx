@@ -6,10 +6,10 @@ import ProductSidePanel from '../components/products/ProductSidePanel';
 import ProductModal from '../components/products/ProductModal';
 import BulkActionBar from '../components/products/BulkActionBar';
 import BulkUploadModal from '../components/products/BulkUploadModal';
+import BulkEditModal from '../components/products/BulkEditModal';
 import { Product } from '../types';
 import { supabase } from '../../lib/supabase';
 import { Seller } from '../../lib/seller';
-import { uploadProductImage } from '../lib/storage';
 
 interface ProductsProps {
     searchTerm?: string;
@@ -22,6 +22,7 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
     const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
+    const [isBulkEditModalOpen, setIsBulkEditModalOpen] = useState(false);
     const [showSidePanel, setShowSidePanel] = useState(true);
     const [seller, setSeller] = useState<Seller | null>(null);
 
@@ -119,8 +120,15 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
     };
 
     const handleCreate = async () => {
+        console.log('Initiating product creation...');
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error('Not authenticated');
+        if (!user) {
+            console.error('No authenticated user found');
+            alert('You must be logged in to add products.');
+            return;
+        }
+        
+        console.log('User authenticated:', user.id);
 
         try {
             // 1. Check Seller Plan & Quota
@@ -289,6 +297,42 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
         }
     };
 
+    const handleBulkEditSave = async ({ category, newImageFile }: { category?: string; newImageFile?: File }) => {
+        try {
+            if (category) {
+                const { error: updateError } = await supabase
+                    .from('products')
+                    .update({ category })
+                    .in('id', selectedIds);
+                if (updateError) throw updateError;
+            }
+
+            if (newImageFile) {
+                const fileExt = newImageFile.name.split('.').pop();
+                const fileName = `bulk-shared/${crypto.randomUUID()}.${fileExt}`;
+                const { error: uploadError } = await supabase.storage.from('products-images').upload(fileName, newImageFile);
+                if (uploadError) throw uploadError;
+                
+                const { data: { publicUrl } } = supabase.storage.from('products-images').getPublicUrl(fileName);
+                
+                const mediaInserts = selectedIds.map(id => ({
+                    product_id: id,
+                    file_url: publicUrl,
+                    is_primary: false,
+                    sort_order: 0
+                }));
+                const { error: dbError } = await supabase.from('product_media').insert(mediaInserts);
+                if (dbError) console.error("Error inserting bulk product media:", dbError);
+            }
+
+            fetchProducts();
+            setSelectedIds([]);
+        } catch (error: any) {
+            console.error('Bulk edit failed:', error);
+            throw error; // Re-throw to be caught by BulkEditModal
+        }
+    };
+
     const handleBulkAction = async (action: string) => {
         if (selectedIds.length === 0) return;
 
@@ -312,6 +356,10 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
                         fetchProducts();
                         setSelectedIds([]);
                     }
+                    break;
+
+                case 'edit':
+                    setIsBulkEditModalOpen(true);
                     break;
 
                 case 'status':
@@ -458,6 +506,13 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
                 isOpen={isBulkModalOpen}
                 onClose={() => setIsBulkModalOpen(false)}
                 onSuccess={() => fetchProducts()}
+            />
+
+            <BulkEditModal
+                isOpen={isBulkEditModalOpen}
+                onClose={() => setIsBulkEditModalOpen(false)}
+                selectedIds={selectedIds}
+                onSave={handleBulkEditSave}
             />
 
             <BulkActionBar

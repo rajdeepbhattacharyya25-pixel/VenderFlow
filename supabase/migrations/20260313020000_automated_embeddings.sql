@@ -54,7 +54,7 @@ BEGIN
     END IF;
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- 4. Apply Trigger
 DROP TRIGGER IF EXISTS tr_product_embedding_change ON public.products;

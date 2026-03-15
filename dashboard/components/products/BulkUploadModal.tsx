@@ -366,16 +366,16 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <div className="bg-white dark:bg-[#1e2235] border border-gray-200 dark:border-white/10 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="bg-theme-panel border border-theme-border w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
 
                 {/* Header */}
-                <div className="flex items-center justify-between p-5 border-b border-gray-200 dark:border-white/10">
+                <div className="flex items-center justify-between p-5 border-b border-theme-border">
                     <div>
-                        <h2 className="text-lg font-bold text-gray-900 dark:text-white">Bulk Product Import</h2>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Upload CSV or JSON to add multiple products at once</p>
+                        <h2 className="text-lg font-bold text-theme-text">Bulk Product Import</h2>
+                        <p className="text-xs text-theme-muted mt-0.5">Upload CSV or JSON to add multiple products at once</p>
                     </div>
-                    <button onClick={handleClose} aria-label="Close" title="Close" className="p-2 hover:bg-gray-100 dark:hover:bg-white/10 rounded-full transition-colors">
-                        <X size={18} className="text-gray-500" />
+                    <button onClick={handleClose} aria-label="Close" title="Close" className="p-2 hover:bg-theme-bg rounded-full transition-colors">
+                        <X size={18} className="text-theme-muted" />
                     </button>
                 </div>
 
@@ -386,7 +386,7 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
                     {!uploadResult && (
                         <button
                             onClick={handleDownloadTemplate}
-                            className="flex items-center gap-2.5 px-4 py-3 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 rounded-xl text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-colors text-sm w-full"
+                            className="flex items-center gap-2.5 px-4 py-3 bg-sky-500/10 border border-sky-500/20 rounded-xl text-sky-600 dark:text-sky-400 hover:bg-sky-500/20 transition-colors text-sm w-full"
                         >
                             <Download size={18} />
                             <div className="text-left">
@@ -402,7 +402,7 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
                             onClick={() => fileInputRef.current?.click()}
                             className={`
                                 border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all
-                                ${file ? 'border-emerald-400 bg-emerald-50 dark:bg-emerald-500/5' : 'border-gray-300 dark:border-white/15 hover:border-blue-400 hover:bg-gray-50 dark:hover:bg-white/5'}
+                                ${file ? 'border-green-500 bg-green-500/5' : 'border-theme-border hover:border-sky-500/50 hover:bg-theme-bg/50'}
                             `}
                         >
                             <input
@@ -414,17 +414,17 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
                                 title="Select file for bulk upload"
                                 aria-label="Select file for bulk upload"
                             />
-                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${file ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600' : 'bg-gray-100 dark:bg-white/10 text-gray-400'}`}>
+                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${file ? 'bg-green-500/20 text-green-600' : 'bg-theme-bg text-theme-muted'}`}>
                                 {parsing ? <Loader2 className="animate-spin" size={20} /> : <Upload size={20} />}
                             </div>
-                            <span className="font-semibold text-sm text-gray-900 dark:text-white">{file ? file.name : 'Click to select file'}</span>
-                            <span className="text-xs text-gray-400">CSV or JSON • Max 200 products • 5MB limit</span>
+                            <span className="font-semibold text-sm text-theme-text">{file ? file.name : 'Click to select file'}</span>
+                            <span className="text-xs text-theme-muted">CSV or JSON • Max 200 products • 5MB limit</span>
                         </div>
                     )}
 
                     {/* Error Banner */}
                     {error && (
-                        <div className="p-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl flex items-start gap-2.5 text-red-600 dark:text-red-400 text-sm">
+                        <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl flex items-start gap-2.5 text-red-500 dark:text-red-400 text-sm">
                             <AlertCircle size={16} className="mt-0.5 flex-shrink-0" />
                             <span>{error}</span>
                         </div>
@@ -433,12 +433,12 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
                     {/* Validation Summary */}
                     {products.length > 0 && !uploadResult && (
                         <div className="flex items-center gap-3 text-xs">
-                            <span className="text-gray-500 dark:text-gray-400 font-medium">
+                            <span className="text-theme-muted font-medium">
                                 <FileText size={14} className="inline mr-1" />
                                 {products.length} products parsed
                             </span>
                             {validCount > 0 && (
-                                <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                                <span className="text-green-600 dark:text-green-400 font-semibold">
                                     <CheckCircle2 size={13} className="inline mr-0.5" />
                                     {validCount} valid
                                 </span>
@@ -454,10 +454,10 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
 
                     {/* Preview Table */}
                     {products.length > 0 && !uploadResult && (
-                        <div className="border border-gray-200 dark:border-white/10 rounded-xl overflow-hidden">
+                        <div className="border border-theme-border rounded-xl overflow-hidden">
                             <div className="max-h-[280px] overflow-y-auto">
                                 <table className="w-full text-xs text-left">
-                                    <thead className="bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-gray-400 uppercase tracking-wider sticky top-0">
+                                    <thead className="bg-theme-bg text-theme-muted uppercase tracking-wider sticky top-0">
                                         <tr>
                                             <th className="px-3 py-2 font-semibold w-8">#</th>
                                             <th className="px-3 py-2 font-semibold">Image</th>
@@ -467,37 +467,37 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
                                             <th className="px-3 py-2 font-semibold">Status</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-gray-100 dark:divide-white/5">
+                                    <tbody className="divide-y divide-theme-border">
                                         {products.map((item, i) => (
-                                            <tr key={i} className={`${!item.valid ? 'bg-red-50/50 dark:bg-red-500/5' : ''}`}>
-                                                <td className="px-3 py-2 text-gray-400">{i + 1}</td>
+                                            <tr key={i} className={`${!item.valid ? 'bg-red-500/5' : ''}`}>
+                                                <td className="px-3 py-2 text-theme-muted">{i + 1}</td>
                                                 <td className="px-3 py-2">
                                                     {item.image_url ? (
                                                         <img
                                                             src={item.image_url}
                                                             alt={`Preview of ${item.name}`}
-                                                            className="w-8 h-8 rounded object-cover bg-gray-100 dark:bg-white/10"
+                                                            className="w-8 h-8 rounded object-cover bg-theme-bg"
                                                             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                                                         />
                                                     ) : (
-                                                        <div className="w-8 h-8 rounded bg-gray-100 dark:bg-white/10 flex items-center justify-center">
-                                                            <ImageIcon size={14} className="text-gray-300" />
+                                                        <div className="w-8 h-8 rounded bg-theme-bg flex items-center justify-center">
+                                                            <ImageIcon size={14} className="text-theme-muted" />
                                                         </div>
                                                     )}
                                                 </td>
-                                                <td className="px-3 py-2 text-gray-900 dark:text-white font-medium max-w-[150px] truncate" title={item.name}>
+                                                <td className="px-3 py-2 text-theme-text font-medium max-w-[150px] truncate" title={item.name}>
                                                     {item.name}
                                                 </td>
-                                                <td className="px-3 py-2 text-gray-700 dark:text-gray-300">
+                                                <td className="px-3 py-2 text-theme-text">
                                                     ₹{item.price}
                                                     {item.discount_price != null && (
-                                                        <span className="text-emerald-500 ml-1">→ ₹{item.discount_price}</span>
+                                                        <span className="text-green-500 ml-1">→ ₹{item.discount_price}</span>
                                                     )}
                                                 </td>
-                                                <td className="px-3 py-2 text-gray-700 dark:text-gray-300">{item.stock_quantity}</td>
+                                                <td className="px-3 py-2 text-theme-text">{item.stock_quantity}</td>
                                                 <td className="px-3 py-2">
                                                     {item.valid ? (
-                                                        <CheckCircle2 size={14} className="text-emerald-500" />
+                                                        <CheckCircle2 size={14} className="text-green-500" />
                                                     ) : (
                                                         <span className="text-red-500 text-[10px]" title={item.errors.join(', ')}>
                                                             <AlertCircle size={14} className="inline" /> {item.errors[0]}
@@ -515,13 +515,13 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
                     {/* Upload Progress */}
                     {uploading && (
                         <div className="space-y-2">
-                            <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                            <div className="flex items-center justify-between text-xs text-theme-muted">
                                 <span>Importing products...</span>
-                                <span className="font-semibold">{uploadProgress.current}/{uploadProgress.total}</span>
+                                <span className="font-semibold text-theme-text">{uploadProgress.current}/{uploadProgress.total}</span>
                             </div>
-                            <div className="w-full h-2 bg-gray-100 dark:bg-white/10 rounded-full overflow-hidden">
+                            <div className="w-full h-2 bg-theme-bg rounded-full overflow-hidden">
                                 <div
-                                    className="h-full bg-blue-500 rounded-full transition-all duration-300"
+                                    className="h-full bg-sky-500 rounded-full transition-all duration-300"
                                     style={{ width: `${uploadProgress.total > 0 ? (uploadProgress.current / uploadProgress.total) * 100 : 0}%` }}
                                 />
                             </div>
@@ -531,17 +531,17 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
                     {/* Upload Result */}
                     {uploadResult && (
                         <div className="space-y-3">
-                            <div className={`p-4 rounded-xl border ${uploadResult.failed === 0 ? 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20' : 'bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20'}`}>
+                            <div className={`p-4 rounded-xl border ${uploadResult.failed === 0 ? 'bg-green-500/10 border-green-500/20' : 'bg-amber-500/10 border-amber-500/20'}`}>
                                 <div className="flex items-center gap-2 mb-1">
                                     {uploadResult.failed === 0 ? (
-                                        <CheckCircle2 size={18} className="text-emerald-600" />
+                                        <CheckCircle2 size={18} className="text-green-600" />
                                     ) : (
                                         <AlertTriangle size={18} className="text-amber-600" />
                                     )}
-                                    <span className="font-bold text-sm text-gray-900 dark:text-white">Import Complete</span>
+                                    <span className="font-bold text-sm text-theme-text">Import Complete</span>
                                 </div>
-                                <p className="text-sm text-gray-600 dark:text-gray-300">
-                                    <span className="text-emerald-600 font-semibold">{uploadResult.success} products added</span>
+                                <p className="text-sm text-theme-muted">
+                                    <span className="text-green-600 font-semibold">{uploadResult.success} products added</span>
                                     {uploadResult.failed > 0 && (
                                         <span className="text-red-500 font-semibold ml-2">{uploadResult.failed} failed</span>
                                     )}
@@ -549,11 +549,11 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
                             </div>
 
                             {uploadResult.failures.length > 0 && (
-                                <div className="border border-red-200 dark:border-red-500/20 rounded-xl overflow-hidden">
-                                    <div className="px-3 py-2 bg-red-50 dark:bg-red-500/10 text-xs font-semibold text-red-600">Failed Rows</div>
+                                <div className="border border-red-500/20 rounded-xl overflow-hidden">
+                                    <div className="px-3 py-2 bg-red-500/10 text-xs font-semibold text-red-500">Failed Rows</div>
                                     <div className="max-h-[120px] overflow-y-auto">
                                         {uploadResult.failures.map((f, i) => (
-                                            <div key={i} className="px-3 py-1.5 text-xs text-red-500 border-t border-red-100 dark:border-red-500/10">
+                                            <div key={i} className="px-3 py-1.5 text-xs text-red-500 border-t border-red-500/10">
                                                 Row {f.row}: <span className="font-medium">{f.name}</span> — {f.reason}
                                             </div>
                                         ))}
@@ -565,30 +565,30 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
 
                     {/* Format Help */}
                     {!file && !uploadResult && (
-                        <div className="bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 p-3 rounded-xl">
-                            <h4 className="text-xs font-semibold text-gray-900 dark:text-white mb-1.5 flex items-center gap-1.5">
-                                <CheckCircle2 size={13} className="text-blue-500" /> CSV Column Reference
+                        <div className="bg-theme-bg/50 border border-theme-border p-3 rounded-xl">
+                            <h4 className="text-xs font-semibold text-theme-text mb-1.5 flex items-center gap-1.5">
+                                <CheckCircle2 size={13} className="text-sky-500" /> CSV Column Reference
                             </h4>
-                            <div className="text-xs text-gray-500 dark:text-gray-400 space-y-0.5">
-                                <p><span className="font-semibold text-gray-700 dark:text-gray-300">name</span> — Product name (required)</p>
-                                <p><span className="font-semibold text-gray-700 dark:text-gray-300">price</span> — Price in ₹ (required)</p>
-                                <p><span className="font-semibold text-gray-700 dark:text-gray-300">description</span> — Product description</p>
-                                <p><span className="font-semibold text-gray-700 dark:text-gray-300">category</span> — Category name</p>
-                                <p><span className="font-semibold text-gray-700 dark:text-gray-300">discount_price</span> — Sale price</p>
-                                <p><span className="font-semibold text-gray-700 dark:text-gray-300">stock_quantity</span> — Number in stock</p>
-                                <p><span className="font-semibold text-gray-700 dark:text-gray-300">image_url</span> — Product image URL</p>
-                                <p><span className="font-semibold text-gray-700 dark:text-gray-300">is_active</span> — true/false (publish immediately)</p>
+                            <div className="text-xs text-theme-muted space-y-0.5">
+                                <p><span className="font-semibold text-theme-text">name</span> — Product name (required)</p>
+                                <p><span className="font-semibold text-theme-text">price</span> — Price in ₹ (required)</p>
+                                <p><span className="font-semibold text-theme-text">description</span> — Product description</p>
+                                <p><span className="font-semibold text-theme-text">category</span> — Category name</p>
+                                <p><span className="font-semibold text-theme-text">discount_price</span> — Sale price</p>
+                                <p><span className="font-semibold text-theme-text">stock_quantity</span> — Number in stock</p>
+                                <p><span className="font-semibold text-theme-text">image_url</span> — Product image URL</p>
+                                <p><span className="font-semibold text-theme-text">is_active</span> — true/false (publish immediately)</p>
                             </div>
                         </div>
                     )}
                 </div>
 
                 {/* Footer */}
-                <div className="p-5 border-t border-gray-200 dark:border-white/10 flex gap-3">
+                <div className="p-5 border-t border-theme-border flex gap-3">
                     {uploadResult ? (
                         <button
                             onClick={handleClose}
-                            className="flex-1 px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl font-semibold hover:opacity-90 transition-opacity text-sm"
+                            className="flex-1 px-4 py-2.5 bg-theme-text text-theme-bg rounded-xl font-semibold hover:opacity-90 transition-opacity text-sm"
                         >
                             Done
                         </button>
@@ -596,14 +596,14 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
                         <>
                             <button
                                 onClick={handleClose}
-                                className="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-white/15 transition-colors text-sm"
+                                className="flex-1 px-4 py-2.5 bg-theme-bg text-theme-text border border-theme-border rounded-xl font-semibold hover:bg-theme-bg/80 transition-colors text-sm"
                             >
                                 Cancel
                             </button>
                             <button
                                 disabled={!file || uploading || parsing || !!error || validCount === 0}
                                 onClick={handleUpload}
-                                className="flex-1 px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl font-semibold hover:opacity-90 disabled:opacity-40 transition-all text-sm flex items-center justify-center gap-2"
+                                className="flex-1 px-4 py-2.5 bg-sky-500 text-white rounded-xl font-semibold hover:bg-sky-600 disabled:opacity-40 transition-all text-sm flex items-center justify-center gap-2"
                             >
                                 {uploading ? (
                                     <>

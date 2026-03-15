@@ -10,6 +10,16 @@ export const useAdminBackup = () => {
     const [isBackupRunning, setIsBackupRunning] = useState(false);
     const [backupStatus, setBackupStatus] = useState<'idle' | 'success' | 'error'>('idle');
     const [lastBackupDate, setLastBackupDate] = useState<string | null>(null);
+    const [backupHistory, setBackupHistory] = useState<any[]>([]);
+
+    const fetchBackupHistory = async () => {
+        const { data } = await supabase
+            .from('backups')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(10);
+        if (data) setBackupHistory(data);
+    };
 
     const generateAdminBackupData = async () => {
         // Admin fetches ALL data
@@ -52,6 +62,14 @@ export const useAdminBackup = () => {
             setBackupStatus('success');
             console.log("Admin Backup successful");
 
+            // Log Success in DB
+            await supabase.from('backups').insert({
+                filename: fileName,
+                type: 'ADMIN_PLATFORM_FULL',
+                status: 'success',
+                size_bytes: JSON.stringify(backupData).length // Approx size
+            });
+
             // Notify Admin via Telegram
             notifyAdmin({
                 type: 'BACKUP_SUCCESS',
@@ -74,8 +92,17 @@ export const useAdminBackup = () => {
                 data: { user_email: 'admin' }
             });
 
+            // Log Failure in DB
+            await supabase.from('backups').insert({
+                filename: `admin_platform_backup_${new Date().toISOString().split('T')[0]}.json`,
+                type: 'ADMIN_PLATFORM_FULL',
+                status: 'error',
+                error_message: (error as Error).message
+            });
+
         } finally {
             setIsBackupRunning(false);
+            fetchBackupHistory();
         }
     };
 
@@ -109,6 +136,7 @@ export const useAdminBackup = () => {
                 apiKey: GOOGLE_API_KEY,
             }).catch(err => console.error("Failed to init Google Client", err));
         }
+        fetchBackupHistory();
     }
 
     return {
@@ -117,6 +145,7 @@ export const useAdminBackup = () => {
         lastBackupDate,
         performBackup,
         downloadLocalBackup,
-        initClient
+        initClient,
+        backupHistory
     };
 };

@@ -12,18 +12,19 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 /* ─── Stitch Design Tokens ──────────────────────────────── */
 const THEME = {
-    bg: '#0f1117',
-    primary: '#13eca4',
-    primaryDim: 'rgba(19, 236, 164, 0.1)',
-    primaryBorder: 'rgba(19, 236, 164, 0.2)',
-    primaryGlow: 'rgba(19, 236, 164, 0.25)',
-    card: 'rgba(255, 255, 255, 0.04)',
-    cardBorder: 'rgba(255, 255, 255, 0.08)',
-    inputBg: 'rgba(255, 255, 255, 0.05)',
-    inputBorder: 'rgba(255, 255, 255, 0.1)',
-    inputFocus: 'rgba(19, 236, 164, 0.5)',
+    bg: '#07080a',
+    primary: '#059669', // Emerald Green
+    primaryDim: 'rgba(5, 150, 105, 0.1)',
+    primaryBorder: 'rgba(5, 150, 105, 0.2)',
+    primaryGlow: 'rgba(5, 150, 105, 0.25)',
+    secondary: '#e5e7eb', // Platinum Silver
+    card: 'rgba(255, 255, 255, 0.02)',
+    cardBorder: 'rgba(255, 255, 255, 0.05)',
+    inputBg: 'rgba(255, 255, 255, 0.03)',
+    inputBorder: 'rgba(255, 255, 255, 0.08)',
+    inputFocus: 'rgba(5, 150, 105, 0.4)',
     text: '#ffffff',
-    textMuted: 'rgba(255, 255, 255, 0.4)',
+    textMuted: '#9ca3af',
     textDim: 'rgba(255, 255, 255, 0.25)',
 };
 
@@ -36,9 +37,9 @@ const STEPS = [
 /* ─── Animation Variants ────────────────────────────────── */
 const pageVariants = {
     initial: { opacity: 0, y: 20 },
-    animate: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] } },
+    animate: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] as any } },
     exit: { opacity: 0, y: -20, transition: { duration: 0.3 } }
-};
+} as const;
 
 const fieldContainerVariants = {
     hidden: { opacity: 0 },
@@ -46,77 +47,79 @@ const fieldContainerVariants = {
         opacity: 1,
         transition: { staggerChildren: 0.1 }
     }
-};
+} as const;
 
 const fieldVariants = {
     hidden: { opacity: 0, y: 15 },
-    visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
-};
+    visible: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 300, damping: 24 } }
+} as const;
 
 /* ─── Step Progress Indicator ─────────────── */
 function StepIndicator({ currentStep }: { currentStep: number }) {
     return (
-        <div className="flex items-center justify-center gap-0 mb-8 md:mb-12">
+        <div className="flex items-center justify-between w-full mb-10 md:mb-16 relative px-1">
+            {/* Background Trace Line */}
+            <div className="absolute top-[20px] md:top-[24px] left-0 right-0 h-[1.5px] bg-white/5 z-0" />
+            
             {STEPS.map((step, i) => {
                 const isActive = currentStep === step.id;
                 const isCompleted = currentStep > step.id;
+                
                 return (
-                    <React.Fragment key={step.id}>
-                        {i > 0 && (
-                            <div className="h-[2px] flex-1 max-w-[60px] md:max-w-[80px] mx-1 rounded-full relative overflow-hidden bg-white/10">
-                                <motion.div
-                                    className="absolute inset-0 origin-left"
-                                    initial={{ scaleX: 0 }}
-                                    animate={{ scaleX: isCompleted ? 1 : 0 }}
-                                    transition={{ duration: 0.4, ease: "easeInOut" }}
-                                    style={{ background: THEME.primary }}
-                                />
-                            </div>
-                        )}
-                        <div className="flex flex-col items-center gap-2 relative z-10">
+                    <div key={step.id} className="flex flex-col items-center relative z-10">
+                        <motion.div
+                            animate={{
+                                background: isCompleted ? THEME.primary : isActive ? THEME.bg : THEME.bg,
+                                borderColor: isCompleted ? THEME.primary : isActive ? THEME.primary : 'rgba(255,255,255,0.1)',
+                                color: isCompleted ? THEME.bg : isActive ? THEME.primary : 'rgba(255,255,255,0.2)',
+                                boxShadow: isActive ? `0 0 20px ${THEME.primaryGlow}` : 'none',
+                                rotate: isActive ? 45 : 0
+                            }}
+                            className="w-12 h-12 md:w-14 md:h-14 border-[1px] flex items-center justify-center text-xs font-bold transition-all duration-500 backdrop-blur-xl"
+                            style={{ 
+                                borderRadius: '1px'
+                            }}
+                        >
                             <motion.div
-                                animate={{
-                                    background: isCompleted ? THEME.primary : isActive ? THEME.primaryDim : 'rgba(255,255,255,0.05)',
-                                    borderColor: isCompleted ? THEME.primary : isActive ? THEME.primary : 'rgba(255,255,255,0.1)',
-                                    color: isCompleted ? THEME.bg : isActive ? THEME.primary : 'rgba(255,255,255,0.25)',
-                                    boxShadow: isActive ? `0 0 20px ${THEME.primaryGlow}, 0 0 40px rgba(19,236,164,0.1)` : 'none',
-                                    scale: isActive ? 1.1 : 1
-                                }}
-                                transition={{ duration: 0.3 }}
-                                className="w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center text-sm font-bold border-2"
+                                animate={{ rotate: isActive ? -45 : 0 }}
+                                className="flex items-center justify-center"
                             >
-                                <AnimatePresence mode="popLayout">
+                                <AnimatePresence mode="wait">
                                     {isCompleted ? (
                                         <motion.div
                                             key="check"
-                                            initial={{ scale: 0, opacity: 0 }}
-                                            animate={{ scale: 1, opacity: 1 }}
-                                            exit={{ scale: 0, opacity: 0, transition: { duration: 0.2 } }}
+                                            initial={{ opacity: 0, scale: 0.5 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            exit={{ opacity: 0, scale: 0.5 }}
                                         >
-                                            <CheckCircle2 className="w-5 h-5 md:w-6 md:h-6" />
+                                            <CheckCircle2 className="w-4 h-4 md:w-5 h-5" />
                                         </motion.div>
                                     ) : (
                                         <motion.span
-                                            key="number"
-                                            initial={{ opacity: 0, scale: 0.5 }}
-                                            animate={{ opacity: 1, scale: 1 }}
-                                            exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.2 } }}
+                                            key="id"
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            className="font-mono tracking-tighter"
                                         >
-                                            {step.id}
+                                            0{step.id}
                                         </motion.span>
                                     )}
                                 </AnimatePresence>
                             </motion.div>
-                            <motion.span
-                                animate={{
-                                    color: isActive ? THEME.primary : isCompleted ? 'rgba(19,236,164,0.6)' : 'rgba(255,255,255,0.2)'
-                                }}
-                                className="text-[10px] md:text-[11px] font-semibold tracking-wide uppercase whitespace-nowrap absolute -bottom-6"
-                            >
-                                {step.label}
-                            </motion.span>
-                        </div>
-                    </React.Fragment>
+                        </motion.div>
+                        
+                        <motion.div
+                            animate={{
+                                opacity: isActive ? 1 : 0.4,
+                                y: isActive ? 0 : 4
+                            }}
+                            className="absolute -bottom-7 flex flex-col items-center"
+                        >
+                            <span className="text-[7px] md:text-[10px] uppercase tracking-[0.2em] md:tracking-[0.3em] font-black whitespace-nowrap text-white">
+                                {step.label.split(' ')[0]}
+                            </span>
+                        </motion.div>
+                    </div>
                 );
             })}
         </div>
@@ -124,10 +127,11 @@ function StepIndicator({ currentStep }: { currentStep: number }) {
 }
 
 /* ─── Floating Input (Stitch Style) ──────────────────────── */
-function FloatingInput({ label, icon: Icon, required, ...props }: {
+function FloatingInput({ label, icon: Icon, required, error, ...props }: {
     label: string;
     icon: React.ElementType;
     required?: boolean;
+    error?: string;
 } & React.InputHTMLAttributes<HTMLInputElement>) {
     const [focused, setFocused] = useState(false);
     const hasValue = Boolean(props.value);
@@ -136,8 +140,8 @@ function FloatingInput({ label, icon: Icon, required, ...props }: {
     return (
         <div className="relative group w-full">
             <div
-                className="absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-200 pointer-events-none"
-                style={{ color: focused ? THEME.primary : 'rgba(255,255,255,0.2)' }}
+                className="absolute left-5 top-1/2 -translate-y-1/2 transition-colors duration-200 pointer-events-none"
+                style={{ color: focused ? THEME.primary : 'rgba(255,255,255,0.15)' }}
             >
                 <Icon className="w-[18px] h-[18px]" />
             </div>
@@ -149,49 +153,55 @@ function FloatingInput({ label, icon: Icon, required, ...props }: {
                 placeholder=" "
                 className="peer w-full text-base outline-none placeholder-transparent"
                 style={{
-                    padding: '24px 16px 12px 48px',
-                    borderRadius: '16px',
+                    padding: '28px 16px 10px 52px',
+                    borderRadius: '2px', // Sharp
                     background: THEME.inputBg,
-                    border: `1.5px solid ${focused ? THEME.inputFocus : THEME.inputBorder}`,
+                    border: `1px solid ${error ? '#ef4444' : focused ? THEME.inputFocus : THEME.inputBorder}`,
                     color: THEME.text,
-                    boxShadow: focused
-                        ? `0 0 0 3px rgba(19,236,164,0.08), 0 0 20px rgba(19,236,164,0.06)`
+                    boxShadow: focused && !error
+                        ? `inset 0 0 10px rgba(5,150,105,0.05)`
                         : 'none',
-                    transition: 'all 0.3s ease',
+                    transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+                    minHeight: '64px',
+                    backdropFilter: 'blur(10px)'
                 }}
             />
             <label
-                className="absolute pointer-events-none transition-all duration-200"
+                className="absolute pointer-events-none transition-all duration-300"
                 style={{
-                    left: '48px',
+                    left: '52px',
                     ...(isFloating
                         ? {
-                            top: '8px',
+                            top: '12px',
                             fontSize: '10px',
-                            fontWeight: 700,
-                            letterSpacing: '0.08em',
+                            fontWeight: 900,
+                            letterSpacing: '0.2em',
                             textTransform: 'uppercase' as const,
+                            opacity: 0.5
                         }
                         : {
                             top: '50%',
                             transform: 'translateY(-50%)',
-                            fontSize: '15px',
+                            fontSize: '14px',
                             fontWeight: 400,
+                            opacity: 0.4
                         }),
-                    color: focused ? THEME.primary : THEME.textDim,
+                color: error ? '#ef4444' : focused ? THEME.primary : THEME.text,
                 }}
             >
                 {label}{required && ' *'}
             </label>
+            {error && <span className="absolute -bottom-4 left-1 text-[10px] text-red-500 font-medium">{error}</span>}
         </div>
     );
 }
 
 /* ─── Floating Select (Stitch Style) ─────────────────────── */
-function FloatingSelect({ label, icon: Icon, required, children, ...props }: {
+function FloatingSelect({ label, icon: Icon, required, children, error, ...props }: {
     label: string;
     icon: React.ElementType;
     required?: boolean;
+    error?: string;
     children: React.ReactNode;
 } & React.SelectHTMLAttributes<HTMLSelectElement>) {
     const [focused, setFocused] = useState(false);
@@ -201,8 +211,8 @@ function FloatingSelect({ label, icon: Icon, required, children, ...props }: {
     return (
         <div className="relative group w-full">
             <div
-                className="absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-200 pointer-events-none z-10"
-                style={{ color: focused ? THEME.primary : 'rgba(255,255,255,0.2)' }}
+                className="absolute left-5 top-1/2 -translate-y-1/2 transition-colors duration-200 pointer-events-none z-10"
+                style={{ color: focused ? THEME.primary : 'rgba(255,255,255,0.15)' }}
             >
                 <Icon className="w-[18px] h-[18px]" />
             </div>
@@ -213,47 +223,48 @@ function FloatingSelect({ label, icon: Icon, required, children, ...props }: {
                 onBlur={(e) => { setFocused(false); props.onBlur?.(e); }}
                 className="peer w-full text-base appearance-none cursor-pointer outline-none"
                 style={{
-                    padding: '24px 40px 12px 48px',
-                    borderRadius: '16px',
+                    padding: '28px 40px 10px 52px',
+                    borderRadius: '2px', // Sharp
                     background: THEME.inputBg,
-                    border: `1.5px solid ${focused ? THEME.inputFocus : THEME.inputBorder}`,
+                    border: `1px solid ${error ? '#ef4444' : focused ? THEME.inputFocus : THEME.inputBorder}`,
                     color: hasValue ? THEME.text : THEME.textDim,
-                    boxShadow: focused
-                        ? `0 0 0 3px rgba(19,236,164,0.08), 0 0 20px rgba(19,236,164,0.06)`
-                        : 'none',
-                    transition: 'all 0.3s ease',
+                    transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+                    minHeight: '60px'
                 }}
             >
                 {children}
             </select>
             <label
-                className="absolute pointer-events-none transition-all duration-200"
+                className="absolute pointer-events-none transition-all duration-300"
                 style={{
-                    left: '48px',
+                    left: '52px',
                     ...(isFloating
                         ? {
-                            top: '8px',
+                            top: '12px',
                             fontSize: '10px',
-                            fontWeight: 700,
-                            letterSpacing: '0.08em',
+                            fontWeight: 900,
+                            letterSpacing: '0.2em',
                             textTransform: 'uppercase' as const,
+                            opacity: 0.5
                         }
                         : {
                             top: '50%',
                             transform: 'translateY(-50%)',
-                            fontSize: '15px',
+                            fontSize: '14px',
                             fontWeight: 400,
+                            opacity: 0.4
                         }),
-                    color: focused ? THEME.primary : THEME.textDim,
+                color: error ? '#ef4444' : focused ? THEME.primary : THEME.text,
                 }}
             >
                 {label}{required && ' *'}
             </label>
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'rgba(255,255,255,0.2)' }}>
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <path d="M3.5 5.25L7 8.75L10.5 5.25" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'rgba(255,255,255,0.1)' }}>
+                <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+                    <path d="M3.5 5.25L7 8.75L10.5 5.25" stroke="currentColor" strokeWidth="2" strokeLinecap="square" />
                 </svg>
             </div>
+            {error && <span className="absolute -bottom-4 left-1 text-[10px] text-red-500 font-medium">{error}</span>}
         </div>
     );
 }
@@ -270,8 +281,8 @@ function FloatingTextarea({ label, icon: Icon, ...props }: {
     return (
         <div className="relative group w-full">
             <div
-                className="absolute left-4 top-5 transition-colors duration-200 pointer-events-none"
-                style={{ color: focused ? THEME.primary : 'rgba(255,255,255,0.2)' }}
+                className="absolute left-5 top-7 transition-colors duration-200 pointer-events-none"
+                style={{ color: focused ? THEME.primary : 'rgba(255,255,255,0.15)' }}
             >
                 <Icon className="w-[18px] h-[18px]" />
             </div>
@@ -282,35 +293,35 @@ function FloatingTextarea({ label, icon: Icon, ...props }: {
                 placeholder=" "
                 className="peer w-full text-base resize-none outline-none placeholder-transparent"
                 style={{
-                    padding: '28px 16px 16px 48px',
-                    borderRadius: '16px',
+                    padding: '32px 16px 16px 52px',
+                    borderRadius: '2px', // Sharp
                     background: THEME.inputBg,
-                    border: `1.5px solid ${focused ? THEME.inputFocus : THEME.inputBorder}`,
+                    border: `1px solid ${focused ? THEME.inputFocus : THEME.inputBorder}`,
                     color: THEME.text,
-                    boxShadow: focused
-                        ? `0 0 0 3px rgba(19,236,164,0.08), 0 0 20px rgba(19,236,164,0.06)`
-                        : 'none',
-                    transition: 'all 0.3s ease',
+                    transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+                    minHeight: '120px'
                 }}
             />
             <label
-                className="absolute pointer-events-none transition-all duration-200"
+                className="absolute pointer-events-none transition-all duration-300"
                 style={{
-                    left: '48px',
+                    left: '52px',
                     ...(isFloating
                         ? {
-                            top: '8px',
+                            top: '12px',
                             fontSize: '10px',
-                            fontWeight: 700,
-                            letterSpacing: '0.08em',
+                            fontWeight: 900,
+                            letterSpacing: '0.2em',
                             textTransform: 'uppercase' as const,
+                            opacity: 0.5
                         }
                         : {
-                            top: '20px',
-                            fontSize: '15px',
+                            top: '26px',
+                            fontSize: '14px',
                             fontWeight: 400,
+                            opacity: 0.4
                         }),
-                    color: focused ? THEME.primary : THEME.textDim,
+                    color: focused ? THEME.primary : THEME.text,
                 }}
             >
                 {label}
@@ -339,12 +350,44 @@ export default function ApplyToSell() {
         message: ''
     });
 
+    const [errors, setErrors] = useState<Record<string, string>>({});
+
+    React.useEffect(() => {
+        const saved = localStorage.getItem('vendorflow_apply_draft');
+        if (saved) {
+            try {
+                const { data, savedStep } = JSON.parse(saved);
+                if (data) setFormData(data);
+                if (savedStep) setStep(savedStep);
+            } catch (e) { console.error('Error loading draft', e); }
+        }
+    }, []);
+
+    React.useEffect(() => {
+        if (!success) {
+            localStorage.setItem('vendorflow_apply_draft', JSON.stringify({ data: formData, savedStep: step }));
+        }
+    }, [formData, step, success]);
+
+    const validateField = (name: string, value: any) => {
+        let error = '';
+        if (name === 'name' && String(value).trim().length < 2 && value !== '') error = 'Name is too short';
+        if (name === 'email' && value !== '' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value))) error = 'Invalid email format';
+        if (name === 'phone' && value !== '' && String(value).length < 7) error = 'Invalid phone number';
+        if (name === 'business_name' && String(value).trim().length < 2 && value !== '') error = 'Business name is too short';
+        if (name === 'city' && String(value).trim().length < 2 && value !== '') error = 'City is required';
+        
+        setErrors(prev => ({ ...prev, [name]: error }));
+    };
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value, type } = e.target;
+        const finalValue = type === 'checkbox' ? (e.target as HTMLInputElement).checked : value;
         setFormData(prev => ({
             ...prev,
-            [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+            [name]: finalValue
         }));
+        validateField(name, finalValue);
     };
 
     const handleSubmit = async (e?: React.FormEvent) => {
@@ -386,6 +429,7 @@ export default function ApplyToSell() {
 
             Events.applicationSubmitted({ category: formData.category });
             setSuccess(true);
+            localStorage.removeItem('vendorflow_apply_draft');
             window.scrollTo(0, 0);
 
         } catch (err: any) {
@@ -395,16 +439,16 @@ export default function ApplyToSell() {
         }
     };
 
-    const canProceedStep1 = formData.name && formData.email && formData.phone;
-    const canProceedStep2 = formData.business_name && formData.category && formData.city;
+    const canProceedStep1 = formData.name && formData.email && formData.phone && !errors.name && !errors.email && !errors.phone;
+    const canProceedStep2 = formData.business_name && formData.category && formData.city && !errors.business_name && !errors.city;
 
     const handleNext = () => {
         if (step === 1 && !canProceedStep1) {
-            toast.error('Please fill in all required fields.');
+            toast.error('Please fill in all required fields correctly.');
             return;
         }
         if (step === 2 && !canProceedStep2) {
-            toast.error('Please fill in all required fields.');
+            toast.error('Please fill in all required fields correctly.');
             return;
         }
 
@@ -424,92 +468,115 @@ export default function ApplyToSell() {
     /* ─── Success State ──────────────────────────────────── */
     if (success) {
         return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0f1117]/95 backdrop-blur-3xl font-[Inter,sans-serif]">
-                {/* Background ambient light */}
-                <motion.div
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 0.15 }}
-                    transition={{ duration: 1.5, ease: "easeOut" }}
-                    className="absolute inset-0 max-w-2xl mx-auto rounded-full blur-[120px] pointer-events-none"
-                    style={{ background: THEME.primary }}
-                />
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#07080a] font-[Inter,sans-serif] overflow-hidden">
+                {/* Background cinematic elements */}
+                <div className="absolute inset-0 pointer-events-none">
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 2 }}
+                        className="absolute inset-0 bg-[#ccff00]/[0.03] backdrop-blur-[100px]"
+                    />
+                    <motion.div
+                        initial={{ scale: 0.5, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 0.2 }}
+                        transition={{ duration: 1.5, ease: "easeOut" }}
+                        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[#ccff00] rounded-full blur-[160px]"
+                    />
+                </div>
 
                 <motion.div
-                    initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                    initial={{ opacity: 0, scale: 0.95, y: 30 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
-                    transition={{ duration: 0.6, type: "spring", damping: 25 }}
-                    className="max-w-md w-full relative z-10"
+                    transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                    className="max-w-xl w-full relative z-10"
                 >
                     <div
-                        className="relative rounded-[32px] p-10 text-center overflow-hidden"
+                        className="relative rounded-[40px] p-12 md:p-16 text-center overflow-hidden border border-white/10"
                         style={{
-                            background: THEME.card,
-                            border: `1px solid ${THEME.cardBorder}`,
-                            boxShadow: `0 25px 50px -12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1)`,
+                            background: 'rgba(255, 255, 255, 0.03)',
+                            boxShadow: `0 40px 100px -20px rgba(0,0,0,0.8), inset 0 1px 1px rgba(255,255,255,0.05)`,
                         }}
                     >
-                        <motion.div
-                            initial={{ scale: 0, rotate: -180 }}
-                            animate={{ scale: 1, rotate: 0 }}
-                            transition={{ type: "spring", damping: 15, stiffness: 200, delay: 0.2 }}
-                            className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-8 relative"
-                            style={{
-                                background: THEME.primaryDim,
-                                border: `1px solid ${THEME.primaryBorder}`,
-                            }}
-                        >
+                        {/* Animated Checkmark Container */}
+                        <div className="relative w-32 h-32 mx-auto mb-10">
+                            {/* Outer Rings */}
+                            {[1, 1.2, 1.4].map((scale, i) => (
+                                <motion.div
+                                    key={i}
+                                    initial={{ scale: 0, opacity: 0 }}
+                                    animate={{ scale: scale, opacity: 0.1 - i * 0.03 }}
+                                    transition={{
+                                        duration: 1.5,
+                                        delay: 0.5 + i * 0.2,
+                                        ease: "easeOut",
+                                        repeat: Infinity,
+                                        repeatType: "reverse"
+                                    }}
+                                    className="absolute inset-0 rounded-full border-2 border-[#ccff00]"
+                                />
+                            ))}
+
+                            {/* Main Circle */}
                             <motion.div
-                                animate={{
-                                    opacity: [0.5, 1, 0.5],
-                                    scale: [1, 1.2, 1]
-                                }}
-                                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                                className="absolute inset-0 rounded-2xl blur-xl"
-                                style={{ background: THEME.primaryGlow }}
-                            />
-                            <CheckCircle2 className="w-10 h-10 relative z-10" style={{ color: THEME.primary }} />
-                        </motion.div>
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                transition={{ type: "spring", damping: 12, stiffness: 200, delay: 0.3 }}
+                                className="absolute inset-0 rounded-full bg-[#ccff00]/10 border border-[#ccff00]/20 backdrop-blur-sm flex items-center justify-center"
+                            >
+                                <svg className="w-16 h-16 text-[#ccff00]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                    <motion.path
+                                        initial={{ pathLength: 0, opacity: 0 }}
+                                        animate={{ pathLength: 1, opacity: 1 }}
+                                        transition={{
+                                            duration: 0.8,
+                                            delay: 0.8,
+                                            ease: "easeInOut"
+                                        }}
+                                        d="M20 6L9 17l-5-5"
+                                    />
+                                </svg>
+                            </motion.div>
+                        </div>
 
                         <motion.h2
-                            initial={{ opacity: 0, y: 10 }}
+                            initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.4 }}
-                            className="text-2xl font-bold mb-4"
-                            style={{ color: THEME.text }}
+                            transition={{ delay: 1.1, duration: 0.6 }}
+                            className="text-4xl md:text-5xl font-black uppercase tracking-tight mb-6 text-white"
                         >
-                            Application Received
+                            Application <br />
+                            <span style={{ color: THEME.primary }}>Submitted</span>
                         </motion.h2>
 
-                        <motion.p
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.5 }}
-                            className="text-base leading-relaxed mb-10"
-                            style={{ color: THEME.textMuted }}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 1.4, duration: 1 }}
+                            className="space-y-6"
                         >
-                            Thank you for your interest in VendorFlow. Our team will review your application and contact you within 24 hours.
-                        </motion.p>
+                            <p className="text-white/50 text-lg md:text-xl font-light leading-relaxed max-w-sm mx-auto">
+                                We've received your business details and will reach out within 24 hours.
+                            </p>
 
-                        <motion.button
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.6 }}
-                            onClick={() => navigate('/')}
-                            className="group relative w-full font-bold py-4 rounded-2xl overflow-hidden transition-transform active:scale-95"
-                            style={{
-                                color: THEME.bg,
-                                background: THEME.primary,
-                            }}
-                        >
-                            <span className="relative z-10">Return to Home</span>
-                            <div
-                                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                                style={{ background: 'linear-gradient(to right, transparent, rgba(255,255,255,0.2), transparent)' }}
-                            />
-                        </motion.button>
+                            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8">
+                                <motion.button
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    onClick={() => navigate('/')}
+                                    className="px-10 py-5 text-black font-black uppercase tracking-widest text-xs rounded-none transition-all"
+                                    style={{ 
+                                        background: THEME.primary,
+                                        boxShadow: `0 20px 40px ${THEME.primaryDim}`
+                                    }}
+                                >
+                                    Return to Home
+                                </motion.button>
+                            </div>
+                        </motion.div>
                     </div>
-                </motion.div >
-            </div >
+                </motion.div>
+            </div>
         );
     }
 
@@ -521,14 +588,19 @@ export default function ApplyToSell() {
             <motion.div
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="w-full flex items-center justify-between p-4 md:p-8"
+                className="w-full flex items-center justify-between px-4 py-0.5 md:px-8 md:py-1"
             >
-                <div></div>
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 text-[9px] font-black uppercase tracking-widest text-white/40">
+                    <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: THEME.primary }} />
+                    SSL Protected / Encrypted
+                </div>
                 <button
                     onClick={() => navigate('/')}
-                    className="p-3 rounded-full bg-white/5 hover:bg-white/10 transition-colors border border-white/5 text-slate-400 hover:text-white"
+                    className="p-3 bg-white/5 hover:bg-white/10 transition-colors border border-white/5 text-slate-400 hover:text-white"
+                    title="Close and return to home"
+                    aria-label="Close form"
                 >
-                    <X className="w-5 h-5 md:w-6 md:h-6" />
+                    <X className="w-4 h-4 md:w-5 h-5" />
                 </button>
             </motion.div>
 
@@ -540,25 +612,33 @@ export default function ApplyToSell() {
                 />
             </div>
 
-            <main className="w-full max-w-xl mx-auto px-4 pb-24 md:pb-12 flex-1 relative z-10 flex flex-col pt-4 md:pt-12">
+            <main className="w-full max-w-6xl mx-auto px-6 pb-32 md:pb-12 flex-1 relative z-10 flex flex-col md:flex-row items-start justify-between pt-8 md:pt-24 gap-10 md:gap-20">
                 <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
-                    className="text-center mb-10 md:mb-14"
+                    initial={{ opacity: 0, x: -30 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.1, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                    className="w-full md:w-1/2 text-left"
                 >
-                    <h2 className="text-3xl md:text-5xl font-extrabold mb-4 bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
-                        Start Selling
-                    </h2>
-                    <p className="text-slate-400 text-sm md:text-base max-w-sm mx-auto">
-                        Join our curated community of premium sellers on VendorFlow.
+                    <h1 className="text-4xl md:text-8xl font-black mb-4 md:mb-6 leading-[0.85] uppercase italic tracking-tighter text-white">
+                        Vendor <br />
+                        <span style={{ color: THEME.primary }}>// Flow</span>
+                    </h1>
+                    <p className="text-white/40 text-sm md:text-base font-light max-w-sm leading-relaxed tracking-wide">
+                        Join an elite circle of commerce. Secure your place in the future of decentralized luxury retail and global distribution.
                     </p>
+                    
+                    <div className="mt-12 hidden md:block">
+                        <div className="flex items-center gap-4 text-white/20 text-[10px] font-bold uppercase tracking-[0.3em]">
+                            <div className="w-12 h-[1px] bg-white/10" />
+                            Premium Onboarding
+                        </div>
+                    </div>
                 </motion.div>
 
-                <div className="w-full flex-1 flex flex-col">
+                <div className="w-full md:w-[480px] flex-shrink-0 flex flex-col">
                     <StepIndicator currentStep={step} />
 
-                    <div className="flex-1 mt-6">
+                    <div className="flex-1 mt-0">
                         <AnimatePresence mode="wait">
                             {step === 1 && (
                                 <motion.div
@@ -583,6 +663,7 @@ export default function ApplyToSell() {
                                                 type="text"
                                                 value={formData.name}
                                                 onChange={handleChange}
+                                                error={errors.name}
                                                 required
                                             />
                                         </motion.div>
@@ -594,6 +675,7 @@ export default function ApplyToSell() {
                                                 type="email"
                                                 value={formData.email}
                                                 onChange={handleChange}
+                                                error={errors.email}
                                                 required
                                             />
                                         </motion.div>
@@ -605,6 +687,7 @@ export default function ApplyToSell() {
                                                 type="tel"
                                                 value={formData.phone}
                                                 onChange={handleChange}
+                                                error={errors.phone}
                                                 required
                                             />
                                         </motion.div>
@@ -635,6 +718,7 @@ export default function ApplyToSell() {
                                                 type="text"
                                                 value={formData.business_name}
                                                 onChange={handleChange}
+                                                error={errors.business_name}
                                                 required
                                             />
                                         </motion.div>
@@ -645,19 +729,19 @@ export default function ApplyToSell() {
                                                 name="category"
                                                 value={formData.category}
                                                 onChange={handleChange}
-                                                options={[
-                                                    { value: '', label: 'Select a category' },
-                                                    { value: 'fashion', label: 'Fashion & Apparel' },
-                                                    { value: 'electronics', label: 'Electronics & Gadgets' },
-                                                    { value: 'home', label: 'Home & Living' },
-                                                    { value: 'beauty', label: 'Health & Beauty' },
-                                                    { value: 'food', label: 'Food & Beverages' },
-                                                    { value: 'art', label: 'Art & Handmade' },
-                                                    { value: 'services', label: 'Digital Products' },
-                                                    { value: 'other', label: 'Other' },
-                                                ]}
+                                                error={errors.category}
                                                 required
-                                            />
+                                            >
+                                                <option value="" disabled>Select a category</option>
+                                                <option value="fashion">Fashion & Apparel</option>
+                                                <option value="electronics">Electronics & Gadgets</option>
+                                                <option value="home">Home & Living</option>
+                                                <option value="beauty">Health & Beauty</option>
+                                                <option value="food">Food & Beverages</option>
+                                                <option value="art">Art & Handmade</option>
+                                                <option value="services">Digital Products</option>
+                                                <option value="other">Other</option>
+                                            </FloatingSelect>
                                         </motion.div>
                                         <motion.div variants={fieldVariants}>
                                             <FloatingInput
@@ -667,25 +751,43 @@ export default function ApplyToSell() {
                                                 type="text"
                                                 value={formData.city}
                                                 onChange={handleChange}
+                                                error={errors.city}
                                                 required
                                             />
                                         </motion.div>
 
                                         <motion.div variants={fieldVariants}>
-                                            <div onClick={() => setFormData(p => ({ ...p, is_selling_online: !p.is_selling_online }))} className="flex items-center justify-between p-5 rounded-2xl border transition-colors cursor-pointer active:scale-[0.99]" style={{
-                                                background: THEME.inputBg,
-                                                borderColor: THEME.inputBorder
-                                            }}>
+                                            <div 
+                                                onClick={() => setFormData(p => ({ ...p, is_selling_online: !p.is_selling_online }))} 
+                                                className="flex items-center justify-between p-6 rounded-none border transition-all cursor-pointer group hover:bg-white/[0.05]" 
+                                                style={{
+                                                    background: THEME.inputBg,
+                                                    borderColor: THEME.inputBorder
+                                                }}
+                                            >
                                                 <div>
-                                                    <h4 className="text-sm font-semibold text-white">Selling online currently?</h4>
-                                                    <p className="text-[12px] text-slate-400 mt-1">Check this if you have an existing store.</p>
+                                                    <h4 className="text-sm font-black uppercase tracking-widest text-white/90">Selling online currently?</h4>
+                                                    <p className="text-[10px] text-white/30 uppercase tracking-widest mt-1">Check this if you have an existing store.</p>
                                                 </div>
                                                 <button
                                                     type="button"
-                                                    className="w-12 h-6 rounded-full transition-colors relative"
-                                                    style={{ background: formData.is_selling_online ? THEME.primary : 'rgba(255,255,255,0.1)' }}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setFormData(prev => ({ ...prev, is_selling_online: !prev.is_selling_online }));
+                                                    }}
+                                                    className="w-14 h-8 transition-colors relative"
+                                                    style={{ 
+                                                        background: formData.is_selling_online ? THEME.primary : 'rgba(255,255,255,0.05)',
+                                                        border: `1px solid ${formData.is_selling_online ? THEME.primary : 'rgba(255,255,255,0.1)'}`
+                                                    }}
+                                                    title={formData.is_selling_online ? "Currently selling online" : "Not selling online"}
+                                                    aria-label="Toggle selling online status"
                                                 >
-                                                    <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform ${formData.is_selling_online ? 'translate-x-6' : 'translate-x-0'}`} />
+                                                    <motion.div 
+                                                        animate={{ x: formData.is_selling_online ? 24 : 0 }}
+                                                        transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                                                        className="absolute top-1 left-1 w-5 h-5 bg-white" 
+                                                    />
                                                 </button>
                                             </div>
                                         </motion.div>
@@ -720,17 +822,17 @@ export default function ApplyToSell() {
                         </AnimatePresence>
                     </div>
 
-                    {/* Navigation Buttons */}
+                    {/* Navigation Buttons (Sticky Footer for Mobile) */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.3 }}
-                        className="flex items-center gap-3 md:gap-4 mt-12 md:mt-16 pt-6 border-t border-white/10"
+                        className="fixed md:relative bottom-0 left-0 right-0 md:bottom-auto md:left-auto md:right-auto bg-[#07080a]/80 md:bg-transparent backdrop-blur-xl md:backdrop-blur-none border-t border-white/10 md:border-none p-6 md:p-0 md:mt-16 z-50 flex items-center gap-3 md:gap-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] md:pb-0"
                     >
                         {step > 1 && (
                             <button
                                 onClick={handlePrev}
-                                className="flex-1 md:flex-none py-4 px-6 rounded-2xl text-slate-400 font-bold transition-colors hover:text-white hover:bg-white/5 flex items-center justify-center gap-2 border border-transparent hover:border-white/10"
+                                className="flex-1 md:flex-none py-4 px-6 rounded-none text-slate-400 font-bold transition-colors hover:text-white hover:bg-white/5 flex items-center justify-center gap-2 border border-white/5 md:border-transparent hover:border-white/10"
                             >
                                 <ArrowLeft className="w-5 h-5" /> Back
                             </button>
@@ -739,21 +841,22 @@ export default function ApplyToSell() {
                         <button
                             onClick={handleNext}
                             disabled={loading}
-                            className="flex-[2] md:flex-1 py-4 px-6 rounded-2xl font-bold transition-transform active:scale-95 flex items-center justify-center gap-2 relative overflow-hidden"
+                            className="flex-[2] md:flex-1 py-5 px-6 rounded-none font-black uppercase tracking-[0.2em] text-xs transition-all active:scale-[0.98] flex items-center justify-center gap-3 relative overflow-hidden group"
                             style={{
                                 background: THEME.primary,
                                 color: THEME.bg,
                                 opacity: loading ? 0.7 : 1
                             }}
                         >
+                            <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-in-out" />
                             {loading ? (
                                 <span className="flex items-center justify-center gap-2">
-                                    <div className="w-5 h-5 border-2 rounded-full animate-spin" style={{ borderColor: 'rgba(15,17,23,0.3)', borderTopColor: THEME.bg }} />
-                                    Submitting
+                                    <div className="w-4 h-4 border-2 rounded-none animate-spin" style={{ borderColor: 'rgba(15,17,23,0.3)', borderTopColor: THEME.bg }} />
+                                    Processing
                                 </span>
                             ) : (
                                 <>
-                                    {step === 3 ? 'Submit Application' : 'Continue'} <ArrowRight className="w-5 h-5" />
+                                    {step === 3 ? 'Confirm Membership' : 'Proceed'} <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                                 </>
                             )}
                         </button>

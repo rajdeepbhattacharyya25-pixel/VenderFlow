@@ -220,7 +220,7 @@ const Billing: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 space-y-6">
                     {/* Current Plan Card */}
-                    <div className="bg-neutral-900 border border-neutral-800 rounded-3xl p-8 relative overflow-hidden group">
+                    <div className="bg-neutral-900 border border-neutral-800 rounded-3xl p-5 md:p-8 relative overflow-hidden group">
                         <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
                             <Zap size={120} />
                         </div>

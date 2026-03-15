@@ -4,44 +4,78 @@ import { ProductMedia } from '../types';
 
 const BUCKET_NAME = 'products-images';
 
+import { generateFileHash } from './vault-utils';
+
 export async function uploadProductImage(
     file: File,
     productId: string,
     isPrimary: boolean = false,
     mediaType: 'image' | 'video' = 'image',
     variantValue?: string
-): Promise<{ data: ProductMedia | null; error: Error | null }> {
+): Promise<{ data: ProductMedia | null; error: Error | null; isDuplicate?: boolean }> {
     try {
+        // 1. Generate Hash
+        const contentHash = await generateFileHash(file);
+
+        // 2. Check for Duplicate (Global)
+        const { data: existingMedia } = await supabase
+            .from('product_media')
+            .select('*')
+            .eq('content_hash', contentHash)
+            .limit(1)
+            .maybeSingle();
+
+        if (existingMedia) {
+            console.log("Duplicate media detected, reusing existing URL");
+            
+            // Still insert for the current product, but use existing URL
+            const { data: mediaData, error: dbError } = await supabase
+                .from('product_media')
+                .insert({
+                    product_id: productId,
+                    file_url: existingMedia.file_url,
+                    content_hash: contentHash,
+                    is_primary: isPrimary,
+                    sort_order: 0
+                })
+                .select()
+                .single();
+
+            if (dbError) throw dbError;
+            return { data: mediaData, error: null, isDuplicate: true };
+        }
+
         const fileExt = file.name.split('.').pop();
         const fileName = `${productId}/${crypto.randomUUID()}.${fileExt}`;
 
-        // 1. Upload to Storage
+        // 3. Upload to Storage
         const { error: uploadError } = await supabase.storage
             .from(BUCKET_NAME)
             .upload(fileName, file);
 
         if (uploadError) throw uploadError;
 
-        // 2. Get Public URL
+        // 4. Get Public URL
         const { data: { publicUrl } } = supabase.storage
             .from(BUCKET_NAME)
             .getPublicUrl(fileName);
 
-        // 3. Insert Record into DB
+        // 5. Insert Record into DB
         const { data: mediaData, error: dbError } = await supabase
             .from('product_media')
             .insert({
                 product_id: productId,
                 file_url: publicUrl,
+                content_hash: contentHash,
                 is_primary: isPrimary,
                 sort_order: 0
             })
-            .select() // important to return the object
+            .select()
             .single();
 
         if (dbError) throw dbError;
 
-        return { data: mediaData, error: null };
+        return { data: mediaData, error: null, isDuplicate: false };
     } catch (error: any) {
         console.error(`Error uploading ${mediaType}:`, error);
         return { data: null, error: error };

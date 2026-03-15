@@ -166,34 +166,34 @@ export const SharedAccessPanel = () => {
     };
 
     return (
-        <div className="bg-panel rounded-2xl p-8 border border-border shadow-sm animate-fadeIn">
+        <div className="bg-theme-panel rounded-2xl p-8 border border-theme-border shadow-sm animate-fadeIn">
             {/* Header */}
-            <div className="flex items-center justify-between mb-8 pb-4 border-b border-border">
+            <div className="flex items-center justify-between mb-8 pb-4 border-b border-theme-border">
                 <div className="flex items-center gap-3">
-                    <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                    <div className="p-2 bg-indigo-500/10 rounded-lg text-indigo-600">
                         <Users size={20} />
                     </div>
-                    <h3 className="font-bold text-lg text-text">Shared Access</h3>
+                    <h3 className="font-bold text-lg text-theme-text">Shared Access</h3>
                 </div>
                 <button
                     onClick={() => setShowAddModal(true)}
-                    className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-xl hover:opacity-90 transition-all font-bold text-sm shadow-sm"
+                    className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl hover:opacity-90 transition-all font-bold text-sm shadow-sm"
                 >
                     <Plus size={16} />
                     Add Helper
                 </button>
             </div>
 
-            {/* Static Hero Section (Optional - keep or remove based on preference, keeping for now) */}
-            <div className="bg-bg/50 p-8 rounded-[2rem] border border-border mb-8">
+            {/* Static Hero Section */}
+            <div className="bg-theme-bg p-8 rounded-[2rem] border border-theme-border mb-8">
                 <div className="flex flex-col md:flex-row items-center gap-8 md:gap-10">
-                    <div className="w-32 h-32 bg-white p-4 rounded-2xl border border-border shadow-sm flex items-center justify-center flex-shrink-0">
+                    <div className="w-32 h-32 bg-theme-panel p-4 rounded-2xl border border-theme-border shadow-sm flex items-center justify-center flex-shrink-0">
                         {/* Placeholder QR or Generic Icon */}
-                        <QrCode size={80} className="text-gray-800" />
+                        <QrCode size={80} className="text-theme-muted" />
                     </div>
                     <div className="flex-grow text-center md:text-left">
-                        <h4 className="text-xl font-bold text-text mb-2">Invite your Helpers</h4>
-                        <p className="text-sm text-muted mb-4 leading-relaxed max-w-md mx-auto md:mx-0">
+                        <h4 className="text-xl font-bold text-theme-text mb-2">Invite your Helpers</h4>
+                        <p className="text-sm text-theme-muted mb-4 leading-relaxed max-w-md mx-auto md:mx-0">
                             Create a staff account and share the QR code. They can scan it to instantly log in without remembering passwords.
                         </p>
                     </div>
@@ -203,25 +203,25 @@ export const SharedAccessPanel = () => {
             {/* Staff List */}
             <div className="space-y-4">
                 <div className="flex items-center justify-between mb-4">
-                    <h4 className="text-xs font-bold text-muted uppercase tracking-widest">Team Members ({staff.length})</h4>
+                    <h4 className="text-xs font-bold text-theme-muted uppercase tracking-widest">Team Members ({staff.length})</h4>
                 </div>
 
                 {loading ? (
-                    <div className="text-center py-10"><Loader2 className="animate-spin text-primary mx-auto" /></div>
+                    <div className="text-center py-10"><Loader2 className="animate-spin text-indigo-600 mx-auto" /></div>
                 ) : staff.length === 0 ? (
-                    <div className="text-center py-10 bg-bg rounded-xl border border-border border-dashed text-muted text-sm">
+                    <div className="text-center py-10 bg-theme-bg rounded-xl border border-theme-border border-dashed text-theme-muted text-sm">
                         No team members yet. Click "Add Helper" to invite someone.
                     </div>
                 ) : (
                     staff.map((s) => (
-                        <div key={s.id} className="flex items-center justify-between p-4 bg-bg border border-border rounded-xl transition-all hover:border-primary/50 group">
+                        <div key={s.id} className="flex items-center justify-between p-4 bg-theme-bg border border-theme-border rounded-xl transition-all hover:border-indigo-500/50 group">
                             <div className="flex items-center gap-4">
-                                <div className="w-10 h-10 bg-primary/10 text-primary rounded-full flex items-center justify-center font-bold text-lg">
+                                <div className="w-10 h-10 bg-indigo-500/10 text-indigo-600 rounded-full flex items-center justify-center font-bold text-lg">
                                     {s.name.charAt(0).toUpperCase()}
                                 </div>
                                 <div>
-                                    <h4 className="text-sm font-bold text-text">{s.name}</h4>
-                                    <p className="text-[10px] uppercase font-bold text-muted tracking-wider">{s.role}</p>
+                                    <h4 className="text-sm font-bold text-theme-text">{s.name}</h4>
+                                    <p className="text-[10px] uppercase font-bold text-theme-muted tracking-wider">{s.role}</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-3">
@@ -242,30 +242,30 @@ export const SharedAccessPanel = () => {
             {/* Add Staff Modal */}
             {showAddModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
-                    <div className="bg-panel w-full max-w-md rounded-3xl p-6 shadow-2xl border border-border">
+                    <div className="bg-theme-panel w-full max-w-md rounded-3xl p-6 shadow-2xl border border-theme-border">
                         <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-lg font-bold text-text">Add New Helper</h3>
-                            <button onClick={() => setShowAddModal(false)} className="p-2 hover:bg-bg rounded-full text-muted transition-colors"><X size={20} /></button>
+                            <h3 className="text-lg font-bold text-theme-text">Add New Helper</h3>
+                            <button onClick={() => setShowAddModal(false)} className="p-2 hover:bg-theme-bg rounded-full text-theme-muted transition-colors" title="Close"><X size={20} /></button>
                         </div>
 
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-xs font-bold text-muted uppercase mb-2">Name</label>
+                                <label className="block text-xs font-bold text-theme-muted uppercase mb-2">Name</label>
                                 <input
                                     type="text"
                                     value={newName}
                                     onChange={(e) => setNewName(e.target.value)}
-                                    className="w-full bg-bg border border-border rounded-xl px-4 py-3 text-text focus:ring-2 focus:ring-primary/20 outline-none"
+                                    className="w-full bg-theme-bg border border-theme-border rounded-xl px-4 py-3 text-theme-text focus:ring-2 focus:ring-indigo-500/20 outline-none"
                                     placeholder="e.g. Rahul"
                                     autoFocus
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-muted uppercase mb-2">Role</label>
+                                <label className="block text-xs font-bold text-theme-muted uppercase mb-2">Role</label>
                                 <select
                                     value={newRole}
                                     onChange={(e) => setNewRole(e.target.value)}
-                                    className="w-full bg-bg border border-border rounded-xl px-4 py-3 text-text focus:ring-2 focus:ring-primary/20 outline-none"
+                                    className="w-full bg-theme-bg border border-theme-border rounded-xl px-4 py-3 text-theme-text focus:ring-2 focus:ring-indigo-500/20 outline-none"
                                 >
                                     <option value="Staff">Staff</option>
                                     <option value="Manager">Manager</option>
@@ -276,7 +276,7 @@ export const SharedAccessPanel = () => {
                             <button
                                 onClick={handleAddStaff}
                                 disabled={creating || !newName.trim()}
-                                className="w-full bg-primary text-white py-3 rounded-xl font-bold hover:brightness-110 transition-all disabled:opacity-50 flex items-center justify-center gap-2 mt-4"
+                                className="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover:brightness-110 transition-all disabled:opacity-50 flex items-center justify-center gap-2 mt-4"
                             >
                                 {creating ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
                                 {creating ? 'Creating Account...' : 'Create & Generate QR'}
@@ -289,13 +289,13 @@ export const SharedAccessPanel = () => {
             {/* QR Code Modal */}
             {showQRModal && generatedCreds && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in">
-                    <div className="bg-panel w-full max-w-sm rounded-[2rem] p-8 shadow-2xl border border-border text-center relative overflow-hidden">
+                    <div className="bg-theme-panel w-full max-w-sm rounded-[2rem] p-8 shadow-2xl border border-theme-border text-center relative overflow-hidden">
                         {/* Confetti or decorative elements can go here */}
-                        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary to-indigo-500" />
+                        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-indigo-500 to-primary" />
 
                         <div className="mb-6">
-                            <h3 className="text-2xl font-bold text-text mb-2">Access Granted!</h3>
-                            <p className="text-sm text-muted">Scan to log in as <span className="text-primary font-bold">{newName || 'Staff'}</span></p>
+                            <h3 className="text-2xl font-bold text-theme-text mb-2">Access Granted!</h3>
+                            <p className="text-sm text-theme-muted">Scan to log in as <span className="text-indigo-600 font-bold">{newName || 'Staff'}</span></p>
                         </div>
 
                         <div className="bg-white p-4 rounded-2xl mx-auto w-fit shadow-inner mb-6">
@@ -311,7 +311,7 @@ export const SharedAccessPanel = () => {
                         <div className="space-y-3">
                             <button
                                 onClick={handleDownloadQR}
-                                className="w-full bg-primary text-white py-3 rounded-xl font-bold text-sm hover:brightness-110 transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/25"
+                                className="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold text-sm hover:brightness-110 transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/25"
                             >
                                 <Download size={18} />
                                 Download QR Image
@@ -319,7 +319,7 @@ export const SharedAccessPanel = () => {
 
                             <button
                                 onClick={copyToClipboard}
-                                className="w-full bg-bg border border-border text-text py-3 rounded-xl font-bold text-sm hover:bg-bg/80 transition-all flex items-center justify-center gap-2"
+                                className="w-full bg-theme-bg border border-theme-border text-theme-text py-3 rounded-xl font-bold text-sm hover:bg-theme-bg/80 transition-all flex items-center justify-center gap-2"
                             >
                                 {copied ? <Check size={18} className="text-green-500" /> : <Copy size={18} />}
                                 {copied ? 'Link Copied!' : 'Copy Login Link'}
@@ -328,7 +328,7 @@ export const SharedAccessPanel = () => {
 
                         <button
                             onClick={() => setShowQRModal(false)}
-                            className="mt-6 text-muted hover:text-text text-sm underline underline-offset-4"
+                            className="mt-6 text-theme-muted hover:text-theme-text text-sm underline underline-offset-4"
                         >
                             Close
                         </button>

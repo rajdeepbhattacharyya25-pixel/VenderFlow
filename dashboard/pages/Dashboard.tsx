@@ -101,33 +101,49 @@ const Dashboard: React.FC<DashboardProps> = ({ theme, onTabChange, sellerSlug })
 
                 // Process Chart Data
                 const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                const monthlyMap = new Map<string, number>();
+                const monthlyMap = new Map<string, { earning: number, sales: number }>();
 
                 // Initialize with 0
-                months.forEach(m => monthlyMap.set(m, 0));
+                months.forEach(m => monthlyMap.set(m, { earning: 0, sales: 0 }));
 
                 const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-                const weeklyMap = new Map<string, number>();
-                days.forEach(d => weeklyMap.set(d, 0));
+                const weeklyMap = new Map<string, { earning: number, sales: number }>();
+                days.forEach(d => weeklyMap.set(d, { earning: 0, sales: 0 }));
 
                 const now = new Date();
 
                 ordersData.forEach((order: any) => {
                     const date = new Date(order.created_at);
                     const month = months[date.getMonth()];
-                    monthlyMap.set(month, (monthlyMap.get(month) || 0) + (order.total || 0));
+                    const currentMonth = monthlyMap.get(month) || { earning: 0, sales: 0 };
+                    monthlyMap.set(month, { 
+                        earning: currentMonth.earning + (order.total || 0),
+                        sales: currentMonth.sales + 1
+                    });
 
                     const diffTime = Math.abs(now.getTime() - date.getTime());
                     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
                     if (diffDays <= 7) {
                         const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
-                        weeklyMap.set(dayName, (weeklyMap.get(dayName) || 0) + (order.total || 0));
+                        const currentDay = weeklyMap.get(dayName) || { earning: 0, sales: 0 };
+                        weeklyMap.set(dayName, {
+                            earning: currentDay.earning + (order.total || 0),
+                            sales: currentDay.sales + 1
+                        });
                     }
                 });
 
-                setMonthlyData(months.map(name => ({ name, value: monthlyMap.get(name) || 0 })));
-                setWeeklyData(days.map(name => ({ name, value: weeklyMap.get(name) || 0 })));
+                setMonthlyData(months.map(name => ({ 
+                    name, 
+                    value: monthlyMap.get(name)?.earning || 0,
+                    sales: monthlyMap.get(name)?.sales || 0
+                })));
+                setWeeklyData(days.map(name => ({ 
+                    name, 
+                    value: weeklyMap.get(name)?.earning || 0,
+                    sales: weeklyMap.get(name)?.sales || 0
+                })));
 
                 // --- Calculate Real Top Selling Products ---
                 const productStats: Record<string, { id: string, quantity: number, revenue: number, name: string, image: string }> = {};
@@ -398,50 +414,50 @@ const Dashboard: React.FC<DashboardProps> = ({ theme, onTabChange, sellerSlug })
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     <button
                         onClick={() => onTabChange?.('products')}
-                        className="flex items-center gap-3 p-4 bg-luxury-card rounded-2xl border border-luxury-border/50 shadow-soft hover:shadow-glow hover:-translate-y-1 transition-all duration-300 group"
+                        className="flex items-center gap-3 p-4 bg-theme-panel rounded-2xl border border-theme-border/50 shadow-soft hover:shadow-glow hover:-translate-y-1 transition-all duration-300 group"
                     >
                         <div className="w-10 h-10 rounded-xl bg-sky-500/10 text-sky-500 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                             <Plus size={20} />
                         </div>
                         <div className="text-left">
-                            <span className="text-xs text-luxury-text/60 block font-medium">Product</span>
-                            <span className="text-sm font-bold text-luxury-text">Add New</span>
+                            <span className="text-xs text-theme-muted block font-medium">Product</span>
+                            <span className="text-sm font-bold text-theme-text">Add New</span>
                         </div>
                     </button>
                     <button
                         onClick={() => onTabChange?.('orders')}
-                        className="flex items-center gap-3 p-4 bg-luxury-card rounded-2xl border border-luxury-border/50 shadow-soft hover:shadow-glow hover:-translate-y-1 transition-all duration-300 group"
+                        className="flex items-center gap-3 p-4 bg-theme-panel rounded-2xl border border-theme-border/50 shadow-soft hover:shadow-glow hover:-translate-y-1 transition-all duration-300 group"
                     >
                         <div className="w-10 h-10 rounded-xl bg-orange-500/10 text-orange-500 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                             <FileText size={20} />
                         </div>
                         <div className="text-left">
-                            <span className="text-xs text-luxury-text/60 block font-medium">Order</span>
-                            <span className="text-sm font-bold text-luxury-text">Invoices</span>
+                            <span className="text-xs text-theme-muted block font-medium">Order</span>
+                            <span className="text-sm font-bold text-theme-text">Invoices</span>
                         </div>
                     </button>
                     <button
                         onClick={() => onTabChange?.('reports')}
-                        className="flex items-center gap-3 p-4 bg-luxury-card rounded-2xl border border-luxury-border/50 shadow-soft hover:shadow-glow hover:-translate-y-1 transition-all duration-300 group"
+                        className="flex items-center gap-3 p-4 bg-theme-panel rounded-2xl border border-theme-border/50 shadow-soft hover:shadow-glow hover:-translate-y-1 transition-all duration-300 group"
                     >
                         <div className="w-10 h-10 rounded-xl bg-green-500/10 text-green-500 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                             <BarChart2 size={20} />
                         </div>
                         <div className="text-left">
-                            <span className="text-xs text-luxury-text/60 block font-medium">Stats</span>
-                            <span className="text-sm font-bold text-luxury-text">Full Report</span>
+                            <span className="text-xs text-theme-muted block font-medium">Stats</span>
+                            <span className="text-sm font-bold text-theme-text">Full Report</span>
                         </div>
                     </button>
                     <button
                         onClick={() => onTabChange?.('sales')}
-                        className="flex items-center gap-3 p-4 bg-luxury-card rounded-2xl border border-luxury-border/50 shadow-soft hover:shadow-glow hover:-translate-y-1 transition-all duration-300 group"
+                        className="flex items-center gap-3 p-4 bg-theme-panel rounded-2xl border border-theme-border/50 shadow-soft hover:shadow-glow hover:-translate-y-1 transition-all duration-300 group"
                     >
                         <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                             <Tag size={20} />
                         </div>
                         <div className="text-left">
-                            <span className="text-xs text-luxury-text/60 block font-medium">Discount</span>
-                            <span className="text-sm font-bold text-luxury-text">Campaigns</span>
+                            <span className="text-xs text-theme-muted block font-medium">Discount</span>
+                            <span className="text-sm font-bold text-theme-text">Campaigns</span>
                         </div>
                     </button>
                     {sellerSlug && (
@@ -449,17 +465,18 @@ const Dashboard: React.FC<DashboardProps> = ({ theme, onTabChange, sellerSlug })
                             href={`/store/${sellerSlug}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-3 p-4 bg-luxury-card rounded-2xl border border-luxury-border/50 shadow-soft hover:shadow-glow hover:-translate-y-1 transition-all duration-300 group"
+                            className="flex items-center gap-3 p-4 bg-theme-panel rounded-2xl border border-theme-border/50 shadow-soft hover:shadow-glow hover:-translate-y-1 transition-all duration-300 group"
                         >
                             <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                                 <Eye size={20} />
                             </div>
                             <div className="text-left">
-                                <span className="text-xs text-luxury-text/60 block font-medium">Storefront</span>
-                                <span className="text-sm font-bold text-luxury-text">View Live</span>
+                                <span className="text-xs text-theme-muted block font-medium">Storefront</span>
+                                <span className="text-sm font-bold text-theme-text">View Live</span>
                             </div>
                         </a>
                     )}
+
                 </div>
 
                 {/* KPI Cards */}

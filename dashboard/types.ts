@@ -16,9 +16,13 @@ export interface Product {
   created_at: string;
   updated_at: string;
   // Virtual / Joined fields for UI convenience
+  image?: string;
   images?: string[]; // Kept for backward compat in some places, but prefer media below
   media?: ProductMedia[];
   stock_quantity?: number;
+  stock?: number; // Virtual for UI
+  orders?: number; // Virtual for UI
+  amount?: number; // Virtual for UI
   low_stock_threshold?: number;
   allow_out_of_stock_orders?: boolean;
   variants?: ProductVariant[];
@@ -66,8 +70,8 @@ export interface Order {
   customerAddress: string;
   price: number;
   time: string;
-  status: 'pending' | 'paid' | 'completed' | 'cancelled';
-  created_at: string;
+  status: string;
+  created_at?: string;
 }
 
 export type Theme = 'light' | 'dark';
@@ -79,6 +83,7 @@ export type Theme = 'light' | 'dark';
 export interface ChartDataPoint {
   name: string;
   value: number;
+  sales?: number;
   target?: number;
 }
 

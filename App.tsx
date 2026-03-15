@@ -13,7 +13,6 @@ import CustomerAuthGuard from './components/CustomerAuthGuard';
 import TelegramInitializer from './components/TelegramInitializer';
 import OfflineOverlay from './components/OfflineOverlay';
 import ClickSpark from './components/react-bits/ClickSpark';
-import { CustomCursor } from './components/CustomCursor';
 import ErrorBoundary from './components/ErrorBoundary';
 import CookieConsent from './components/CookieConsent';
 import { initTelegramApp } from './lib/telegram';
@@ -155,7 +154,6 @@ function App() {
   return (
     <ErrorBoundary>
       <BrowserRouter>
-        <CustomCursor />
         <RouteChangeTracker />
         <Toaster position="top-right" />
         <OfflineOverlay />

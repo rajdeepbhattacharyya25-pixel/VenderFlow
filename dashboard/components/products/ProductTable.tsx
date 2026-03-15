@@ -35,17 +35,17 @@ const ProductTable: React.FC<ProductTableProps> = ({
                                     aria-label="Select all products"
                                 />
                             </th>
-                            <th className="p-4 text-xs font-semibold text-muted uppercase tracking-wider">Product</th>
-                            <th className="p-4 text-xs font-semibold text-muted uppercase tracking-wider">Status</th>
-                            <th className="p-4 text-xs font-semibold text-muted uppercase tracking-wider text-right">Inventory</th>
-                            <th className="p-4 text-xs font-semibold text-muted uppercase tracking-wider text-right">Price</th>
-                            <th className="p-4 text-xs font-semibold text-muted uppercase tracking-wider text-right">Actions</th>
+                            <th className="p-4 text-xs font-bold text-dashboard-muted uppercase tracking-wider">Product</th>
+                            <th className="p-4 text-xs font-bold text-dashboard-muted uppercase tracking-wider">Status</th>
+                            <th className="p-4 text-xs font-bold text-dashboard-muted uppercase tracking-wider text-right">Inventory</th>
+                            <th className="p-4 text-xs font-bold text-dashboard-muted uppercase tracking-wider text-right">Price</th>
+                            <th className="p-4 text-xs font-bold text-dashboard-muted uppercase tracking-wider text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-muted/10">
                         {products.length === 0 ? (
                             <tr>
-                                <td colSpan={6} className="p-8 text-center text-muted">
+                                <td colSpan={6} className="p-12 text-center text-dashboard-muted font-medium">
                                     No products found. Start by adding one!
                                 </td>
                             </tr>
@@ -107,7 +107,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
                                     )}
                                 </td>
                                 <td className="p-4 text-right">
-                                    <button className="p-2 text-muted hover:text-text rounded-lg hover:bg-bg transition-colors" title="Edit" onClick={() => onEdit(product)}>
+                                    <button className="p-2 text-dashboard-muted hover:text-text rounded-lg hover:bg-bg transition-colors" title="Edit" onClick={() => onEdit(product)}>
                                         <MoreVertical size={18} />
                                     </button>
                                 </td>
@@ -120,7 +120,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
             {/* Mobile Card View */}
             <div className="md:hidden flex flex-col divide-y divide-muted/10">
                 {products.length === 0 ? (
-                    <div className="p-8 text-center text-muted">
+                    <div className="p-8 text-center text-dashboard-muted">
                         No products found.
                     </div>
                 ) : products.map((product) => (
@@ -147,12 +147,12 @@ const ProductTable: React.FC<ProductTableProps> = ({
                                         {product.images && product.images[0] ? (
                                             <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
                                         ) : (
-                                            <div className="w-full h-full flex items-center justify-center text-xs text-muted">No Img</div>
+                                            <div className="w-full h-full flex items-center justify-center text-xs text-dashboard-muted">No Img</div>
                                         )}
                                     </div>
                                     <div>
                                         <div className="font-medium text-text line-clamp-1">{product.name}</div>
-                                        <div className="text-xs text-muted">{product.category || 'Uncategorized'}</div>
+                                        <div className="text-xs text-dashboard-muted">{product.category || 'Uncategorized'}</div>
                                     </div>
                                 </div>
                                 <div className="text-right">
@@ -168,10 +168,10 @@ const ProductTable: React.FC<ProductTableProps> = ({
                                     `}>
                                         {product.is_active ? 'Published' : 'Draft'}
                                     </span>
-                                    <span className="text-xs text-muted">Stock: {product.stock_quantity}</span>
+                                    <span className="text-xs text-dashboard-muted">Stock: {product.stock_quantity}</span>
                                 </div>
                                 <button
-                                    className="p-1.5 text-muted hover:text-text rounded-lg hover:bg-bg transition-colors"
+                                    className="p-1.5 text-dashboard-muted hover:text-text rounded-lg hover:bg-bg transition-colors"
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         onEdit(product);

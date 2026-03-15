@@ -52,16 +52,21 @@ export const TOP_PRODUCTS = [
     orders: 26,
     stock: 3,
     amount: 36987,
+    category: 'Footwear',
+    is_active: true,
+    has_variants: false,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
   },
 ];
 
 export const RECENT_ORDERS = [
-  { id: 'o1', productName: 'Nike Revolution 3', productImage: 'https://picsum.photos/seed/nike1/64/64', time: 'just now', price: 250 },
-  { id: 'o2', productName: 'Round Neck Grey T-Shirt', productImage: 'https://picsum.photos/seed/grey/64/64', time: '2 mins ago', price: 99 },
-  { id: 'o3', productName: 'Polo Multicolor T-Shirt', productImage: 'https://picsum.photos/seed/polo/64/64', time: '15 mins ago', price: 139 },
-  { id: 'o4', productName: 'Green Plain T-shirt', productImage: 'https://picsum.photos/seed/tshirt/64/64', time: '19 mins ago', price: 79 },
-  { id: 'o5', productName: 'Nike Revolution 3', productImage: 'https://picsum.photos/seed/nike1/64/64', time: '25 mins ago', price: 250 },
-  { id: 'o6', productName: 'Nike Dunk Shoes', productImage: 'https://picsum.photos/seed/dunk/64/64', time: '1 hour ago', price: 579 },
+  { id: 'o1', productName: 'Nike Revolution 3', productImage: 'https://picsum.photos/seed/nike1/64/64', time: 'just now', price: 250, status: 'completed', customerName: 'Alex Smith', customerEmail: 'alex@example.com', customerAddress: '123 Street, City' },
+  { id: 'o2', productName: 'Round Neck Grey T-Shirt', productImage: 'https://picsum.photos/seed/grey/64/64', time: '2 mins ago', price: 99, status: 'completed', customerName: 'Jordan Doe', customerEmail: 'jordan@example.com', customerAddress: '456 Lane, Town' },
+  { id: 'o3', productName: 'Polo Multicolor T-Shirt', productImage: 'https://picsum.photos/seed/polo/64/64', time: '15 mins ago', price: 139, status: 'completed', customerName: 'Sam Wilson', customerEmail: 'sam@example.com', customerAddress: '789 Road, Vill' },
+  { id: 'o4', productName: 'Green Plain T-shirt', productImage: 'https://picsum.photos/seed/tshirt/64/64', time: '19 mins ago', price: 79, status: 'completed', customerName: 'Chris Evans', customerEmail: 'chris@example.com', customerAddress: '321 Blvd, Capital' },
+  { id: 'o5', productName: 'Nike Revolution 3', productImage: 'https://picsum.photos/seed/nike1/64/64', time: '25 mins ago', price: 250, status: 'completed', customerName: 'Alex Smith', customerEmail: 'alex@example.com', customerAddress: '123 Street, City' },
+  { id: 'o6', productName: 'Nike Dunk Shoes', productImage: 'https://picsum.photos/seed/dunk/64/64', time: '1 hour ago', price: 579, status: 'completed', customerName: 'Taylor Swift', customerEmail: 'taylor@example.com', customerAddress: '1989 Album St, NY' },
 ];
 
 export const DONUT_DATA: DonutData[] = [

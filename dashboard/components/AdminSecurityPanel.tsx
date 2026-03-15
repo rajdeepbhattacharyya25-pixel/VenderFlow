@@ -243,34 +243,34 @@ const AdminSecurityPanel: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-8">
+            <div className="bg-theme-panel border border-theme-border rounded-2xl p-8">
                 <div className="flex items-center gap-4 mb-6">
                     <div className="w-12 h-12 bg-red-500/10 text-red-500 rounded-xl flex items-center justify-center">
                         <Shield size={24} />
                     </div>
                     <div>
-                        <h2 className="text-xl font-bold text-white">Critical Security</h2>
-                        <p className="text-neutral-400 text-sm mt-1">Manage access control and credentials</p>
+                        <h2 className="text-xl font-bold text-theme-text">Critical Security</h2>
+                        <p className="text-theme-muted text-sm mt-1">Manage access control and credentials</p>
                     </div>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     {/* Change Password Section */}
-                    <div className="bg-black/20 border border-neutral-800 rounded-xl p-6 h-full">
+                    <div className="bg-theme-bg border border-theme-border rounded-xl p-6 h-full">
                         <div className="flex items-center gap-3 mb-6">
-                            <Key size={20} className="text-neutral-400" />
-                            <h3 className="font-bold text-white">Change Admin Password</h3>
+                            <Key size={20} className="text-theme-muted" />
+                            <h3 className="font-bold text-theme-text">Change Admin Password</h3>
                         </div>
 
                         <form onSubmit={handlePasswordChange} className="space-y-4">
                             <div className="space-y-2">
-                                <label className="text-xs text-neutral-500 font-medium">NEW PASSWORD</label>
+                                <label className="text-xs text-theme-muted font-medium uppercase tracking-wider">New Password</label>
                                 <div className="relative">
                                     <input
                                         type={showPassword ? "text" : "password"}
                                         value={newPassword}
                                         onChange={(e) => setNewPassword(e.target.value)}
-                                        className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-indigo-500 transition-colors"
+                                        className="w-full bg-theme-panel border border-theme-border rounded-lg px-4 py-2 text-theme-text focus:outline-none focus:border-indigo-500 transition-colors"
                                         placeholder="Enter new strong password"
                                     />
                                     <button
@@ -285,16 +285,16 @@ const AdminSecurityPanel: React.FC = () => {
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-xs text-neutral-500 font-medium">CONFIRM NEW PASSWORD</label>
+                                <label className="text-xs text-theme-muted font-medium uppercase tracking-wider">Confirm New Password</label>
                                 <div className="relative">
                                     <input
                                         type={showPassword ? "text" : "password"}
                                         value={confirmPassword}
                                         onChange={(e) => setConfirmPassword(e.target.value)}
-                                        className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-indigo-500 transition-colors"
+                                        className="w-full bg-theme-panel border border-theme-border rounded-lg px-4 py-2 text-theme-text focus:outline-none focus:border-indigo-500 transition-colors"
                                         placeholder="Confirm new password"
                                     />
-                                    <Lock size={16} className="absolute right-3 top-2.5 text-neutral-500" />
+                                    <Lock size={16} className="absolute right-3 top-2.5 text-theme-muted" />
                                 </div>
                             </div>
 
@@ -313,16 +313,16 @@ const AdminSecurityPanel: React.FC = () => {
 
                     {/* Session & Access Control */}
                     {settings && (
-                        <div className="bg-black/20 border border-neutral-800 rounded-xl p-6 h-full flex flex-col">
+                        <div className="bg-theme-bg border border-theme-border rounded-xl p-6 h-full flex flex-col">
                             <div className="flex items-center gap-3 mb-6">
-                                <Lock size={20} className="text-neutral-400" />
-                                <h3 className="font-bold text-white">Access Policy</h3>
+                                <Lock size={20} className="text-theme-muted" />
+                                <h3 className="font-bold text-theme-text">Access Policy</h3>
                             </div>
 
                             <div className="space-y-6 flex-1">
                                 {/* Session Timeout Controls */}
                                 <div>
-                                    <label className="text-xs text-neutral-500 font-medium mb-2 block">SESSION TIMEOUT</label>
+                                    <label className="text-xs text-theme-muted font-medium mb-2 block uppercase tracking-wider">Session Timeout</label>
                                     <div className="flex items-center gap-2">
                                         <div className="relative flex-1">
                                             <input
@@ -330,10 +330,10 @@ const AdminSecurityPanel: React.FC = () => {
                                                 value={timeoutVal}
                                                 onChange={(e) => setTimeoutVal(e.target.value === '' ? '' : parseInt(e.target.value))}
                                                 disabled={timeoutUnit === 'never'}
-                                                className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-indigo-500 transition-colors pl-10 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                className="w-full bg-theme-panel border border-theme-border rounded-lg px-4 py-2 text-theme-text focus:outline-none focus:border-indigo-500 transition-colors pl-10 disabled:opacity-50 disabled:cursor-not-allowed"
                                                 placeholder={timeoutUnit === 'never' ? 'Infinite' : 'Enter duration'}
                                             />
-                                            <Clock size={16} className="absolute left-3 top-2.5 text-neutral-500" />
+                                            <Clock size={16} className="absolute left-3 top-2.5 text-theme-muted" />
                                         </div>
 
                                         <select
@@ -347,7 +347,7 @@ const AdminSecurityPanel: React.FC = () => {
                                                 if (unit === 'hours' && (timeoutVal === '' || typeof timeoutVal !== 'number')) setTimeoutVal(1);
                                                 if (unit === 'minutes' && (timeoutVal === '' || typeof timeoutVal !== 'number')) setTimeoutVal(60);
                                             }}
-                                            className="bg-neutral-900 border border-neutral-800 rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:border-indigo-500 transition-colors cursor-pointer hover:bg-neutral-800"
+                                            className="bg-theme-panel border border-theme-border rounded-lg px-4 py-2 text-theme-text text-sm focus:outline-none focus:border-indigo-500 transition-colors cursor-pointer hover:bg-theme-bg"
                                         >
                                             <option value="minutes">Minutes</option>
                                             <option value="hours">Hours</option>
@@ -363,13 +363,13 @@ const AdminSecurityPanel: React.FC = () => {
                                 </div>
 
                                 {/* 2FA Toggle */}
-                                <div className="space-y-3">
-                                    <div className="flex items-center justify-between p-3 bg-neutral-900 rounded-lg border border-neutral-800">
+                                 <div className="space-y-3">
+                                    <div className="flex items-center justify-between p-3 bg-theme-panel rounded-lg border border-theme-border">
                                         <div className="flex items-center gap-3">
                                             <Smartphone size={18} className="text-indigo-400" />
                                             <div>
-                                                <div className="text-sm font-medium text-white">Enforce 2FA</div>
-                                                <div className="text-xs text-neutral-500">Require Two-Factor Auth</div>
+                                                <div className="text-sm font-medium text-theme-text">Enforce 2FA</div>
+                                                <div className="text-xs text-theme-muted">Require Two-Factor Auth</div>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-3">
@@ -419,15 +419,15 @@ const AdminSecurityPanel: React.FC = () => {
             </div>
 
             {/* Active Sessions */}
-            <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-8">
+            <div className="bg-theme-panel border border-theme-border rounded-2xl p-8">
                 <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-4">
                         <div className="w-10 h-10 bg-indigo-500/10 text-indigo-400 rounded-xl flex items-center justify-center">
                             <Users size={20} />
                         </div>
                         <div>
-                            <h2 className="text-lg font-bold text-white">Active Sessions</h2>
-                            <p className="text-neutral-400 text-xs">Devices currently logged into admin panel</p>
+                            <h2 className="text-lg font-bold text-theme-text">Active Sessions</h2>
+                            <p className="text-theme-muted text-xs">Devices currently logged into admin panel</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -475,7 +475,7 @@ const AdminSecurityPanel: React.FC = () => {
 
                 {/* Select All Header */}
                 {sessions.length > 0 && (
-                    <div className="flex items-center gap-3 mb-4 pb-3 border-b border-neutral-800">
+                    <div className="flex items-center gap-3 mb-4 pb-3 border-b border-theme-border">
                         <input
                             type="checkbox"
                             id="select-all-sessions-admin"
@@ -521,7 +521,7 @@ const AdminSecurityPanel: React.FC = () => {
                         const isSelected = selectedSessions.has(session.id);
 
                         return (
-                            <div key={session.id} className={`flex items-center justify-between p-4 border rounded-xl transition-all ${isCurrent ? 'bg-indigo-500/5 border-indigo-500/20' : isSelected ? 'bg-red-500/10 border-red-500/30' : 'bg-black/20 border-neutral-800'}`}>
+                            <div key={session.id} className={`flex items-center justify-between p-4 border rounded-xl transition-all ${isCurrent ? 'bg-indigo-500/5 border-indigo-500/20' : isSelected ? 'bg-red-500/10 border-red-500/30' : 'bg-theme-bg border-theme-border'}`}>
                                 <div className="flex items-center gap-4">
                                     {/* Checkbox for non-current sessions */}
                                     {!isCurrent && (
@@ -541,12 +541,12 @@ const AdminSecurityPanel: React.FC = () => {
                                             className="w-4 h-4 rounded border-neutral-700 bg-neutral-800 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
                                         />
                                     )}
-                                    <div className="p-2 bg-neutral-800 rounded-full text-neutral-400">
+                                    <div className="p-2 bg-theme-panel rounded-full text-theme-muted border border-theme-border">
                                         {ua.match(/Mobile|Android|iPhone/i) ? <Smartphone size={16} /> : <ExternalLink size={16} />}
                                     </div>
                                     <div>
-                                        <h4 className="text-sm font-medium text-white max-w-[200px] truncate" title={ua}>{os}</h4>
-                                        <div className="flex items-center gap-2 text-xs text-neutral-500 mt-0.5">
+                                        <h4 className="text-sm font-medium text-theme-text max-w-[200px] truncate" title={ua}>{os}</h4>
+                                        <div className="flex items-center gap-2 text-xs text-theme-muted mt-0.5">
                                             <span>{session.ip_address}</span>
                                             {session.location && (
                                                 <>
@@ -592,8 +592,8 @@ const AdminSecurityPanel: React.FC = () => {
                         <AlertTriangle size={20} />
                     </div>
                     <div>
-                        <h4 className="font-bold text-white">Security Audit Logs</h4>
-                        <p className="text-xs text-neutral-500">View recent login activity and sensitive actions.</p>
+                        <h4 className="font-bold text-theme-text">Security Audit Logs</h4>
+                        <p className="text-xs text-theme-muted">View recent login activity and sensitive actions.</p>
                     </div>
                 </div>
                 <button
