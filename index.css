@@ -431,3 +431,29 @@ html {
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
 }
+
+/* ===== Dashboard Settings Input Fix =====
+   Scoped under .dashboard-root to avoid conflicts with storefront
+   and to work correctly in BOTH light and dark mode. */
+.dashboard-root .bg-bg {
+  background-color: var(--dashboard-bg) !important;
+}
+.dashboard-root .bg-panel {
+  background-color: var(--dashboard-panel) !important;
+}
+.dashboard-root .text-text {
+  color: var(--dashboard-text) !important;
+}
+.dashboard-root .text-muted {
+  color: var(--dashboard-muted) !important;
+}
+.dashboard-root .border-border {
+  border-color: var(--dashboard-border) !important;
+}
+
+/* All inputs inside the dashboard always get the dashboard text/bg */
+.dashboard-root input,
+.dashboard-root textarea,
+.dashboard-root select {
+  color: var(--dashboard-text) !important;
+}

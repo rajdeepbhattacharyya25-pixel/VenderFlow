@@ -110,7 +110,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView, 
           >
             <IconHeart className={compact ? "w-4 h-4" : "w-5 h-5"} fill={isWishlisted} />
           </button>
-          {(product.video || product.images?.length > 1) && (
+          {(videoMedia || (product.images?.length ?? 0) > 1) && (
             <button
               onClick={handleShare}
               className={`flex items-center justify-center rounded-full shadow-sm hover:shadow-md transition-all transform active:scale-90 bg-white dark:bg-black/90 text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary-light ${compact ? 'w-10 h-10' : 'w-11 h-11'}`}

@@ -267,7 +267,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-theme-bg transition-colors duration-300 font-sans selection:bg-indigo-500 selection:text-white pb-20 md:pb-0">
+    <div className="dashboard-root min-h-screen bg-theme-bg transition-colors duration-300 font-sans selection:bg-indigo-500 selection:text-white pb-20 md:pb-0">
 
       {/* Left Sidebar */}
       <Sidebar

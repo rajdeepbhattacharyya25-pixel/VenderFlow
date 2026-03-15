@@ -12,7 +12,6 @@ if (!rootElement) {
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    {/* @ts-expect-error next-themes typing issue with React 19 children */}
     <ThemeProvider attribute="class">
       <App />
     </ThemeProvider>

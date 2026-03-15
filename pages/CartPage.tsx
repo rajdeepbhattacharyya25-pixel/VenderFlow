@@ -121,7 +121,8 @@ const CartPage: React.FC = () => {
                 cartCount={cartItems.reduce((sum, item) => sum + item.quantity, 0)}
                 isDarkMode={document.documentElement.classList.contains('dark')}
                 toggleDarkMode={() => document.documentElement.classList.toggle('dark')}
-                branding={{ storeName: 'rajdeep' }}
+                storeName="rajdeep"
+                onSearch={() => {}}
                 products={[]}
                 onProductSelect={() => { }}
             />
@@ -142,7 +143,7 @@ const CartPage: React.FC = () => {
 
             <Footer
                 onLinkClick={() => { }}
-                branding={{ storeName: 'rajdeep' }}
+                branding={{ storeName: 'rajdeep', description: '' }}
             />
 
             <BottomNav

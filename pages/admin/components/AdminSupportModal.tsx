@@ -586,9 +586,9 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
                                                     {isAdmin && (
                                                         <div className="flex justify-end mt-1 px-1">
                                                             {msg.is_read ? (
-                                                                <CheckCheck size={14} className="text-emerald-500" title="Read" />
+                                                                <CheckCheck size={14} className="text-emerald-500" aria-label="Read" />
                                                             ) : (
-                                                                <Check size={14} className="text-neutral-400" title="Delivered" />
+                                                                <Check size={14} className="text-neutral-400" aria-label="Delivered" />
                                                             )}
                                                         </div>
                                                     )}

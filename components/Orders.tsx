@@ -157,7 +157,7 @@ export const Orders: React.FC<OrdersProps> = ({ onNavigate, onAddToCart, showToa
                             <h1 className="text-2xl md:text-3xl font-heading font-bold text-gray-900 dark:text-white">Order {selectedOrder.id}</h1>
                             <span className={`text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wide 
                             ${selectedOrder.status === 'delivered' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                                    selectedOrder.status === 'shipping' || selectedOrder.status === 'shipped' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
+                                    selectedOrder.status === 'shipped' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
                                         selectedOrder.status === 'processing' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
                                             selectedOrder.status === 'pending' ? 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400' :
                                                 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
@@ -303,8 +303,8 @@ export const Orders: React.FC<OrdersProps> = ({ onNavigate, onAddToCart, showToa
                                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{order.date}</p>
                                     </div>
                                     <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide 
-                                ${order.status === 'Delivered' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                                            order.status === 'Processing' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
+                                ${order.status === 'delivered' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                                            order.status === 'processing' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
                                                 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
                                         {order.status}
                                     </span>
@@ -314,7 +314,7 @@ export const Orders: React.FC<OrdersProps> = ({ onNavigate, onAddToCart, showToa
                                 <div className="flex gap-2 mb-4 overflow-x-auto hide-scroll py-2">
                                     {order.items.map((item, i) => (
                                         <div key={i} className="w-14 h-14 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700 flex items-center justify-center shrink-0 p-1">
-                                            <img src={item.image} alt={item.product_name} className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal opacity-90" />
+                                            <img src={item.image} alt={item.name} className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal opacity-90" />
                                         </div>
                                     ))}
                                 </div>

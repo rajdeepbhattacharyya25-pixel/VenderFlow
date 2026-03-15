@@ -24,10 +24,10 @@ interface RotatingTextProps {
     mainClassName?: string;
     splitLevelClassName?: string;
     elementLevelClassName?: string;
-    [key: string]: unknown;
+    [key: string]: any;
 }
 
-const RotatingText = forwardRef<unknown, RotatingTextProps>((props, ref) => {
+const RotatingText = forwardRef<any, RotatingTextProps>((props, ref) => {
     const {
         texts,
         transition = { type: 'spring', damping: 25, stiffness: 300 },
