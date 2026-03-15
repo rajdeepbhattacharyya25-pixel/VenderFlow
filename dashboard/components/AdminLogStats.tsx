@@ -90,20 +90,20 @@ const AdminLogStats: React.FC<AdminLogStatsProps> = ({ logs }) => {
     return (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             {/* Activity Chart */}
-            <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6">
+            <div className="bg-theme-panel border border-theme-border rounded-2xl p-6">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-indigo-500/10 text-indigo-400 rounded-xl flex items-center justify-center">
+                        <div className="w-10 h-10 bg-indigo-500/10 text-indigo-500 rounded-xl flex items-center justify-center">
                             <Activity size={20} />
                         </div>
                         <div>
-                            <h3 className="font-bold text-white">Activity Volume</h3>
+                            <h3 className="font-bold text-theme-text">Activity Volume</h3>
                             <div className="flex items-center gap-2 mt-1">
                                 <select
                                     value={dateRange}
                                     onChange={(e) => setDateRange(e.target.value as any)}
                                     aria-label="Date range filter"
-                                    className="bg-neutral-800 border-none text-xs text-neutral-400 rounded-lg py-1 pl-2 pr-6 focus:ring-1 focus:ring-indigo-500 cursor-pointer"
+                                    className="bg-theme-bg border border-theme-border text-xs text-theme-muted rounded-lg py-1 pl-2 pr-6 focus:ring-1 focus:ring-indigo-500 cursor-pointer"
                                 >
                                     <option value="7d">Last 7 Days</option>
                                     <option value="30d">Last 30 Days</option>
@@ -114,21 +114,21 @@ const AdminLogStats: React.FC<AdminLogStatsProps> = ({ logs }) => {
                     </div>
 
                     {dateRange === 'custom' && (
-                        <div className="flex items-center gap-2 bg-neutral-800 p-1.5 rounded-lg border border-neutral-700">
+                        <div className="flex items-center gap-2 bg-theme-bg p-1.5 rounded-lg border border-theme-border">
                             <input
                                 type="date"
                                 value={customStart}
                                 onChange={(e) => setCustomStart(e.target.value)}
                                 aria-label="Custom start date"
-                                className="bg-transparent text-xs text-white border-none focus:ring-0 p-0 w-24"
+                                className="bg-transparent text-xs text-theme-text border-none focus:ring-0 p-0 w-24"
                             />
-                            <span className="text-neutral-500">-</span>
+                            <span className="text-theme-muted">-</span>
                             <input
                                 type="date"
                                 value={customEnd}
                                 onChange={(e) => setCustomEnd(e.target.value)}
                                 aria-label="Custom end date"
-                                className="bg-transparent text-xs text-white border-none focus:ring-0 p-0 w-24"
+                                className="bg-transparent text-xs text-theme-text border-none focus:ring-0 p-0 w-24"
                             />
                         </div>
                     )}
@@ -136,25 +136,30 @@ const AdminLogStats: React.FC<AdminLogStatsProps> = ({ logs }) => {
                 <div className="h-64 w-full">
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={activityData}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#262626" vertical={false} />
+                            <CartesianGrid strokeDasharray="3 3" stroke="var(--dashboard-muted)" strokeOpacity={0.2} vertical={false} />
                             <XAxis
                                 dataKey="date"
-                                stroke="#737373"
-                                fontSize={12}
+                                stroke="var(--dashboard-muted)"
+                                fontSize={10}
                                 tickLine={false}
                                 axisLine={false}
                             />
                             <YAxis
-                                stroke="#737373"
-                                fontSize={12}
+                                stroke="var(--dashboard-muted)"
+                                fontSize={10}
                                 tickLine={false}
                                 axisLine={false}
                                 allowDecimals={false}
                             />
                             <Tooltip
-                                contentStyle={{ backgroundColor: '#171717', border: '1px solid #262626', borderRadius: '8px', color: '#fff' }}
-                                itemStyle={{ color: '#fff' }}
-                                cursor={{ fill: '#262626' }}
+                                contentStyle={{ 
+                                    backgroundColor: 'var(--dashboard-panel)', 
+                                    border: '1px solid var(--dashboard-border)', 
+                                    borderRadius: '12px', 
+                                    color: 'var(--dashboard-text)' 
+                                }}
+                                itemStyle={{ color: 'var(--dashboard-text)' }}
+                                cursor={{ fill: 'var(--dashboard-bg)', opacity: 0.4 }}
                             />
                             <Bar dataKey="count" fill="#6366f1" radius={[4, 4, 0, 0]} />
                         </BarChart>
@@ -163,14 +168,14 @@ const AdminLogStats: React.FC<AdminLogStatsProps> = ({ logs }) => {
             </div>
 
             {/* Distribution Chart */}
-            <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6">
+            <div className="bg-theme-panel border border-theme-border rounded-2xl p-6">
                 <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 bg-emerald-500/10 text-emerald-400 rounded-xl flex items-center justify-center">
+                    <div className="w-10 h-10 bg-emerald-500/10 text-emerald-500 rounded-xl flex items-center justify-center">
                         <PieIcon size={20} />
                     </div>
                     <div>
-                        <h3 className="font-bold text-white">Action Types</h3>
-                        <p className="text-xs text-neutral-400">Distribution by category</p>
+                        <h3 className="font-bold text-theme-text">Action Types</h3>
+                        <p className="text-xs text-theme-muted">Distribution by category</p>
                     </div>
                 </div>
                 <div className="h-64 w-full">
@@ -190,14 +195,14 @@ const AdminLogStats: React.FC<AdminLogStatsProps> = ({ logs }) => {
                                 ))}
                             </Pie>
                             <Tooltip
-                                contentStyle={{ backgroundColor: '#171717', border: '1px solid #262626', borderRadius: '8px', color: '#fff' }}
-                                itemStyle={{ color: '#fff' }}
+                                contentStyle={{ backgroundColor: 'var(--dashboard-panel)', border: '1px solid var(--dashboard-border)', borderRadius: '12px', color: 'var(--dashboard-text)' }}
+                                itemStyle={{ color: 'var(--dashboard-text)' }}
                             />
                             <Legend
                                 verticalAlign="bottom"
                                 height={36}
                                 iconType="circle"
-                                formatter={(value) => <span className="text-sm text-neutral-400 ml-1">{value}</span>}
+                                formatter={(value) => <span className="text-sm text-theme-muted ml-1">{value}</span>}
                             />
                         </PieChart>
                     </ResponsiveContainer>

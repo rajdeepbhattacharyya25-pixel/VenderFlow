@@ -230,9 +230,9 @@ export const PricingSection = () => {
                     </motion.div>
                 </div>
 
-                <div className="flex md:grid md:grid-cols-3 gap-6 max-w-6xl mx-auto overflow-x-auto pb-8 px-4 scroll-smooth snap-x snap-mandatory no-scrollbar md:overflow-visible md:pb-0 md:px-0">
+                <div className="flex md:grid md:grid-cols-3 gap-4 max-w-6xl mx-auto overflow-x-auto pb-8 px-4 scroll-smooth snap-x snap-mandatory no-scrollbar md:overflow-visible md:pb-0 md:px-0">
                     {plans.map((plan, index) => (
-                        <div key={plan.name} className="min-w-[85vw] md:min-w-0 snap-center shrink-0 md:shrink md:flex">
+                        <div key={plan.name} className="min-w-[80vw] md:min-w-0 snap-center shrink-0 md:shrink md:flex">
                             <PricingCard plan={plan} index={index} isAnnual={isAnnual} />
                         </div>
                     ))}

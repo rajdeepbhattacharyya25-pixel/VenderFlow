@@ -19,6 +19,7 @@ import DecryptedText from '../components/react-bits/DecryptedText';
 import RotatingText from '../components/react-bits/RotatingText';
 import ScrollVelocity from '../components/react-bits/ScrollVelocity';
 import FloatingCollage from '../components/FloatingCollage';
+import { CustomCursor } from '../components/CustomCursor';
 
 // Helper: race a promise against a timeout
 function withTimeout<T>(promise: Promise<T> | PromiseLike<T>, ms: number, label = 'Operation'): Promise<T> {
@@ -170,6 +171,7 @@ export default function LandingPage() {
     return (
         <ClickSpark sparkColor='#ccff00' sparkSize={10} sparkRadius={15} sparkCount={8} duration={400}>
             <div ref={containerRef} className="bg-[#050505] min-h-screen text-white font-body overflow-x-clip selection:bg-[#ccff00] selection:text-black">
+                <CustomCursor />
                 {/* Optimized Noise Texture Overlay - 3.5% Opacity Matte Look */}
                 <div
                     className="fixed inset-0 pointer-events-none opacity-[0.035] z-[60] contrast-[1.1]"
@@ -300,7 +302,7 @@ export default function LandingPage() {
                             />
                         </div>
 
-                        <h1 className="hero-element font-orbitron font-bold text-6xl sm:text-7xl md:text-8xl lg:text-[120px] leading-[0.9] tracking-tighter uppercase mb-6 flex flex-col">
+                        <h1 className="hero-element font-orbitron font-bold text-5xl sm:text-7xl md:text-8xl lg:text-[120px] leading-[0.9] tracking-tighter uppercase mb-6 flex flex-col">
                             <SplitText
                                 text="Scale Without"
                                 className="hero-text-top block text-white/90"
@@ -392,7 +394,7 @@ export default function LandingPage() {
                 </div>
 
                 {/* Mobile-Optimized CTA */}
-                <section className="py-16 sm:py-24 px-4 border-t border-white/10 relative overflow-hidden group">
+                <section className="py-12 sm:py-24 px-4 border-t border-white/10 relative overflow-hidden group">
                     <div className="absolute inset-0 z-0 transition-opacity duration-1000 pointer-events-none">
                         <div className="w-full h-full relative pointer-events-auto opacity-80 hidden sm:block">
                             <LiquidEther
@@ -432,7 +434,7 @@ export default function LandingPage() {
                             />
                         </div>
                         <p className="text-white/50 mb-8 max-w-xl mx-auto text-base sm:text-lg font-light">
-                            Join the curated network of high-volume merchants. Elevate your brand today.
+                            Everything you need to sell online. Elevate your brand today.
                         </p>
 
                         <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto px-4 sm:px-0">

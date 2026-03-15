@@ -144,7 +144,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, isMobile, activeTab, setAc
       )}
 
       <aside
-        className={`fixed top-0 left-0 h-full bg-[#1a1c2e] border-r border-white/5 z-40 transition-all duration-300 ease-in-out flex flex-col shadow-2xl
+        className={`fixed top-0 left-0 h-full bg-theme-panel border-r border-theme-border/50 z-40 transition-all duration-300 ease-in-out flex flex-col shadow-2xl
           ${isMobile
             ? (collapsed ? '-translate-x-full' : 'translate-x-0 w-[260px]')
             : (collapsed ? 'w-[180px]' : 'w-[260px]')
@@ -152,10 +152,10 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, isMobile, activeTab, setAc
         `}
       >
         {/* Logo Area */}
-        <div className={`h-[70px] flex items-center px-4 border-b border-white/5`}>
+        <div className={`h-[70px] flex items-center px-4 border-b border-theme-border/50`}>
           <button
             onClick={() => setActiveTab('dashboard')}
-            className="flex items-center gap-2.5 text-luxury-text font-heading font-bold tracking-tight hover:opacity-80 transition-opacity text-left w-full group min-w-0"
+            className="flex items-center gap-2.5 text-theme-text font-heading font-bold tracking-tight hover:opacity-80 transition-opacity text-left w-full group min-w-0"
           >
             <div className="relative flex-shrink-0">
               <img
@@ -164,7 +164,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, isMobile, activeTab, setAc
                 className="w-8 h-8 md:w-10 md:h-10 rounded-lg object-cover shadow-soft group-hover:shadow-glow transition-shadow duration-300"
               />
             </div>
-            <span className="truncate uppercase tracking-widest text-xs md:text-sm text-white">
+            <span className="truncate uppercase tracking-widest text-xs md:text-sm text-theme-text">
               {storeName || 'VendorFlow'}
             </span>
           </button>
@@ -188,8 +188,8 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, isMobile, activeTab, setAc
                         relative flex items-center h-11 rounded-lg transition-all duration-300 group overflow-hidden
                         ${collapsed ? 'justify-start w-full px-3' : 'px-4 w-full'}
                         ${isActive
-                    ? 'bg-white/10 text-white translate-x-1'
-                    : 'text-slate-400 hover:bg-white/5 hover:text-white hover:translate-x-1'
+                    ? 'bg-theme-bg text-theme-text translate-x-1'
+                    : 'text-theme-muted hover:bg-theme-bg/50 hover:text-theme-text hover:translate-x-1'
                   }
                     `}
               >
@@ -202,7 +202,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, isMobile, activeTab, setAc
                     className="flex-shrink-0"
                   />
                   {showBadge && (
-                    <span className="absolute -top-1 left-3 w-2 h-2 bg-red-500 rounded-full animate-pulse border-2 border-luxury-card" />
+                    <span className="absolute -top-1 left-3 w-2 h-2 bg-red-500 rounded-full animate-pulse border-2 border-theme-panel" />
                   )}
 
                   <span className="text-[12px] font-medium whitespace-nowrap truncate">
@@ -212,12 +212,12 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, isMobile, activeTab, setAc
 
                 {/* Active Indicator Line */}
                 {isActive && collapsed && (
-                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-white rounded-r-full" />
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-theme-text rounded-r-full" />
                 )}
 
                 {/* Tooltip for collapsed state */}
                 {collapsed && (
-                  <div className="absolute left-full ml-3 px-3 py-1.5 bg-luxury-text text-luxury-bg text-xs font-bold rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-xl">
+                  <div className="absolute left-full ml-3 px-3 py-1.5 bg-theme-text text-theme-bg text-xs font-bold rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-xl">
                     {item.label}
                   </div>
                 )}
@@ -225,18 +225,18 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, isMobile, activeTab, setAc
             );
           })}
 
-          <div className="mt-auto flex flex-col gap-2 pt-6 border-t border-white/5">
+          <div className="mt-auto flex flex-col gap-2 pt-6 border-t border-theme-border/50">
             {sellerSlug && (
               <a
                 href={`/store/${sellerSlug}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-3 h-11 rounded-lg transition-all duration-200 w-full group text-slate-400 hover:text-white hover:bg-white/5 px-3"
+                className="flex items-center gap-3 h-11 rounded-lg transition-all duration-200 w-full group text-theme-muted hover:text-theme-text hover:bg-theme-bg px-3"
                 title="View Storefront"
               >
                 <div className="relative flex-shrink-0">
                   <AnimatedIcon icon={ShoppingBag} animation="bounce" trigger="hover" size={18} className="flex-shrink-0" />
-                  <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-green-500 border-2 border-luxury-card"></div>
+                  <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-green-500 border-2 border-theme-panel"></div>
                 </div>
                 <span className="text-[12px] font-medium whitespace-nowrap truncate">View Store</span>
               </a>
@@ -244,12 +244,13 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, isMobile, activeTab, setAc
 
             <button
               onClick={handleLogout}
-              className="flex items-center gap-3 h-11 rounded-lg transition-all duration-200 w-full group text-slate-400 hover:text-red-400 hover:bg-red-500/10 px-3"
+              className="flex items-center gap-3 h-11 rounded-lg transition-all duration-200 w-full group text-theme-muted hover:text-red-500 hover:bg-red-500/10 px-3"
             >
               <AnimatedIcon icon={LogOut} animation="tilt" trigger="hover" size={18} className="flex-shrink-0" />
               <span className="text-[12px] font-medium whitespace-nowrap">Logout</span>
             </button>
           </div>
+
 
         </nav>
 

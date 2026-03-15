@@ -35,12 +35,16 @@ export const useAutoBackup = (enableAuto = true) => {
 
         const { data: products } = await supabase.from('products').select('*').eq('seller_id', user.id);
         const { data: orders } = await supabase.from('orders').select('*').eq('seller_id', user.id);
+        const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+        const { data: categories } = await supabase.from('categories').select('*'); // Assuming categories are global or linked
 
         return {
             date: new Date().toISOString(),
             seller_id: user.id,
+            profile,
             products,
-            orders
+            orders,
+            categories
         };
     };
 
@@ -116,6 +120,33 @@ export const useAutoBackup = (enableAuto = true) => {
         }
     };
 
+    const downloadCSVBackup = async () => {
+        try {
+            const { jsonToCSV } = await import('../dashboard/lib/vault-utils');
+            setIsBackupRunning(true);
+            const backupData = await generateBackupData();
+            
+            // For CSV, we'll download products as primary focus
+            const csv = jsonToCSV(backupData.products || []);
+            const fileName = `store_products_export_${new Date().toISOString().split('T')[0]}.csv`;
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error("CSV download failed", error);
+            alert("Failed to generate CSV export");
+        } finally {
+            setIsBackupRunning(false);
+        }
+    };
+
     const connectAndBackup = async () => {
         try {
             await signInToGoogle();
@@ -125,5 +156,5 @@ export const useAutoBackup = (enableAuto = true) => {
         }
     };
 
-    return { isBackupRunning, backupStatus, lastBackupDate, connectAndBackup, performBackup, downloadLocalBackup };
+    return { isBackupRunning, backupStatus, lastBackupDate, connectAndBackup, performBackup, downloadLocalBackup, downloadCSVBackup };
 };

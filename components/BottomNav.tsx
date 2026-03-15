@@ -66,17 +66,17 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             >
               {/* Active indicator bar */}
               {isActive && (
-                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-5 h-0.5 bg-emerald-500 dark:bg-emerald-400 rounded-full" />
+                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-5 h-0.5 bg-[#ccff00] rounded-full" />
               )}
 
               {/* Icon with badge */}
               <span className="relative">
                 <Icon
-                  className={`w-[22px] h-[22px] transition-all duration-150 ${isActive ? 'stroke-[2.5]' : 'stroke-[1.8]'}`}
+                  className={`w-[22px] h-[22px] transition-all duration-150 ${isActive ? 'stroke-[2.5] text-[#ccff00]' : 'stroke-[1.8]'}`}
                   fill={isActive && id === 'wishlist' ? 'currentColor' : 'none'}
                 />
                 {badge > 0 && (
-                  <span className="absolute -top-1.5 -right-2.5 min-w-[16px] h-[16px] flex items-center justify-center bg-emerald-600 text-white text-[9px] font-bold rounded-full px-1 border-2 border-white dark:border-neutral-950 animate-in zoom-in duration-200">
+                  <span className="absolute -top-1.5 -right-2.5 min-w-[16px] h-[16px] flex items-center justify-center bg-[#ccff00] text-black text-[9px] font-bold rounded-full px-1 border-2 border-white dark:border-neutral-950 animate-in zoom-in duration-200">
                     {badge > 99 ? '99+' : badge}
                   </span>
                 )}

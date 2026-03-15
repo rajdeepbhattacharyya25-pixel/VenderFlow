@@ -99,7 +99,7 @@ const PlatformConfigPanel: React.FC = () => {
     };
 
     if (loading) {
-        return <div className="animate-pulse bg-neutral-900 h-64 rounded-2xl border border-neutral-800"></div>;
+        return <div className="animate-pulse bg-theme-panel h-64 rounded-2xl border border-theme-border"></div>;
     }
 
     if (!settings) return null;
@@ -107,72 +107,72 @@ const PlatformConfigPanel: React.FC = () => {
     return (
         <div className="space-y-6">
             {/* Financial Logic */}
-            <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-8">
+            <div className="bg-theme-panel border border-theme-border rounded-2xl p-8">
                 <div className="flex items-center gap-4 mb-6">
-                    <div className="w-12 h-12 bg-green-500/10 text-green-400 rounded-xl flex items-center justify-center">
+                    <div className="w-12 h-12 bg-green-500/10 text-green-500 rounded-xl flex items-center justify-center">
                         <IndianRupee size={24} />
                     </div>
                     <div>
-                        <h2 className="text-xl font-bold text-white">Financials & Business Logic</h2>
-                        <p className="text-neutral-400 text-sm mt-1">Control commissions and payouts</p>
+                        <h2 className="text-xl font-bold text-theme-text">Financials & Business Logic</h2>
+                        <p className="text-theme-muted text-sm mt-1">Control commissions and payouts</p>
                     </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label className="block text-sm font-medium text-neutral-400 mb-2">Platform Commission (%)</label>
+                        <label className="block text-sm font-medium text-theme-muted mb-2">Platform Commission (%)</label>
                         <div className="relative">
                             <input
                                 type="number"
                                 value={settings.commission_rate}
                                 onChange={(e) => setSettings({ ...settings, commission_rate: parseFloat(e.target.value) })}
-                                className="w-full bg-black/20 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors pl-10"
+                                className="w-full bg-theme-bg border border-theme-border rounded-xl px-4 py-3 text-theme-text focus:outline-none focus:border-indigo-500 transition-colors pl-10"
                                 placeholder="5.0"
                             />
-                            <CreditCard size={16} className="absolute left-3 top-3.5 text-neutral-500" />
+                            <CreditCard size={16} className="absolute left-3 top-3.5 text-theme-muted" />
                         </div>
-                        <p className="text-xs text-neutral-500 mt-2">Percentage taken from every successful sale.</p>
+                        <p className="text-xs text-theme-muted mt-2">Percentage taken from every successful sale.</p>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-neutral-400 mb-2">Min. Payout Threshold (₹)</label>
+                        <label className="block text-sm font-medium text-theme-muted mb-2">Min. Payout Threshold (₹)</label>
                         <div className="relative">
                             <input
                                 type="number"
                                 value={settings.min_payout_amount}
                                 onChange={(e) => setSettings({ ...settings, min_payout_amount: parseFloat(e.target.value) })}
-                                className="w-full bg-black/20 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors pl-10"
+                                className="w-full bg-theme-bg border border-theme-border rounded-xl px-4 py-3 text-theme-text focus:outline-none focus:border-indigo-500 transition-colors pl-10"
                                 placeholder="500"
                             />
-                            <IndianRupee size={16} className="absolute left-3 top-3.5 text-neutral-500" />
+                            <IndianRupee size={16} className="absolute left-3 top-3.5 text-theme-muted" />
                         </div>
-                        <p className="text-xs text-neutral-500 mt-2">Minimum earnings required for sellers to withdraw.</p>
+                        <p className="text-xs text-theme-muted mt-2">Minimum earnings required for sellers to withdraw.</p>
                     </div>
                 </div>
             </div>
 
             {/* System Health & Maintenance */}
-            <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-8">
+            <div className="bg-theme-panel border border-theme-border rounded-2xl p-8">
                 <div className="flex items-center gap-4 mb-6">
-                    <div className="w-12 h-12 bg-amber-500/10 text-amber-400 rounded-xl flex items-center justify-center">
+                    <div className="w-12 h-12 bg-amber-500/10 text-amber-500 rounded-xl flex items-center justify-center">
                         <ShieldAlert size={24} />
                     </div>
                     <div>
-                        <h2 className="text-xl font-bold text-white">System Health & Maintenance</h2>
-                        <p className="text-neutral-400 text-sm mt-1">Status controls and global announcements</p>
+                        <h2 className="text-xl font-bold text-theme-text">System Health & Maintenance</h2>
+                        <p className="text-theme-muted text-sm mt-1">Status controls and global announcements</p>
                     </div>
                 </div>
 
                 <div className="space-y-6">
                     {/* Maintenance Mode Toggle */}
-                    <div className="flex items-center justify-between p-4 bg-black/20 border border-neutral-800 rounded-xl hover:border-neutral-700 transition-all">
+                    <div className="flex items-center justify-between p-4 bg-theme-bg border border-theme-border rounded-xl hover:border-theme-border transition-all">
                         <div className="flex items-center gap-4">
-                            <div className={`p-2 rounded-lg ${settings.maintenance_mode ? 'bg-red-500/20 text-red-400' : 'bg-green-500/10 text-green-400'}`}>
+                            <div className={`p-2 rounded-lg ${settings.maintenance_mode ? 'bg-red-500/20 text-red-500' : 'bg-green-500/10 text-green-500'}`}>
                                 <Lock size={20} />
                             </div>
                             <div>
-                                <h4 className="font-bold text-white">Maintenance Mode</h4>
-                                <p className="text-xs text-neutral-500">
+                                <h4 className="font-bold text-theme-text">Maintenance Mode</h4>
+                                <p className="text-xs text-theme-muted">
                                     {settings.maintenance_mode
                                         ? "Active: Store is locked for customers."
                                         : "Inactive: Store is live and accessible."}
@@ -181,7 +181,7 @@ const PlatformConfigPanel: React.FC = () => {
                         </div>
                         <button
                             onClick={() => setSettings({ ...settings, maintenance_mode: !settings.maintenance_mode })}
-                            className={`w-14 h-7 rounded-full p-1 transition-colors ${settings.maintenance_mode ? 'bg-red-500' : 'bg-neutral-700'}`}
+                            className={`w-14 h-7 rounded-full p-1 transition-colors ${settings.maintenance_mode ? 'bg-red-500' : 'bg-theme-muted'}`}
                             aria-label="Toggle maintenance mode"
                         >
                             <div className={`w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${settings.maintenance_mode ? 'translate-x-7' : 'translate-x-0'}`} />
@@ -190,17 +190,17 @@ const PlatformConfigPanel: React.FC = () => {
 
                     {/* Announcement Banner */}
                     <div>
-                        <label className="block text-sm font-medium text-neutral-400 mb-2">Global Announcement Banner</label>
+                        <label className="block text-sm font-medium text-theme-muted mb-2">Global Announcement Banner</label>
                         <div className="relative">
                             <textarea
                                 value={settings.announcement_message || ''}
                                 onChange={(e) => setSettings({ ...settings, announcement_message: e.target.value })}
-                                className="w-full bg-black/20 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors pl-10 min-h-[80px]"
+                                className="w-full bg-theme-bg border border-theme-border rounded-xl px-4 py-3 text-theme-text focus:outline-none focus:border-indigo-500 transition-colors pl-10 min-h-[80px]"
                                 placeholder="e.g., Scheduled maintenance on Sunday at 3 AM..."
                             />
-                            <Globe size={16} className="absolute left-3 top-3.5 text-neutral-500" />
+                            <Globe size={16} className="absolute left-3 top-3.5 text-theme-muted" />
                         </div>
-                        <p className="text-xs text-neutral-500 mt-2">This message will appear on all seller dashboards if set.</p>
+                        <p className="text-xs text-theme-muted mt-2">This message will appear on all seller dashboards if set.</p>
                     </div>
                 </div>
             </div>

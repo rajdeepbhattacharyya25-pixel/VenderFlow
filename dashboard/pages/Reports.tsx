@@ -439,7 +439,7 @@ const Reports = () => {
     }
 
     return (
-        <div className="p-6 md:p-8 max-w-[1600px] mx-auto animate-[fadeIn_0.5s_ease-out]">
+        <div className="p-4 md:p-6 lg:p-8 max-w-[1600px] mx-auto animate-[fadeIn_0.5s_ease-out]">
             {/* Deep Analysis Mode Banner */}
             {importedOrders && (
                 <div className="mb-6 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-800 rounded-xl p-4 flex items-center justify-between shadow-sm animate-[fadeIn_0.3s]">
@@ -593,9 +593,9 @@ const Reports = () => {
                                                 <stop offset="95%" stopColor="#4F46E5" stopOpacity={0} />
                                             </linearGradient>
                                         </defs>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#374151" opacity={0.15} />
-                                        <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#6B7280' }} dy={10} />
-                                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#6B7280' }} tickFormatter={(v) => `₹${v}`} />
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--dashboard-muted)" opacity={0.2} />
+                                        <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--dashboard-muted)' }} dy={10} />
+                                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--dashboard-muted)' }} tickFormatter={(v) => `₹${v}`} />
                                         <Tooltip content={<CustomTooltip formatter={(v: number) => [`₹${v?.toFixed(0)}`, 'Revenue']} />} />
                                         <Area type="monotone" dataKey="revenue" stroke="#4F46E5" strokeWidth={2.5} fill="url(#overviewGradient)" dot={false} activeDot={{ r: 5, fill: '#4F46E5', strokeWidth: 2, stroke: '#fff' }} />
                                     </AreaChart>
@@ -613,9 +613,9 @@ const Reports = () => {
                                                 <stop offset="100%" stopColor="#818CF8" stopOpacity={0.6} />
                                             </linearGradient>
                                         </defs>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#374151" opacity={0.15} />
-                                        <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#6B7280' }} dy={10} />
-                                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#6B7280' }} allowDecimals={false} />
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--dashboard-muted)" opacity={0.2} />
+                                        <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--dashboard-muted)' }} dy={10} />
+                                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--dashboard-muted)' }} allowDecimals={false} />
                                         <Tooltip content={<CustomTooltip formatter={(v: number) => [v, 'Orders']} />} cursor={{ fill: 'rgba(99, 102, 241, 0.05)' }} />
                                         <Bar dataKey="orders" fill="url(#ordersBarGradient)" radius={[6, 6, 0, 0]} />
                                     </BarChart>
@@ -710,9 +710,9 @@ const Reports = () => {
                                                 <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
                                             </linearGradient>
                                         </defs>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#374151" opacity={0.15} />
-                                        <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#6B7280' }} dy={10} />
-                                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#6B7280' }} tickFormatter={(v) => `₹${v}`} />
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--dashboard-muted)" opacity={0.2} />
+                                        <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--dashboard-muted)' }} dy={10} />
+                                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--dashboard-muted)' }} tickFormatter={(v) => `₹${v}`} />
                                         <Tooltip content={<CustomTooltip formatter={(v: number) => [`₹${v?.toFixed(0)}`, 'Revenue']} />} />
                                         <Area type="monotone" dataKey="revenue" stroke="#6366f1" strokeWidth={2.5} fill="url(#revenueGradient)" dot={false} activeDot={{ r: 5, fill: '#6366f1', strokeWidth: 2, stroke: '#fff' }} />
                                     </AreaChart>
@@ -812,20 +812,20 @@ const Reports = () => {
                                                 const refundRate = totalUnits > 0 ? (product.refunded_units / totalUnits) * 100 : 0;
                                                 const asp = product.units > 0 ? (product.revenue / product.units) : 0;
                                                 const contrib = revenueStats.gross > 0 ? (product.revenue / revenueStats.gross) * 100 : 0;
-                                                const maxUnits = topProducts[0]?.units || 1;
+                                                const maxUnits = ((topProducts as any)[0] as any)?.units || 1;
 
                                                 return (
                                                     <tr key={idx} className="border-b border-neutral-100 dark:border-white/[0.04] hover:bg-indigo-50/50 dark:hover:bg-white/[0.02] transition-colors">
                                                         <td className="py-4 px-4">
                                                             <div className="flex items-center gap-3">
-                                                                <span className="text-xs font-bold text-gray-400 w-5">{idx + 1}</span>
-                                                                <span className="font-medium text-sm text-gray-900 dark:text-white">{product.name}</span>
+                                                                <span className="text-xs font-bold text-theme-muted w-5">{idx + 1}</span>
+                                                                <span className="font-medium text-sm text-theme-text">{product.name}</span>
                                                             </div>
                                                         </td>
                                                         <td className="py-4 px-4 text-right">
                                                             <div className="flex items-center justify-end gap-2">
-                                                                <span className="text-sm font-medium text-gray-600 dark:text-gray-300">{product.units.toLocaleString()}</span>
-                                                                <div className="w-12 h-1.5 bg-neutral-200 dark:bg-neutral-700 rounded-full overflow-hidden">
+                                                                <span className="text-sm font-medium text-theme-text opacity-80">{product.units.toLocaleString()}</span>
+                                                                <div className="w-12 h-1.5 bg-theme-border/20 rounded-full overflow-hidden">
                                                                     <div className="h-full bg-indigo-400 rounded-full" style={{ width: `${(product.units / maxUnits) * 100}%` }} />
                                                                 </div>
                                                             </div>
@@ -870,9 +870,9 @@ const Reports = () => {
                                                     <stop offset="100%" stopColor="#22d3ee" />
                                                 </linearGradient>
                                             </defs>
-                                            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#374151" opacity={0.1} />
-                                            <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#6B7280' }} tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`} />
-                                            <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#9CA3AF' }} width={80} />
+                                            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--dashboard-muted)" opacity={0.2} />
+                                            <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--dashboard-muted)' }} tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`} />
+                                            <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--dashboard-muted)' }} width={80} />
                                             <Tooltip content={<CustomTooltip formatter={(v: number) => [`₹${v?.toLocaleString()}`, 'Revenue']} />} />
                                             <Bar dataKey="revenue" fill="url(#barGradient)" radius={[0, 6, 6, 0]} />
                                         </BarChart>
@@ -960,9 +960,9 @@ const Reports = () => {
                                                 <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0} />
                                             </linearGradient>
                                         </defs>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#374151" opacity={0.1} />
-                                        <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#6B7280' }} dy={10} />
-                                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#6B7280' }} tickFormatter={(v) => `₹${v}`} />
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--dashboard-muted)" opacity={0.2} />
+                                        <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--dashboard-muted)' }} dy={10} />
+                                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--dashboard-muted)' }} tickFormatter={(v) => `₹${v}`} />
                                         <Tooltip content={<CustomTooltip formatter={(v: number, name: string) => [`₹${(v || 0).toFixed(0)}`, name === 'revenue' ? 'Daily Net' : name === 'ma3' ? '3-Day MA' : '7-Day MA']} />} />
                                         <Area type="monotone" dataKey="revenue" name="Daily Net Revenue" stroke="#94a3b8" strokeWidth={1.5} fill="none" dot={false} opacity={0.5} />
                                         <Area type="monotone" dataKey="ma3" name="3-Day Trend" stroke="#0ea5e9" strokeWidth={2} fill="url(#trendGradient3)" dot={false} activeDot={{ r: 4, fill: '#0ea5e9', strokeWidth: 2, stroke: '#fff' }} />

@@ -64,6 +64,20 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* Dashboard Theme Variables */
+  --dashboard-bg: #F5F7FA;
+  --dashboard-panel: #FFFFFF;
+  --dashboard-muted: #6B7280;
+  --dashboard-text: #111827;
+  --dashboard-border: #E5E7EB;
+  --dashboard-accent-1: #DFF8FF;
+  --dashboard-accent-2: #F1FFC8;
+  --dashboard-accent-3: #F3E9FF;
+  --dashboard-chart-line: #A7D129;
+  --dashboard-donut-online: #38BDF8;
+  --dashboard-donut-store: #1F2937;
+  --dashboard-shadow: rgba(16, 24, 40, 0.06);
 }
 
 html.dark {
@@ -77,6 +91,7 @@ html.dark {
   /* Gray 900 */
   --color-text: #F9FAFB;
   /* Gray 50 */
+  --color-status-gray: #374151;
   --color-muted: #9CA3AF;
   --color-border: #374151;
 
@@ -86,6 +101,20 @@ html.dark {
   --color-luxury-text: #F9FAFB;
   --color-luxury-accent: #10B981;
   --color-luxury-border: #374151;
+
+  /* Dashboard Dark Mode Overrides */
+  --dashboard-bg: #0B0C0E;
+  --dashboard-panel: #151619;
+  --dashboard-muted: #9CA3AF;
+  --dashboard-text: #F9FAFB;
+  --dashboard-border: #2D3B55;
+  --dashboard-accent-1: #164E63;
+  --dashboard-accent-2: #365314;
+  --dashboard-accent-3: #581C87;
+  --dashboard-chart-line: #D9F99D;
+  --dashboard-donut-online: #38BDF8;
+  --dashboard-donut-store: #334155;
+  --dashboard-shadow: rgba(0, 0, 0, 0.5);
 
   /* Explicit Dark Mode Overrides */
   .btn-primary-dark {
@@ -223,17 +252,30 @@ body {
 }
 
 @keyframes heart-pulse {
-  0% {
-    transform: scale(1);
-  }
-
-  50% {
-    transform: scale(1.05);
-  }
-
   100% {
     transform: scale(1);
   }
+}
+
+@keyframes zoomFade {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.2);
+  }
+}
+
+.animate-zoom-fade {
+  animation: zoomFade 0.6s ease-out forwards;
 }
 
 /* ===== Mobile Utilities ===== */
@@ -341,6 +383,19 @@ html {
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Dashboard Custom Theme Mapping */
+  --color-theme-bg: var(--dashboard-bg);
+  --color-theme-panel: var(--dashboard-panel);
+  --color-theme-muted: var(--dashboard-muted);
+  --color-theme-text: var(--dashboard-text);
+  --color-theme-border: var(--dashboard-border);
+  --color-theme-accent-1: var(--dashboard-accent-1);
+  --color-theme-accent-2: var(--dashboard-accent-2);
+  --color-theme-accent-3: var(--dashboard-accent-3);
+  --color-theme-chart-line: var(--dashboard-chart-line);
+  --color-theme-donut-online: var(--dashboard-donut-online);
+  --color-theme-donut-store: var(--dashboard-donut-store);
 }
 
 .dark {

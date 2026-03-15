@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import Cropper from 'react-easy-crop';
 import type { Area } from 'react-easy-crop';
 import { X, Loader2, RotateCcw, ZoomIn, Maximize, Square, Monitor, Smartphone } from 'lucide-react';
-import { uploadToImgBB } from '../../lib/imgbb';
+import { unifiedUpload, checkDuplicate } from '../../lib/vault';
 
 interface ImageEditorModalProps {
     isOpen: boolean;
@@ -101,10 +101,26 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, imageSrc, o
         try {
             const croppedFile = await getCroppedImg(imageSrc, croppedAreaPixels, rotation);
 
-            setUploadStatus('Uploading to free hosting...');
-            const hostedUrl = await uploadToImgBB(croppedFile);
+            // Pre-flight deduplication check
+            setUploadStatus('Checking vault for duplicates...');
+            const existingUrl = await checkDuplicate(croppedFile);
 
-            onComplete(hostedUrl);
+            if (existingUrl) {
+                setUploadStatus('Duplicate found — reusing!');
+                onComplete(existingUrl);
+                handleClose();
+                return;
+            }
+
+            setUploadStatus('Uploading to free hosting...');
+            const result = await unifiedUpload({
+                file: croppedFile,
+                productId: 'editor-upload', // Will be re-linked when product is saved
+                isPrimary: false,
+                mediaType: 'image',
+            });
+
+            onComplete(result.url);
             handleClose();
         } catch (err: any) {
             setError(err.message || 'Upload failed');
@@ -140,26 +156,26 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, imageSrc, o
             onClick={handleClose}
         >
             <div
-                className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-3xl max-h-[95vh] md:max-h-[92vh] flex flex-col shadow-2xl border border-gray-200 dark:border-slate-700 animate-[slideUp_0.3s_ease-out]"
+                className="bg-theme-panel rounded-2xl w-full max-w-3xl max-h-[95vh] md:max-h-[92vh] flex flex-col shadow-2xl border border-theme-border animate-[slideUp_0.3s_ease-out]"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
-                <div className="flex items-center justify-between p-4 md:p-5 border-b border-gray-100 dark:border-slate-700/50">
+                <div className="flex items-center justify-between p-4 md:p-5 border-b border-theme-border">
                     <div>
-                        <h2 className="text-base md:text-lg font-bold text-gray-900 dark:text-white">Edit Image</h2>
-                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Crop, zoom & rotate</p>
+                        <h2 className="text-base md:text-lg font-bold text-theme-text">Edit Image</h2>
+                        <p className="text-xs text-theme-muted mt-0.5">Crop, zoom & rotate</p>
                     </div>
                     <div className="flex items-center gap-1.5">
                         <button
                             onClick={handleReset}
-                            className="p-2.5 md:p-2 text-gray-400 hover:text-sky-500 rounded-lg hover:bg-sky-500/10 active:bg-sky-500/20 transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
+                            className="p-2.5 md:p-2 text-theme-muted hover:text-sky-500 rounded-lg hover:bg-sky-500/10 active:bg-sky-500/20 transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
                             title="Reset"
                         >
                             <RotateCcw size={18} />
                         </button>
                         <button
                             onClick={handleClose}
-                            className="p-2.5 md:p-2 text-gray-400 hover:text-red-500 rounded-lg hover:bg-red-500/10 active:bg-red-500/20 transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
+                            className="p-2.5 md:p-2 text-theme-muted hover:text-red-500 rounded-lg hover:bg-red-500/10 active:bg-red-500/20 transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
                             title="Close"
                         >
                             <X size={18} />
@@ -186,10 +202,10 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, imageSrc, o
                 </div>
 
                 {/* Controls */}
-                <div className="p-4 md:p-5 border-t border-gray-100 dark:border-slate-700/50 space-y-3 md:space-y-4">
+                <div className="p-4 md:p-5 border-t border-theme-border space-y-3 md:space-y-4">
                     {/* Aspect Ratio Presets */}
                     <div className="flex items-center gap-2">
-                        <span className="text-xs font-medium text-gray-500 dark:text-gray-400 w-14 md:w-16 shrink-0">Ratio</span>
+                        <span className="text-xs font-medium text-theme-muted w-14 md:w-16 shrink-0">Ratio</span>
                         <div className="flex gap-1.5 flex-wrap">
                             {ASPECT_OPTIONS.map((opt) => {
                                 const Icon = opt.icon;
@@ -199,7 +215,7 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, imageSrc, o
                                         onClick={() => setAspect(opt.value)}
                                         className={`px-3 py-2 md:py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 min-h-[36px] active:scale-95 ${aspect === opt.value
                                             ? 'bg-sky-500 text-white shadow-sm'
-                                            : 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-slate-700'
+                                            : 'bg-theme-bg text-theme-muted hover:bg-theme-bg/80'
                                             }`}
                                     >
                                         <Icon size={13} />
@@ -212,7 +228,7 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, imageSrc, o
 
                     {/* Zoom Slider */}
                     <div className="flex items-center gap-3">
-                        <span className="text-xs font-medium text-gray-500 dark:text-gray-400 w-14 md:w-16 shrink-0 flex items-center gap-1">
+                        <span className="text-xs font-medium text-theme-muted w-14 md:w-16 shrink-0 flex items-center gap-1">
                             <ZoomIn size={13} /> Zoom
                         </span>
                         <input
@@ -223,14 +239,14 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, imageSrc, o
                             step={0.05}
                             value={zoom}
                             onChange={(e) => setZoom(Number(e.target.value))}
-                            className="flex-1 h-1.5 bg-gray-200 dark:bg-slate-700 rounded-full appearance-none cursor-pointer accent-sky-500"
+                            className="flex-1 h-1.5 bg-theme-bg rounded-full appearance-none cursor-pointer accent-sky-500"
                         />
-                        <span className="text-xs font-mono text-gray-400 w-10 text-right">{zoom.toFixed(1)}x</span>
+                        <span className="text-xs font-mono text-theme-muted w-10 text-right">{zoom.toFixed(1)}x</span>
                     </div>
 
                     {/* Rotation Slider */}
                     <div className="flex items-center gap-3">
-                        <span className="text-xs font-medium text-gray-500 dark:text-gray-400 w-14 md:w-16 shrink-0 flex items-center gap-1">
+                        <span className="text-xs font-medium text-theme-muted w-14 md:w-16 shrink-0 flex items-center gap-1">
                             <RotateCcw size={13} /> Rotate
                         </span>
                         <input
@@ -241,25 +257,25 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, imageSrc, o
                             step={1}
                             value={rotation}
                             onChange={(e) => setRotation(Number(e.target.value))}
-                            className="flex-1 h-1.5 bg-gray-200 dark:bg-slate-700 rounded-full appearance-none cursor-pointer accent-sky-500"
+                            className="flex-1 h-1.5 bg-theme-bg rounded-full appearance-none cursor-pointer accent-sky-500"
                         />
-                        <span className="text-xs font-mono text-gray-400 w-10 text-right">{rotation}°</span>
+                        <span className="text-xs font-mono text-theme-muted w-10 text-right">{rotation}°</span>
                     </div>
 
                     {/* Error */}
                     {error && (
-                        <div className="p-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl text-sm text-red-600 dark:text-red-400">
+                        <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-sm text-red-500 dark:text-red-400">
                             {error}
                         </div>
                     )}
                 </div>
 
                 {/* Footer */}
-                <div className="p-4 md:p-5 border-t border-gray-100 dark:border-slate-700/50 flex items-center gap-3">
+                <div className="p-4 md:p-5 border-t border-theme-border flex items-center gap-3">
                     <button
                         onClick={handleClose}
                         disabled={uploading}
-                        className="flex-1 px-4 py-3 md:py-2.5 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-slate-700 active:bg-gray-300 transition-colors text-sm disabled:opacity-50 min-h-[48px]"
+                        className="flex-1 px-4 py-3 md:py-2.5 bg-theme-bg text-theme-text border border-theme-border rounded-xl font-semibold hover:bg-theme-bg/80 active:bg-theme-bg transition-colors text-sm disabled:opacity-50 min-h-[48px]"
                     >
                         Cancel
                     </button>

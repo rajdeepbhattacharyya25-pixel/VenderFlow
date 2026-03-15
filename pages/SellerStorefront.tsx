@@ -736,7 +736,7 @@ const SellerStorefront = () => {
 
     // Hooks for Persistence
     useCartSync(storeCustomer);
-    const { wishlistIds, toggleWishlist: syncToggle } = useWishlist(storeCustomer);
+    const { wishlistIds, toggleWishlist: syncToggle } = useWishlist(storeCustomer, sellerSlug);
 
     const toggleWishlist = async (product: Product) => {
         const isAdding = await syncToggle(product);

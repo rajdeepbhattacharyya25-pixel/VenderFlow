@@ -53,22 +53,22 @@ const KPICard: React.FC<KPICardProps> = ({
 
   const colorStyles = {
     blue: {
-      bg: 'bg-sky-50 dark:bg-sky-900/10',
-      iconBg: 'bg-white/60 dark:bg-sky-800/20',
+      bg: 'bg-theme-accent-1 dark:bg-theme-accent-1/10',
+      iconBg: 'bg-white/60 dark:bg-white/5',
       iconColor: 'text-sky-600 dark:text-sky-400',
-      border: 'border-sky-100 dark:border-sky-800/20'
+      border: 'border-theme-border/50'
     },
     yellow: {
-      bg: 'bg-lime-50 dark:bg-lime-900/10',
-      iconBg: 'bg-white/60 dark:bg-lime-800/20',
+      bg: 'bg-theme-accent-2 dark:bg-theme-accent-2/10',
+      iconBg: 'bg-white/60 dark:bg-white/5',
       iconColor: 'text-lime-700 dark:text-lime-400',
-      border: 'border-lime-100 dark:border-lime-800/20'
+      border: 'border-theme-border/50'
     },
     indigo: {
-      bg: 'bg-indigo-50 dark:bg-indigo-900/10',
-      iconBg: 'bg-white/60 dark:bg-indigo-800/20',
+      bg: 'bg-theme-accent-3 dark:bg-theme-accent-3/10',
+      iconBg: 'bg-white/60 dark:bg-white/5',
       iconColor: 'text-indigo-600 dark:text-indigo-400',
-      border: 'border-indigo-100 dark:border-indigo-800/20'
+      border: 'border-theme-border/50'
     }
   };
 
@@ -86,12 +86,12 @@ const KPICard: React.FC<KPICardProps> = ({
             <div className={`p-1 rounded-md ${styles.iconBg} ${styles.iconColor} shadow-sm`}>
               <Icon size={14} strokeWidth={2} />
             </div>
-            <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">{title}</h3>
+            <h3 className="text-[10px] font-bold uppercase tracking-wider text-theme-muted">{title}</h3>
           </div>
 
-          <div className="text-xl font-heading font-bold text-slate-800 dark:text-white tabular-nums leading-tight tracking-tight mt-0.5">
+          <div className="text-xl font-heading font-bold text-theme-text tabular-nums leading-tight tracking-tight mt-0.5">
             {loading ? (
-              <div className="h-6 w-24 bg-slate-200 dark:bg-slate-700 animate-pulse rounded my-0.5"></div>
+              <div className="h-6 w-24 bg-theme-bg animate-pulse rounded my-0.5"></div>
             ) : (
               <>{prefix}{formattedValue}{suffix}</>
             )}

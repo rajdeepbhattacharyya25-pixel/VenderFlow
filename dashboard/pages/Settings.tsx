@@ -113,13 +113,20 @@ const DEFAULT_THEME_CONFIG = {
     hero: { title: 'Welcome', subtitle: 'Discover amazing products', image: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80', overlayOpacity: 0.5 }
 };
 
+const SETTINGS_DRAFT_KEY = 'vf_settings_draft';
+const SETTINGS_TAB_KEY = 'vf_settings_active_tab';
+
 const Settings = () => {
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [show2FAModal, setShow2FAModal] = useState(false);
     const [timeoutVal, setTimeoutVal] = useState<number | ''>(60);
     const [timeoutUnit, setTimeoutUnit] = useState<'minutes' | 'hours' | 'never'>('minutes');
-    const [activeTab, setActiveTab] = useState<TabType>('profile');
+    const [activeTab, setActiveTab] = useState<TabType>(
+        () => (localStorage.getItem(SETTINGS_TAB_KEY) as TabType | null) || 'profile'
+    );
+    const [showDraftBanner, setShowDraftBanner] = useState(false);
+    const isInitialLoad = React.useRef(true);
     const [settings, setSettings] = useState<StoreSettings>({
         store_name: '',
         business_type: 'Retail Store',
@@ -406,6 +413,20 @@ const Settings = () => {
         }
     };
 
+    // Persist active tab
+    useEffect(() => {
+        localStorage.setItem(SETTINGS_TAB_KEY, activeTab);
+    }, [activeTab]);
+
+    // Auto-save draft on settings change (debounced, skips initial load)
+    useEffect(() => {
+        if (isInitialLoad.current) return;
+        const timer = setTimeout(() => {
+            localStorage.setItem(SETTINGS_DRAFT_KEY, JSON.stringify({ settings, savedAt: Date.now() }));
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [settings]);
+
     useEffect(() => {
         fetchSettings();
     }, []);
@@ -474,9 +495,23 @@ const Settings = () => {
                     setTimeoutVal(mins);
                 }
             }
+            // After DB fetch, check if a newer draft exists
+            const raw = localStorage.getItem(SETTINGS_DRAFT_KEY);
+            if (raw) {
+                try {
+                    const draft = JSON.parse(raw);
+                    // Show banner if draft was saved within last 24 hours
+                    if (draft.savedAt && Date.now() - draft.savedAt < 24 * 60 * 60 * 1000) {
+                        setShowDraftBanner(true);
+                    } else {
+                        localStorage.removeItem(SETTINGS_DRAFT_KEY);
+                    }
+                } catch { localStorage.removeItem(SETTINGS_DRAFT_KEY); }
+            }
         } catch (err) {
             console.error(err);
         } finally {
+            isInitialLoad.current = false;
             setLoading(false);
         }
     };
@@ -536,6 +571,8 @@ const Settings = () => {
 
             if (result.error) throw result.error;
 
+            localStorage.removeItem(SETTINGS_DRAFT_KEY);
+            setShowDraftBanner(false);
             await fetchSettings();
             alert('Settings saved successfully!');
         } catch (error) {
@@ -585,7 +622,7 @@ const Settings = () => {
         switch (activeTab) {
             case 'profile':
                 return (
-                    <div className="bg-panel rounded-2xl p-8 border border-border shadow-sm animate-fadeIn">
+                    <div className="bg-panel rounded-2xl p-4 md:p-6 lg:p-8 border border-border shadow-sm animate-fadeIn">
                         {renderHeader('Business Profile', <Building size={20} />)}
 
                         <div className="flex flex-col md:flex-row gap-8 md:gap-10">
@@ -700,7 +737,7 @@ const Settings = () => {
             case 'security':
                 return (
                     <div className="space-y-6 animate-fadeIn">
-                        <div className="bg-panel rounded-2xl p-8 border border-border shadow-sm">
+                        <div className="bg-panel rounded-2xl p-4 md:p-6 lg:p-8 border border-border shadow-sm">
                             {renderHeader('Account & Security', <Shield size={20} />)}
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -834,7 +871,7 @@ const Settings = () => {
                             </div>
 
                             {/* Active Sessions List */}
-                            <div className="mt-8 bg-panel border border-border rounded-2xl p-8">
+                            <div className="mt-8 bg-panel border border-border rounded-2xl p-4 md:p-6 lg:p-8">
                                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
                                     <div className="flex items-center gap-4">
                                         <div className="w-10 h-10 bg-primary/10 text-primary rounded-xl flex items-center justify-center">
@@ -1027,7 +1064,7 @@ const Settings = () => {
 
             case 'notifications':
                 return (
-                    <div className="bg-panel rounded-2xl p-8 border border-border shadow-sm animate-fadeIn">
+                    <div className="bg-panel rounded-2xl p-4 md:p-6 lg:p-8 border border-border shadow-sm animate-fadeIn">
                         {renderHeader('Notifications', <NotificationIcon size={20} />)}
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
@@ -1086,7 +1123,7 @@ const Settings = () => {
 
             case 'billing':
                 return (
-                    <div className="bg-panel rounded-2xl p-8 border border-border shadow-sm animate-fadeIn">
+                    <div className="bg-panel rounded-2xl p-4 md:p-6 lg:p-8 border border-border shadow-sm animate-fadeIn">
                         {renderHeader('Billing & Finance', <BillingIcon size={20} />)}
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
@@ -1137,7 +1174,7 @@ const Settings = () => {
                 );
             case 'appearance':
                 return (
-                    <div className="bg-panel rounded-2xl p-8 border border-border shadow-sm animate-fadeIn">
+                    <div className="bg-panel rounded-2xl p-4 md:p-6 lg:p-8 border border-border shadow-sm animate-fadeIn">
                         {renderHeader('Appearance', <Palette size={20} />)}
 
                         {/* Preview Environment Banner */}
@@ -1396,7 +1433,7 @@ const Settings = () => {
                 );
             case 'data':
                 return (
-                    <div className="bg-panel rounded-2xl p-8 border border-border shadow-sm animate-fadeIn">
+                    <div className="bg-panel rounded-2xl p-4 md:p-6 lg:p-8 border border-border shadow-sm animate-fadeIn">
                         {renderHeader('Data & Backup', <Database size={20} />)}
 
                         <div className="bg-bg/50 p-6 rounded-2xl border border-border mb-6">
@@ -1476,7 +1513,7 @@ const Settings = () => {
                 );
             case 'status':
                 return (
-                    <div className="bg-panel rounded-2xl p-8 border border-border shadow-sm animate-fadeIn">
+                    <div className="bg-panel rounded-2xl p-4 md:p-6 lg:p-8 border border-border shadow-sm animate-fadeIn">
                         {renderHeader('System Status', <Activity size={20} />)}
                         <div className="space-y-6">
                             <div className="bg-bg/50 p-6 rounded-2xl border border-border">
@@ -1609,7 +1646,7 @@ const Settings = () => {
                 );
             case 'shipping':
                 return (
-                    <div className="bg-panel rounded-2xl p-8 border border-border shadow-sm animate-fadeIn">
+                    <div className="bg-panel rounded-2xl p-4 md:p-6 lg:p-8 border border-border shadow-sm animate-fadeIn">
                         {renderHeader('Shipping & Delivery', <Truck size={20} />)}
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
@@ -1701,6 +1738,45 @@ const Settings = () => {
                     <span className="text-primary font-medium">{navItems.find(i => i.id === activeTab)?.label}</span>
                 </div>
             </div>
+
+            {/* Unsaved Draft Restore Banner */}
+            {showDraftBanner && (
+                <div className="flex items-center justify-between gap-4 px-5 py-3.5 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/40 rounded-2xl text-sm shadow-sm animate-fadeIn">
+                    <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 font-medium">
+                        <span className="text-base">📝</span>
+                        You have unsaved changes from a previous session.
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                        <button
+                            onClick={() => {
+                                const raw = localStorage.getItem(SETTINGS_DRAFT_KEY);
+                                if (!raw) return;
+                                try {
+                                    const draft = JSON.parse(raw);
+                                    if (draft.settings) {
+                                        isInitialLoad.current = true;
+                                        setSettings(draft.settings);
+                                        setTimeout(() => { isInitialLoad.current = false; }, 100);
+                                    }
+                                } catch { /* ignore */ }
+                                setShowDraftBanner(false);
+                            }}
+                            className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg text-xs transition-colors"
+                        >
+                            Restore
+                        </button>
+                        <button
+                            onClick={() => {
+                                localStorage.removeItem(SETTINGS_DRAFT_KEY);
+                                setShowDraftBanner(false);
+                            }}
+                            className="px-3 py-1.5 bg-transparent hover:bg-amber-100 dark:hover:bg-amber-900/40 text-amber-700 dark:text-amber-400 font-medium rounded-lg text-xs transition-colors border border-amber-300 dark:border-amber-700"
+                        >
+                            Discard
+                        </button>
+                    </div>
+                </div>
+            )}
 
             <div className="flex flex-col lg:flex-row gap-8">
                 {/* Fixed Navigation Sidebar */}

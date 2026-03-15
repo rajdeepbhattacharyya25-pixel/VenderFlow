@@ -21,14 +21,14 @@ const AdminNotificationsPanel: React.FC = () => {
     };
 
     return (
-        <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-8">
+        <div className="bg-theme-panel border border-theme-border rounded-2xl p-8">
             <div className="flex items-center gap-4 mb-6">
-                <div className="w-12 h-12 bg-blue-500/10 text-blue-400 rounded-xl flex items-center justify-center">
+                <div className="w-12 h-12 bg-blue-500/10 text-blue-500 rounded-xl flex items-center justify-center">
                     <Bell size={24} />
                 </div>
                 <div>
-                    <h2 className="text-xl font-bold text-white">Notification Preferences</h2>
-                    <p className="text-neutral-400 text-sm mt-1">Control which Telegram alerts you receive</p>
+                    <h2 className="text-xl font-bold text-theme-text">Notification Preferences</h2>
+                    <p className="text-theme-muted text-sm mt-1">Control which Telegram alerts you receive</p>
                 </div>
             </div>
 
@@ -63,14 +63,14 @@ const AdminNotificationsPanel: React.FC = () => {
 };
 
 const ToggleRow = ({ label, desc, enabled, onClick }: { label: string, desc: string, enabled: boolean, onClick: () => void }) => (
-    <div className="flex items-center justify-between p-4 bg-black/20 border border-neutral-800 rounded-xl hover:border-neutral-700 transition-all">
+    <div className="flex items-center justify-between p-4 bg-theme-bg border border-theme-border rounded-xl hover:border-theme-border transition-all">
         <div>
-            <h4 className="font-bold text-white text-sm">{label}</h4>
-            <p className="text-xs text-neutral-500">{desc}</p>
+            <h4 className="font-bold text-theme-text text-sm">{label}</h4>
+            <p className="text-xs text-theme-muted">{desc}</p>
         </div>
         <button
             onClick={onClick}
-            className={`w-12 h-6 rounded-full p-1 transition-colors ${enabled ? 'bg-indigo-600' : 'bg-neutral-700'}`}
+            className={`w-12 h-6 rounded-full p-1 transition-colors ${enabled ? 'bg-indigo-600' : 'bg-theme-muted'}`}
             aria-label={`Toggle ${label}`}
         >
             <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${enabled ? 'translate-x-6' : 'translate-x-0'}`} />

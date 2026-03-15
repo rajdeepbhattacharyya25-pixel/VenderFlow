@@ -28,10 +28,10 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
       />
       
       {/* Content */}
-      <div className="relative bg-panel w-full max-w-2xl rounded-2xl shadow-2xl transform transition-all animate-[popIn_0.2s_ease-out_forwards] border border-muted/10">
-        <div className="flex items-center justify-between p-6 border-b border-muted/10">
-          <h3 className="text-lg font-bold text-text">{title}</h3>
-          <button onClick={onClose} className="text-muted hover:text-text p-1 rounded-lg hover:bg-bg transition-colors">
+      <div className="relative bg-theme-panel w-full max-w-2xl rounded-2xl shadow-2xl transform transition-all animate-[popIn_0.2s_ease-out_forwards] border border-theme-border/10">
+        <div className="flex items-center justify-between p-6 border-b border-theme-border/10">
+          <h3 className="text-lg font-bold text-theme-text">{title}</h3>
+          <button onClick={onClose} className="text-theme-muted hover:text-theme-text p-1 rounded-lg hover:bg-theme-bg transition-colors" title="Close modal">
             <X size={20} />
           </button>
         </div>

@@ -181,16 +181,16 @@ export const TelegramSettings = () => {
     };
 
     const renderHeader = (title: string, icon: React.ReactNode) => (
-        <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
-            <div className="p-2 bg-blue-50 rounded-lg text-blue-600">
+        <div className="flex items-center gap-3 mb-6 pb-4 border-b border-theme-border">
+            <div className="p-2 bg-indigo-500/10 rounded-lg text-indigo-600">
                 {icon}
             </div>
-            <h3 className="font-bold text-lg text-gray-900">{title}</h3>
+            <h3 className="font-bold text-lg text-theme-text">{title}</h3>
         </div>
     );
 
     return (
-        <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm animate-fadeIn">
+        <div className="bg-theme-panel rounded-2xl p-8 border border-theme-border shadow-sm animate-fadeIn">
             {renderHeader('Telegram Bot Configuration', <Send size={20} />)}
 
             <div className="max-w-2xl">
@@ -231,7 +231,7 @@ export const TelegramSettings = () => {
                             </button>
                             <button
                                 onClick={() => setStep('input')}
-                                className="text-sm font-bold text-gray-500 hover:underline ml-auto"
+                                className="text-sm font-bold text-theme-muted hover:text-theme-text hover:underline ml-auto"
                             >
                                 Reconfigure
                             </button>
@@ -240,15 +240,15 @@ export const TelegramSettings = () => {
                 )}
 
                 <div className="mb-4">
-                    <p className="text-xs font-semibold text-gray-500 mb-1">OPTIONAL: Localhost / Tunnel URL</p>
+                    <p className="text-xs font-semibold text-theme-muted mb-1">OPTIONAL: Localhost / Tunnel URL</p>
                     <input
                         type="url"
                         placeholder="e.g. https://crazy-cat-42.loca.lt"
                         value={customAppUrl}
                         onChange={(e) => setCustomAppUrl(e.target.value)}
-                        className="w-full text-sm border-gray-200 rounded-lg bg-gray-50 placeholder:text-gray-400"
+                        className="w-full text-sm border border-theme-border rounded-lg bg-theme-bg text-theme-text placeholder:text-theme-muted/50 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
                     />
-                    <p className="text-[10px] text-gray-400 mt-1">If using localhost, paste your ngrok/localtunnel URL here before clicking 'Sync Menu Btn'.</p>
+                    <p className="text-[10px] text-theme-muted/70 mt-1">If using localhost, paste your ngrok/localtunnel URL here before clicking 'Sync Menu Btn'.</p>
                 </div>
 
                 {step === 'verify' && (
@@ -299,7 +299,7 @@ export const TelegramSettings = () => {
                         </div>
 
                         <div>
-                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                            <label className="block text-xs font-bold text-theme-muted uppercase tracking-wider mb-2">
                                 Bot Token
                             </label>
                             <div className="relative">
@@ -308,12 +308,12 @@ export const TelegramSettings = () => {
                                     value={botToken}
                                     onChange={(e) => setBotToken(e.target.value)}
                                     placeholder="123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
-                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 font-mono text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                                    className="w-full bg-theme-bg border border-theme-border rounded-xl px-4 py-3 text-theme-text font-mono text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
                                 />
                                 {botToken && (
                                     <button
                                         onClick={() => setBotToken('')}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-theme-muted hover:text-theme-text"
                                     >
                                         Clear
                                     </button>
