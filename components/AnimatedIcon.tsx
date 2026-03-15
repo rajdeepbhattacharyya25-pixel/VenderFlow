@@ -83,7 +83,7 @@ export const AnimatedIcon: React.FC<AnimatedIconProps> = ({
             case 'float':
                 return {
                     initial: { y: 0 },
-                    animate: { y: [-3, 3], transition: { duration: 2, repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' } },
+                    animate: { y: [-3, 3], transition: { duration: 2, repeat: Infinity, repeatType: 'reverse' as const, ease: 'easeInOut' } },
                     hover: { y: -4, transition: { duration: 0.3 } },
                     tap: { y: 1 }
                 };
@@ -104,7 +104,7 @@ export const AnimatedIcon: React.FC<AnimatedIconProps> = ({
         }
     };
 
-    const variants = getVariants();
+    const variants = getVariants() as any;
 
     // Determine which states to actually apply based on the trigger
     let initial = 'initial';

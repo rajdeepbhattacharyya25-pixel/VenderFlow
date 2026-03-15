@@ -176,19 +176,14 @@ const PreviewStorefront = () => {
                     onLogin={() => { }}
                     categories={uniqueCategories}
                     isAdmin={false}
-                    storeLogo={storeSettings?.logo_url || "/logo.jpg"}
-                    customTheme={{
-                        primaryColor: storeSettings?.theme_config?.colors?.primary,
-                        backgroundColor: storeSettings?.theme_config?.colors?.background,
-                        textColor: storeSettings?.theme_config?.colors?.text
-                    }}
+                    storeName={storeSettings?.store_name}
                 />
             )}
 
             <main className="flex-grow">
                 {currentView === 'home' && (
                     <>
-                        <Hero onShopCollection={() => setCurrentView('viewAll')} previewSettings={storeSettings} />
+                        <Hero onShopCollection={() => setCurrentView('viewAll')} />
                         <div className="max-w-[1600px] mx-auto px-4 space-y-16 mb-20">
                             <ScrollableSection
                                 title="Preview Selection"
@@ -238,7 +233,14 @@ const PreviewStorefront = () => {
             </main>
 
             {isModalOpen && selectedProduct && (
-                <QuickViewModal product={selectedProduct} onClose={() => setIsModalOpen(false)} onAddToCart={addToCart} />
+                <QuickViewModal
+                    product={selectedProduct}
+                    isOpen={isModalOpen}
+                    isWishlisted={false}
+                    onToggleWishlist={() => {}}
+                    onClose={() => setIsModalOpen(false)}
+                    onAddToCart={addToCart}
+                />
             )}
         </div>
     );

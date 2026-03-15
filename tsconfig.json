@@ -32,6 +32,7 @@
     "supabase",
     "dashboard/supabase",
     "scripts",
-    "seller dashboard ui"
+    "seller dashboard ui",
+    "test-gemini.ts"
   ]
 }
