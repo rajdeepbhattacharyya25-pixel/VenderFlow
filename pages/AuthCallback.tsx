@@ -21,6 +21,7 @@ const AuthCallback = () => {
     const navigate = useNavigate();
     const [status, setStatus] = useState('Logging you in...');
     const [debugLog, setDebugLog] = useState<string[]>([]);
+    const redirectScheduledRef = React.useRef(false);
 
     const addLog = (msg: string) => {
         console.log(msg);
@@ -31,6 +32,10 @@ const AuthCallback = () => {
     const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
+        // Prevent React StrictMode double-invoke
+        if (attemptRef.current) return;
+        attemptRef.current = true;
+
         // Global safety timeout — never stay stuck for more than 15s
         const safetyTimeout = setTimeout(() => {
             console.warn('AuthCallback: global safety timeout reached (15s). Redirecting...');
@@ -47,66 +52,20 @@ const AuthCallback = () => {
             return;
         }
 
-        addLog("AuthCallback mounted. Checking session...");
-
-        // Manual session check in case onAuthStateChange doesn't fire
-        const checkSession = async () => {
-            // Priority 0: Manual Hash Check (Fastest & most reliable during redirect)
-            const hash = window.location.hash;
-            if (hash && (hash.includes('access_token=') || hash.includes('refresh_token='))) {
-                addLog("Priority: Manual hash detection. Extracting tokens...");
-                try {
-                    const params = new URLSearchParams(hash.substring(1));
-                    const access_token = params.get('access_token');
-                    const refresh_token = params.get('refresh_token');
-
-                    if (access_token && refresh_token) {
-                        addLog("Found tokens. Forcing session set...");
-                        const { data: setData, error: setError } = await Promise.race([
-                            supabase.auth.setSession({ access_token, refresh_token }),
-                            new Promise<{ data: any, error: any }>(resolve => 
-                                setTimeout(() => resolve({ data: { session: null }, error: { message: 'setSession Timeout' as any } }), 8000)
-                            )
-                        ]);
-
-                        if (setData?.session) {
-                            addLog(`Manual set success for ${setData.session.user.email}`);
-                            // Continue to wait for onAuthStateChange to handle redirection
-                            return;
-                        } else {
-                            addLog(`Manual set failed/timed out: ${setError?.message || 'Unknown'}`);
-                        }
-                    }
-                } catch (e: any) {
-                    addLog(`Hash parsing error: ${e.message}`);
-                }
-            }
-
-            // 1. Fallback to standard getSession
-            addLog("Checking getSession as fallback...");
-            const { data, error } = await Promise.race([
-                supabase.auth.getSession(),
-                new Promise<{ data: any, error: any }>(resolve => 
-                    setTimeout(() => resolve({ data: { session: null }, error: { message: 'Timeout' as any } }), 15000)
-                )
-            ]);
-
-            if (data?.session) {
-                addLog(`Standard session recovery: ${data.session.user.email}`);
-            } else {
-                addLog(`Standard check result: ${error ? error.message : 'No session'}`);
-            }
-        };
-
-        checkSession();
-
-        // Parse URL manually to debug
+        // Parse URL for debug info only — do NOT manually call setSession.
+        // Supabase JS client automatically parses the access_token from the URL hash
+        // when onAuthStateChange is set up. A manual setSession call races against this
+        // and causes timeouts. Let the SDK handle it.
         const hash = window.location.hash;
-        if (hash) {
-            addLog(`URL Hash detected (length: ${hash.length})`);
+        if (hash && (hash.includes('access_token=') || hash.includes('refresh_token='))) {
+            addLog(`OAuth hash detected (length: ${hash.length}). Waiting for Supabase SDK...`);
+        } else if (hash) {
+            addLog(`URL Hash found (length: ${hash.length}), no OAuth tokens.`);
         } else {
-            addLog("No URL Hash found");
+            addLog('No URL hash. Checking existing session...');
         }
+
+        addLog('Listening for auth state change...');
 
         // Listen for auth state changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -120,24 +79,25 @@ const AuthCallback = () => {
                 }
 
                 if (event === 'INITIAL_SESSION' && !session) {
-                    console.log("No session in INITIAL_SESSION, waiting...");
-                    // Wait longer for hash to be parsed
+                    addLog('No session yet in INITIAL_SESSION — waiting for Supabase to parse hash...');
+                    // Give Supabase SDK 5s to parse hash tokens and fire SIGNED_IN
                     timeoutRef.current = setTimeout(async () => {
-                        if (attemptRef.current) return;
-                        attemptRef.current = true;
+                        if (redirectScheduledRef.current) return;
 
                         const { data } = await supabase.auth.getSession();
                         if (!data.session) {
-                            console.log("Login timed out - Redirecting to home");
+                            addLog('Session still not found after 5s — redirecting home.');
+                            redirectScheduledRef.current = true;
                             import('react-hot-toast').then(({ toast }) => {
-                                toast.error('Session timeout: Google Auth successfully returned but your browser failed to verify the local session. Check if cookies/local storage are blocked.', {
+                                toast.error('Login timed out. If this keeps happening, check that cookies and local storage are not blocked in your browser.', {
                                     duration: 10000,
                                 });
                             });
-                            // Only redirect if we REALLY don't have a session
                             navigate('/', { replace: true });
+                        } else {
+                            addLog(`Session recovered via fallback getSession: ${data.session.user.email}`);
                         }
-                    }, 3000); // Increased to 3s
+                    }, 5000);
                 }
 
                 if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user) {
