@@ -28,13 +28,14 @@ const AuthCallback = () => {
         setDebugLog(prev => [...prev, msg]);
     };
 
-    const attemptRef = React.useRef(false);
     const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
-        // Prevent React StrictMode double-invoke
-        if (attemptRef.current) return;
-        attemptRef.current = true;
+        // `processed` is local to this effect run. In React StrictMode the effect
+        // runs twice (mount → cleanup → remount). Using a closure-local flag instead
+        // of a ref guard ensures onAuthStateChange is always subscribed on the
+        // final mount, while still preventing the callback from processing twice.
+        let processed = false;
 
         // Global safety timeout — never stay stuck for more than 15s
         const safetyTimeout = setTimeout(() => {
@@ -101,6 +102,10 @@ const AuthCallback = () => {
                 }
 
                 if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user) {
+                    // Prevent processing twice in React StrictMode
+                    if (processed) return;
+                    processed = true;
+
                     try {
                         const user = session.user;
                         addLog(`User found: ${user.email}`);
