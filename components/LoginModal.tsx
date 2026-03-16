@@ -141,20 +141,16 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
                 if (error) throw error;
 
                 if (data.user) {
-                    // Log the session (non-blocking, 5s timeout)
+                    // Log the session
                     try {
-                        const sessionPromise = supabase.functions.invoke('log-session', {
+                        const { data: sessionData, error: sessionFnError } = await supabase.functions.invoke('log-session', {
                             body: { device_info: navigator.userAgent }
                         });
-                        const timeoutPromise = new Promise((_, reject) =>
-                            setTimeout(() => reject(new Error('log-session timeout')), 5000)
-                        );
-                        const { data: sessionData } = await Promise.race([sessionPromise, timeoutPromise]) as any;
                         if (sessionData?.session_id) {
                             localStorage.setItem('current_session_id', sessionData.session_id);
                         }
                     } catch (sessionError) {
-                        console.error('log-session skipped:', sessionError);
+                        console.error('Failed to log session:', sessionError);
                     }
 
                     const { data: profile, error: profileError } = await supabase
@@ -182,12 +178,6 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
 
                             if (!createError) {
                                 currentProfile = newProfile;
-                                // Also create a pending seller record so they can bypass the guard and reach Onboarding
-                                await supabase.from('sellers').insert({
-                                    id: data.user.id,
-                                    store_name: data.user.email?.split('@')[0] || 'My Store',
-                                    status: 'pending'
-                                });
                             } else {
                                 console.error("LoginModal profile creation failed:", createError);
                             }
@@ -224,12 +214,12 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
 
             <div id="login-panel" className="relative w-full max-h-[calc(100vh-140px)] md:max-h-[calc(100vh-160px)] md:max-w-[360px] bg-stone-950 rounded-[2rem] overflow-visible shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] animate-in slide-in-from-bottom-4 zoom-in-95 duration-500 border border-white/10 flex flex-col mt-4 md:mt-0">
                 <OwlOverlay targetSelector="#login-panel" isError={!!error} />
-                <div className="p-6 sm:p-8 flex-1 overflow-y-auto hide-scroll" style={{ paddingTop: 'max(env(safe-area-inset-top, 24px), 24px)' }}>
+                <div className="p-6 sm:p-8 flex-1 overflow-y-auto" style={{ paddingTop: 'max(env(safe-area-inset-top, 24px), 24px)' }}>
                     {/* Close Button */}
                     <button
                         onClick={onClose}
                         aria-label="Close modal"
-                        className="absolute top-6 right-6 md:top-8 md:right-8 w-11 h-11 flex items-center justify-center text-stone-500 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-all duration-300"
+                        className="absolute top-8 right-8 p-2 text-stone-500 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-all duration-300"
                     >
                         <X className="w-5 h-5" strokeWidth={1.5} />
                     </button>
@@ -240,7 +230,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
                             <div className="mx-auto w-10 h-10 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center mb-3">
                                 <Lock className="w-5 h-5 text-stone-100" strokeWidth={1.2} />
                             </div>
-                            <h3 className="text-2xl font-heading font-medium text-white mb-1.5 tracking-tight">
+                            <h3 className="text-2xl font-display font-medium text-white mb-1.5 tracking-tight">
                                 {isSignUp ? 'Create Account' : (mode === 'seller' ? 'Vendor Portal' : 'Welcome Back')}
                             </h3>
                             <p className="text-stone-500 text-[9px] font-bold uppercase tracking-[0.3em]">
@@ -266,7 +256,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
                                         onChange={(e) => setEmail(e.target.value)}
                                         required
                                         autoComplete="off"
-                                        className="w-full bg-stone-900/50 border border-white/5 rounded-xl px-4 py-3 min-h-[48px] text-white placeholder-stone-700 focus:outline-none focus:ring-1 focus:ring-white/20 transition-all text-base md:text-sm font-medium"
+                                        className="w-full bg-stone-900/50 border border-white/5 rounded-xl px-4 py-3 text-white placeholder-stone-700 focus:outline-none focus:ring-1 focus:ring-white/20 transition-all text-sm font-medium"
                                         placeholder="Email Address"
                                         inputMode="email"
                                         autoCapitalize="off"
@@ -282,7 +272,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
                                         required
                                         minLength={6}
                                         autoComplete="new-password"
-                                        className="w-full bg-stone-900/50 border border-white/5 rounded-xl px-4 py-3 min-h-[48px] text-white placeholder-stone-700 focus:outline-none focus:ring-1 focus:ring-white/20 transition-all text-base md:text-sm font-medium"
+                                        className="w-full bg-stone-900/50 border border-white/5 rounded-xl px-4 py-3 text-white placeholder-stone-700 focus:outline-none focus:ring-1 focus:ring-white/20 transition-all text-sm font-medium"
                                         placeholder="••••••••"
                                     />
                                 </div>
@@ -291,8 +281,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
                             <button
                                 type="submit"
                                 disabled={isLoading}
-                                className="w-full flex items-center justify-center bg-white text-stone-950 font-bold py-3.5 min-h-[48px] rounded-xl hover:bg-stone-200 active:scale-[0.98] transition-all duration-300 disabled:opacity-50 text-[10px] uppercase tracking-[0.4em] shadow-xl shadow-white/5"
-                                style={{ WebkitTapHighlightColor: 'transparent' }}
+                                className="w-full bg-white text-stone-950 font-bold py-3.5 rounded-xl hover:bg-stone-200 active:scale-[0.98] transition-all duration-300 disabled:opacity-50 text-[10px] uppercase tracking-[0.4em] shadow-xl shadow-white/5"
+                                style={{ minHeight: '44px', WebkitTapHighlightColor: 'transparent' }}
                             >
                                 {isLoading ? (
                                     <div className="flex items-center justify-center gap-3">
@@ -319,7 +309,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
                         <button
                             onClick={handleGoogleLogin}
                             disabled={isLoading}
-                            className="w-full flex items-center justify-center gap-4 bg-stone-900/50 border border-white/5 text-white font-bold py-3.5 min-h-[48px] rounded-xl hover:bg-stone-800 transition-all active:scale-[0.98] disabled:opacity-50 text-[10px] uppercase tracking-[0.4em]"
+                            className="w-full flex items-center justify-center gap-4 bg-stone-900/50 border border-white/5 text-white font-bold py-3.5 rounded-xl hover:bg-stone-800 transition-all active:scale-[0.98] disabled:opacity-50 text-[10px] uppercase tracking-[0.4em]"
+                            style={{ minHeight: '44px' }}
                         >
                             <svg className="w-5 h-5" viewBox="0 0 24 24">
                                 <path
@@ -342,11 +333,11 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
                             <span>Google Auth</span>
                         </button>
 
-                        <div className="mt-6 w-full text-center space-y-2">
+                        <div className="mt-6 w-full text-center space-y-3">
                             {!isSignUp && (
                                 <button
                                     onClick={() => setMode(mode === 'customer' ? 'seller' : 'customer')}
-                                    className="text-[9px] min-h-[44px] px-4 font-bold text-stone-500 hover:text-white transition-colors uppercase tracking-[0.3em] flex items-center justify-center gap-3 mx-auto"
+                                    className="text-[9px] font-bold text-stone-500 hover:text-white transition-colors uppercase tracking-[0.3em] flex items-center justify-center gap-3 mx-auto"
                                 >
                                     {mode === 'customer' ? (
                                         <><Store className="w-3.5 h-3.5" /> Vendor Access</>
@@ -358,7 +349,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
 
                             <button
                                 onClick={() => setIsSignUp(!isSignUp)}
-                                className="text-[10px] min-h-[44px] px-4 flex items-center justify-center font-medium text-stone-500 hover:text-white transition-colors mx-auto underline underline-offset-[6px] decoration-stone-800 hover:decoration-white"
+                                className="text-[10px] font-medium text-stone-500 hover:text-white transition-colors block mx-auto underline underline-offset-[6px] decoration-stone-800 hover:decoration-white"
                             >
                                 {isSignUp ? 'Back to Authenticate' : "Create an identity"}
                             </button>
