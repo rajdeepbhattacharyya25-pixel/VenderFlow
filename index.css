@@ -285,8 +285,74 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
-.hide-scroll::-webkit-scrollbar {
-  display: none;
+/* --- MINIMAL IMAGE EDITOR STUDIO --- */
+
+.studio-toolbar {
+  @apply fixed bottom-0 left-0 right-0 h-20 bg-black/80 backdrop-blur-2xl border-t border-white/5 flex items-center justify-between px-8 z-[70] shadow-[0_-10px_40px_rgba(0,0,0,0.5)];
+}
+
+.studio-control-group {
+  @apply flex items-center gap-6;
+}
+
+.studio-slider-compact {
+  @apply flex items-center gap-3 min-w-[160px];
+}
+
+.studio-btn-minimal {
+  @apply px-4 py-2 rounded-lg text-xs font-bold tracking-wider uppercase transition-all flex items-center gap-2;
+}
+
+.studio-btn-primary {
+  @apply px-6 py-2.5 bg-cyan-500 hover:bg-cyan-400 text-black text-xs font-black uppercase tracking-widest rounded-xl transition-all hover:scale-105 active:scale-95 disabled:bg-zinc-800 disabled:text-white/20;
+}
+
+/* Refined ReactCrop Selection */
+.ReactCrop__crop-selection {
+  border: 1.5px solid rgba(0, 242, 255, 0.6) !important;
+  box-shadow: 0 0 20px rgba(0, 242, 255, 0.1) !important;
+}
+
+.ReactCrop__drag-handle {
+  width: 10px !important;
+  height: 10px !important;
+  background-color: #00f2ff !important;
+  border: 1.5px solid #000 !important;
+  border-radius: 2px !important;
+  box-shadow: none !important;
+  opacity: 0.7;
+}
+
+.ReactCrop__drag-handle:hover {
+  transform: scale(1.4);
+  opacity: 1;
+  box-shadow: 0 0 10px rgba(0, 242, 255, 0.5) !important;
+}
+
+/* Studio Editor Animations */
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+.animate-shake {
+  animation: shake 0.2s ease-in-out infinite;
 }
 
 /* Safe area padding for notched devices */
@@ -451,9 +517,11 @@ html {
   border-color: var(--dashboard-border) !important;
 }
 
-/* All inputs inside the dashboard always get the dashboard text/bg */
-.dashboard-root input,
-.dashboard-root textarea,
-.dashboard-root select {
-  color: var(--dashboard-text) !important;
+/* Utility to hide scrollbars but keep functionality */
+.hide-scroll {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
+.hide-scroll::-webkit-scrollbar {
+  display: none;
+}

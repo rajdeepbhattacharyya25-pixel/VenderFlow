@@ -108,7 +108,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
                                 </td>
                                 <td className="p-4 text-right">
                                     <button className="p-2 text-dashboard-muted hover:text-text rounded-lg hover:bg-bg transition-colors" title="Edit" onClick={() => onEdit(product)}>
-                                        <MoreVertical size={18} />
+                                        <Edit2 size={18} />
                                     </button>
                                 </td>
                             </tr>

@@ -6,8 +6,17 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { applyRateLimit } from '../_shared/rate-limiter.ts';
 import { captureServerEvent } from '../_shared/posthog-edge.ts';
 
+// Status Constants
+const STATUS = {
+    PENDING: 'pending',
+    CREATED: 'created',
+    EXISTS: 'exists',
+} as const;
+
+const ALLOWED_ORIGIN = Deno.env.get('ALLOWED_ORIGIN') ?? '*';
+
 const corsHeaders = {
-    'Access-Control-Allow-Origin': Deno.env.get('ALLOWED_ORIGIN') ?? '*',
+    'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
@@ -71,18 +80,22 @@ serve(async (req) => {
             .maybeSingle()
 
         if (existingReq) {
-            if (existingReq.status === 'created' || existingReq.status === 'exists') {
-                const { data: seller } = await adminClient
+            const isCompleted = [STATUS.CREATED, STATUS.EXISTS].includes(existingReq.status as any);
+            
+            if (isCompleted) {
+                const { data: seller, error: sellerError } = await adminClient
                     .from('sellers')
                     .select('*')
                     .eq('id', existingReq.seller_id)
                     .single()
 
+                if (sellerError) throw sellerError;
+
                 return new Response(
                     JSON.stringify({
                         success: true,
                         data: seller,
-                        created: existingReq.status === 'created',
+                        created: existingReq.status === STATUS.CREATED,
                         idempotent: true
                     }),
                     { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -93,7 +106,7 @@ serve(async (req) => {
             await adminClient.from('seller_requests').insert({
                 client_request_id: clientReqId,
                 user_id: user.id,
-                status: 'pending',
+                status: STATUS.PENDING,
                 metadata: { store_name, slug: rawSlug, utm }
             })
         }
@@ -125,7 +138,7 @@ serve(async (req) => {
             .from('seller_requests')
             .update({
                 seller_id: seller.id,
-                status: isNew ? 'created' : 'exists'
+                status: isNew ? STATUS.CREATED : STATUS.EXISTS
             })
             .eq('client_request_id', clientReqId)
 
@@ -172,7 +185,7 @@ serve(async (req) => {
         )
 
     } catch (error) {
-        console.error('Error:', error)
+        console.error('Operation failed:', error instanceof Error ? error.message : error)
         return new Response(
             JSON.stringify({ error: 'Internal server error' }),
             { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

@@ -34,7 +34,62 @@ const Dashboard: React.FC<DashboardProps> = ({ theme, onTabChange, sellerSlug })
     const [trafficData, setTrafficData] = useState<{ visitors_7d: number, change_pct: number } | null>(null);
 
     useEffect(() => {
+        let mounted = true;
+        let subscription: any = null;
+
+        const setupRealtime = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user || !mounted) return;
+
+            subscription = supabase
+                .channel(`dashboard-orders-${user.id}`)
+                .on('postgres_changes', {
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: 'orders',
+                    filter: `seller_id=eq.${user.id}`
+                }, (payload) => {
+                    const o = payload.new;
+                    setStats(prev => ({
+                        sales: prev.sales + (o.total || 0),
+                        earnings: prev.earnings + ((o.total || 0) * 0.40),
+                        orders: prev.orders + 1
+                    }));
+
+                    let shipping = o.shipping_address;
+                    if (typeof shipping === 'string') {
+                        try { shipping = JSON.parse(shipping); } catch (e) { shipping = {}; }
+                    }
+                    shipping = shipping || {};
+                    const firstItem = o.items?.[0];
+
+                    const mappedOrder = {
+                        id: o.id,
+                        productName: firstItem?.name || `Order #${o.id.slice(0, 8)}`,
+                        productImage: firstItem?.image || 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b',
+                        price: o.total || 0,
+                        status: o.status || 'pending',
+                        time: new Date(o.created_at).toLocaleDateString(),
+                        customerName: shipping.name || 'Customer',
+                        customerEmail: shipping.email || shipping.phone || 'No contact info',
+                        customerAddress: shipping.street ? `${shipping.street}, ${shipping.city}, ${shipping.zip}` : 'No address provided'
+                    };
+
+                    setRecentOrders(prev => [mappedOrder, ...prev].slice(0, 5));
+                    showToast(`New order received! Total: ₹${o.total}`);
+                })
+                .subscribe();
+        };
+
         fetchDashboardData();
+        setupRealtime();
+
+        return () => {
+            mounted = false;
+            if (subscription) {
+                supabase.removeChannel(subscription);
+            }
+        };
     }, []);
 
     const showToast = (message: string) => {

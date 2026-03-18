@@ -8,8 +8,10 @@ async function test() {
     const model = genAI.getGenerativeModel({ model: "gemini-embedding-2-preview" });
     const result = await model.embedContent("Hello world");
     console.log("SUCCESS: Embedding generated. Dimensions:", result.embedding.values.length);
-  } catch (error: any) {
-    console.error("FAILURE:", error.message);
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error("FAILURE:", error.message);
+    }
   }
 }
 

@@ -57,25 +57,35 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
 
             if (sellerData) setSeller(sellerData as Seller);
 
-            const mappedProducts = (data || []).map((p: any) => {
-                // Ensure we use the proper media objects
-                const media = p.product_media || [];
-                // Fallback for simple images string array if still used somewhere
-                const images = media.map((m: any) => m.file_url);
-
-                // Extract stock
-                const stock = p.product_stock?.[0]?.stock_quantity ?? 0;
-
-                return {
-                    ...p,
-                    images: images.length > 0 ? images : ['https://via.placeholder.com/150'],
-                    media: media,
-                    stock_quantity: stock,
-                    variants: p.product_variants || [],
-                    orders: Math.floor(Math.random() * 50),
-                    amount: (p.price || 0) * (Math.floor(Math.random() * 50))
-                };
-            });
+            const mappedProducts = (data || [])
+                .filter((p: any) => {
+                    // Filter out "ghost" products: named 'New Product' with no media
+                    // These are products that were initialized but never saved or had images added.
+                    if (p.name === 'New Product' || !p.name) {
+                        const media = p.product_media || [];
+                        if (media.length === 0) return false;
+                    }
+                    return true;
+                })
+                .map((p: any) => {
+                    // Ensure we use the proper media objects
+                    const media = p.product_media || [];
+                    // ...
+                    const images = media.map((m: any) => m.file_url);
+    
+                    // Extract stock
+                    const stock = p.product_stock?.[0]?.stock_quantity ?? 0;
+    
+                    return {
+                        ...p,
+                        images: images.length > 0 ? images : ['https://via.placeholder.com/150'],
+                        media: media,
+                        stock_quantity: stock,
+                        variants: p.product_variants || [],
+                        orders: Math.floor(Math.random() * 50),
+                        amount: (p.price || 0) * (Math.floor(Math.random() * 50))
+                    };
+                });
 
             setProducts(mappedProducts);
         } catch (error) {
@@ -85,12 +95,22 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
 
     // Filter Logic
     useEffect(() => {
+        // Universal ghost filtering: hide products named 'New Product' with no media
+        let baseProducts = products.filter(p => {
+            if (p.name === 'New Product' || !p.name) {
+                const media = p.media || [];
+                if (media.length === 0) return false;
+            }
+            return true;
+        });
+
         if (!searchTerm) {
-            setFilteredProducts(products);
+            setFilteredProducts(baseProducts);
             return;
         }
+
         const lowerSearch = searchTerm.toLowerCase();
-        const filtered = products.filter(p =>
+        const filtered = baseProducts.filter(p =>
             p.name.toLowerCase().includes(lowerSearch) ||
             p.category?.toLowerCase().includes(lowerSearch) ||
             p.id.toLowerCase().includes(lowerSearch)
@@ -152,8 +172,6 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
                 return;
             }
 
-            // 2. Determine Status (Free tier needs approval)
-            const status = seller.plan === 'free' ? 'pending' : 'active';
 
             const { data, error } = await supabase
                 .from('products')
@@ -162,7 +180,7 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
                     price: 0,
                     is_active: false,
                     seller_id: user.id,
-                    status: status
+                    status: 'draft'
                 }])
                 .select()
                 .single();
@@ -488,16 +506,40 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
             </div>
 
             {/* Right Context Panel (Collapsible ideally, fixed for now) */}
-            {showSidePanel && (
                 <div className="w-[320px] flex-shrink-0 hidden xl:flex flex-col border-l border-muted/10 pl-6">
-                    <ProductSidePanel />
+                    <ProductSidePanel products={products.filter(p => {
+                        if (p.name === 'New Product' || !p.name) {
+                            const media = p.media || [];
+                            if (media.length === 0) return false;
+                        }
+                        return true;
+                    })} />
                 </div>
-            )}
 
             {/* Global Overlays */}
             <ProductModal
                 isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
+                onClose={async () => {
+                    setIsModalOpen(false);
+                    // If we close the modal and it was a new product that was NEVER saved (still named 'New Product' and in draft status)
+                    // we should probably delete it to prevent "ghost" products.
+                    if (editingProduct?.name === 'New Product' && editingProduct?.status === 'draft') {
+                        const { error } = await supabase.from('products').delete().eq('id', editingProduct.id);
+                        if (!error) {
+                             // Decrement quota if it was incremented
+                             const { data: { user } } = await supabase.auth.getUser();
+                             if (user) {
+                                 await supabase.rpc('decrement_seller_quota', {
+                                     seller_id_param: user.id,
+                                     column_param: 'product_count',
+                                     amount_param: 1
+                                 });
+                             }
+                             fetchProducts();
+                        }
+                    }
+                    setEditingProduct(null);
+                }}
                 product={editingProduct}
                 onSave={handleSaveProduct}
             />

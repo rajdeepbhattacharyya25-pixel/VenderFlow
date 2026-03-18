@@ -64,12 +64,13 @@ const PreviewStorefront = () => {
                 if (data.products) {
                     const mappedProducts = data.products.map((p: any) => {
                         const hasDiscount = p.discount_price && Number(p.discount_price) > 0;
+                        const images = p.product_media?.map((m: any) => m.file_url) || [];
                         return {
                             ...p,
-                            image: 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=400', // fallback
-                            images: [],
-                            media: [], // minimal mapping for preview
-                            sizes: ['Standard'],
+                            image: images.length > 0 ? images[0] : (p.image || 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=400'),
+                            images: images,
+                            media: p.product_media || [],
+                            sizes: p.product_variants?.map((v: any) => v.variant_name) || ['Standard'],
                             price: hasDiscount ? Number(p.discount_price) : Number(p.price),
                             originalPrice: hasDiscount ? Number(p.price) : undefined
                         };

@@ -13,8 +13,8 @@ interface StaffMember {
 
 interface GeneratedCreds {
     email: string;
-    password: string;
     loginUrl: string;
+    expiresAt?: string;
 }
 
 export const SharedAccessPanel = () => {
@@ -24,7 +24,8 @@ export const SharedAccessPanel = () => {
 
     // Form State
     const [newName, setNewName] = useState('');
-    const [newRole, setNewRole] = useState('Staff');
+    const [newRole, setNewRole] = useState('staff');
+    const [isKiosk, setIsKiosk] = useState(false);
     const [creating, setCreating] = useState(false);
 
     // QR State
@@ -76,22 +77,20 @@ export const SharedAccessPanel = () => {
                     action: 'create',
                     name: newName,
                     role: newRole,
-                    storeId: store.id
+                    storeId: store.id,
+                    kiosk: isKiosk,
+                    // Default permissions based on role
+                    permissions: getDefaultPermissions(newRole)
                 }
             });
 
             if (error) throw error;
-            if (!data.email || !data.password) throw new Error("Invalid response from server");
-
-            // 3. Generate Login URL
-            // Assuming the app is hosted at window.location.origin
-            const baseUrl = window.location.origin;
-            const loginUrl = `${baseUrl}/staff/login?u=${encodeURIComponent(data.email)}&p=${encodeURIComponent(data.password)}`;
+            if (!data.login_link) throw new Error("Invalid response from server");
 
             setGeneratedCreds({
                 email: data.email,
-                password: data.password,
-                loginUrl
+                loginUrl: data.login_link,
+                expiresAt: data.expires_at
             });
             setShowAddModal(false);
             setShowQRModal(true);
@@ -257,6 +256,7 @@ export const SharedAccessPanel = () => {
                                     onChange={(e) => setNewName(e.target.value)}
                                     className="w-full bg-theme-bg border border-theme-border rounded-xl px-4 py-3 text-theme-text focus:ring-2 focus:ring-indigo-500/20 outline-none"
                                     placeholder="e.g. Rahul"
+                                    title="Staff member name"
                                     autoFocus
                                 />
                             </div>
@@ -265,12 +265,33 @@ export const SharedAccessPanel = () => {
                                 <select
                                     value={newRole}
                                     onChange={(e) => setNewRole(e.target.value)}
-                                    className="w-full bg-theme-bg border border-theme-border rounded-xl px-4 py-3 text-theme-text focus:ring-2 focus:ring-indigo-500/20 outline-none"
+                                    className="w-full bg-theme-bg/50 border border-theme-border/50 rounded-xl px-4 py-2.5 text-theme-text focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition-all cursor-pointer"
+                                    title="Select staff role"
                                 >
-                                    <option value="Staff">Staff</option>
-                                    <option value="Manager">Manager</option>
-                                    <option value="Sales">Sales</option>
+                                    <option value="staff">Staff / Picker</option>
+                                    <option value="sales">Sales</option>
+                                    <option value="manager">Manager</option>
+                                    <option value="admin">Admin</option>
                                 </select>
+                            </div>
+
+                            <div className="flex items-center gap-3 p-4 bg-indigo-500/5 rounded-2xl border border-indigo-500/10">
+                                <div className="flex-1">
+                                    <h4 className="text-sm font-bold text-theme-text">Kiosk Mode (Auto-Login QR)</h4>
+                                    <p className="text-[10px] text-theme-muted mt-0.5 leading-relaxed">
+                                        Short-lived session for shared devices. Link expires in 15 mins.
+                                    </p>
+                                </div>
+                                <label className="relative inline-flex items-center cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        className="sr-only peer"
+                                        checked={isKiosk}
+                                        onChange={(e) => setIsKiosk(e.target.checked)}
+                                        title="Enable kiosk mode"
+                                    />
+                                    <div className="w-11 h-6 bg-theme-bg peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 border border-theme-border"></div>
+                                </label>
                             </div>
 
                             <button
@@ -295,7 +316,15 @@ export const SharedAccessPanel = () => {
 
                         <div className="mb-6">
                             <h3 className="text-2xl font-bold text-theme-text mb-2">Access Granted!</h3>
-                            <p className="text-sm text-theme-muted">Scan to log in as <span className="text-indigo-600 font-bold">{newName || 'Staff'}</span></p>
+                            <p className="text-sm text-theme-muted">
+                                {generatedCreds.expiresAt ? (
+                                    <span className="text-amber-600 font-bold flex items-center justify-center gap-1">
+                                        <Loader2 size={14} className="animate-spin" /> Kiosk Token: Expires in 15m
+                                    </span>
+                                ) : (
+                                    <span>Scan to log in as <span className="text-indigo-600 font-bold">{newName || 'Staff'}</span></span>
+                                )}
+                            </p>
                         </div>
 
                         <div className="bg-white p-4 rounded-2xl mx-auto w-fit shadow-inner mb-6">
@@ -337,4 +366,31 @@ export const SharedAccessPanel = () => {
             )}
         </div>
     );
+};
+
+// Helper to define initial permission blobs
+const getDefaultPermissions = (role: string) => {
+    switch (role.toLowerCase()) {
+        case 'admin':
+            return { all: true };
+        case 'manager':
+            return {
+                products: ['view', 'create', 'edit', 'delete'],
+                orders: ['view', 'edit', 'status'],
+                customers: ['view'],
+                staff: ['view', 'manage']
+            };
+        case 'sales':
+            return {
+                products: ['view'],
+                orders: ['view', 'create', 'edit'],
+                customers: ['view', 'create']
+            };
+        case 'staff':
+        default:
+            return {
+                orders: ['view', 'status'],
+                picking: true
+            };
+    }
 };

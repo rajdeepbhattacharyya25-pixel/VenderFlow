@@ -12,7 +12,6 @@ import AdminGuard from './components/admin/AdminGuard';
 import CustomerAuthGuard from './components/CustomerAuthGuard';
 import TelegramInitializer from './components/TelegramInitializer';
 import OfflineOverlay from './components/OfflineOverlay';
-import ClickSpark from './components/react-bits/ClickSpark';
 import ErrorBoundary from './components/ErrorBoundary';
 import CookieConsent from './components/CookieConsent';
 import { initTelegramApp } from './lib/telegram';
@@ -100,17 +99,18 @@ function App() {
           try {
             const { data: profile } = await supabase
               .from('profiles')
-              .select('role, plan')
+              .select('role')
               .eq('id', session.user.id)
               .maybeSingle();
 
             identify(session.user.id, {
               email: session.user.email ? 'REDACTED' : undefined,
               role: profile?.role || 'vendor',
-              plan: profile?.plan || 'free'
+              plan: 'free' // Default for analytics if not fetched from sellers
             });
           } catch (e) {
-            console.error("Profile ident error:", e);
+            const error = e as Error;
+            console.error("Profile identification failed:", error.message);
           }
         })();
       } else if (event === 'SIGNED_OUT') {
@@ -135,11 +135,8 @@ function App() {
     gsap.ticker.lagSmoothing(0);
 
     // Register Service Worker for Push Notifications
-    if ('serviceWorker' in navigator) {
+    if ('serviceWorker' in navigator && import.meta.env.DEV) {
       navigator.serviceWorker.register('/sw.js')
-        .then(registration => {
-          console.log('Service Worker registered with scope:', registration.scope);
-        })
         .catch(error => {
           console.error('Service Worker registration failed:', error);
         });

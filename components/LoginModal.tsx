@@ -214,7 +214,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
 
             <div id="login-panel" className="relative w-full max-h-[calc(100vh-140px)] md:max-h-[calc(100vh-160px)] md:max-w-[360px] bg-stone-950 rounded-[2rem] overflow-visible shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] animate-in slide-in-from-bottom-4 zoom-in-95 duration-500 border border-white/10 flex flex-col mt-4 md:mt-0">
                 <OwlOverlay targetSelector="#login-panel" isError={!!error} />
-                <div className="p-6 sm:p-8 flex-1 overflow-y-auto" style={{ paddingTop: 'max(env(safe-area-inset-top, 24px), 24px)' }}>
+                <div className="p-6 sm:p-8 flex-1 overflow-y-auto hide-scroll" style={{ paddingTop: 'max(env(safe-area-inset-top, 24px), 24px)' }}>
                     {/* Close Button */}
                     <button
                         onClick={onClose}

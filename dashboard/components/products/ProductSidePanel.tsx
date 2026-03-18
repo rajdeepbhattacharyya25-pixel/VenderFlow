@@ -1,8 +1,24 @@
 import React, { useState } from 'react';
 import { TrendingUp, Package, AlertCircle, ChevronRight, History } from 'lucide-react';
 
-const ProductSidePanel = () => {
+import { Product } from '../../types';
+
+interface ProductSidePanelProps {
+    isOpen?: boolean;
+    onClose?: () => void;
+    products: Product[];
+}
+
+const ProductSidePanel: React.FC<ProductSidePanelProps> = ({ products }) => {
     const [activeTab, setActiveTab] = useState<'insights' | 'inventory'>('insights');
+
+    // Calculate Insights
+    const totalRevenue = products.reduce((acc, p) => acc + (p.amount || 0), 0);
+    const totalUnitsSold = products.reduce((acc, p) => acc + (p.orders || 0), 0);
+    const lowStockItems = products.filter(p => p.stock_quantity <= 5).slice(0, 5);
+    const fastMovers = [...products]
+        .sort((a, b) => (b.orders || 0) - (a.orders || 0))
+        .slice(0, 3);
 
     return (
         <div className="h-full flex flex-col gap-6">
@@ -37,13 +53,13 @@ const ProductSidePanel = () => {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <span className="text-xs text-theme-muted block">Revenue</span>
-                                    <span className="text-lg font-bold text-theme-text">$12,450</span>
-                                    <span className="text-xs text-green-500 block">↑ 12%</span>
+                                    <span className="text-lg font-bold text-theme-text">${totalRevenue.toLocaleString()}</span>
+                                    <span className="text-xs text-green-500 block">Active</span>
                                 </div>
                                 <div>
                                     <span className="text-xs text-theme-muted block">Units Sold</span>
-                                    <span className="text-lg font-bold text-theme-text">840</span>
-                                    <span className="text-xs text-red-500 block">↓ 3%</span>
+                                    <span className="text-lg font-bold text-theme-text">{totalUnitsSold}</span>
+                                    <span className="text-xs text-theme-muted block">across {products.length} skus</span>
                                 </div>
                             </div>
                         </div>
@@ -55,15 +71,20 @@ const ProductSidePanel = () => {
                                 Fast Moving Stock
                             </h4>
                             <div className="space-y-3">
-                                {[1, 2, 3].map((i) => (
-                                    <div key={i} className="flex items-center justify-between text-sm">
+                                {fastMovers.length > 0 ? fastMovers.map((product) => (
+                                    <div key={product.id} className="flex items-center justify-between text-sm">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded bg-theme-bg/50"></div>
-                                            <span className="text-theme-text">Premium T-Shirt</span>
+                                            <img src={product.images?.[0] || 'https://via.placeholder.com/150'} alt="" className="w-8 h-8 rounded object-cover bg-theme-bg/50" />
+                                            <span className="text-theme-text truncate max-w-[120px]">{product.name}</span>
                                         </div>
-                                        <span className="font-mono text-sky-600 dark:text-sky-400">45 left</span>
+                                        <div className="text-right">
+                                            <span className="font-mono text-sky-600 dark:text-sky-400 block">{product.stock_quantity} left</span>
+                                            <span className="text-[10px] text-theme-muted">{product.orders || 0} sold</span>
+                                        </div>
                                     </div>
-                                ))}
+                                )) : (
+                                    <p className="text-xs text-theme-muted text-center py-4">No sales data available</p>
+                                )}
                             </div>
                         </div>
                     </>
@@ -89,14 +110,16 @@ const ProductSidePanel = () => {
                                 Low Stock Alerts
                             </h4>
                             <ul className="space-y-2">
-                                <li className="text-sm text-theme-text flex justify-between">
-                                    <span>Blue Jeans (32)</span>
-                                    <span className="font-bold">2 left</span>
-                                </li>
-                                <li className="text-sm text-theme-text flex justify-between">
-                                    <span>Red Scarf</span>
-                                    <span className="font-bold">0 left</span>
-                                </li>
+                                {lowStockItems.length > 0 ? lowStockItems.map(item => (
+                                    <li key={item.id} className="text-sm text-theme-text flex justify-between">
+                                        <span className="truncate max-w-[150px]">{item.name}</span>
+                                        <span className={`font-bold ${item.stock_quantity === 0 ? 'text-red-600' : 'text-orange-500'}`}>
+                                            {item.stock_quantity === 0 ? 'Out of Stock' : `${item.stock_quantity} left`}
+                                        </span>
+                                    </li>
+                                )) : (
+                                    <li className="text-xs text-theme-muted text-center py-2">All stock levels healthy</li>
+                                )}
                             </ul>
                         </div>
                     </>

@@ -70,28 +70,46 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
             }
         };
 
-        fetchNotifications();
-
         // Subscribe to new notifications
-        const channel = supabase
-            .channel('seller-notifications')
-            .on('postgres_changes', {
-                event: 'INSERT',
-                schema: 'public',
-                table: 'notifications'
-            }, (payload) => {
-                const newNotification = payload.new as Notification;
-                if (currentUserId && newNotification.user_id === currentUserId) {
-                    fetchNotifications();
-                    setToastNotification(newNotification);
-                    setTimeout(() => setToastNotification(null), 5000);
-                }
-            })
-            .subscribe();
+        let channel: any;
+        
+        const setupSubscription = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user || !mounted) return;
+
+            // Use a unique channel name per user to avoid broadcast collisions
+            const newChannel = supabase
+                .channel(`notifications-${user.id}`)
+                .on('postgres_changes', {
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: 'notifications',
+                    filter: `user_id=eq.${user.id}`
+                }, (payload) => {
+                    if (mounted) {
+                        const newNotification = payload.new as Notification;
+                        setNotifications(prev => [newNotification, ...prev].slice(0, 20));
+                        setUnreadCount(prev => prev + 1);
+                        setToastNotification(newNotification);
+                        setTimeout(() => {
+                            if (mounted) setToastNotification(null);
+                        }, 5000);
+                    }
+                });
+            
+            if (mounted) {
+                channel = newChannel.subscribe();
+            } else {
+                newChannel.unsubscribe();
+            }
+        };
+
+        setupSubscription();
+        fetchNotifications();
 
         return () => {
             mounted = false;
-            channel.unsubscribe();
+            if (channel) channel.unsubscribe();
         };
     }, []);
 
@@ -363,7 +381,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
                             className="hidden sm:flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-colors font-semibold text-xs uppercase tracking-wider border border-indigo-200 dark:border-indigo-500/20"
                         >
                             <ExternalLink size={14} />
-                            Preview
+                            View Live
                         </a>
                     )}
 

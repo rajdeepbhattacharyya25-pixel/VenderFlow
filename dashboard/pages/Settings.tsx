@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     Save, Building, Mail, Phone, MapPin, Globe, CreditCard, Bell,
     Shield, Palette, Database, Layout, Loader2, Image, Lock,
@@ -77,6 +77,7 @@ interface StoreSettings {
         hero?: HeroSettings;
     };
     enforce_2fa?: boolean;
+    razorpay_account_id?: string;
 }
 
 interface Session {
@@ -172,7 +173,8 @@ const Settings = () => {
             { icon: 'truck', text: 'Free Express Shipping over ₹5,000' },
             { icon: 'check', text: 'Authenticity Guaranteed' }
         ],
-        logo_url: ''
+        logo_url: '',
+        razorpay_account_id: ''
     });
 
     // System Status State
@@ -184,9 +186,12 @@ const Settings = () => {
         region: 'us-east-1',
         provider: 'Supabase'
     });
+    const [sellerQuota, setSellerQuota] = useState<any>(null);
+    const [userRole, setUserRole] = useState<'admin' | 'seller' | null>(null);
 
     const [apiUsage, setApiUsage] = useState<ApiUsage[]>([]);
     const [loadingApiUsage, setLoadingApiUsage] = useState(false);
+    const [aiUsage, setAiUsage] = useState<number>(0);
 
     const [sessions, setSessions] = useState<Session[]>([]);
     const [loadingSessions, setLoadingSessions] = useState(false);
@@ -196,6 +201,8 @@ const Settings = () => {
     const [previewLoading, setPreviewLoading] = useState(false);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [activePreviews, setActivePreviews] = useState<any[]>([]);
+    const realtimeChannelRef = useRef<any>(null);
+    const healthTimeoutRef = useRef<any>(null);
 
     const fetchPreviews = async () => {
         try {
@@ -254,7 +261,7 @@ const Settings = () => {
             }
 
             const data = await response.json();
-            setPreviewUrl(`${window.location.origin}/preview/${data.preview.id}`);
+            setPreviewUrl(`${window.location.origin}/preview/${data.id}`);
             fetchPreviews();
         } catch (error: any) {
             console.error('Error creating preview:', error);
@@ -305,7 +312,16 @@ const Settings = () => {
         if (activeTab === 'status') {
             checkSystemStatus();
             const interval = setInterval(checkSystemStatus, 30000); // Check every 30s
-            return () => clearInterval(interval);
+            return () => {
+                clearInterval(interval);
+                if (realtimeChannelRef.current) {
+                    realtimeChannelRef.current.unsubscribe();
+                    realtimeChannelRef.current = null;
+                }
+                if (healthTimeoutRef.current) {
+                    clearTimeout(healthTimeoutRef.current);
+                }
+            };
         }
     }, [activeTab]);
 
@@ -331,27 +347,116 @@ const Settings = () => {
         setSystemStatus(prev => ({
             ...prev,
             database: { status: dbError ? 'disconnected' : 'connected', latency: dbLatency },
-            api: { status: fnError && fnError.message === 'Failed to send request' ? 'down' : 'healthy' }, // Rough check
+            api: { status: fnError && (fnError as any).message === 'Failed to send request' ? 'down' : 'healthy' }, // Rough check
             storage: { status: storageError ? 'offline' : 'online' },
             realtime: { status: 'checking' }
         }));
 
         // 4. Check Realtime
+        // Cleanup previous attempts first
+        if (realtimeChannelRef.current) {
+            realtimeChannelRef.current.unsubscribe();
+            realtimeChannelRef.current = null;
+        }
+        if (healthTimeoutRef.current) {
+            clearTimeout(healthTimeoutRef.current);
+        }
+
         const channelId = `health-${Date.now()}`;
         const channel = supabase.channel(channelId);
-        channel.subscribe((status, err) => {
-            if (status === 'SUBSCRIBED') {
-                setSystemStatus(prev => ({ ...prev, realtime: { status: 'live' } }));
-                supabase.removeChannel(channel);
-            } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
-                console.warn(`Realtime Health Check Failed: ${status}`, err);
+        realtimeChannelRef.current = channel;
+        
+        healthTimeoutRef.current = setTimeout(() => {
+            if (realtimeChannelRef.current === channel) {
                 setSystemStatus(prev => ({ ...prev, realtime: { status: 'offline' } }));
-                supabase.removeChannel(channel);
+            }
+            channel.unsubscribe();
+        }, 15000);
+
+        channel.subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+                if (healthTimeoutRef.current) clearTimeout(healthTimeoutRef.current);
+                setSystemStatus(prev => ({ ...prev, realtime: { status: 'live' } }));
+                // Keep it live for a bit then kill to save resources
+                setTimeout(() => {
+                    if (realtimeChannelRef.current === channel) channel.unsubscribe();
+                }, 5000);
+            } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+                // The 15s timeout above will eventually mark it offline if no SUBSCRIBED happens.
             }
         });
 
         // 5. Check API Usage
-        fetchApiUsage();
+        await fetchUserRole();
+        await fetchApiUsage();
+        
+        // 6. Check Seller Quota
+        await fetchSellerQuota();
+
+        // 7. Check Active Previews
+        await fetchPreviews();
+    };
+
+    const fetchUserRole = async () => {
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) return;
+            
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('id', session.user.id)
+                .single();
+            
+            if (profile) {
+                setUserRole(profile.role as any);
+            }
+        } catch (error) {
+            console.error('Error fetching user role:', error);
+        }
+    };
+
+    const fetchSellerQuota = async () => {
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) return;
+            
+            // 1. Fetch Quota Limits
+            const { data: quota, error } = await supabase
+                .from('seller_quotas')
+                .select('*')
+                .eq('seller_id', session.user.id)
+                .maybeSingle();
+            
+            if (error) throw error;
+            
+            // Default fallbacks if no quota row exists
+            const safeQuota = quota || {
+                max_previews: 5,
+                max_ai_tokens: 10000,
+                seller_id: session.user.id
+            };
+            
+            setSellerQuota(safeQuota);
+
+            // 2. Fetch Real-time Usage (AI Tokens)
+            const startOfMonth = new Date();
+            startOfMonth.setDate(1);
+            startOfMonth.setHours(0, 0, 0, 0);
+
+            const { data: usageEvents } = await supabase
+                .from('usage_quota_events')
+                .select('change_amount')
+                .eq('seller_id', session.user.id)
+                .eq('quota_type', 'ai_tokens')
+                .gte('created_at', startOfMonth.toISOString());
+
+            const totalUsed = (usageEvents || []).reduce((sum, event) => sum + Number(event.change_amount), 0);
+            setAiUsage(totalUsed);
+
+        } catch (error) {
+            console.error('Error fetching seller quota or usage:', error);
+        }
     };
 
     const fetchApiUsage = async () => {
@@ -392,7 +497,7 @@ const Settings = () => {
         }
     };
 
-    const { lastBackupDate, connectAndBackup, performBackup, isBackupRunning, backupStatus, downloadLocalBackup } = useAutoBackup(false);
+    const { lastBackupDate, connectAndBackup, performBackup, isBackupRunning, backupStatus, backupProgress, backupMessage, downloadLocalBackup } = useAutoBackup(false);
 
     const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files || e.target.files.length === 0) return;
@@ -491,6 +596,12 @@ const Settings = () => {
                 .eq('seller_id', user.id)
                 .maybeSingle();
 
+            const { data: sellerData } = await supabase
+                .from('sellers')
+                .select('razorpay_account_id')
+                .eq('id', user.id)
+                .single();
+
             if (error) {
                 console.error('Error fetching settings:', error);
             }
@@ -527,7 +638,8 @@ const Settings = () => {
                     ],
                     logo_url: data.logo_url || '',
                     session_timeout_minutes: data.session_timeout_minutes || 60,
-                    enforce_2fa: data.enforce_2fa || false
+                    enforce_2fa: data.enforce_2fa || false,
+                    razorpay_account_id: sellerData?.razorpay_account_id || ''
                 });
 
                 // Sync local timeout state
@@ -605,6 +717,10 @@ const Settings = () => {
                 enforce_2fa: settings.enforce_2fa
             };
 
+            const sellerPayload = {
+                razorpay_account_id: settings.razorpay_account_id
+            };
+
             let result;
             if (settings.id) {
                 result = await supabase
@@ -617,7 +733,13 @@ const Settings = () => {
                     .insert([payload]);
             }
 
+            const sellerResult = await supabase
+                .from('sellers')
+                .update(sellerPayload)
+                .eq('id', user.id);
+
             if (result.error) throw result.error;
+            if (sellerResult.error) throw sellerResult.error;
 
             localStorage.removeItem(SETTINGS_DRAFT_KEY);
             setShowDraftBanner(false);
@@ -675,8 +797,8 @@ const Settings = () => {
             case 'notifications': return <NotificationsSettings settings={settings} setSettings={setSettings} renderHeader={renderHeader} handleLogoUpload={handleLogoUpload} saving={saving} setSaving={setSaving} show2FAModal={show2FAModal} setShow2FAModal={setShow2FAModal} timeoutVal={timeoutVal} setTimeoutVal={setTimeoutVal} timeoutUnit={timeoutUnit} setTimeoutUnit={setTimeoutUnit} systemStatus={systemStatus} apiUsage={apiUsage} loadingApiUsage={loadingApiUsage} sessions={sessions} loadingSessions={loadingSessions} selectedSessions={selectedSessions} setSelectedSessions={setSelectedSessions} isRevoking={isRevoking} handleRevokeSession={handleRevokeSession} handleRevokeSelected={handleRevokeSelected} formatUaString={formatUaString} getDeviceIcon={getDeviceIcon} DEFAULT_THEME_CONFIG={DEFAULT_THEME_CONFIG} activePreviews={activePreviews} previewLoading={previewLoading} setPreviewLoading={setPreviewLoading} fetchPreviews={fetchPreviews} />;
             case 'billing': return <BillingSettings settings={settings} setSettings={setSettings} renderHeader={renderHeader} handleLogoUpload={handleLogoUpload} saving={saving} setSaving={setSaving} show2FAModal={show2FAModal} setShow2FAModal={setShow2FAModal} timeoutVal={timeoutVal} setTimeoutVal={setTimeoutVal} timeoutUnit={timeoutUnit} setTimeoutUnit={setTimeoutUnit} systemStatus={systemStatus} apiUsage={apiUsage} loadingApiUsage={loadingApiUsage} sessions={sessions} loadingSessions={loadingSessions} selectedSessions={selectedSessions} setSelectedSessions={setSelectedSessions} isRevoking={isRevoking} handleRevokeSession={handleRevokeSession} handleRevokeSelected={handleRevokeSelected} formatUaString={formatUaString} getDeviceIcon={getDeviceIcon} DEFAULT_THEME_CONFIG={DEFAULT_THEME_CONFIG} activePreviews={activePreviews} previewLoading={previewLoading} setPreviewLoading={setPreviewLoading} fetchPreviews={fetchPreviews} />;
             case 'appearance': return <AppearanceSettings settings={settings} setSettings={setSettings} renderHeader={renderHeader} handleLogoUpload={handleLogoUpload} saving={saving} setSaving={setSaving} show2FAModal={show2FAModal} setShow2FAModal={setShow2FAModal} timeoutVal={timeoutVal} setTimeoutVal={setTimeoutVal} timeoutUnit={timeoutUnit} setTimeoutUnit={setTimeoutUnit} systemStatus={systemStatus} apiUsage={apiUsage} loadingApiUsage={loadingApiUsage} sessions={sessions} loadingSessions={loadingSessions} selectedSessions={selectedSessions} setSelectedSessions={setSelectedSessions} isRevoking={isRevoking} handleRevokeSession={handleRevokeSession} handleRevokeSelected={handleRevokeSelected} formatUaString={formatUaString} getDeviceIcon={getDeviceIcon} DEFAULT_THEME_CONFIG={DEFAULT_THEME_CONFIG} activePreviews={activePreviews} previewLoading={previewLoading} setPreviewLoading={setPreviewLoading} fetchPreviews={fetchPreviews} handleCreatePreview={handleCreatePreview} previewUrl={previewUrl} handleDeletePreview={handleDeletePreview} />;
-            case 'data': return <DataSettings settings={settings} setSettings={setSettings} renderHeader={renderHeader} handleLogoUpload={handleLogoUpload} saving={saving} setSaving={setSaving} show2FAModal={show2FAModal} setShow2FAModal={setShow2FAModal} timeoutVal={timeoutVal} setTimeoutVal={setTimeoutVal} timeoutUnit={timeoutUnit} setTimeoutUnit={setTimeoutUnit} systemStatus={systemStatus} apiUsage={apiUsage} loadingApiUsage={loadingApiUsage} sessions={sessions} loadingSessions={loadingSessions} selectedSessions={selectedSessions} setSelectedSessions={setSelectedSessions} isRevoking={isRevoking} handleRevokeSession={handleRevokeSession} handleRevokeSelected={handleRevokeSelected} formatUaString={formatUaString} getDeviceIcon={getDeviceIcon} DEFAULT_THEME_CONFIG={DEFAULT_THEME_CONFIG} activePreviews={activePreviews} previewLoading={previewLoading} setPreviewLoading={setPreviewLoading} fetchPreviews={fetchPreviews} backupStatus={backupStatus} lastBackupDate={lastBackupDate} isBackupRunning={isBackupRunning} downloadLocalBackup={downloadLocalBackup} connectAndBackup={connectAndBackup} performBackup={performBackup} />;
-            case 'status': return <SystemStatusSettings settings={settings} setSettings={setSettings} renderHeader={renderHeader} handleLogoUpload={handleLogoUpload} saving={saving} setSaving={setSaving} show2FAModal={show2FAModal} setShow2FAModal={setShow2FAModal} timeoutVal={timeoutVal} setTimeoutVal={setTimeoutVal} timeoutUnit={timeoutUnit} setTimeoutUnit={setTimeoutUnit} systemStatus={systemStatus} apiUsage={apiUsage} loadingApiUsage={loadingApiUsage} sessions={sessions} loadingSessions={loadingSessions} selectedSessions={selectedSessions} setSelectedSessions={setSelectedSessions} isRevoking={isRevoking} handleRevokeSession={handleRevokeSession} handleRevokeSelected={handleRevokeSelected} formatUaString={formatUaString} getDeviceIcon={getDeviceIcon} DEFAULT_THEME_CONFIG={DEFAULT_THEME_CONFIG} activePreviews={activePreviews} previewLoading={previewLoading} setPreviewLoading={setPreviewLoading} fetchPreviews={fetchPreviews} fetchApiUsage={fetchApiUsage} />;
+            case 'data': return <DataSettings settings={settings} setSettings={setSettings} renderHeader={renderHeader} handleLogoUpload={handleLogoUpload} saving={saving} setSaving={setSaving} show2FAModal={show2FAModal} setShow2FAModal={setShow2FAModal} timeoutVal={timeoutVal} setTimeoutVal={setTimeoutVal} timeoutUnit={timeoutUnit} setTimeoutUnit={setTimeoutUnit} systemStatus={systemStatus} apiUsage={apiUsage} loadingApiUsage={loadingApiUsage} sessions={sessions} loadingSessions={loadingSessions} selectedSessions={selectedSessions} setSelectedSessions={setSelectedSessions} isRevoking={isRevoking} handleRevokeSession={handleRevokeSession} handleRevokeSelected={handleRevokeSelected} formatUaString={formatUaString} getDeviceIcon={getDeviceIcon} DEFAULT_THEME_CONFIG={DEFAULT_THEME_CONFIG} activePreviews={activePreviews} previewLoading={previewLoading} setPreviewLoading={setPreviewLoading} fetchPreviews={fetchPreviews} backupStatus={backupStatus} backupProgress={backupProgress} backupMessage={backupMessage} lastBackupDate={lastBackupDate} isBackupRunning={isBackupRunning} downloadLocalBackup={downloadLocalBackup} connectAndBackup={connectAndBackup} performBackup={performBackup} />;
+            case 'status': return <SystemStatusSettings settings={settings} setSettings={setSettings} renderHeader={renderHeader} handleLogoUpload={handleLogoUpload} saving={saving} setSaving={setSaving} show2FAModal={show2FAModal} setShow2FAModal={setShow2FAModal} timeoutVal={timeoutVal} setTimeoutVal={setTimeoutVal} timeoutUnit={timeoutUnit} setTimeoutUnit={setTimeoutUnit} systemStatus={systemStatus} apiUsage={apiUsage} loadingApiUsage={loadingApiUsage} sessions={sessions} loadingSessions={loadingSessions} selectedSessions={selectedSessions} setSelectedSessions={setSelectedSessions} isRevoking={isRevoking} handleRevokeSession={handleRevokeSession} handleRevokeSelected={handleRevokeSelected} formatUaString={formatUaString} getDeviceIcon={getDeviceIcon} DEFAULT_THEME_CONFIG={DEFAULT_THEME_CONFIG} activePreviews={activePreviews} previewLoading={previewLoading} setPreviewLoading={setPreviewLoading} fetchPreviews={fetchPreviews} fetchApiUsage={fetchApiUsage} sellerQuota={sellerQuota} aiUsage={aiUsage} userRole={userRole} />;
             case 'shipping': return <ShippingSettings settings={settings} setSettings={setSettings} renderHeader={renderHeader} handleLogoUpload={handleLogoUpload} saving={saving} setSaving={setSaving} show2FAModal={show2FAModal} setShow2FAModal={setShow2FAModal} timeoutVal={timeoutVal} setTimeoutVal={setTimeoutVal} timeoutUnit={timeoutUnit} setTimeoutUnit={setTimeoutUnit} systemStatus={systemStatus} apiUsage={apiUsage} loadingApiUsage={loadingApiUsage} sessions={sessions} loadingSessions={loadingSessions} selectedSessions={selectedSessions} setSelectedSessions={setSelectedSessions} isRevoking={isRevoking} handleRevokeSession={handleRevokeSession} handleRevokeSelected={handleRevokeSelected} formatUaString={formatUaString} getDeviceIcon={getDeviceIcon} DEFAULT_THEME_CONFIG={DEFAULT_THEME_CONFIG} activePreviews={activePreviews} previewLoading={previewLoading} setPreviewLoading={setPreviewLoading} fetchPreviews={fetchPreviews} />;
             default: return null;
         }
