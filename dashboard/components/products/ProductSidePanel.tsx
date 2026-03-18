@@ -101,6 +101,10 @@ const ProductSidePanel: React.FC<ProductSidePanelProps> = ({ products }) => {
                                 <span className="text-sm font-medium text-theme-text">Export Stock Report</span>
                                 <ChevronRight size={16} className="text-theme-muted group-hover:text-theme-chart-line" />
                             </button>
+                            <button className="w-full flex items-center justify-between p-3 rounded-lg bg-indigo-500/10 border border-indigo-500/20 hover:border-indigo-500/50 transition-colors group">
+                                <span className="text-sm font-medium text-indigo-600 dark:text-indigo-400">AI Bulk Cleanup</span>
+                                <TrendingUp size={16} className="text-indigo-600 dark:text-indigo-400" />
+                            </button>
                         </div>
 
                         {/* Low Stock Alerts */}

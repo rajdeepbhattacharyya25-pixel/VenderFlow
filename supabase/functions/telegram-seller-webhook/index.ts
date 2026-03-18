@@ -42,6 +42,8 @@ serve(async (req) => {
         // 4. Handle Content
         if (update.message) {
             await handleMessage(update.message, config, supabase);
+        } else if (update.callback_query) {
+            await handleCallbackQuery(update.callback_query, config, supabase);
         }
 
         return new Response("OK", { status: 200 });
@@ -87,12 +89,134 @@ async function handleMessage(message: any, config: any, supabase: any) {
             case '/support':
                 await handleSupport(chatId, text, config, supabase);
                 break;
+            case '/alerts':
+                await handleAlerts(chatId, config, supabase);
+                break;
             default:
                 if (message.chat.type === 'private') {
                     await sendMessage(config.bot_token, chatId, "❌ Unknown command. Try /help.");
                 }
         }
     }
+}
+
+async function handleCallbackQuery(callback: any, config: any, supabase: any) {
+    const chatId = callback.message.chat.id;
+    const data = callback.data;
+    const [action, ...args] = data.split(':');
+
+    try {
+        if (action === 'confirm_order') {
+            const orderId = args[0];
+            const { error } = await supabase.from('orders').update({ status: 'confirmed' }).eq('id', orderId).eq('seller_id', config.seller_id);
+            if (error) throw error;
+            await answerCallbackQuery(config.bot_token, callback.id, "✅ Order Confirmed!");
+            await sendMessage(config.bot_token, chatId, `✅ Order <b>#${orderId.slice(0, 8)}</b> has been confirmed.`);
+        } 
+        else if (action === 'ship_order') {
+            const orderId = args[0];
+            const { error } = await supabase.from('orders').update({ status: 'shipped' }).eq('id', orderId).eq('seller_id', config.seller_id);
+            if (error) throw error;
+            await answerCallbackQuery(config.bot_token, callback.id, "📦 Marked as Shipped!");
+            await sendMessage(config.bot_token, chatId, `📦 Order <b>#${orderId.slice(0, 8)}</b> is now marked as shipped.`);
+        }
+        else if (action === 'cancel_order') {
+            const orderId = args[0];
+            const { error } = await supabase.from('orders').update({ status: 'cancelled' }).eq('id', orderId).eq('seller_id', config.seller_id);
+            if (error) throw error;
+            await answerCallbackQuery(config.bot_token, callback.id, "❌ Order Cancelled");
+            await sendMessage(config.bot_token, chatId, `❌ Order <b>#${orderId.slice(0, 8)}</b> has been cancelled.`);
+        }
+        else if (action === 'add_stock') {
+            const productId = args[0];
+            const amount = parseInt(args[1]);
+            
+            const { error } = await supabase.rpc('increment_product_stock', { 
+                p_id: productId, 
+                p_amount: amount 
+            });
+
+            if (error) throw error;
+            
+            await answerCallbackQuery(config.bot_token, callback.id, `➕ Added ${amount}!`);
+            
+            // Fetch new stock for confirmation message
+            const { data: stock } = await supabase
+                .from('product_stock')
+                .select('stock_quantity')
+                .eq('product_id', productId)
+                .single();
+
+            await sendMessage(config.bot_token, chatId, `✅ Stock updated. New quantity: <b>${stock?.stock_quantity || 'Unknown'}</b>`);
+        }
+        else if (action === 'toggle_pref') {
+            const key = args[0];
+            const currentPrefs = config.preferences || {};
+            const newValue = !currentPrefs[key];
+            const newPrefs = { ...currentPrefs, [key]: newValue };
+            
+            const { error } = await supabase.from('seller_telegram_configs').update({ preferences: newPrefs }).eq('id', config.id);
+            if (error) throw error;
+            
+            await answerCallbackQuery(config.bot_token, callback.id, "🔄 Preference Updated!");
+            await handleAlerts(chatId, { ...config, preferences: newPrefs }, supabase, callback.message.message_id);
+        }
+    } catch (err) {
+        console.error("Callback Error:", err);
+        await answerCallbackQuery(config.bot_token, callback.id, "⚠️ Operation failed.");
+    }
+}
+
+async function handleAlerts(chatId: number, config: any, supabase: any, editMessageId?: number) {
+    const prefs = config.preferences || { orders: true, stock: true, customers: true, daily_summary: true, critical_only: false };
+    
+    const getLabel = (val: boolean) => val ? "🔔 ON" : "🔕 OFF";
+    
+    const keyboard = {
+        inline_keyboard: [
+            [
+                { text: `Orders: ${getLabel(prefs.orders)}`, callback_data: 'toggle_pref:orders' },
+                { text: `Stock: ${getLabel(prefs.stock)}`, callback_data: 'toggle_pref:stock' }
+            ],
+            [
+                { text: `Customers: ${getLabel(prefs.customers)}`, callback_data: 'toggle_pref:customers' },
+                { text: `Daily Summary: ${getLabel(prefs.daily_summary)}`, callback_data: 'toggle_pref:daily_summary' }
+            ],
+            [
+                { text: `Mode: ${prefs.critical_only ? "⚠️ Critical Only" : "📢 All Alerts"}`, callback_data: 'toggle_pref:critical_only' }
+            ]
+        ]
+    };
+
+    const text = "⚙️ <b>Notification Settings</b>\nManage what alerts you receive and how often.";
+
+    if (editMessageId) {
+        await editMessage(config.bot_token, chatId, editMessageId, text, keyboard);
+    } else {
+        await sendMessage(config.bot_token, chatId, text, keyboard);
+    }
+}
+
+async function answerCallbackQuery(token: string, callbackId: string, text: string) {
+    await fetch(`https://api.telegram.org/bot${token}/answerCallbackQuery`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ callback_query_id: callbackId, text: text })
+    });
+}
+
+async function editMessage(token: string, chatId: number, messageId: number, text: string, replyMarkup: any) {
+    await fetch(`https://api.telegram.org/bot${token}/editMessageText`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            chat_id: chatId,
+            message_id: messageId,
+            text: text,
+            parse_mode: 'HTML',
+            reply_markup: replyMarkup
+        })
+    });
 }
 
 // --- Handlers ---
@@ -111,6 +235,7 @@ async function handleStart(message: any, config: any, supabase: any) {
     const keyboard = {
         inline_keyboard: [
             [{ text: "🖥️ Open Seller Dashboard", web_app: { url: dashboardUrl } }],
+            [{ text: "⚙️ Manage Alerts", callback_data: "show_alerts" }],
             [{ text: "🌐 Open in Browser", url: dashboardUrl }]
         ]
     };
@@ -129,15 +254,26 @@ async function handleStart(message: any, config: any, supabase: any) {
 
 async function handleHelp(chatId: number, token: string) {
     const msg = `
-🤖 <b>Available Commands</b>
+🤖 <b>VendorFlow Seller Command Center</b>
 
-<b>/stats</b> - View today's sales & orders
-<b>/orders</b> - List recent 5 orders
-<b>/weekly</b> - View this week's performance
-<b>/top</b> - View top selling products
-<b>/lowstock</b> - View items running low (&lt;10)
-<b>/login</b> - Get a magic link to dashboard
-<b>/support [message]</b> - Open a support ticket
+Use these commands to manage your store directly from Telegram:
+
+📊 <b>Monitoring</b>
+<b>/stats</b> - View today's sales and order count
+<b>/weekly</b> - Weekly performance summary (Revenue & Orders)
+<b>/top</b> - Your top 5 selling products
+<b>/lowstock</b> - List all products with &lt;10 units remaining
+
+📦 <b>Orders & Inventory</b>
+<b>/orders</b> - List your 5 most recent orders
+<b>/login</b> - Get a secure magic link for dashboard access
+<b>1-Click Actions</b>: When you receive a new order or low stock alert, use the buttons below the message to <b>Confirm</b>, <b>Ship</b>, or <b>Restock</b> instantly.
+
+⚙️ <b>Settings</b>
+<b>/alerts</b> - Open the notification preferences menu. Toggle alerts for orders, stock, and daily summaries.
+<b>/support [msg]</b> - Send a message to our support team
+
+<i>Need more? Open your full dashboard via the button in /start.</i>
 `;
     await sendMessage(token, chatId, msg);
 }
@@ -164,7 +300,7 @@ async function handleOrders(chatId: number, config: any, supabase: any) {
     let msg = "📦 <b>Recent Orders</b>\n\n";
     orders.forEach((o: any) => {
         const date = new Date(o.created_at).toLocaleDateString();
-        const statusEmoji = o.status === 'completed' ? '✅' : o.status === 'pending' ? '⏳' : '📦';
+        const statusEmoji = o.status === 'confirmed' ? '✅' : o.status === 'pending' ? '⏳' : o.status === 'shipped' ? '📦' : '🏁';
 
         let name = 'Customer';
         if (o.shipping_address) {
@@ -173,7 +309,7 @@ async function handleOrders(chatId: number, config: any, supabase: any) {
         }
         name = name.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-        msg += `${statusEmoji} <b>$${o.total}</b> - ${name}\n<i>${date}</i> (#${o.id.slice(0, 8)})\n\n`;
+        msg += `${statusEmoji} <b>₹${o.total}</b> - ${name}\n<i>${date}</i> (#${o.id.slice(0, 8)})\n\n`;
     });
 
     await sendMessage(config.bot_token, chatId, msg);

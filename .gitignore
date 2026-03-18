@@ -30,3 +30,6 @@ dist-ssr
 supabase/.env
 
 .vercel
+
+# Sentry Config File
+.env.sentry-build-plugin

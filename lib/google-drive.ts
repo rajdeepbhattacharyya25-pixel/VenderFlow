@@ -18,7 +18,7 @@ export const initGoogleClient = async (config: BackupConfig) => {
         gsiScript.async = true;
         gsiScript.defer = true;
         gsiScript.onload = () => {
-            // @ts-ignore
+            // @ts-expect-error: GSI library is loaded dynamically
             tokenClient = window.google.accounts.oauth2.initTokenClient({
                 client_id: config.clientId,
                 scope: SCOPES,
@@ -35,10 +35,10 @@ export const initGoogleClient = async (config: BackupConfig) => {
             const gapiScript = document.createElement("script");
             gapiScript.src = "https://apis.google.com/js/api.js";
             gapiScript.onload = () => {
-                // @ts-ignore
+                // @ts-expect-error: GAPI library is loaded dynamically
                 window.gapi.load("client", async () => {
                     try {
-                        // @ts-ignore
+                        // @ts-expect-error: GAPI client is loaded dynamically
                         await window.gapi.client.init({
                             apiKey: config.apiKey,
                             discoveryDocs: DISCOVERY_DOCS,
@@ -65,7 +65,7 @@ export const signInToGoogle = async () => {
         }
 
         // Overwrite callback to resolve the specific sign-in attempt
-        // @ts-ignore
+        // @ts-expect-error: GSI tokenClient callback
         tokenClient.callback = (tokenResponse: any) => {
             if (tokenResponse.error) {
                 reject(tokenResponse);
@@ -79,6 +79,30 @@ export const signInToGoogle = async () => {
         tokenClient.requestAccessToken({ prompt: 'consent' });
     });
 };
+
+export const trySilentSignIn = async () => {
+    return new Promise<void>((resolve, reject) => {
+        if (!tokenClient) {
+            reject(new Error("Token client not initialized"));
+            return;
+        }
+
+        // @ts-ignore
+        tokenClient.callback = (tokenResponse: any) => {
+            if (tokenResponse.error) {
+                reject(tokenResponse);
+                return;
+            }
+            accessToken = tokenResponse.access_token;
+            resolve();
+        };
+
+        // Try silently (no prompt)
+        tokenClient.requestAccessToken({ prompt: 'none' });
+    });
+};
+
+export const isConnected = () => !!accessToken;
 
 export const uploadFileToDrive = async (fileContent: object, fileName: string) => {
     if (!accessToken) {
