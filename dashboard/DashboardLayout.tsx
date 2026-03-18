@@ -10,6 +10,7 @@ import Settings from './pages/Settings';
 import Support from './pages/Support';
 import Promotions from './pages/Promotions';
 import Billing from './pages/Billing';
+import AuditLogs from './pages/AuditLogs';
 import { Theme } from './types';
 
 
@@ -17,10 +18,10 @@ import { Theme } from './types';
 import { supabase } from '../lib/supabase';
 import { useAutoBackup } from '../hooks/useAutoBackup';
 
-import { AlertCircle, Megaphone, X } from 'lucide-react';
+import { AlertCircle, Megaphone, X, Database, ShieldAlert } from 'lucide-react';
 
 function App() {
-  useAutoBackup(true); // Enable auto-backup on dashboard load
+  const { isBackupRunning, backupProgress, backupMessage, backupStatus } = useAutoBackup(true); // Enable auto-backup on dashboard load
 
   const [theme, setTheme] = useState<Theme>('light');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -48,7 +49,6 @@ function App() {
   const [isSuspended, setIsSuspended] = useState(false);
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [announcement, setAnnouncement] = useState<{ id: string; title: string; content: string; type: string } | null>(null);
-  const [isMaintenanceMode, setIsMaintenanceMode] = useState(false); // New state for maintenance mode
   const [storeName, setStoreName] = useState<string | null>(null);
 
   useEffect(() => {
@@ -215,6 +215,8 @@ function App() {
         return <Support />;
       case 'billing':
         return <Billing />;
+      case 'logs':
+        return <AuditLogs />;
       default:
         return <Dashboard theme={theme} onTabChange={setActiveTab} sellerSlug={sellerSlug} />;
     }
@@ -318,6 +320,80 @@ function App() {
               >
                 <X size={16} />
               </button>
+            </div>
+          )}
+
+          {/* Global Backup Notification */}
+          {(isBackupRunning || backupMessage) && (
+            <div className={`mb-6 p-5 rounded-2xl border backdrop-blur-sm animate-in slide-in-from-top-4 fade-in duration-500 shadow-lg ${
+                backupStatus === 'error' ? 'bg-red-500/10 border-red-500/20 shadow-red-500/5' :
+                backupStatus === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 shadow-emerald-500/5' :
+                'bg-indigo-500/10 border-indigo-500/20 shadow-indigo-500/5'
+            }`}>
+              <div className="flex flex-col md:flex-row items-center gap-4">
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                    backupStatus === 'error' ? 'bg-red-500/20 text-red-500' :
+                    backupStatus === 'success' ? 'bg-emerald-500/20 text-emerald-500' :
+                    'bg-indigo-500/20 text-indigo-500 animate-pulse'
+                }`}>
+                  <Database size={24} />
+                </div>
+                
+                <div className="flex-1 text-center md:text-left">
+                  <div className="flex items-center justify-center md:justify-start gap-2 mb-1">
+                    <h3 className={`font-bold ${
+                        backupStatus === 'error' ? 'text-red-500' :
+                        backupStatus === 'success' ? 'text-emerald-500' :
+                        'text-indigo-500'
+                    }`}>
+                        {backupStatus === 'error' ? 'Backup Failed' : 
+                         backupStatus === 'success' ? 'Backup Successful' : 
+                         'Auto-Backup in Progress'}
+                    </h3>
+                    {isBackupRunning && (
+                        <div className="flex gap-1">
+                          <span className="w-1 h-1 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                          <span className="w-1 h-1 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                          <span className="w-1 h-1 bg-indigo-500 rounded-full animate-bounce"></span>
+                        </div>
+                    )}
+                  </div>
+                  <p className="text-sm text-theme-text opacity-90 font-medium">
+                    {backupMessage || "Synchronizing your data accurately..."}
+                  </p>
+                  {isBackupRunning && (
+                      <div className="flex items-center gap-2 mt-2 text-[11px] font-bold text-red-500 uppercase tracking-widest bg-red-500/5 px-3 py-1.5 rounded-lg border border-red-500/10 w-fit mx-auto md:mx-0">
+                        <ShieldAlert size={14} />
+                        PLEASE DO NOT CLOSE OR REFRESH THIS WINDOW
+                      </div>
+                  )}
+                </div>
+
+                <div className="flex flex-col items-center md:items-end gap-2 w-full md:w-48">
+                  <div className={`flex justify-between w-full text-[10px] font-bold uppercase tracking-wider mb-1 px-1 ${
+                      backupStatus === 'error' ? 'text-red-500' :
+                      backupStatus === 'success' ? 'text-emerald-500' :
+                      'text-indigo-500'
+                  }`}>
+                    <span>{backupStatus === 'success' ? 'Completed' : 'Progress'}</span>
+                    <span>{backupProgress}%</span>
+                  </div>
+                  <div className={`h-2 w-full rounded-full overflow-hidden border ${
+                      backupStatus === 'error' ? 'bg-red-500/10 border-red-500/10' :
+                      backupStatus === 'success' ? 'bg-emerald-500/10 border-emerald-500/10' :
+                      'bg-indigo-500/10 border-indigo-500/10'
+                  }`}>
+                    <div 
+                      className={`h-full transition-all duration-700 ease-out rounded-full ${
+                          backupStatus === 'error' ? 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]' :
+                          backupStatus === 'success' ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]' :
+                          'bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]'
+                      }`}
+                      style={{ width: `${backupProgress}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
