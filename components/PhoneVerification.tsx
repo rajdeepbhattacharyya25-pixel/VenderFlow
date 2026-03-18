@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { auth } from '../lib/firebase';
 import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
 import { IconCheck, IconPhone } from './Icons';
-import { Loader2, Edit2, RotateCcw } from 'lucide-react';
+import { Loader2, Edit2 } from 'lucide-react';
 
 declare global {
     interface Window {
@@ -97,10 +97,12 @@ export const PhoneVerification: React.FC<PhoneVerificationProps> = ({
             if (window.recaptchaVerifier) {
                 try {
                     // Force re-render of recaptcha or just let the user retry which might trigger new verifier usage
-                    window.recaptchaVerifier.render().then((widgetId: any) => {
-                        // grecaptcha.reset(widgetId);
+                    window.recaptchaVerifier.render().then((_widgetId: any) => {
+                        // grecaptcha.reset(_widgetId);
                     });
-                } catch (e) { }
+                } catch (e) {
+                    console.warn("Recaptcha reset passive failure", e);
+                }
             }
         } finally {
             setLoading(false);

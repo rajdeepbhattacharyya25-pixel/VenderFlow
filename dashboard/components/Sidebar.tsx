@@ -10,7 +10,8 @@ import {
   Zap,
   MessageSquare,
   Ticket,
-  CreditCard
+  CreditCard,
+  History as HistoryIcon
 } from 'lucide-react';
 import { signOut } from '../../lib/auth';
 import { useNavigate } from 'react-router-dom';
@@ -38,6 +39,7 @@ const MENU_ITEMS = [
   { id: 'promotions', label: 'Promotions', icon: Ticket },
   { id: 'reports', label: 'Business Analytics', icon: PieChart },
   { id: 'settings', label: 'Settings', icon: Settings },
+  { id: 'logs', label: 'Audit Logs', icon: HistoryIcon },
   { id: 'billing', label: 'Billing & Plans', icon: CreditCard },
   { id: 'support', label: 'Support', icon: MessageSquare },
 ];
@@ -45,6 +47,51 @@ const MENU_ITEMS = [
 const Sidebar: React.FC<SidebarProps> = ({ collapsed, isMobile, activeTab, setActiveTab, sellerSlug, businessLogo, onSidebarClose, storeName }) => {
   const navigate = useNavigate();
   const [unreadSupportCount, setUnreadSupportCount] = useState(0);
+  const [filteredMenuItems, setFilteredMenuItems] = useState(MENU_ITEMS);
+
+  // Filter menu items based on permissions
+  useEffect(() => {
+    const staffContextRaw = localStorage.getItem('staff_context');
+    if (!staffContextRaw) {
+      setFilteredMenuItems(MENU_ITEMS);
+      return;
+    }
+
+    try {
+      const staffData = JSON.parse(staffContextRaw);
+      const permissions = staffData.permissions || {};
+
+      if (permissions.all) {
+        setFilteredMenuItems(MENU_ITEMS);
+        return;
+      }
+
+      const filtered = MENU_ITEMS.filter(item => {
+        // Dashboard is always visible
+        if (item.id === 'dashboard') return true;
+
+        // Map menu IDs to permission keys
+        const permissionMap: Record<string, any> = {
+          products: permissions.products,
+          orders: permissions.orders || permissions.picking,
+          sales: permissions.orders,
+          promotions: permissions.products,
+          reports: permissions.reports,
+          settings: permissions.staff || permissions.manage,
+          logs: permissions.staff || permissions.manage,
+          billing: false, // Staff never see billing
+          support: true // Everyone sees support currently
+        };
+
+        return !!permissionMap[item.id];
+      });
+
+      setFilteredMenuItems(filtered);
+    } catch (e) {
+      console.error("Error parsing staff context", e);
+      setFilteredMenuItems(MENU_ITEMS);
+    }
+  }, []);
 
   // Fetch unread admin messages for this seller
   useEffect(() => {
@@ -172,7 +219,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, isMobile, activeTab, setAc
 
         {/* Nav Items */}
         <nav className="flex-1 py-6 flex flex-col gap-1.5 px-3 overflow-y-auto">
-          {MENU_ITEMS.map((item) => {
+          {filteredMenuItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
             const showBadge = item.id === 'support' && unreadSupportCount > 0 && !isActive;

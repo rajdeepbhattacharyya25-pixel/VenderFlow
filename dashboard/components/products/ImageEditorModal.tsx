@@ -1,121 +1,133 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import Cropper from 'react-easy-crop';
-import type { Area } from 'react-easy-crop';
-import { X, Loader2, RotateCcw, ZoomIn, Maximize, Square, Monitor, Smartphone } from 'lucide-react';
-import { unifiedUpload, checkDuplicate } from '../../lib/vault';
+import ReactCrop, { 
+  centerCrop, 
+  makeAspectCrop, 
+  type Crop, 
+  type PixelCrop 
+} from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
+import { X, Loader2, RotateCcw, ZoomIn, Maximize, Square, Monitor, Smartphone, RotateCw } from 'lucide-react';
+import { unifiedUpload } from '../../lib/vault';
 
 interface ImageEditorModalProps {
     isOpen: boolean;
     imageSrc: string;
     onClose: () => void;
     onComplete: (imageUrl: string) => void;
+    productId?: string;
 }
 
 const ASPECT_OPTIONS = [
-    { label: 'Free', value: 0, icon: Maximize },
+    { label: 'Free', value: undefined, icon: Maximize },
     { label: '1:1', value: 1, icon: Square },
     { label: '4:3', value: 4 / 3, icon: Monitor },
     { label: '16:9', value: 16 / 9, icon: Smartphone },
 ];
 
-async function getCroppedImg(imageSrc: string, pixelCrop: Area, rotation: number = 0): Promise<File> {
-    const image = await createImage(imageSrc);
+function centerAspectCrop(mediaWidth: number, mediaHeight: number, aspect: number | undefined) {
+  return centerCrop(
+    makeAspectCrop(
+      { unit: '%', width: 90 },
+      aspect || 1,
+      mediaWidth,
+      mediaHeight
+    ),
+    mediaWidth,
+    mediaHeight
+  );
+}
+
+async function getCroppedImg(
+    image: HTMLImageElement,
+    pixelCrop: PixelCrop,
+    rotation: number = 0
+): Promise<File> {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d')!;
 
-    const radians = (rotation * Math.PI) / 180;
-    const sin = Math.abs(Math.sin(radians));
-    const cos = Math.abs(Math.cos(radians));
-    const rotatedWidth = image.width * cos + image.height * sin;
-    const rotatedHeight = image.width * sin + image.height * cos;
+    const scaleX = image.naturalWidth / image.width;
+    const scaleY = image.naturalHeight / image.height;
 
-    canvas.width = rotatedWidth;
-    canvas.height = rotatedHeight;
+    canvas.width = pixelCrop.width * scaleX;
+    canvas.height = pixelCrop.height * scaleY;
 
-    ctx.translate(rotatedWidth / 2, rotatedHeight / 2);
-    ctx.rotate(radians);
-    ctx.translate(-image.width / 2, -image.height / 2);
-    ctx.drawImage(image, 0, 0);
+    ctx.imageSmoothingQuality = 'high';
 
-    const croppedCanvas = document.createElement('canvas');
-    const croppedCtx = croppedCanvas.getContext('2d')!;
+    const rotateRads = rotation * Math.PI / 180;
+    
+    ctx.save();
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.rotate(rotateRads);
+    ctx.translate(-canvas.width / 2, -canvas.height / 2);
 
-    croppedCanvas.width = pixelCrop.width;
-    croppedCanvas.height = pixelCrop.height;
-
-    croppedCtx.drawImage(
-        canvas,
-        pixelCrop.x,
-        pixelCrop.y,
-        pixelCrop.width,
-        pixelCrop.height,
-        0,
-        0,
-        pixelCrop.width,
-        pixelCrop.height,
+    ctx.drawImage(
+      image,
+      pixelCrop.x * scaleX,
+      pixelCrop.y * scaleY,
+      pixelCrop.width * scaleX,
+      pixelCrop.height * scaleY,
+      0,
+      0,
+      pixelCrop.width * scaleX,
+      pixelCrop.height * scaleY
     );
+    ctx.restore();
 
     return new Promise((resolve, reject) => {
-        croppedCanvas.toBlob((blob) => {
+        canvas.toBlob((blob) => {
             if (!blob) {
                 reject(new Error('Canvas crop failed'));
                 return;
             }
             resolve(new File([blob], 'product-image.webp', { type: 'image/webp' }));
-        }, 'image/webp', 0.85);
+        }, 'image/webp', 0.9);
     });
 }
 
-function createImage(url: string): Promise<HTMLImageElement> {
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.addEventListener('load', () => resolve(img));
-        img.addEventListener('error', (err) => reject(err));
-        img.crossOrigin = 'anonymous';
-        img.src = url;
-    });
-}
-
-const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, imageSrc, onClose, onComplete }) => {
-    const [crop, setCrop] = useState({ x: 0, y: 0 });
+const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ 
+    isOpen, 
+    imageSrc, 
+    onClose, 
+    onComplete, 
+    productId = 'temp-new-product' 
+}) => {
+    const [crop, setCrop] = useState<Crop>();
+    const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
     const [zoom, setZoom] = useState(1);
     const [rotation, setRotation] = useState(0);
-    const [aspect, setAspect] = useState(0);
-    const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+    const [aspect, setAspect] = useState<number | undefined>(undefined);
     const [uploading, setUploading] = useState(false);
     const [uploadStatus, setUploadStatus] = useState('');
     const [error, setError] = useState<string | null>(null);
+    
+    const imgRef = useRef<HTMLImageElement>(null);
 
-    const onCropComplete = useCallback((_: Area, croppedPixels: Area) => {
-        setCroppedAreaPixels(croppedPixels);
-    }, []);
+    function onImageLoad(e: React.SyntheticEvent<HTMLImageElement>) {
+      const { width, height } = e.currentTarget;
+      setCrop(centerAspectCrop(width, height, aspect));
+    }
+
+    const handleAspectChange = (newAspect: number | undefined) => {
+      setAspect(newAspect);
+      if (imgRef.current) {
+        const { width, height } = imgRef.current;
+        setCrop(centerAspectCrop(width, height, newAspect));
+      }
+    };
 
     const handleApply = async () => {
-        if (!croppedAreaPixels) return;
+        if (!completedCrop || !imgRef.current) return;
 
         setUploading(true);
         setError(null);
-        setUploadStatus('Cropping image...');
+        setUploadStatus('Finalizing...');
 
         try {
-            const croppedFile = await getCroppedImg(imageSrc, croppedAreaPixels, rotation);
-
-            // Pre-flight deduplication check
-            setUploadStatus('Checking vault for duplicates...');
-            const existingUrl = await checkDuplicate(croppedFile);
-
-            if (existingUrl) {
-                setUploadStatus('Duplicate found — reusing!');
-                onComplete(existingUrl);
-                handleClose();
-                return;
-            }
-
-            setUploadStatus('Uploading to free hosting...');
+            const croppedFile = await getCroppedImg(imgRef.current, completedCrop, rotation);
             const result = await unifiedUpload({
                 file: croppedFile,
-                productId: 'editor-upload', // Will be re-linked when product is saved
+                productId,
                 isPrimary: false,
                 mediaType: 'image',
             });
@@ -123,6 +135,7 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, imageSrc, o
             onComplete(result.url);
             handleClose();
         } catch (err: any) {
+            console.error('Editor failed:', err);
             setError(err.message || 'Upload failed');
         } finally {
             setUploading(false);
@@ -131,19 +144,20 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, imageSrc, o
     };
 
     const handleClose = () => {
-        setCrop({ x: 0, y: 0 });
+        setCrop(undefined);
+        setCompletedCrop(undefined);
         setZoom(1);
         setRotation(0);
-        setAspect(0);
-        setCroppedAreaPixels(null);
+        setAspect(undefined);
         setError(null);
-        setUploading(false);
-        setUploadStatus('');
         onClose();
     };
 
     const handleReset = () => {
-        setCrop({ x: 0, y: 0 });
+        if (imgRef.current) {
+          const { width, height } = imgRef.current;
+          setCrop(centerAspectCrop(width, height, aspect));
+        }
         setZoom(1);
         setRotation(0);
     };
@@ -151,149 +165,115 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ isOpen, imageSrc, o
     if (!isOpen) return null;
 
     return createPortal(
-        <div
-            className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-[fadeIn_0.2s_ease-out]"
-            onClick={handleClose}
-        >
-            <div
-                className="bg-theme-panel rounded-2xl w-full max-w-3xl max-h-[95vh] md:max-h-[92vh] flex flex-col shadow-2xl border border-theme-border animate-[slideUp_0.3s_ease-out]"
-                onClick={(e) => e.stopPropagation()}
-            >
-                {/* Header */}
-                <div className="flex items-center justify-between p-4 md:p-5 border-b border-theme-border">
-                    <div>
-                        <h2 className="text-base md:text-lg font-bold text-theme-text">Edit Image</h2>
-                        <p className="text-xs text-theme-muted mt-0.5">Crop, zoom & rotate</p>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                        <button
-                            onClick={handleReset}
-                            className="p-2.5 md:p-2 text-theme-muted hover:text-sky-500 rounded-lg hover:bg-sky-500/10 active:bg-sky-500/20 transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
-                            title="Reset"
-                        >
-                            <RotateCcw size={18} />
-                        </button>
-                        <button
-                            onClick={handleClose}
-                            className="p-2.5 md:p-2 text-theme-muted hover:text-red-500 rounded-lg hover:bg-red-500/10 active:bg-red-500/20 transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
-                            title="Close"
-                        >
-                            <X size={18} />
-                        </button>
-                    </div>
+        <div className="fixed inset-0 z-[60] flex flex-col bg-black overflow-hidden animate-[fadeIn_0.2s_ease-out]">
+            {/* Minimal Header */}
+            <div className="absolute top-0 left-0 right-0 h-16 flex items-center justify-between px-8 z-[70] pointer-events-none">
+              <div className="flex items-center gap-4 pointer-events-auto">
+                <span className="text-[10px] font-black tracking-[0.3em] uppercase text-white/20">Studio Editor</span>
+                <div className="h-4 w-px bg-white/10" />
+                <button 
+                  onClick={handleReset}
+                  className="p-2 text-white/40 hover:text-cyan-400 transition-colors"
+                  title="Reset Workspace"
+                >
+                  <RotateCcw size={16} />
+                </button>
+              </div>
+              <button 
+                onClick={handleClose}
+                className="p-2 text-white/40 hover:text-white transition-colors pointer-events-auto"
+                title="Exit Editor"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            {/* Central Workspace */}
+            <div className="flex-1 relative flex items-center justify-center p-20 pb-40">
+                <div 
+                  className="relative transition-transform duration-500 cubic-bezier(0.4, 0, 0.2, 1)"
+                  style={{ transform: `scale(${zoom}) rotate(${rotation}deg)` }}
+                >
+                  <ReactCrop
+                      crop={crop}
+                      onChange={(c) => setCrop(c)}
+                      onComplete={(c) => setCompletedCrop(c)}
+                      aspect={aspect}
+                      className="max-h-[75vh]"
+                  >
+                      <img
+                          ref={imgRef}
+                          src={imageSrc}
+                          onLoad={onImageLoad}
+                          alt="Edit target"
+                          className="max-h-[75vh] w-auto object-contain select-none"
+                          crossOrigin="anonymous"
+                      />
+                  </ReactCrop>
+                </div>
+            </div>
+
+            {/* Unified Bottom Toolbar */}
+            <div className="studio-toolbar">
+              {/* Aspect Group */}
+              <div className="studio-control-group">
+                {ASPECT_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.label}
+                    onClick={() => handleAspectChange(opt.value)}
+                    className={`studio-btn-minimal ${aspect === opt.value ? 'text-cyan-400 bg-cyan-500/10' : 'text-white/40 hover:text-white'}`}
+                  >
+                    <opt.icon size={14} />
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Precision Sliders */}
+              <div className="studio-control-group flex-1 justify-center max-w-2xl">
+                {/* Zoom */}
+                <div className="studio-slider-compact group">
+                  <ZoomIn size={14} className="text-white/20 group-hover:text-cyan-400 transition-colors" />
+                  <input
+                    type="range" min={0.5} max={2} step={0.01} value={zoom}
+                    onChange={(e) => setZoom(Number(e.target.value))}
+                    className="flex-1 h-1 bg-white/10 rounded-full appearance-none cursor-pointer accent-cyan-400"
+                  />
+                  <span className="text-[10px] font-mono text-white/20 w-8">{zoom.toFixed(1)}x</span>
                 </div>
 
-                {/* Crop Area */}
-                <div className="relative w-full h-[50vh] md:h-[400px]">
-                    <Cropper
-                        image={imageSrc}
-                        crop={crop}
-                        zoom={zoom}
-                        rotation={rotation}
-                        aspect={aspect || undefined}
-                        onCropChange={setCrop}
-                        onZoomChange={setZoom}
-                        onRotationChange={setRotation}
-                        onCropComplete={onCropComplete}
-                        style={{
-                            containerStyle: { background: '#0f172a' },
-                        }}
-                    />
-                </div>
+                <div className="h-6 w-px bg-white/5 mx-4" />
 
-                {/* Controls */}
-                <div className="p-4 md:p-5 border-t border-theme-border space-y-3 md:space-y-4">
-                    {/* Aspect Ratio Presets */}
+                {/* Rotate */}
+                <div className="studio-slider-compact group">
+                  <RotateCw size={14} className="text-white/20 group-hover:text-cyan-400 transition-colors" />
+                  <input
+                    type="range" min={-180} max={180} step={1} value={rotation}
+                    onChange={(e) => setRotation(Number(e.target.value))}
+                    className="flex-1 h-1 bg-white/10 rounded-full appearance-none cursor-pointer accent-cyan-400"
+                  />
+                  <span className="text-[10px] font-mono text-white/20 w-8">{rotation}°</span>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="studio-control-group min-w-[200px] justify-end">
+                {error && <span className="text-red-400 text-[10px] font-bold uppercase truncate max-w-[120px]">{error}</span>}
+                <button
+                  onClick={handleApply}
+                  disabled={uploading || !completedCrop}
+                  className="studio-btn-primary"
+                >
+                  {uploading ? (
                     <div className="flex items-center gap-2">
-                        <span className="text-xs font-medium text-theme-muted w-14 md:w-16 shrink-0">Ratio</span>
-                        <div className="flex gap-1.5 flex-wrap">
-                            {ASPECT_OPTIONS.map((opt) => {
-                                const Icon = opt.icon;
-                                return (
-                                    <button
-                                        key={opt.label}
-                                        onClick={() => setAspect(opt.value)}
-                                        className={`px-3 py-2 md:py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 min-h-[36px] active:scale-95 ${aspect === opt.value
-                                            ? 'bg-sky-500 text-white shadow-sm'
-                                            : 'bg-theme-bg text-theme-muted hover:bg-theme-bg/80'
-                                            }`}
-                                    >
-                                        <Icon size={13} />
-                                        {opt.label}
-                                    </button>
-                                );
-                            })}
-                        </div>
+                      <Loader2 size={14} className="animate-spin" />
+                      <span>{uploadStatus}</span>
                     </div>
-
-                    {/* Zoom Slider */}
-                    <div className="flex items-center gap-3">
-                        <span className="text-xs font-medium text-theme-muted w-14 md:w-16 shrink-0 flex items-center gap-1">
-                            <ZoomIn size={13} /> Zoom
-                        </span>
-                        <input
-                            title="Zoom level"
-                            type="range"
-                            min={1}
-                            max={3}
-                            step={0.05}
-                            value={zoom}
-                            onChange={(e) => setZoom(Number(e.target.value))}
-                            className="flex-1 h-1.5 bg-theme-bg rounded-full appearance-none cursor-pointer accent-sky-500"
-                        />
-                        <span className="text-xs font-mono text-theme-muted w-10 text-right">{zoom.toFixed(1)}x</span>
-                    </div>
-
-                    {/* Rotation Slider */}
-                    <div className="flex items-center gap-3">
-                        <span className="text-xs font-medium text-theme-muted w-14 md:w-16 shrink-0 flex items-center gap-1">
-                            <RotateCcw size={13} /> Rotate
-                        </span>
-                        <input
-                            title="Rotation angle"
-                            type="range"
-                            min={-180}
-                            max={180}
-                            step={1}
-                            value={rotation}
-                            onChange={(e) => setRotation(Number(e.target.value))}
-                            className="flex-1 h-1.5 bg-theme-bg rounded-full appearance-none cursor-pointer accent-sky-500"
-                        />
-                        <span className="text-xs font-mono text-theme-muted w-10 text-right">{rotation}°</span>
-                    </div>
-
-                    {/* Error */}
-                    {error && (
-                        <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-sm text-red-500 dark:text-red-400">
-                            {error}
-                        </div>
-                    )}
-                </div>
-
-                {/* Footer */}
-                <div className="p-4 md:p-5 border-t border-theme-border flex items-center gap-3">
-                    <button
-                        onClick={handleClose}
-                        disabled={uploading}
-                        className="flex-1 px-4 py-3 md:py-2.5 bg-theme-bg text-theme-text border border-theme-border rounded-xl font-semibold hover:bg-theme-bg/80 active:bg-theme-bg transition-colors text-sm disabled:opacity-50 min-h-[48px]"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        onClick={handleApply}
-                        disabled={uploading || !croppedAreaPixels}
-                        className="flex-1 px-4 py-3 md:py-2.5 bg-sky-500 text-white rounded-xl font-semibold hover:bg-sky-600 active:bg-sky-700 disabled:opacity-40 transition-all text-sm flex items-center justify-center gap-2 min-h-[48px]"
-                    >
-                        {uploading ? (
-                            <>
-                                <Loader2 size={16} className="animate-spin" />
-                                {uploadStatus}
-                            </>
-                        ) : (
-                            'Apply & Upload'
-                        )}
-                    </button>
-                </div>
+                  ) : (
+                    <span>Commit</span>
+                  )}
+                </button>
+              </div>
             </div>
         </div>,
         document.body

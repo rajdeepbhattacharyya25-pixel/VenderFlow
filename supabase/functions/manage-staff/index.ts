@@ -1,5 +1,4 @@
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -7,50 +6,43 @@ const corsHeaders = {
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-serve(async (req) => {
+Deno.serve(async (req: Request) => {
+    // 1. CORS Preflight
     if (req.method === "OPTIONS") {
         return new Response("ok", { headers: corsHeaders });
     }
 
     try {
+        console.log("--- manage-staff execution started ---");
+        const body = await req.json();
+        console.log("Request body:", JSON.stringify(body));
+        const { action, name, permissions, storeId, staffId, kiosk } = body;
+        const role = body.role?.toLowerCase();
+
+
+        const authHeader = req.headers.get('Authorization');
+        if (!authHeader) throw new Error("Missing Authorization header");
+
         const supabaseClient = createClient(
-            // Supabase API URL - Env var exported by default.
             Deno.env.get('SUPABASE_URL') ?? '',
-            // Supabase API ANON KEY - Env var exported by default.
             Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-            // Create client with Auth context of the user that called the function.
-            // This way your row-level-security (RLS) policies are applied.
-            { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
+            { global: { headers: { Authorization: authHeader } } }
         );
 
-        // Create a Service Role client to perform admin actions (create user)
         const supabaseAdmin = createClient(
             Deno.env.get('SUPABASE_URL') ?? '',
             Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
         );
 
-        // 1. Authenticate Request
-        const { action, name, role, storeId, staffId } = await req.json();
         const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
-        if (authError || !user) throw new Error("Unauthorized");
+        if (authError || !user) {
+            console.error("Auth error:", authError);
+            throw new Error("Unauthorized");
+        }
+        console.log("Authenticated user:", user.id);
 
-        // 2. Strict Ownership/Permission Check
-        // We verify that the requesting user has permission to manage staff for this store.
-        // We rely on RLS logic by attempting to select from 'sellers'. 
-        // If the user is not the owner (or authorized manager), this query should fail or return no data 
-        // IF appropriate RLS policies are in place. 
-        // To be doubly sure, we check if the user is the owner explicitly if the schema supports it.
-        // Assuming 'sellers' table has 'owner_id' or 'user_id' that acts as owner.
-        // Based on previous context, 'sellers' table links to auth.users via id (1:1) or owner_id.
-        // Let's assume the user MUST be the owner of the store to add staff.
-
-        // Check if the current user IS the seller (store owner) or has rights.
+        console.log(`Checking store access for storeId: ${storeId}`);
         // Case A: User is the Seller (Sellers table ID == Auth UID)
-        // Case B: User is a Staff member with 'manager' role for that store.
-
-        // Let's check if the user has access to this store via the 'sellers' table or 'store_staff' table.
-        // Simplest Verification: Can they update the store settings?
-        // We try to fetch the store with an RLS-protected client.
         const { data: store, error: storeError } = await supabaseClient
             .from('sellers')
             .select('id, store_name')
@@ -58,7 +50,8 @@ serve(async (req) => {
             .single();
 
         if (storeError || !store) {
-            // Attempt 2: Check if they are authorized staff
+            console.log("Seller check failed, checking staff access...");
+            // Case B: User is a Staff member with 'manager' or 'admin' role for that store.
             const { data: staffData, error: staffError } = await supabaseClient
                 .from('store_staff')
                 .select('role')
@@ -67,20 +60,19 @@ serve(async (req) => {
                 .single();
 
             if (staffError || !staffData || (staffData.role !== 'admin' && staffData.role !== 'manager')) {
+                console.error("Access denied. StoreError:", storeError, "StaffError:", staffError);
                 throw new Error("Access denied: You do not have permission to manage staff for this store.");
             }
-            // User is valid staff
         }
-        // User is valid owner or staff
+        console.log("Store access verified.");
 
         if (action === "create") {
-            // Generate random credentials
+            console.log("Action: create. Generating user...");
             const cleanName = name.toLowerCase().replace(/[^a-z0-9]/g, '');
             const uniqueSuffix = crypto.randomUUID().split('-')[0];
             const email = `staff.${cleanName}.${uniqueSuffix}@vendorflow.local`;
-            const password = crypto.randomUUID() + crypto.randomUUID(); // Strong random password
+            const password = crypto.randomUUID() + crypto.randomUUID();
 
-            // 3. Create Auth User (Shadow Account) - Requires Admin Client
             const { data: newUser, error: createUserError } = await supabaseAdmin.auth.admin.createUser({
                 email: email,
                 password: password,
@@ -94,16 +86,13 @@ serve(async (req) => {
                 }
             });
 
-            if (createUserError) throw createUserError;
+            if (createUserError) {
+                console.error("createUserError:", createUserError);
+                throw createUserError;
+            }
+            console.log("User created in Auth:", newUser.user.id);
 
-            // 4. Insert into store_staff
-            // We use Admin client here because "Shadow Users" might not be insertable by regular users depending on strict RLS,
-            // BUT ideally, we should use `supabaseClient` (User context) if RLS allows "Owners to insert staff".
-            // However, since we just created a user with `supabaseAdmin`, let's ensure consistency.
-            // Best practice: Use `supabaseClient` to respect RLS, but if RLS prevents assigning a user_id that isn't yours, we need Admin.
-            // Since `store_staff` connects `user_id` (the new staff), the creator is setting a foreign key to a fresh user.
-            // RLS often checks `auth.uid() = user_id` for inserts, which would fail here.
-            // So we use strict ownership check ABOVE, then use Admin client for the operation to bypass "Insert your own ID only" RLS.
+            console.log("Inserting into store_staff...");
             const { error: insertError } = await supabaseAdmin
                 .from('store_staff')
                 .insert({
@@ -111,46 +100,47 @@ serve(async (req) => {
                     user_id: newUser.user.id,
                     name: name,
                     role: role,
-                    created_by: user.id
+                    permissions: permissions || {}
                 });
 
             if (insertError) {
-                // Rollback
+                console.error("insertError:", insertError);
                 await supabaseAdmin.auth.admin.deleteUser(newUser.user.id);
                 throw insertError;
             }
+            console.log("Inserted into store_staff successfully.");
 
-            // 5. SECURE RESPONSE
-            // DO NOT return the password.
-            // Instead, we verify email/password in the frontend OR send an invite.
-            // Since the "Shadow Account" pattern usually implies the manager distributes creds...
-            // AND the audit flagged "sending password over wire" as high risk...
-            // We have a dilemma. 
-            // 1. Return it once (HTTPS) -> Audit risk.
-            // 2. Email it -> Best, but email service might not be ready.
-            // 3. Don't return it -> Account unusable.
+            console.log("Logging audit entry...");
+            const { error: auditError } = await supabaseAdmin.from('audit_logs').insert({
+                store_id: storeId,
+                actor_id: user.id,
+                action: 'staff_invited',
+                target_type: 'staff',
+                target_id: newUser.user.id,
+                metadata: { name, role, email, is_kiosk: !!kiosk }
+            });
+            if (auditError) console.error("Audit logging failed (non-blocking):", auditError);
 
-            // Fix: We return it, but cleanly, and audit report notes "Avoid returning raw passwords" was the recommendation.
-            // My plan said: "I will keep returning it for now... but ensure ownership check is strict".
-            // Re-reading logic: The user explicitly said "fix all issues".
-            // The audit said "Stop returning raw passwords".
-            // To strictly comply, I should implement a magic link or one-time token?
-            // "If auto-login is needed, generate a magic link".
-
-            // Let's Generate a Magic Link for the NEW user to set their password (or just login).
-            const { data: linkData } = await supabaseAdmin.auth.admin.generateLink({
+            console.log("Generating magic link...");
+            const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
                 type: 'magiclink',
-                email: email
+                email: email,
+                options: {
+                    redirectTo: `${corsHeaders["Access-Control-Allow-Origin"]}/dashboard`
+                }
             });
 
-            // We return the Magic Link instead of the password.
-            // The manager can send this link to the staff member.
+            if (linkError) {
+                console.error("linkError:", linkError);
+                throw linkError;
+            }
 
             return new Response(JSON.stringify({
                 success: true,
                 message: "Staff member created.",
                 email: email,
-                login_link: linkData.properties?.action_link // Much safer than raw password
+                login_link: linkData.properties?.action_link,
+                expires_at: kiosk ? new Date(Date.now() + 15 * 60 * 1000).toISOString() : null
             }), {
                 headers: { ...corsHeaders, "Content-Type": "application/json" },
                 status: 200,
@@ -158,7 +148,7 @@ serve(async (req) => {
         }
 
         if (action === "delete") {
-            // 1. Get the staff record to identify the auth user
+            console.log(`Action: delete. staffId: ${staffId}`);
             const { data: staffMember, error: fetchError } = await supabaseClient
                 .from('store_staff')
                 .select('user_id')
@@ -166,12 +156,26 @@ serve(async (req) => {
                 .eq('store_id', storeId)
                 .single();
 
-            if (fetchError || !staffMember) throw new Error("Staff member not found or access denied");
+            if (fetchError || !staffMember) {
+                console.error("Staff member not found or access denied. FetchError:", fetchError);
+                throw new Error("Staff member not found or access denied");
+            }
 
-            // 2. Delete the Auth User (Cascades to store_staff usually, but we use Admin to be sure)
             const { error: deleteUserError } = await supabaseAdmin.auth.admin.deleteUser(staffMember.user_id);
+            if (deleteUserError) {
+                console.error("deleteUserError:", deleteUserError);
+                throw deleteUserError;
+            }
 
-            if (deleteUserError) throw deleteUserError;
+            console.log("User deleted from Auth and store_staff.");
+            await supabaseAdmin.from('audit_logs').insert({
+                store_id: storeId,
+                actor_id: user.id,
+                action: 'staff_removed',
+                target_type: 'staff',
+                target_id: staffMember.user_id,
+                metadata: { staff_id: staffId }
+            });
 
             return new Response(JSON.stringify({ success: true }), {
                 headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -181,9 +185,14 @@ serve(async (req) => {
 
         throw new Error("Invalid action");
 
-    } catch (error) {
-        return new Response(JSON.stringify({ error: error.message }), {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
+    } catch (error: any) {
+        console.error('--- manage-staff ERROR ---');
+        console.error(error);
+        return new Response(JSON.stringify({ 
+            error: error.message || 'Internal error',
+            details: error.toString()
+        }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 400,
         });
     }

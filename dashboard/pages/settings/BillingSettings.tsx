@@ -28,6 +28,23 @@ export const BillingSettings = ({ settings, setSettings, renderHeader, handleLog
                             </div>
                         </div>
 
+                        <div className="mb-8 p-4 bg-primary/5 border border-primary/20 rounded-2xl">
+                            <label className="block text-[10px] font-bold text-primary dark:text-primary uppercase tracking-wider mb-2 flex items-center gap-2">
+                                <BillingIcon size={12} />
+                                Razorpay Connected Account ID
+                            </label>
+                            <input
+                                type="text"
+                                value={settings.razorpay_account_id || ''}
+                                onChange={(e) => setSettings({ ...settings, razorpay_account_id: e.target.value })}
+                                className="w-full bg-bg border border-border rounded-xl px-4 py-3 text-sm font-medium text-text focus:ring-2 focus:ring-primary/20 outline-none"
+                                placeholder="acc_XXXXXXXXXXXXXX"
+                            />
+                            <p className="text-[10px] text-muted mt-2 leading-relaxed">
+                                <span className="font-bold text-primary">Required for selling:</span> Find this in your Razorpay Dashboard under Account & Settings {'>'} Connected Accounts. This ID allows you to receive payments directly into your account.
+                            </p>
+                        </div>
+
                         <div className="mb-8">
                             <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-2">Bank / UPI Transfer Details</label>
                             <textarea

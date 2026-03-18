@@ -85,10 +85,30 @@ const SellerGuard: React.FC = () => {
                 addLog(`Status: ${sellerData?.status || 'missing'}`);
 
                 if (sellerData && (sellerData.status === 'active' || sellerData.status === 'pending' || sellerData.status === 'onboarding')) {
-                    addLog('Access granted');
+                    addLog('Access granted (Owner)');
+                    setIsAuthorized(true);
+                    return;
+                }
+
+                // 4. Check Staff Status
+                addLog('Checking staff membership...');
+                const staffResponse = await withTimeout(
+                    supabase.from('store_staff').select('id, store_id, role, permissions').eq('user_id', user.id).maybeSingle(),
+                    15000,
+                    'store_staff'
+                ) as any;
+
+                if (!isMounted) return;
+
+                const staffData = staffResponse.data;
+                if (staffData) {
+                    addLog(`Staff Access: ${staffData.role}`);
+                    // Store staff info in local storage for sidebar pruning if needed, 
+                    // or ideally use a Context provider. For now, localStorage is a quick fix.
+                    localStorage.setItem('staff_context', JSON.stringify(staffData));
                     setIsAuthorized(true);
                 } else {
-                    addLog('Access denied (invalid status)');
+                    addLog('Access denied (Not a seller or staff)');
                     setIsAuthorized(false);
                 }
             } catch (error: any) {

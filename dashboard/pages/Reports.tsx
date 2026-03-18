@@ -421,11 +421,28 @@ const Reports = () => {
     };
 
     const handleExportCSV = () => {
-        const csvContent = "data:text/csv;charset=utf-8,ID,Total,Status\n" + (orders.map(o => `${o.id},${o.total},${o.status}`).join('\n'));
+        const dataToExport = importedOrders || orders;
+        if (dataToExport.length === 0) {
+            alert("No data available to export.");
+            return;
+        }
+
+        const headers = ["Order ID", "Date", "Total", "Status", "Items Count"];
+        const rows = dataToExport.map(o => [
+            o.id,
+            new Date(o.created_at).toISOString(),
+            o.total,
+            o.status,
+            o.items?.length || 0
+        ]);
+
+        const csvContent = "data:text/csv;charset=utf-8," 
+            + [headers, ...rows].map(e => e.join(",")).join("\n");
+        
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `store_analytics_${dateRange}.csv`);
+        link.setAttribute("download", `store_analytics_${dateRange}_${new Date().toISOString().split('T')[0]}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);

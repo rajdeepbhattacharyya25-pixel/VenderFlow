@@ -1346,6 +1346,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
             <ImageEditorModal
                 isOpen={editorOpen}
                 imageSrc={editorImageSrc}
+                productId={product?.id || 'temp-new-product'}
                 onClose={() => setEditorOpen(false)}
                 onComplete={(url) => {
                     updateField('images', [...formData.images, url]);

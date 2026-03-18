@@ -107,6 +107,37 @@ const FAQCard: React.FC<FAQItemProps> = ({ question, answer, isOpen, onClick, in
     );
 };
 
+const FAQWord: React.FC<{ word: string, index: number, revealScroll: any }> = ({ word, index, revealScroll }) => {
+    const start = index * 0.02;
+    const end = 0.04 + (index * 0.02);
+    const revealAmount = useTransform(revealScroll, [start, end], [0, 100]);
+
+    return (
+        <div className="relative inline-block overflow-hidden py-1">
+            <h2 className="text-[38px] sm:text-4xl md:text-5xl lg:text-6xl font-black text-white font-heading tracking-tighter leading-tight uppercase m-0">
+                {word}
+            </h2>
+
+            {/* The Scrubbable Neon Mask - Wiping Right-to-Left */}
+            <motion.div
+                style={{
+                    clipPath: useTransform(revealAmount, (v: number) => `inset(0 ${v}% 0 0)`),
+                }}
+                className="absolute inset-0 bg-[#ccff00] z-10 pointer-events-none"
+            />
+
+            {/* Trailing Edge Velocity Blur */}
+            <motion.div
+                style={{
+                    right: useTransform(revealAmount, (v: number) => `${v}%`),
+                    opacity: useTransform(revealAmount, [0, 5, 95, 100], [0, 1, 1, 0])
+                }}
+                className="absolute top-0 bottom-0 w-[40px] bg-gradient-to-l from-[#ccff00]/60 to-transparent blur-md z-20 pointer-events-none translate-x-full"
+            />
+        </div>
+    );
+};
+
 export const FAQ: React.FC = () => {
     const [openIndex, setOpenIndex] = useState<number | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -165,36 +196,9 @@ export const FAQ: React.FC = () => {
                     </span>
 
                     <div className="flex flex-col gap-1 mb-10">
-                        {['Commonly', 'Asked', 'Questions'].map((word, i) => {
-                            const start = i * 0.02;
-                            const end = 0.04 + (i * 0.02);
-                            const revealAmount = useTransform(revealScroll, [start, end], [0, 100]);
-
-                            return (
-                                <div key={i} className="relative inline-block overflow-hidden py-1">
-                                    <h2 className="text-[38px] sm:text-4xl md:text-5xl lg:text-6xl font-black text-white font-heading tracking-tighter leading-tight uppercase m-0">
-                                        {word}
-                                    </h2>
-
-                                    {/* The Scrubbable Neon Mask - Wiping Right-to-Left */}
-                                    <motion.div
-                                        style={{
-                                            clipPath: useTransform(revealAmount, (v) => `inset(0 ${v}% 0 0)`),
-                                        }}
-                                        className="absolute inset-0 bg-[#ccff00] z-10 pointer-events-none"
-                                    />
-
-                                    {/* Trailing Edge Velocity Blur */}
-                                    <motion.div
-                                        style={{
-                                            right: useTransform(revealAmount, (v) => `${v}%`),
-                                            opacity: useTransform(revealAmount, [0, 5, 95, 100], [0, 1, 1, 0])
-                                        }}
-                                        className="absolute top-0 bottom-0 w-[40px] bg-gradient-to-l from-[#ccff00]/60 to-transparent blur-md z-20 pointer-events-none translate-x-full"
-                                    />
-                                </div>
-                            );
-                        })}
+                        {['Commonly', 'Asked', 'Questions'].map((word, i) => (
+                            <FAQWord key={i} word={word} index={i} revealScroll={revealScroll} />
+                        ))}
                     </div>
 
                     <p className="text-sm md:text-lg text-white/50 leading-relaxed max-w-sm font-light border-l-4 border-[#ccff00] pl-6 py-2 italic">

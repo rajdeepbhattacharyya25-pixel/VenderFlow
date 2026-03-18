@@ -1,7 +1,7 @@
 import React from 'react';
 import { Database, Download, Upload, Eye, Check, AlertCircle, Loader2, RefreshCw, Lock } from 'lucide-react';
 
-export const DataSettings = ({ settings, setSettings, renderHeader, handleLogoUpload, saving, setSaving, show2FAModal, setShow2FAModal, timeoutVal, setTimeoutVal, timeoutUnit, setTimeoutUnit, systemStatus, apiUsage, loadingApiUsage, sessions, loadingSessions, selectedSessions, setSelectedSessions, isRevoking, handleRevokeSession, handleRevokeSelected, formatUaString, getDeviceIcon, DEFAULT_THEME_CONFIG, activePreviews, previewLoading, setPreviewLoading, fetchPreviews, backupStatus, lastBackupDate, isBackupRunning, downloadLocalBackup, connectAndBackup, performBackup }: any) => {
+export const DataSettings = ({ settings, setSettings, renderHeader, handleLogoUpload, saving, setSaving, show2FAModal, setShow2FAModal, timeoutVal, setTimeoutVal, timeoutUnit, setTimeoutUnit, systemStatus, apiUsage, loadingApiUsage, sessions, loadingSessions, selectedSessions, setSelectedSessions, isRevoking, handleRevokeSession, handleRevokeSelected, formatUaString, getDeviceIcon, DEFAULT_THEME_CONFIG, activePreviews, previewLoading, setPreviewLoading, fetchPreviews, backupStatus, lastBackupDate, isBackupRunning, backupProgress, backupMessage, downloadLocalBackup, connectAndBackup, performBackup }: any) => {
     return (
         <div className="bg-panel rounded-2xl p-4 md:p-6 lg:p-8 border border-border shadow-sm animate-fadeIn">
                         {renderHeader('Data & Backup', <Database size={20} />)}
@@ -47,7 +47,7 @@ export const DataSettings = ({ settings, setSettings, renderHeader, handleLogoUp
                                         disabled={isBackupRunning}
                                         className="text-xs font-bold bg-white dark:bg-neutral-800 text-text border border-border hover:bg-gray-50 dark:hover:bg-neutral-700 px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
                                     >
-                                        Connect Drive
+                                        {backupStatus === 'success' ? 'Connected' : 'Connect Drive'}
                                     </button>
                                     <button
                                         onClick={() => performBackup(true)}
@@ -59,6 +59,35 @@ export const DataSettings = ({ settings, setSettings, renderHeader, handleLogoUp
                                     </button>
                                 </div>
                             </div>
+
+                            {/* Progress Bar & Status Messages */}
+                            {(isBackupRunning || backupMessage) && (
+                                <div className="mt-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <span className={`text-[11px] font-bold flex items-center gap-2 ${
+                                            backupStatus === 'error' ? 'text-red-500' : 
+                                            backupStatus === 'success' ? 'text-green-500' : 'text-primary'
+                                        }`}>
+                                            {backupStatus === 'error' ? <AlertCircle size={14} /> : 
+                                             backupStatus === 'success' ? <Check size={14} /> : 
+                                             <Loader2 size={14} className="animate-spin" />}
+                                            {backupMessage}
+                                        </span>
+                                        {isBackupRunning && (
+                                            <span className="text-[10px] font-bold text-muted">{backupProgress}%</span>
+                                        )}
+                                    </div>
+                                    <div className="h-1.5 w-full bg-bg/50 rounded-full overflow-hidden border border-border">
+                                        <div 
+                                            className={`h-full transition-all duration-500 ease-out rounded-full ${
+                                                backupStatus === 'error' ? 'bg-red-500' : 
+                                                backupStatus === 'success' ? 'bg-green-500' : 'bg-primary'
+                                            }`}
+                                            style={{ width: `${backupProgress}%` }}
+                                        />
+                                    </div>
+                                </div>
+                            )}
 
                             {backupStatus === 'error' && (
                                 <p className="text-xs text-red-500 font-medium mt-3 flex items-center gap-2">

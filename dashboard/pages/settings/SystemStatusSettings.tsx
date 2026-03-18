@@ -1,7 +1,7 @@
 import React from 'react';
-import { Activity, RefreshCw, AlertCircle, Database, Layout, Clock, Zap, Globe, Info, Loader2 } from 'lucide-react';
+import { Activity, RefreshCw, AlertCircle, Database, Layout, Clock, Zap, Globe, Info, Loader2, Users } from 'lucide-react';
 
-export const SystemStatusSettings = ({ settings, setSettings, renderHeader, handleLogoUpload, saving, setSaving, show2FAModal, setShow2FAModal, timeoutVal, setTimeoutVal, timeoutUnit, setTimeoutUnit, systemStatus, apiUsage, loadingApiUsage, sessions, loadingSessions, selectedSessions, setSelectedSessions, isRevoking, handleRevokeSession, handleRevokeSelected, formatUaString, getDeviceIcon, DEFAULT_THEME_CONFIG, activePreviews, previewLoading, setPreviewLoading, fetchPreviews, fetchApiUsage }: any) => {
+export const SystemStatusSettings = ({ settings, setSettings, renderHeader, handleLogoUpload, saving, setSaving, show2FAModal, setShow2FAModal, timeoutVal, setTimeoutVal, timeoutUnit, setTimeoutUnit, systemStatus, apiUsage, loadingApiUsage, aiUsage, sessions, loadingSessions, selectedSessions, setSelectedSessions, isRevoking, handleRevokeSession, handleRevokeSelected, formatUaString, getDeviceIcon, DEFAULT_THEME_CONFIG, activePreviews, previewLoading, setPreviewLoading, fetchPreviews, fetchApiUsage, sellerQuota, userRole }: any) => {
     return (
         <div className="bg-panel rounded-2xl p-4 md:p-6 lg:p-8 border border-border shadow-sm animate-fadeIn">
                         {renderHeader('System Status', <Activity size={20} />)}
@@ -63,6 +63,68 @@ export const SystemStatusSettings = ({ settings, setSettings, renderHeader, hand
                             </div>
 
                             <div className="bg-bg/50 p-6 rounded-2xl border border-border">
+                                <div className="flex items-center gap-3 mb-6 text-primary">
+                                    <Users size={20} />
+                                    <h4 className="font-bold text-sm">My Personal Usage</h4>
+                                </div>
+                                
+                                <div className="space-y-6">
+                                    {(previewLoading || systemStatus.database.status === 'checking') ? (
+                                        <div className="flex flex-col items-center justify-center py-8 gap-3">
+                                            <Loader2 className="animate-spin text-primary" size={24} />
+                                            <p className="text-xs text-muted animate-pulse">Fetching your usage data...</p>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            {/* Previews Quota */}
+                                            <div className="space-y-2">
+                                                <div className="flex justify-between items-center text-xs">
+                                                    <span className="font-bold uppercase tracking-wider text-text flex items-center gap-2">
+                                                        <Layout size={12} />
+                                                        Storefront Previews
+                                                    </span>
+                                                    <span className="font-medium text-muted">
+                                                        {activePreviews.length} / {sellerQuota?.max_previews || 5} active
+                                                    </span>
+                                                </div>
+                                                <div className="h-2 w-full bg-border rounded-full overflow-hidden">
+                                                    <div
+                                                        className={`h-full transition-all duration-1000 ${
+                                                            (activePreviews.length / (sellerQuota?.max_previews || 5)) >= 0.9 ? 'bg-red-500' : 'bg-primary'
+                                                        }`}
+                                                        style={{ width: `${Math.min((activePreviews.length / (sellerQuota?.max_previews || 5)) * 100, 100)}%` }}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* AI Usage Quota */}
+                                            <div className="space-y-2">
+                                                <div className="flex justify-between items-center text-xs">
+                                                    <span className="font-bold uppercase tracking-wider text-text flex items-center gap-2">
+                                                        <Zap size={12} />
+                                                        Monthly AI Tokens
+                                                    </span>
+                                                    <span className="font-medium text-muted">
+                                                        {aiUsage?.toLocaleString() || '0'} / {sellerQuota?.max_ai_tokens?.toLocaleString() || '10,000'} used
+                                                    </span>
+                                                </div>
+                                                <div className="h-2 w-full bg-border rounded-full overflow-hidden">
+                                                    <div
+                                                        className={`h-full transition-all duration-1000 ${
+                                                            (aiUsage / (sellerQuota?.max_ai_tokens || 10000)) >= 0.9 ? 'bg-red-500' : 'bg-primary'
+                                                        }`}
+                                                        style={{ width: `${Math.min((aiUsage / (sellerQuota?.max_ai_tokens || 10000)) * 100, 100)}%` }}
+                                                    />
+                                                </div>
+                                                <p className="text-[10px] text-muted italic">Resets on the 1st of every month.</p>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+
+                            {userRole === 'admin' && (
+                                <div className="bg-bg/50 p-6 rounded-2xl border border-border">
                                 <div className="flex items-center justify-between mb-6">
                                     <div className="flex items-center gap-3 text-primary">
                                         <Globe size={20} />
@@ -130,7 +192,8 @@ export const SystemStatusSettings = ({ settings, setSettings, renderHeader, hand
                                         </p>
                                     </div>
                                 </div>
-                            </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 

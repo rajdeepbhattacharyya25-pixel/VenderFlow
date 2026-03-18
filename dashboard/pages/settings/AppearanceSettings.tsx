@@ -18,8 +18,8 @@ export const AppearanceSettings = ({ settings, setSettings, renderHeader, handle
                                 <div className="flex flex-col items-end gap-2">
                                     <button
                                         onClick={handleCreatePreview}
-                                        disabled={previewLoading || activePreviews.length >= 2}
-                                        className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-xl text-sm font-bold hover:opacity-90 transition-opacity disabled:opacity-50"
+                                        disabled={previewLoading || activePreviews.filter((p: any) => new Date(p.expires_at) > new Date()).length >= 2}
+                                        className="flex items-center gap-2 bg-primary text-white dark:text-gray-900 px-4 py-2 rounded-xl text-sm font-bold hover:opacity-90 transition-opacity disabled:opacity-50"
                                     >
                                         {previewLoading ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
                                         Generate Link
@@ -29,7 +29,7 @@ export const AppearanceSettings = ({ settings, setSettings, renderHeader, handle
 
                             {previewUrl && (
                                 <div className="bg-white dark:bg-black/50 p-3 rounded-xl border border-border flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-                                    <span className="text-xs font-mono text-muted">{previewUrl}</span>
+                                    <span className="text-xs font-mono text-gray-900 dark:text-gray-100">{previewUrl}</span>
                                     <a
                                         href={previewUrl}
                                         target="_blank"
