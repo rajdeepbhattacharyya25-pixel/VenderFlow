@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { initGoogleClient, signInToGoogle, uploadFileToDrive } from '../lib/google-drive';
+import { useEffect, useState, useCallback } from 'react';
+import { initGoogleClient, signInToGoogle, uploadFileToDrive, trySilentSignIn } from '../lib/google-drive';
 import { supabase } from '../lib/supabase';
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
@@ -12,33 +12,7 @@ export const useAutoBackup = (enableAuto = true) => {
     const [backupMessage, setBackupMessage] = useState<string | null>(null);
     const [lastBackupDate, setLastBackupDate] = useState<string | null>(null);
 
-    useEffect(() => {
-        const savedDate = localStorage.getItem('last_drive_backup');
-        if (savedDate) {
-            setLastBackupDate(savedDate);
-        }
-
-        // Initialize GAPI client on mount - only if credentials are present
-        if (GOOGLE_CLIENT_ID && GOOGLE_API_KEY) {
-            initGoogleClient({
-                clientId: GOOGLE_CLIENT_ID,
-                apiKey: GOOGLE_API_KEY,
-            }).catch(err => {
-                // Silently handle init failures in local dev unless they are critical
-                if (import.meta.env.DEV) {
-                    console.log("Google Client initialization skipped or failed (local dev)");
-                } else {
-                    console.error("Failed to init Google Client", err);
-                }
-            });
-        }
-
-        if (enableAuto) {
-            performBackup();
-        }
-    }, []);
-
-    const generateBackupData = async () => {
+    const generateBackupData = useCallback(async () => {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error("No user logged in");
 
@@ -54,9 +28,9 @@ export const useAutoBackup = (enableAuto = true) => {
             products,
             orders
         };
-    };
+    }, []);
 
-    const performBackup = async (manual = false) => {
+    const performBackup = useCallback(async (manual = false) => {
         if (!GOOGLE_CLIENT_ID || !GOOGLE_API_KEY) {
             console.warn("Google Drive credentials missing");
             return;
@@ -85,10 +59,6 @@ export const useAutoBackup = (enableAuto = true) => {
 
             // 2. Auth & Upload
             // Ensure signed in (might trigger popup if first time)
-            // For auto-backup to work silently, user must have authorized previously.
-            // If not authorized, this will throw or prompt.
-            // We'll wrap in try/catch to not annoy user if silent auth fails.
-
             const fileName = `store_backup_${new Date().toISOString().split('T')[0]}.json`;
             setBackupProgress(60);
             setBackupMessage("Uploading to Google Drive...");
@@ -117,14 +87,49 @@ export const useAutoBackup = (enableAuto = true) => {
             setBackupStatus('error');
             setBackupMessage(error instanceof Error ? error.message : "Backup failed. Please check your connection.");
             setBackupProgress(0);
-            // If error is "User not signed in", we might want to prompt them in the UI
-            // but strictly for AUTO backup, we fail silently.
         } finally {
             setIsBackupRunning(false);
         }
-    };
+    }, [generateBackupData]);
 
-    const downloadLocalBackup = async () => {
+    useEffect(() => {
+        const savedDate = localStorage.getItem('last_drive_backup');
+        if (savedDate) {
+            setLastBackupDate(savedDate);
+        }
+
+        // Initialize GAPI client on mount - only if credentials are present
+        if (GOOGLE_CLIENT_ID && GOOGLE_API_KEY) {
+            initGoogleClient({
+                clientId: GOOGLE_CLIENT_ID,
+                apiKey: GOOGLE_API_KEY,
+            }).then(() => {
+                // If we were previously connected, try silent sign-in
+                if (localStorage.getItem('gdrive_connected') === 'true') {
+                    trySilentSignIn()
+                        .then(() => {
+                            setBackupStatus('success');
+                            console.log("Silent GDrive sign-in successful");
+                        })
+                        .catch(err => {
+                            console.warn("Silent GDrive sign-in failed", err);
+                        });
+                }
+            }).catch(err => {
+                if (import.meta.env.DEV) {
+                    console.log("Google Client initialization skipped or failed (local dev)");
+                } else {
+                    console.error("Failed to init Google Client", err);
+                }
+            });
+        }
+
+        if (enableAuto) {
+            performBackup();
+        }
+    }, [enableAuto, performBackup]);
+
+    const downloadLocalBackup = useCallback(async () => {
         try {
             setIsBackupRunning(true);
             const backupData = await generateBackupData();
@@ -145,15 +150,14 @@ export const useAutoBackup = (enableAuto = true) => {
         } finally {
             setIsBackupRunning(false);
         }
-    };
+    }, [generateBackupData]);
 
-    const downloadCSVBackup = async () => {
+    const downloadCSVBackup = useCallback(async () => {
         try {
             const { jsonToCSV } = await import('../dashboard/lib/vault-utils');
             setIsBackupRunning(true);
             const backupData = await generateBackupData();
             
-            // For CSV, we'll download products as primary focus
             const csv = jsonToCSV(backupData.products || []);
             const fileName = `store_products_export_${new Date().toISOString().split('T')[0]}.csv`;
 
@@ -172,17 +176,18 @@ export const useAutoBackup = (enableAuto = true) => {
         } finally {
             setIsBackupRunning(false);
         }
-    };
+    }, [generateBackupData]);
 
-    const connectAndBackup = async () => {
+    const connectAndBackup = useCallback(async () => {
         try {
             await signInToGoogle();
+            localStorage.setItem('gdrive_connected', 'true');
             await performBackup(true);
         } catch (err) {
             console.error("Connect failed", err);
             alert("Failed to connect to Google Drive. Please check your browser's popup blocker or console for details.");
         }
-    };
+    }, [performBackup]);
 
     return { 
         isBackupRunning, 

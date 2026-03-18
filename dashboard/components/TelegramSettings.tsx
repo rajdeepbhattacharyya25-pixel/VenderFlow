@@ -196,47 +196,95 @@ export const TelegramSettings = () => {
             <div className="max-w-2xl">
                 {/* Status Cards */}
                 {step === 'connected' && (
-                    <div className="bg-green-50 border border-green-100 rounded-xl p-6 mb-8">
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white shadow-sm">
-                                <CheckCircle2 size={24} />
+                    <>
+                        <div className="bg-green-50 border border-green-100 rounded-xl p-6 mb-8">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white shadow-sm">
+                                    <CheckCircle2 size={24} />
+                                </div>
+                                <div>
+                                    <h4 className="font-bold text-lg text-green-900">Bot Active</h4>
+                                    <p className="text-green-700">
+                                        Connected as <span className="font-bold">@{config?.bot_username}</span>
+                                    </p>
+                                </div>
                             </div>
-                            <div>
-                                <h4 className="font-bold text-lg text-green-900">Bot Active</h4>
-                                <p className="text-green-700">
-                                    Connected as <span className="font-bold">@{config?.bot_username}</span>
-                                </p>
+                            <div className="mt-4 pt-4 border-t border-green-100 flex gap-4">
+                                <button
+                                    onClick={() => window.open(`https://t.me/${config?.bot_username}`, '_blank')}
+                                    className="text-sm font-bold text-green-700 hover:underline flex items-center gap-1"
+                                >
+                                    Open Bot <ExternalLink size={14} />
+                                </button>
+                                <button
+                                    onClick={handleTestNotification}
+                                    className="text-sm font-bold text-green-700 hover:underline"
+                                >
+                                    Test Notification
+                                </button>
+                                <button
+                                    onClick={handleSyncMenu}
+                                    disabled={connecting}
+                                    className="text-sm font-bold text-blue-600 hover:underline flex items-center gap-1"
+                                >
+                                    {connecting ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
+                                    Sync Menu Btn
+                                </button>
+                                <button
+                                    onClick={() => setStep('input')}
+                                    className="text-sm font-bold text-theme-muted hover:text-theme-text hover:underline ml-auto"
+                                >
+                                    Reconfigure
+                                </button>
                             </div>
                         </div>
-                        <div className="mt-4 pt-4 border-t border-green-100 flex gap-4">
-                            <button
-                                onClick={() => window.open(`https://t.me/${config?.bot_username}`, '_blank')}
-                                className="text-sm font-bold text-green-700 hover:underline flex items-center gap-1"
-                            >
-                                Open Bot <ExternalLink size={14} />
-                            </button>
-                            <button
-                                onClick={handleTestNotification}
-                                className="text-sm font-bold text-green-700 hover:underline"
-                            >
-                                Test Notification
-                            </button>
-                            <button
-                                onClick={handleSyncMenu}
-                                disabled={connecting}
-                                className="text-sm font-bold text-blue-600 hover:underline flex items-center gap-1"
-                            >
-                                {connecting ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
-                                Sync Menu Btn
-                            </button>
-                            <button
-                                onClick={() => setStep('input')}
-                                className="text-sm font-bold text-theme-muted hover:text-theme-text hover:underline ml-auto"
-                            >
-                                Reconfigure
-                            </button>
+
+                        {/* Notification Preferences */}
+                        <div className="bg-theme-bg/30 border border-theme-border rounded-xl p-6 mb-8">
+                            <h4 className="font-bold text-theme-text mb-4">Notification Preferences</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {[
+                                    { key: 'orders', label: 'New Order Alerts' },
+                                    { key: 'stock', label: 'Low Stock Warnings' },
+                                    { key: 'customers', label: 'New Customer Alerts' },
+                                    { key: 'daily_summary', label: 'Daily Performance Reports' }
+                                ].map(({ key, label }) => (
+                                    <label key={key} className="flex items-center justify-between p-3 bg-theme-panel rounded-lg border border-theme-border cursor-pointer hover:border-indigo-500/50 transition-colors">
+                                        <span className="text-sm font-medium text-theme-text">{label}</span>
+                                        <input
+                                            type="checkbox"
+                                            checked={config.preferences?.[key] !== false}
+                                            onChange={async (e) => {
+                                                const newPrefs = { ...config.preferences, [key]: e.target.checked };
+                                                setConfig({ ...config, preferences: newPrefs });
+                                                await supabase.from('seller_telegram_configs').update({ preferences: newPrefs }).eq('id', config.id);
+                                            }}
+                                            className="w-4 h-4 rounded border-theme-border text-indigo-600 focus:ring-indigo-500"
+                                        />
+                                    </label>
+                                ))}
+                            </div>
+                            
+                            <div className="mt-6 pt-6 border-t border-theme-border">
+                                <label className="flex items-center gap-3 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={config.preferences?.critical_only === true}
+                                        onChange={async (e) => {
+                                            const newPrefs = { ...config.preferences, critical_only: e.target.checked };
+                                            setConfig({ ...config, preferences: newPrefs });
+                                            await supabase.from('seller_telegram_configs').update({ preferences: newPrefs }).eq('id', config.id);
+                                        }}
+                                        className="w-4 h-4 rounded border-theme-border text-amber-600 focus:ring-amber-500"
+                                    />
+                                    <div>
+                                        <span className="text-sm font-bold text-theme-text block">⚠️ Critical Alerts Only</span>
+                                        <span className="text-xs text-theme-muted">Only receive warnings and errors (e.g. low stock)</span>
+                                    </div>
+                                </label>
+                            </div>
                         </div>
-                    </div>
+                    </>
                 )}
 
                 <div className="mb-4">

@@ -16,17 +16,22 @@ import {
 
 interface AuditLog {
   id: string;
-  user_id: string;
+  actor_id: string;
   store_id: string;
   action: string;
-  resource: string;
-  details: any;
+  target_type: string;
+  target_id: string;
+  metadata: any;
   created_at: string;
-  ip_address: string;
-  user_agent: string;
   profiles?: {
     email: string;
     full_name: string;
+  };
+  store_staff?: {
+    name: string;
+  }[];
+  sellers?: {
+    store_name: string;
   };
 }
 
@@ -71,9 +76,15 @@ const AuditLogs: React.FC = () => {
         .from('audit_logs')
         .select(`
           *,
-          profiles:user_id (
+          profiles:actor_id (
             email,
             full_name
+          ),
+          store_staff:actor_id (
+            name
+          ),
+          sellers:actor_id (
+            store_name
           )
         `, { count: 'exact' })
         .eq('store_id', storeId)
@@ -86,7 +97,7 @@ const AuditLogs: React.FC = () => {
 
       if (searchTerm) {
         // Full text search or ilike
-        query = query.or(`resource.ilike.%${searchTerm}%,action.ilike.%${searchTerm}%`);
+        query = query.or(`target_type.ilike.%${searchTerm}%,action.ilike.%${searchTerm}%`);
       }
 
       const { data, count, error } = await query;
@@ -103,13 +114,13 @@ const AuditLogs: React.FC = () => {
 
   const handleExport = () => {
     const csvRows = [
-      ['Date', 'User', 'Action', 'Resource', 'IP Address'],
+      ['Date', 'User', 'Action', 'Target Type', 'Full Name'],
       ...logs.map(log => [
         new Date(log.created_at).toLocaleString(),
-        log.profiles?.email || log.user_id,
+        log.profiles?.email || log.actor_id,
         log.action,
-        log.resource,
-        log.ip_address
+        log.target_type,
+        log.store_staff?.[0]?.name || log.profiles?.full_name || log.sellers?.store_name || 'System User'
       ])
     ];
 
@@ -156,7 +167,7 @@ const AuditLogs: React.FC = () => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-theme-muted" size={18} />
           <input
             type="text"
-            placeholder="Search resources or actions..."
+            placeholder="Search targets or actions..."
             className="w-full bg-theme-bg/50 border border-theme-border/50 rounded-xl py-2 pl-10 pr-4 text-theme-text focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
             title="Search logs"
             value={searchTerm}
@@ -189,7 +200,7 @@ const AuditLogs: React.FC = () => {
                 <th className="px-6 py-4 text-xs font-bold text-theme-muted uppercase tracking-wider">Timestamp</th>
                 <th className="px-6 py-4 text-xs font-bold text-theme-muted uppercase tracking-wider">User</th>
                 <th className="px-6 py-4 text-xs font-bold text-theme-muted uppercase tracking-wider">Action</th>
-                <th className="px-6 py-4 text-xs font-bold text-theme-muted uppercase tracking-wider">Resource</th>
+                <th className="px-6 py-4 text-xs font-bold text-theme-muted uppercase tracking-wider">Target</th>
                 <th className="px-6 py-4 text-xs font-bold text-theme-muted uppercase tracking-wider text-right">Details</th>
               </tr>
             </thead>
@@ -221,11 +232,13 @@ const AuditLogs: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
                         <div className="w-7 h-7 bg-indigo-500/10 text-indigo-500 rounded-full flex items-center justify-center text-[10px] font-bold">
-                          {log.profiles?.email?.charAt(0).toUpperCase() || '?'}
+                          {(log.store_staff?.[0]?.name || log.profiles?.full_name || log.sellers?.store_name || '?').charAt(0).toUpperCase()}
                         </div>
                         <div className="min-w-0">
-                          <p className="text-sm font-medium text-theme-text truncate">{log.profiles?.full_name || 'System User'}</p>
-                          <p className="text-[10px] text-theme-muted truncate">{log.profiles?.email || log.user_id}</p>
+                          <p className="text-sm font-medium text-theme-text truncate">
+                            {log.store_staff?.[0]?.name || log.profiles?.full_name || log.sellers?.store_name || 'System User'}
+                          </p>
+                          <p className="text-[10px] text-theme-muted truncate">{log.profiles?.email || log.actor_id}</p>
                         </div>
                       </div>
                     </td>
@@ -237,14 +250,15 @@ const AuditLogs: React.FC = () => {
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2 text-sm text-theme-text">
                         <Tag size={14} className="text-theme-muted" />
-                        {log.resource}
+                        {log.target_type}
                       </div>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      {log.details && Object.keys(log.details).length > 0 ? (
+                      {log.metadata && Object.keys(log.metadata).length > 0 ? (
                         <button 
                           className="text-xs text-indigo-500 hover:text-indigo-400 font-medium transition-colors"
                           title="View log details"
+                          onClick={() => console.log('Log details:', log.metadata)}
                         >
                           View Details
                         </button>
