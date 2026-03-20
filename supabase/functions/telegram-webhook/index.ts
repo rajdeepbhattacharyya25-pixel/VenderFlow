@@ -104,21 +104,25 @@ serve(async (req) => {
                 }
                 else if (command === "/help") {
                     const helpText = `
-🤖 Admin Bot Commands
+🤖 *Admin Bot Commands*
 
+/start - Initial setup & dashboard link
 /stats - View live system statistics
 /backup - Download system backup
-/health - Check system health
-/storage - View storage usage
-/login (email) - Get magic login link
-/check_admin (email) - Check admin status
-/broadcast (message) - Send notification to all
+/health - Check system health & storage
+/login [email] - Get magic login link
+/check_admin [email] - Verify profile & role
+/list_users - List recent registered users
+/set_admin [email] - Elevate user to admin
+/set_password [email] [pass] - Set user password
+/broadcast [msg] - Send to all users
+/msg [email] [msg] - Message specific seller
 /help - Show this list
 
-ℹ️ How to Reply:
+ℹ️ *Support:*
 Simply reply to any "New Message" notification to send a response back.
 `;
-                    await sendMessage(chatId, helpText, null);
+                    await sendMessage(chatId, helpText, 'Markdown');
                 }
                 else {
                     await sendMessage(chatId, `❓ Unknown command: ${command}`);

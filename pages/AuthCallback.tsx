@@ -407,11 +407,11 @@ const AuthCallback = () => {
     return (
         <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center p-4">
             <div className="absolute inset-0 overflow-hidden">
-                <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl"></div>
+                <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-96 h-96 bg-emerald-600/20 rounded-full blur-3xl"></div>
             </div>
 
             <div className="relative z-10 text-center">
-                <Loader2 className="w-12 h-12 text-indigo-500 animate-spin mb-6 mx-auto" />
+                <Loader2 className="w-12 h-12 text-emerald-500 animate-spin mb-6 mx-auto" />
                 <h2 className="text-2xl font-bold text-white mb-2">{status}</h2>
                 <p className="text-gray-500 text-sm">Please wait while we set things up</p>
                 

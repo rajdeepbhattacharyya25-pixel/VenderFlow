@@ -182,7 +182,7 @@ export const TelegramSettings = () => {
 
     const renderHeader = (title: string, icon: React.ReactNode) => (
         <div className="flex items-center gap-3 mb-6 pb-4 border-b border-theme-border">
-            <div className="p-2 bg-indigo-500/10 rounded-lg text-indigo-600">
+            <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-600">
                 {icon}
             </div>
             <h3 className="font-bold text-lg text-theme-text">{title}</h3>
@@ -249,7 +249,7 @@ export const TelegramSettings = () => {
                                     { key: 'customers', label: 'New Customer Alerts' },
                                     { key: 'daily_summary', label: 'Daily Performance Reports' }
                                 ].map(({ key, label }) => (
-                                    <label key={key} className="flex items-center justify-between p-3 bg-theme-panel rounded-lg border border-theme-border cursor-pointer hover:border-indigo-500/50 transition-colors">
+                                    <label key={key} className="flex items-center justify-between p-3 bg-theme-panel rounded-lg border border-theme-border cursor-pointer hover:border-emerald-500/50 transition-colors">
                                         <span className="text-sm font-medium text-theme-text">{label}</span>
                                         <input
                                             type="checkbox"
@@ -259,7 +259,7 @@ export const TelegramSettings = () => {
                                                 setConfig({ ...config, preferences: newPrefs });
                                                 await supabase.from('seller_telegram_configs').update({ preferences: newPrefs }).eq('id', config.id);
                                             }}
-                                            className="w-4 h-4 rounded border-theme-border text-indigo-600 focus:ring-indigo-500"
+                                            className="w-4 h-4 rounded border-theme-border text-emerald-600 focus:ring-emerald-500"
                                         />
                                     </label>
                                 ))}
@@ -294,7 +294,7 @@ export const TelegramSettings = () => {
                         placeholder="e.g. https://crazy-cat-42.loca.lt"
                         value={customAppUrl}
                         onChange={(e) => setCustomAppUrl(e.target.value)}
-                        className="w-full text-sm border border-theme-border rounded-lg bg-theme-bg text-theme-text placeholder:text-theme-muted/50 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
+                        className="w-full text-sm border border-theme-border rounded-lg bg-theme-bg text-theme-text placeholder:text-theme-muted/50 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none"
                     />
                     <p className="text-[10px] text-theme-muted/70 mt-1">If using localhost, paste your ngrok/localtunnel URL here before clicking 'Sync Menu Btn'.</p>
                 </div>
@@ -356,7 +356,7 @@ export const TelegramSettings = () => {
                                     value={botToken}
                                     onChange={(e) => setBotToken(e.target.value)}
                                     placeholder="123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
-                                    className="w-full bg-theme-bg border border-theme-border rounded-xl px-4 py-3 text-theme-text font-mono text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
+                                    className="w-full bg-theme-bg border border-theme-border rounded-xl px-4 py-3 text-theme-text font-mono text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all"
                                 />
                                 {botToken && (
                                     <button

@@ -1,4 +1,7 @@
 User-agent: *
 Allow: /
+Disallow: /admin/
+Disallow: /dashboard/
+Disallow: /auth/
 
-Sitemap: https://venderflow.vercel.app/sitemap.xml
+Sitemap: https://vendorflow.vercel.app/sitemap.xml

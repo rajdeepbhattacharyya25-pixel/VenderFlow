@@ -13,7 +13,7 @@ export const BenefitsBar: React.FC<BenefitsBarProps> = ({ badges }) => {
     return: <div className="w-8 h-8 rounded-full bg-green-50 dark:bg-green-900/30 flex items-center justify-center text-green-700 dark:text-green-400"><IconReturn className="w-4 h-4" /></div>,
     shield: <div className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400"><IconShield className="w-4 h-4" /></div>,
     truck: <div className="w-8 h-8 rounded-full bg-orange-50 dark:bg-orange-900/30 flex items-center justify-center text-orange-600 dark:text-orange-400"><IconTruck className="w-4 h-4" /></div>,
-    check: <div className="w-8 h-8 rounded-full bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400"><IconCheck className="w-4 h-4" /></div>,
+    check: <div className="w-8 h-8 rounded-full bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400"><IconCheck className="w-4 h-4" /></div>,
     star: <div className="w-8 h-8 rounded-full bg-yellow-50 dark:bg-yellow-900/30 flex items-center justify-center text-yellow-600 dark:text-yellow-400"><IconStar className="w-4 h-4" /></div>,
     heart: <div className="w-8 h-8 rounded-full bg-red-50 dark:bg-red-900/30 flex items-center justify-center text-red-600 dark:text-red-400"><IconHeart className="w-4 h-4" /></div>,
     zap: <div className="w-8 h-8 rounded-full bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-400"><IconZap className="w-4 h-4" /></div>,

@@ -127,7 +127,7 @@ export default function SellerApplications() {
                         placeholder="Search by name, email, or business..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-3 md:py-2.5 min-h-[44px] md:min-h-0 bg-neutral-950 border border-neutral-800 rounded-xl text-neutral-200 placeholder-neutral-600 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-colors"
+                        className="w-full pl-10 pr-4 py-3 md:py-2.5 min-h-[44px] md:min-h-0 bg-neutral-950 border border-neutral-800 rounded-xl text-neutral-200 placeholder-neutral-600 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-colors"
                     />
                 </div>
 
@@ -152,7 +152,7 @@ export default function SellerApplications() {
             {/* Content Area */}
             {loading ? (
                 <div className="flex justify-center items-center h-64">
-                    <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+                    <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
                 </div>
             ) : applications.length === 0 ? (
                 <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-12 text-center text-neutral-400">
@@ -263,8 +263,8 @@ export default function SellerApplications() {
 
                             {/* Actions Banner for Pending */}
                             {selectedApp.status === 'pending' && (
-                                <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-                                    <p className="text-indigo-200 text-sm font-medium">This application requires your review.</p>
+                                <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                                    <p className="text-emerald-200 text-sm font-medium">This application requires your review.</p>
                                     <div className="flex gap-3 w-full sm:w-auto">
                                         <button
                                             onClick={() => handleAction(selectedApp.id, 'reject')}
@@ -297,7 +297,7 @@ export default function SellerApplications() {
                                             </div>
                                             <div>
                                                 <div className="text-xs text-neutral-500 mb-1">Email Address</div>
-                                                <div className="font-medium text-indigo-400">{selectedApp.email}</div>
+                                                <div className="font-medium text-emerald-400">{selectedApp.email}</div>
                                             </div>
                                             <div>
                                                 <div className="text-xs text-neutral-500 mb-1">Phone / WhatsApp</div>
@@ -344,7 +344,7 @@ export default function SellerApplications() {
                                             {selectedApp.instagram && (
                                                 <div>
                                                     <div className="text-xs text-neutral-500 mb-1">Social / Website</div>
-                                                    <a href={selectedApp.instagram.startsWith('http') ? selectedApp.instagram : `https://${selectedApp.instagram}`} target="_blank" rel="noreferrer" className="text-indigo-400 hover:text-indigo-300 font-medium flex items-center gap-1">
+                                                    <a href={selectedApp.instagram.startsWith('http') ? selectedApp.instagram : `https://${selectedApp.instagram}`} target="_blank" rel="noreferrer" className="text-emerald-400 hover:text-emerald-300 font-medium flex items-center gap-1">
                                                         {selectedApp.instagram} <ExternalLink className="w-3 h-3" />
                                                     </a>
                                                 </div>
@@ -358,7 +358,7 @@ export default function SellerApplications() {
                             {selectedApp.message && (
                                 <div>
                                     <h4 className="text-xs font-bold text-neutral-500 uppercase tracking-tighter mb-2">Message from Applicant</h4>
-                                    <div className="bg-neutral-800/30 rounded-xl p-4 border-l-2 border-indigo-500 text-neutral-300 italic">
+                                    <div className="bg-neutral-800/30 rounded-xl p-4 border-l-2 border-emerald-500 text-neutral-300 italic">
                                         "{selectedApp.message}"
                                     </div>
                                 </div>

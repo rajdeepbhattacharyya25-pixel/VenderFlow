@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { initGoogleClient, signInToGoogle, uploadFileToDrive, trySilentSignIn } from '../lib/google-drive';
+import { initGoogleClient, signInToGoogle, uploadFileToDrive, trySilentSignIn, isConnected } from '../lib/google-drive';
 import { supabase } from '../lib/supabase';
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
@@ -11,6 +11,7 @@ export const useAutoBackup = (enableAuto = true) => {
     const [backupProgress, setBackupProgress] = useState(0);
     const [backupMessage, setBackupMessage] = useState<string | null>(null);
     const [lastBackupDate, setLastBackupDate] = useState<string | null>(null);
+    const [isInitialized, setIsInitialized] = useState(false);
 
     const generateBackupData = useCallback(async () => {
         const { data: { user } } = await supabase.auth.getUser();
@@ -44,6 +45,12 @@ export const useAutoBackup = (enableAuto = true) => {
                 console.log("Backup skipped: executed recently");
                 return;
             }
+        }
+    
+        // Don't run auto-backup if not connected
+        if (!manual && !isConnected()) {
+            console.log("Auto-backup skipped: Google Drive not connected");
+            return;
         }
 
         try {
@@ -104,7 +111,6 @@ export const useAutoBackup = (enableAuto = true) => {
                 clientId: GOOGLE_CLIENT_ID,
                 apiKey: GOOGLE_API_KEY,
             }).then(() => {
-                // If we were previously connected, try silent sign-in
                 if (localStorage.getItem('gdrive_connected') === 'true') {
                     trySilentSignIn()
                         .then(() => {
@@ -113,21 +119,29 @@ export const useAutoBackup = (enableAuto = true) => {
                         })
                         .catch(err => {
                             console.warn("Silent GDrive sign-in failed", err);
-                        });
+                        })
+                        .finally(() => setIsInitialized(true));
+                } else {
+                    setIsInitialized(true);
                 }
             }).catch(err => {
+                setIsInitialized(true); // Still set initialized to avoid infinite pending state
                 if (import.meta.env.DEV) {
                     console.log("Google Client initialization skipped or failed (local dev)");
                 } else {
                     console.error("Failed to init Google Client", err);
                 }
             });
+        } else {
+            setIsInitialized(true);
         }
+    }, []);
 
-        if (enableAuto) {
+    useEffect(() => {
+        if (enableAuto && isInitialized && isConnected()) {
             performBackup();
         }
-    }, [enableAuto, performBackup]);
+    }, [enableAuto, isInitialized, performBackup]);
 
     const downloadLocalBackup = useCallback(async () => {
         try {

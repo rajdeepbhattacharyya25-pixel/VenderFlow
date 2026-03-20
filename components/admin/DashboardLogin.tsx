@@ -13,7 +13,7 @@ const DashboardLogin = () => {
     return (
         <div className="min-h-screen relative bg-stone-950 flex items-center justify-center overflow-hidden">
             {/* Background Effects matching Storefront 'Discovery' section aesthetics */}
-            <div className="absolute inset-0 bg-gradient-to-br from-indigo-950/20 via-indigo-950/20 to-pink-950/20 opacity-100"></div>
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-950/20 via-emerald-950/20 to-pink-950/20 opacity-100"></div>
 
             {/* Decorative Orbs */}
             <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-[100px] -translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>

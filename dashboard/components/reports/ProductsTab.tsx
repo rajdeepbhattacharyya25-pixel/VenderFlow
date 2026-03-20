@@ -46,7 +46,7 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({ topProducts, revenueSt
                                             </div>
                                             <div className="text-right">
                                                 <p className="text-xs text-gray-400">Contribution</p>
-                                                <p className="text-lg font-bold text-indigo-500 dark:text-indigo-400">{contrib.toFixed(1)}%</p>
+                                                <p className="text-lg font-bold text-emerald-500 dark:text-emerald-400">{contrib.toFixed(1)}%</p>
                                             </div>
                                         </div>
                                     </div>
@@ -79,7 +79,7 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({ topProducts, revenueSt
                                         const maxUnits = ((topProducts as any)[0] as any)?.units || 1;
 
                                         return (
-                                            <tr key={idx} className="border-b border-neutral-100 dark:border-white/[0.04] hover:bg-indigo-50/50 dark:hover:bg-white/[0.02] transition-colors">
+                                            <tr key={idx} className="border-b border-neutral-100 dark:border-white/[0.04] hover:bg-emerald-50/50 dark:hover:bg-white/[0.02] transition-colors">
                                                 <td className="py-4 px-4">
                                                     <div className="flex items-center gap-3">
                                                         <span className="text-xs font-bold text-theme-muted w-5">{idx + 1}</span>
@@ -90,7 +90,7 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({ topProducts, revenueSt
                                                     <div className="flex items-center justify-end gap-2">
                                                         <span className="text-sm font-medium text-theme-text opacity-80">{product.units.toLocaleString()}</span>
                                                         <div className="w-12 h-1.5 bg-theme-border/20 rounded-full overflow-hidden">
-                                                            <div className="h-full bg-indigo-400 rounded-full" style={{ width: `${(product.units / maxUnits) * 100}%` }} />
+                                                            <div className="h-full bg-emerald-400 rounded-full" style={{ width: `${(product.units / maxUnits) * 100}%` }} />
                                                         </div>
                                                     </div>
                                                 </td>
@@ -110,7 +110,7 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({ topProducts, revenueSt
                                                     <div className="flex items-center justify-end gap-2">
                                                         <span className="text-xs font-semibold text-gray-500">{contrib.toFixed(1)}%</span>
                                                         <div className="w-16 h-1.5 bg-neutral-200 dark:bg-neutral-700 rounded-full overflow-hidden">
-                                                            <div className="h-full bg-gradient-to-r from-indigo-500 to-cyan-400 rounded-full transition-all duration-500" style={{ width: `${contrib}%` }} />
+                                                            <div className="h-full bg-gradient-to-r from-emerald-500 to-cyan-400 rounded-full transition-all duration-500" style={{ width: `${contrib}%` }} />
                                                         </div>
                                                     </div>
                                                 </td>
@@ -130,7 +130,7 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({ topProducts, revenueSt
                                 <BarChart data={topProducts.slice(0, 8).map((p: any) => ({ name: p.name.length > 20 ? p.name.slice(0, 20) + '…' : p.name, revenue: p.revenue }))} layout="vertical" margin={{ top: 5, right: 30, left: 80, bottom: 5 }}>
                                     <defs>
                                         <linearGradient id="barGradient" x1="0" y1="0" x2="1" y2="0">
-                                            <stop offset="0%" stopColor="#6366f1" />
+                                            <stop offset="0%" stopColor="#10B981" />
                                             <stop offset="100%" stopColor="#22d3ee" />
                                         </linearGradient>
                                     </defs>

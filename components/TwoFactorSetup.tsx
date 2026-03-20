@@ -74,7 +74,7 @@ export const TwoFactorSetup: React.FC<TwoFactorSetupProps> = ({ onClose, onCompl
 
                 <div className="p-6">
                     <div className="flex items-center gap-3 mb-6">
-                        <div className="p-3 bg-indigo-50 dark:bg-indigo-500/10 rounded-xl text-indigo-600 dark:text-indigo-400">
+                        <div className="p-3 bg-emerald-50 dark:bg-emerald-500/10 rounded-xl text-emerald-600 dark:text-emerald-400">
                             <QrCode size={24} />
                         </div>
                         <div>
@@ -91,7 +91,7 @@ export const TwoFactorSetup: React.FC<TwoFactorSetupProps> = ({ onClose, onCompl
                             <button
                                 onClick={startSetup}
                                 disabled={loading}
-                                className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2"
+                                className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2"
                             >
                                 {loading ? <Loader2 className="animate-spin" size={18} /> : 'Start Setup'}
                             </button>
@@ -126,7 +126,7 @@ export const TwoFactorSetup: React.FC<TwoFactorSetupProps> = ({ onClose, onCompl
                                     value={verifyCode}
                                     onChange={(e) => setVerifyCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                                     placeholder="000 000"
-                                    className="w-full text-center text-2xl font-mono tracking-widest py-3 bg-gray-50 dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-xl focus:border-indigo-500 outline-none transition-colors"
+                                    className="w-full text-center text-2xl font-mono tracking-widest py-3 bg-gray-50 dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-xl focus:border-emerald-500 outline-none transition-colors"
                                 />
                                 {error && <p className="text-red-500 text-xs text-center">{error}</p>}
                             </div>
@@ -134,7 +134,7 @@ export const TwoFactorSetup: React.FC<TwoFactorSetupProps> = ({ onClose, onCompl
                             <button
                                 onClick={verifySetup}
                                 disabled={loading || verifyCode.length !== 6}
-                                className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {loading ? <Loader2 className="animate-spin" size={18} /> : 'Verify & Enable'}
                             </button>

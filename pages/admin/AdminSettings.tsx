@@ -32,7 +32,7 @@ const AdminSettings: React.FC = () => {
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id as any)}
                                     className={`w-full lg:w-auto flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${activeTab === tab.id
-                                        ? 'bg-indigo-600/10 text-indigo-400'
+                                        ? 'bg-emerald-600/10 text-emerald-400'
                                         : 'text-neutral-400 hover:bg-neutral-800 hover:text-white'
                                         }`}
                                 >

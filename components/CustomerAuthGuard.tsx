@@ -36,7 +36,7 @@ const CustomerAuthGuard: React.FC = () => {
     if (isAuthenticated === null) {
         return (
             <div className="min-h-screen bg-white dark:bg-gray-900 flex flex-col items-center justify-center p-4">
-                <Loader2 className="w-10 h-10 text-indigo-500 animate-spin mb-4" />
+                <Loader2 className="w-10 h-10 text-emerald-500 animate-spin mb-4" />
                 <p className="text-gray-500 dark:text-gray-400">Checking authentication...</p>
             </div>
         );

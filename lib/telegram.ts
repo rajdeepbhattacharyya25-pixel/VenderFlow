@@ -158,7 +158,11 @@ export const useTelegram = () => {
     // Toggle confirmation when closing via standard specific logic
     const toggleClosingConfirmation = (enable: boolean) => {
         if (!tg) return;
-        enable ? tg.enableClosingConfirmation() : tg.disableClosingConfirmation();
+        if (enable) {
+            tg.enableClosingConfirmation();
+        } else {
+            tg.disableClosingConfirmation();
+        }
     }
 
     return {

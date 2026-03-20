@@ -57,7 +57,7 @@ export const AIContentHelper: React.FC<AIContentHelperProps> = ({ type, context,
                 handleGenerate();
             }}
             disabled={loading}
-            className={`flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-lg text-xs font-medium hover:from-indigo-500 hover:to-violet-500 transition-all disabled:opacity-50 shadow-sm ${className}`}
+            className={`flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-cyan-600 text-white rounded-lg text-xs font-medium hover:from-emerald-500 hover:to-cyan-500 transition-all disabled:opacity-50 shadow-sm ${className}`}
         >
             {loading ? (
                 <>

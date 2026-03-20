@@ -152,7 +152,7 @@ const Billing: React.FC = () => {
                     email: (await supabase.auth.getUser()).data.user?.email
                 },
                 theme: {
-                    color: '#6366f1'
+                    color: '#10B981'
                 }
             };
 
@@ -170,7 +170,7 @@ const Billing: React.FC = () => {
 
     const plans = [
         { name: 'free', price: '₹0', features: ['200 Telegram Msgs', '50 Emails', '10% Commission'], color: 'neutral' },
-        { name: 'pro', price: '₹999/mo', features: ['5000 Telegram Msgs', 'Unlimited Email', '5% Commission'], color: 'indigo' },
+        { name: 'pro', price: '₹999/mo', features: ['5000 Telegram Msgs', 'Unlimited Email', '5% Commission'], color: 'primary' },
         { name: 'premium', price: '₹2499/mo', features: ['Unlimited Everything', '2% Commission', 'Priority Support'], color: 'amber' }
     ];
 
@@ -226,8 +226,8 @@ const Billing: React.FC = () => {
                         </div>
                         <div className="relative z-10">
                             <div className="flex items-center gap-3 mb-6">
-                                <div className="p-2 bg-indigo-500/10 rounded-xl">
-                                    <Zap className="text-indigo-500" size={24} />
+                                <div className="p-2 bg-emerald-500/10 rounded-xl">
+                                    <Zap className="text-emerald-500" size={24} />
                                 </div>
                                 <h2 className="text-xl font-bold text-white">Current Subscription</h2>
                             </div>
@@ -247,7 +247,7 @@ const Billing: React.FC = () => {
                                     </div>
                                     <div className="h-2 bg-neutral-800 rounded-full overflow-hidden">
                                         <div
-                                            className="h-full bg-indigo-500 rounded-full transition-all duration-1000"
+                                            className="h-full bg-emerald-500 rounded-full transition-all duration-1000"
                                             style={{ width: `${Math.min(100, (seller?.telegram_message_quota_remaining || 0) / 50)}%` }}
                                         />
                                     </div>
@@ -273,7 +273,7 @@ const Billing: React.FC = () => {
                     {/* Plans Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {plans.map(p => (
-                            <div key={p.name} className={`bg-neutral-900 border border-neutral-800 rounded-2xl p-6 flex flex-col ${seller?.plan === p.name ? 'ring-2 ring-indigo-500 border-transparent shadow-lg shadow-indigo-500/10' : ''}`}>
+                            <div key={p.name} className={`bg-neutral-900 border border-neutral-800 rounded-2xl p-6 flex flex-col ${seller?.plan === p.name ? 'ring-2 ring-emerald-500 border-transparent shadow-lg shadow-emerald-500/10' : ''}`}>
                                 <div className="mb-4">
                                     <h3 className="text-xs font-black uppercase tracking-widest text-neutral-500 mb-1">{p.name}</h3>
                                     <div className="text-2xl font-black text-white tracking-tighter">{p.price}</div>
@@ -292,8 +292,8 @@ const Billing: React.FC = () => {
                                     className={`w-full py-2.5 rounded-xl text-xs font-bold transition-all ${seller?.plan === p.name
                                         ? 'bg-neutral-800 text-neutral-500 cursor-default'
                                         : upgrading === p.name
-                                            ? 'bg-indigo-500/50 text-white cursor-wait'
-                                            : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/20'
+                                            ? 'bg-emerald-500/50 text-white cursor-wait'
+                                            : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/20'
                                         }`}
                                 >
                                     {seller?.plan === p.name ? 'Current' : upgrading === p.name ? 'Processing...' : 'Upgrade Now'}
@@ -307,8 +307,8 @@ const Billing: React.FC = () => {
                 <div className="space-y-6">
                     <div className="bg-neutral-900 border border-neutral-800 rounded-3xl p-6">
                         <div className="flex items-center gap-3 mb-6">
-                            <div className="p-2 bg-indigo-500/10 rounded-xl">
-                                <CreditCard className="text-indigo-500" size={20} />
+                            <div className="p-2 bg-emerald-500/10 rounded-xl">
+                                <CreditCard className="text-emerald-500" size={20} />
                             </div>
                             <h2 className="text-lg font-bold text-white">Payout Account</h2>
                         </div>
@@ -330,7 +330,7 @@ const Billing: React.FC = () => {
                                 <button
                                     onClick={handleAutomatedAccountCreation}
                                     disabled={connectingRazorpay}
-                                    className="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold text-xs hover:bg-indigo-700 transition-colors disabled:opacity-50 ring-2 ring-indigo-500/20"
+                                    className="w-full py-3 bg-emerald-600 text-white rounded-xl font-bold text-xs hover:bg-emerald-700 transition-colors disabled:opacity-50 ring-2 ring-emerald-500/20"
                                 >
                                     {connectingRazorpay ? 'Creating Account...' : 'One-Click Payout Setup'}
                                 </button>
@@ -346,7 +346,7 @@ const Billing: React.FC = () => {
                                         required
                                         value={razorpayAccountId}
                                         onChange={e => setRazorpayAccountId(e.target.value)}
-                                        className="w-full bg-neutral-950 border border-neutral-800 rounded-xl py-2.5 px-4 text-white text-[11px] focus:ring-2 focus:ring-indigo-500/50 transition-all outline-none"
+                                        className="w-full bg-neutral-950 border border-neutral-800 rounded-xl py-2.5 px-4 text-white text-[11px] focus:ring-2 focus:ring-emerald-500/50 transition-all outline-none"
                                         placeholder="acc_XXXXXXXXXXXXXX"
                                     />
                                     <button
@@ -383,8 +383,8 @@ const Billing: React.FC = () => {
                             </div>
                         ) : (
                             <form onSubmit={handleKYCSubmit} className="space-y-4">
-                                <div className="p-4 bg-indigo-500/5 border border-indigo-500/10 rounded-2xl flex items-start gap-3 mb-4">
-                                    <AlertCircle size={18} className="text-indigo-400 mt-0.5" />
+                                <div className="p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl flex items-start gap-3 mb-4">
+                                    <AlertCircle size={18} className="text-emerald-400 mt-0.5" />
                                     <p className="text-[10px] text-neutral-400 leading-relaxed font-medium">
                                         Submit your GST and PAN details to unlock higher sales limits and premium features.
                                     </p>
@@ -396,7 +396,7 @@ const Billing: React.FC = () => {
                                             type="text"
                                             value={kycForm.gst_number}
                                             onChange={e => setKycForm({ ...kycForm, gst_number: e.target.value.toUpperCase() })}
-                                            className="w-full bg-neutral-950 border border-neutral-800 rounded-xl py-2.5 px-4 text-white text-sm focus:ring-2 focus:ring-indigo-500/50 transition-all outline-none"
+                                            className="w-full bg-neutral-950 border border-neutral-800 rounded-xl py-2.5 px-4 text-white text-sm focus:ring-2 focus:ring-emerald-500/50 transition-all outline-none"
                                             placeholder="22AAAAA0000A1Z5"
                                         />
                                     </div>
@@ -407,7 +407,7 @@ const Billing: React.FC = () => {
                                             required
                                             value={kycForm.pan_number}
                                             onChange={e => setKycForm({ ...kycForm, pan_number: e.target.value.toUpperCase() })}
-                                            className="w-full bg-neutral-950 border border-neutral-800 rounded-xl py-2.5 px-4 text-white text-sm focus:ring-2 focus:ring-indigo-500/50 transition-all outline-none"
+                                            className="w-full bg-neutral-950 border border-neutral-800 rounded-xl py-2.5 px-4 text-white text-sm focus:ring-2 focus:ring-emerald-500/50 transition-all outline-none"
                                             placeholder="ABCDE1234F"
                                         />
                                     </div>

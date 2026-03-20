@@ -1,26 +1,24 @@
 /**
  * supabase/functions/seller-analytics/index.ts
- *
- * Server-side proxy for PostHog Query API, scoped to individual sellers.
- * - Guards with user JWT — only authenticated sellers can call this.
- * - Fetches properties for the specific seller's store and queries PostHog for ONLY their traffic.
- *
- * Required secrets (set via `supabase secrets set`):
- *   POSTHOG_PERSONAL_API_KEY  — from PostHog Project Settings > Personal API Keys
- *   POSTHOG_PROJECT_ID        — numeric project ID from PostHog URL
- *   POSTHOG_HOST              — optional, defaults to https://app.posthog.com
  */
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
+// Inlined CORS headers for immediate fix while shared utility bundling is investigated
+export const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, sentry-trace, baggage",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+  "Access-Control-Max-Age": "86400",
+};
+
 const POSTHOG_HOST = Deno.env.get("POSTHOG_HOST") ?? "https://app.posthog.com";
 const POSTHOG_API_KEY = Deno.env.get("POSTHOG_PERSONAL_API_KEY") ?? "";
 const POSTHOG_PROJECT_ID = Deno.env.get("POSTHOG_PROJECT_ID") ?? "";
 
-// Simple in-memory cache
 const cache = new Map<string, { data: unknown; expires: number }>();
-const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const CACHE_TTL_MS = 5 * 60 * 1000;
 
 function getCache(key: string): unknown | null {
     const entry = cache.get(key);
@@ -33,17 +31,15 @@ function setCache(key: string, data: unknown) {
     cache.set(key, { data, expires: Date.now() + CACHE_TTL_MS });
 }
 
-// ── PostHog API helpers ────────────────────────────────────────────────────────
-
-async function phFetch(endpoint: string, body: unknown): Promise<unknown> {
-    const url = `${POSTHOG_HOST}/api/projects/${POSTHOG_PROJECT_ID}${endpoint}`;
+async function phFetch(query: unknown): Promise<any> {
+    const url = `${POSTHOG_HOST}/api/projects/${POSTHOG_PROJECT_ID}/query/`;
     const res = await fetch(url, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${POSTHOG_API_KEY}`,
         },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ query }),
     });
     if (!res.ok) {
         const text = await res.text();
@@ -61,27 +57,31 @@ async function getStoreTrafficData(slug: string) {
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
 
-    // Filter pageviews by `$pathname` exactly matching `/store/${slug}` or starting with `/store/${slug}/`
     const properties = [
         { key: "$pathname", value: `/store/${slug}`, operator: "icontains", type: "event" }
     ];
 
-    // Get unique visitors this week
-    const thisWeek = await phFetch("/insights/trend/", {
-        date_from: sevenDaysAgo.toISOString().split("T")[0],
-        date_to: now.toISOString().split("T")[0],
-        events: [{ id: "$pageview", math: "dau", properties }],
-    }) as { result?: Array<{ aggregated_value?: number }> };
+    const [thisWeek, lastWeek] = await Promise.all([
+        phFetch({
+            kind: "TrendsQuery",
+            dateRange: {
+                date_from: sevenDaysAgo.toISOString().split("T")[0],
+                date_to: now.toISOString().split("T")[0],
+            },
+            series: [{ event: "$pageview", math: "dau", properties }],
+        }),
+        phFetch({
+            kind: "TrendsQuery",
+            dateRange: {
+                date_from: fourteenDaysAgo.toISOString().split("T")[0],
+                date_to: sevenDaysAgo.toISOString().split("T")[0],
+            },
+            series: [{ event: "$pageview", math: "dau", properties }],
+        })
+    ]);
 
-    // Get last week for comparison
-    const lastWeek = await phFetch("/insights/trend/", {
-        date_from: fourteenDaysAgo.toISOString().split("T")[0],
-        date_to: sevenDaysAgo.toISOString().split("T")[0],
-        events: [{ id: "$pageview", math: "dau", properties }],
-    }) as { result?: Array<{ aggregated_value?: number }> };
-
-    const thisCount = (thisWeek.result ?? []).reduce((acc, r) => acc + (r.aggregated_value ?? 0), 0);
-    const lastCount = (lastWeek.result ?? []).reduce((acc, r) => acc + (r.aggregated_value ?? 0), 0);
+    const thisCount = (thisWeek.results?.[0]?.data ?? []).reduce((acc: number, v: number) => acc + (v ?? 0), 0);
+    const lastCount = (lastWeek.results?.[0]?.data ?? []).reduce((acc: number, v: number) => acc + (v ?? 0), 0);
     const changePct = lastCount > 0 ? ((thisCount - lastCount) / lastCount) * 100 : 0;
 
     const data = {
@@ -93,20 +93,12 @@ async function getStoreTrafficData(slug: string) {
     return data;
 }
 
-// ── Handler ────────────────────────────────────────────────────────────────────
-
 Deno.serve(async (req: Request) => {
-    const corsHeaders = {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-    };
-
     if (req.method === "OPTIONS") {
         return new Response("ok", { headers: corsHeaders });
     }
 
     try {
-        // Authenticate: require valid Supabase JWT
         const authHeader = req.headers.get("Authorization");
         if (!authHeader) {
             return new Response("Unauthorized", { status: 401, headers: corsHeaders });
@@ -130,7 +122,6 @@ Deno.serve(async (req: Request) => {
             );
         }
 
-        // Check that user is a seller and get their slug
         const { data: seller, error: sellerError } = await supabaseClient
             .from("sellers")
             .select("slug")

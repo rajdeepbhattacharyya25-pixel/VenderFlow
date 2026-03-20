@@ -62,15 +62,15 @@ export const CompleteTheLook: React.FC<CompleteTheLookProps> = ({
   }
 
   return (
-    <div className="mt-12 p-6 bg-gradient-to-br from-indigo-50/50 to-purple-50/50 dark:from-indigo-900/10 dark:to-purple-900/10 rounded-3xl border border-indigo-100/50 dark:border-indigo-500/10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="mt-12 p-6 bg-gradient-to-br from-emerald-50/50 to-teal-50/50 dark:from-emerald-900/10 dark:to-teal-900/10 rounded-3xl border border-emerald-100/50 dark:border-emerald-500/10 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
-          <div className="p-2 bg-indigo-500 rounded-lg shadow-lg shadow-indigo-500/20">
+          <div className="p-2 bg-emerald-500 rounded-lg shadow-lg shadow-emerald-500/20">
             <IconSparkles className="w-5 h-5 text-white" />
           </div>
           <div>
             <h3 className="text-xl font-bold font-heading text-gray-900 dark:text-white">Complete the Look</h3>
-            <p className="text-xs text-indigo-600 dark:text-indigo-400 font-medium">AI-powered styling suggestions</p>
+            <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">AI-powered styling suggestions</p>
           </div>
         </div>
       </div>
@@ -94,7 +94,7 @@ export const CompleteTheLook: React.FC<CompleteTheLookProps> = ({
                 className="min-w-[200px] w-[200px] flex flex-col group/card cursor-pointer"
                 onClick={() => onQuickView(product)}
               >
-                <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-white dark:bg-gray-800 mb-3 border border-transparent group-hover/card:border-indigo-200 dark:group-hover/card:border-indigo-500/30 transition-all shadow-sm group-hover/card:shadow-md">
+                <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-white dark:bg-gray-800 mb-3 border border-transparent group-hover/card:border-emerald-200 dark:group-hover/card:border-emerald-500/30 transition-all shadow-sm group-hover/card:shadow-md">
                   <img 
                     src={product.image} 
                     alt={product.name} 
@@ -106,13 +106,13 @@ export const CompleteTheLook: React.FC<CompleteTheLookProps> = ({
                       e.stopPropagation();
                       onAddToCart(product);
                     }}
-                    className="absolute bottom-3 right-3 w-10 h-10 bg-white dark:bg-surface-dark shadow-xl rounded-full flex items-center justify-center text-gray-900 dark:text-white hover:bg-indigo-500 hover:text-white transition-all transform hover:scale-110 active:scale-90"
+                    className="absolute bottom-3 right-3 w-10 h-10 bg-white dark:bg-surface-dark shadow-xl rounded-full flex items-center justify-center text-gray-900 dark:text-white hover:bg-emerald-500 hover:text-white transition-all transform hover:scale-110 active:scale-90"
                     aria-label={`Add ${product.name} to cart`}
                   >
                     <IconShoppingBag className="w-5 h-5" />
                   </button>
                 </div>
-                <h4 className="text-sm font-bold text-gray-900 dark:text-white truncate group-hover/card:text-indigo-600 dark:group-hover/card:text-indigo-400 transition-colors">
+                <h4 className="text-sm font-bold text-gray-900 dark:text-white truncate group-hover/card:text-emerald-600 dark:group-hover/card:text-emerald-400 transition-colors">
                   {product.name}
                 </h4>
                 <p className="text-sm font-medium text-gray-500 dark:text-gray-400">

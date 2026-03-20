@@ -108,7 +108,7 @@ const NotificationCenter: React.FC = () => {
             case 'warning': return <AlertTriangle size={16} className="text-amber-500" />;
             case 'error': return <AlertCircle size={16} className="text-red-500" />;
             case 'success': return <Check size={16} className="text-emerald-500" />;
-            case 'order': return <ShoppingBag size={16} className="text-indigo-500" />;
+            case 'order': return <ShoppingBag size={16} className="text-emerald-500" />;
             case 'seller': return <User size={16} className="text-blue-500" />;
             default: return <Info size={16} className="text-neutral-400" />;
         }
@@ -135,7 +135,7 @@ const NotificationCenter: React.FC = () => {
                             {unreadCount > 0 && (
                                 <button
                                     onClick={handleMarkAllRead}
-                                    className="text-xs text-indigo-400 hover:text-indigo-300 font-medium transition-colors"
+                                    className="text-xs text-emerald-400 hover:text-emerald-300 font-medium transition-colors"
                                 >
                                     Mark all read
                                 </button>
@@ -168,7 +168,7 @@ const NotificationCenter: React.FC = () => {
                                 {notifications.map((notification) => (
                                     <div
                                         key={notification.id}
-                                        className={`p-4 hover:bg-neutral-800/50 transition-colors relative group ${!notification.is_read ? 'bg-indigo-500/5' : ''}`}
+                                        className={`p-4 hover:bg-neutral-800/50 transition-colors relative group ${!notification.is_read ? 'bg-emerald-500/5' : ''}`}
                                     >
                                         <div className="flex gap-3">
                                             <div className="mt-0.5 flex-shrink-0">
@@ -191,7 +191,7 @@ const NotificationCenter: React.FC = () => {
                                                         e.stopPropagation();
                                                         handleMarkAsRead(notification.id);
                                                     }}
-                                                    className="opacity-0 group-hover:opacity-100 p-1 hover:bg-neutral-700 rounded-full transition-all self-start text-neutral-400 hover:text-indigo-400"
+                                                    className="opacity-0 group-hover:opacity-100 p-1 hover:bg-neutral-700 rounded-full transition-all self-start text-neutral-400 hover:text-emerald-400"
                                                     title="Mark as read"
                                                 >
                                                     <Check size={14} />
@@ -219,7 +219,7 @@ const NotificationCenter: React.FC = () => {
                             <button
                                 onClick={subscribeToPush}
                                 disabled={pushLoading}
-                                className="w-full py-2 px-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold shadow-sm hover:shadow active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                className="w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold shadow-sm hover:shadow active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                             >
                                 <Bell size={14} />
                                 {pushLoading ? 'Enabling...' : 'Enable Browser Notifications'}

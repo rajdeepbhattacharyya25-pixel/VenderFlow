@@ -104,7 +104,7 @@ export default function Onboarding() {
                     <div className="pt-2 flex flex-col space-y-3">
                         <button
                             onClick={() => setCurrentStep('ai-setup')}
-                            className="w-full flex items-center justify-center gap-2 bg-purple-600 text-white font-semibold py-3 px-4 rounded-xl hover:bg-purple-700 transition"
+                            className="w-full flex items-center justify-center gap-2 bg-teal-600 text-white font-semibold py-3 px-4 rounded-xl hover:bg-teal-700 transition"
                         >
                             Start AI Setup <ArrowRight className="w-4 h-4" />
                         </button>

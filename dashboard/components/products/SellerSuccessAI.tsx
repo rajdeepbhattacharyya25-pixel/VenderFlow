@@ -126,7 +126,7 @@ export const SellerSuccessAI: React.FC<SellerSuccessAIProps> = ({ product, onApp
                 <button
                     onClick={handleDeepAudit}
                     disabled={isAuditing}
-                    className="w-full flex items-center justify-center gap-2 p-4 bg-gradient-to-br from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white rounded-2xl font-bold text-sm shadow-xl shadow-indigo-500/20 transition-all active:scale-95 group overflow-hidden relative"
+                    className="w-full flex items-center justify-center gap-2 p-4 bg-gradient-to-br from-emerald-500 to-cyan-600 hover:from-emerald-600 hover:to-cyan-700 text-white rounded-2xl font-bold text-sm shadow-xl shadow-emerald-500/20 transition-all active:scale-95 group overflow-hidden relative"
                 >
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
                     {isAuditing ? (
@@ -158,8 +158,8 @@ export const SellerSuccessAI: React.FC<SellerSuccessAIProps> = ({ product, onApp
                             <div className="space-y-2">
                                 <div className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase ml-1">AI Improvement Tips</div>
                                 {auditResult.tips.map((tip, i) => (
-                                    <div key={i} className="flex items-start gap-2 p-3 rounded-xl bg-indigo-500/5 border border-indigo-500/10 text-xs">
-                                        <ArrowRight size={14} className="text-indigo-500 mt-0.5" />
+                                    <div key={i} className="flex items-start gap-2 p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/10 text-xs">
+                                        <ArrowRight size={14} className="text-emerald-500 mt-0.5" />
                                         <span className="text-gray-600 dark:text-gray-300 leading-relaxed">{tip}</span>
                                     </div>
                                 ))}

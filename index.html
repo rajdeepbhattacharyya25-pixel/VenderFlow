@@ -12,6 +12,7 @@
     content="Premium e-commerce marketplace. Shop curated products from verified Indian sellers." />
   <meta name="keywords"
     content="vendorflow, e-commerce, india, online shopping, platform, dashboard, merchant, seller" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
 
   <!-- Open Graph / Social -->
   <meta property="og:type" content="website" />
@@ -20,7 +21,10 @@
     content="Premium e-commerce marketplace. Shop curated products from verified Indian sellers." />
   <meta property="og:url" content="https://vendorflow.vercel.app" />
   <meta property="og:image" content="https://vendorflow.vercel.app/logo.jpg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
   <meta property="og:site_name" content="VendorFlow" />
+  <meta property="og:locale" content="en_US" />
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image" />
@@ -52,6 +56,19 @@
         "@type": "Offer",
         "price": "0",
         "priceCurrency": "USD"
+      }
+    }
+  </script>
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "VendorFlow",
+      "url": "https://vendorflow.vercel.app",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://vendorflow.vercel.app/search?q={search_term_string}",
+        "query-input": "required name=search_term_string"
       }
     }
   </script>

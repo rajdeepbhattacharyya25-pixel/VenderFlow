@@ -53,18 +53,18 @@ export const AnalyticsAIOracle: React.FC<AnalyticsAIOracleProps> = ({ revenueSta
     const getImpactColor = (impact: string) => {
         switch (impact) {
             case 'high': return 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
-            case 'medium': return 'bg-indigo-500/10 text-indigo-500 border-indigo-500/20';
+            case 'medium': return 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
             default: return 'bg-gray-500/10 text-gray-500 border-gray-500/20';
         }
     };
 
     return (
-        <div className="bg-white dark:bg-white/[0.03] backdrop-blur-md border border-indigo-500/20 rounded-2xl overflow-hidden shadow-2xl shadow-indigo-500/10 mb-8 transition-all hover:border-indigo-500/40">
+        <div className="bg-white dark:bg-white/[0.03] backdrop-blur-md border border-emerald-500/20 rounded-2xl overflow-hidden shadow-2xl shadow-emerald-500/10 mb-8 transition-all hover:border-emerald-500/40">
             <div className="p-6 md:p-8">
                 {!result && !isAnalyzing ? (
                     <div className="flex flex-col md:flex-row items-center justify-between gap-6">
                         <div className="flex items-center gap-6">
-                            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center relative shadow-lg shadow-indigo-500/20">
+                            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-cyan-600 flex items-center justify-center relative shadow-lg shadow-emerald-500/20">
                                 <Sparkles className="w-8 h-8 text-white animate-pulse" />
                                 <div className="absolute -top-1 -right-1 w-4 h-4 bg-amber-400 rounded-full border-2 border-white dark:border-neutral-900" />
                             </div>
@@ -75,7 +75,7 @@ export const AnalyticsAIOracle: React.FC<AnalyticsAIOracleProps> = ({ revenueSta
                         </div>
                         <button
                             onClick={runOracle}
-                            className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 transition-all active:scale-95 whitespace-nowrap"
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 transition-all active:scale-95 whitespace-nowrap"
                         >
                             <Zap className="w-4 h-4" />
                             Run Oracle Audit
@@ -84,7 +84,7 @@ export const AnalyticsAIOracle: React.FC<AnalyticsAIOracleProps> = ({ revenueSta
                 ) : isAnalyzing ? (
                     <div className="flex flex-col items-center justify-center py-12 space-y-4">
                         <div className="relative">
-                            <Loader2 className="w-12 h-12 text-indigo-500 animate-spin" />
+                            <Loader2 className="w-12 h-12 text-emerald-500 animate-spin" />
                             <Sparkles className="w-4 h-4 text-amber-400 absolute top-0 right-0 animate-bounce" />
                         </div>
                         <div className="text-center">
@@ -111,11 +111,11 @@ export const AnalyticsAIOracle: React.FC<AnalyticsAIOracleProps> = ({ revenueSta
                     <div className="space-y-8 animate-[fadeIn_0.5s_ease-out]">
                         {/* Summary */}
                         <div className="flex flex-col md:flex-row gap-6 items-start">
-                             <div className="w-12 h-12 rounded-xl bg-indigo-500/10 flex items-center justify-center shrink-0">
-                                <MessageSquare className="w-6 h-6 text-indigo-500" />
+                             <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center shrink-0">
+                                <MessageSquare className="w-6 h-6 text-emerald-500" />
                             </div>
                             <div className="flex-1">
-                                <h4 className="text-xs font-black text-indigo-500 uppercase tracking-[0.2em] mb-2">The Oracle's Verdict</h4>
+                                <h4 className="text-xs font-black text-emerald-500 uppercase tracking-[0.2em] mb-2">The Oracle's Verdict</h4>
                                 <p className="text-xl font-bold text-gray-900 dark:text-white italic leading-relaxed">
                                     "{result?.summary}"
                                 </p>
@@ -160,18 +160,18 @@ export const AnalyticsAIOracle: React.FC<AnalyticsAIOracleProps> = ({ revenueSta
 
                         {/* Recommendations */}
                         <div className="space-y-4">
-                            <div className="flex items-center gap-2 text-indigo-500 mb-1">
+                            <div className="flex items-center gap-2 text-emerald-500 mb-1">
                                 <Target className="w-4 h-4" />
                                 <h5 className="text-xs font-black uppercase tracking-widest">Oracle Growth Map</h5>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 {result?.recommendations.map((rec, i) => (
-                                    <div key={i} className="group p-5 rounded-2xl bg-gray-50/50 dark:bg-neutral-800/50 border border-gray-100 dark:border-white/[0.05] hover:border-indigo-500/30 transition-all hover:scale-[1.02] cursor-default">
+                                    <div key={i} className="group p-5 rounded-2xl bg-gray-50/50 dark:bg-neutral-800/50 border border-gray-100 dark:border-white/[0.05] hover:border-emerald-500/30 transition-all hover:scale-[1.02] cursor-default">
                                         <div className="flex items-center justify-between mb-3">
                                             <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded border ${getImpactColor(rec.impact)}`}>
                                                 {rec.impact} Impact
                                             </span>
-                                            <ChevronRight className="w-3 h-3 text-gray-400 group-hover:text-indigo-500 group-hover:translate-x-1 transition-all" />
+                                            <ChevronRight className="w-3 h-3 text-gray-400 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all" />
                                         </div>
                                         <h6 className="font-bold text-gray-900 dark:text-white mb-2">{rec.title}</h6>
                                         <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{rec.action}</p>

@@ -24,7 +24,7 @@ interface AdminLogStatsProps {
     logs: AuditLog[];
 }
 
-const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#06b6d4'];
+const COLORS = ['#10b981', '#14b8a6', '#06b6d4', '#f59e0b', '#ef4444'];
 
 const AdminLogStats: React.FC<AdminLogStatsProps> = ({ logs }) => {
     const [dateRange, setDateRange] = React.useState<'7d' | '30d' | 'custom'>('7d');
@@ -93,7 +93,7 @@ const AdminLogStats: React.FC<AdminLogStatsProps> = ({ logs }) => {
             <div className="bg-theme-panel border border-theme-border rounded-2xl p-6">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-indigo-500/10 text-indigo-500 rounded-xl flex items-center justify-center">
+                        <div className="w-10 h-10 bg-emerald-500/10 text-emerald-500 rounded-xl flex items-center justify-center">
                             <Activity size={20} />
                         </div>
                         <div>
@@ -101,9 +101,9 @@ const AdminLogStats: React.FC<AdminLogStatsProps> = ({ logs }) => {
                             <div className="flex items-center gap-2 mt-1">
                                 <select
                                     value={dateRange}
-                                    onChange={(e) => setDateRange(e.target.value as any)}
+                                    onChange={(e) => setDateRange(e.target.value as '7d' | '30d' | 'custom')}
                                     aria-label="Date range filter"
-                                    className="bg-theme-bg border border-theme-border text-xs text-theme-muted rounded-lg py-1 pl-2 pr-6 focus:ring-1 focus:ring-indigo-500 cursor-pointer"
+                                    className="bg-theme-bg border border-theme-border text-xs text-theme-muted rounded-lg py-1 pl-2 pr-6 focus:ring-1 focus:ring-emerald-500 cursor-pointer"
                                 >
                                     <option value="7d">Last 7 Days</option>
                                     <option value="30d">Last 30 Days</option>
@@ -161,7 +161,7 @@ const AdminLogStats: React.FC<AdminLogStatsProps> = ({ logs }) => {
                                 itemStyle={{ color: 'var(--dashboard-text)' }}
                                 cursor={{ fill: 'var(--dashboard-bg)', opacity: 0.4 }}
                             />
-                            <Bar dataKey="count" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                            <Bar dataKey="count" fill="#10b981" radius={[4, 4, 0, 0]} />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>

@@ -335,12 +335,12 @@ export const adminDb = {
     async getAdminStats() {
         try {
             // 1. Total Sellers Count
-            const { count: sellerCount, error: sellerError } = await supabase
+            const { count: sellerCount } = await supabase
                 .from('sellers')
                 .select('*', { count: 'exact', head: true });
 
             // 2. Live Revenue (sum of all non-cancelled orders)
-            const { data: revenueData, error: revenueError } = await supabase
+            const { data: revenueData } = await supabase
                 .from('orders')
                 .select('total')
                 .neq('status', 'cancelled');
@@ -348,7 +348,7 @@ export const adminDb = {
             const totalRevenue = revenueData?.reduce((acc, order) => acc + (order.total || 0), 0) || 0;
 
             // 3. Active Orders (pending + processing)
-            const { count: activeOrders, error: ordersError } = await supabase
+            const { count: activeOrders } = await supabase
                 .from('orders')
                 .select('*', { count: 'exact', head: true })
                 .in('status', ['pending', 'processing', 'confirmed']);
@@ -441,7 +441,7 @@ export const adminDb = {
             }
 
             // 8. Total Wallet Balances (New for Payout System)
-            const { data: walletData, error: walletError } = await supabase
+            const { data: walletData } = await supabase
                 .from('seller_wallets')
                 .select('available_balance, reserve_balance, negative_balance');
 
@@ -449,13 +449,40 @@ export const adminDb = {
             const totalReserves = walletData?.reduce((acc, w) => acc + (w.reserve_balance || 0), 0) || 0;
             const totalNegative = walletData?.reduce((acc, w) => acc + (w.negative_balance || 0), 0) || 0;
 
+            // Calculate trends for orders and revenue
+            const { data: recentOrderData } = await supabase
+                .from('orders')
+                .select('total')
+                .neq('status', 'cancelled')
+                .gte('created_at', thirtyDaysAgo.toISOString());
+
+            const { data: priorOrderData } = await supabase
+                .from('orders')
+                .select('total')
+                .neq('status', 'cancelled')
+                .gte('created_at', sixtyDaysAgo.toISOString())
+                .lt('created_at', thirtyDaysAgo.toISOString());
+
+            const recentRevenue = recentOrderData?.reduce((acc, order) => acc + (order.total || 0), 0) || 0;
+            const priorRevenue = priorOrderData?.reduce((acc, order) => acc + (order.total || 0), 0) || 0;
+            const recentOrderCount = recentOrderData?.length || 0;
+            const priorOrderCount = priorOrderData?.length || 0;
+
+            const revenueChange = priorRevenue > 0
+                ? Math.round((recentRevenue - priorRevenue) / priorRevenue * 100)
+                : recentRevenue > 0 ? 100 : 0;
+
+            const ordersChange = priorOrderCount > 0
+                ? Math.round((recentOrderCount - priorOrderCount) / priorOrderCount * 100)
+                : recentOrderCount > 0 ? 100 : 0;
+
             return {
                 totalSellers: sellerCount || 0,
                 sellerChange: sellerChange,
                 liveRevenue: totalRevenue,
-                revenueChange: 8, // Mock for now - would need historical comparison
+                revenueChange: revenueChange,
                 activeOrders: activeOrders || 0,
-                ordersChange: -3, // Mock for now
+                ordersChange: ordersChange,
                 sysHealth: sysHealth,
                 healthStatus: healthStatus,
                 // Additional metrics for detailed view

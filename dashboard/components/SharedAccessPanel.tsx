@@ -169,14 +169,14 @@ export const SharedAccessPanel = () => {
             {/* Header */}
             <div className="flex items-center justify-between mb-8 pb-4 border-b border-theme-border">
                 <div className="flex items-center gap-3">
-                    <div className="p-2 bg-indigo-500/10 rounded-lg text-indigo-600">
+                    <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-600">
                         <Users size={20} />
                     </div>
                     <h3 className="font-bold text-lg text-theme-text">Shared Access</h3>
                 </div>
                 <button
                     onClick={() => setShowAddModal(true)}
-                    className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl hover:opacity-90 transition-all font-bold text-sm shadow-sm"
+                    className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-xl hover:opacity-90 transition-all font-bold text-sm shadow-sm"
                 >
                     <Plus size={16} />
                     Add Helper
@@ -206,16 +206,16 @@ export const SharedAccessPanel = () => {
                 </div>
 
                 {loading ? (
-                    <div className="text-center py-10"><Loader2 className="animate-spin text-indigo-600 mx-auto" /></div>
+                    <div className="text-center py-10"><Loader2 className="animate-spin text-emerald-600 mx-auto" /></div>
                 ) : staff.length === 0 ? (
                     <div className="text-center py-10 bg-theme-bg rounded-xl border border-theme-border border-dashed text-theme-muted text-sm">
                         No team members yet. Click "Add Helper" to invite someone.
                     </div>
                 ) : (
                     staff.map((s) => (
-                        <div key={s.id} className="flex items-center justify-between p-4 bg-theme-bg border border-theme-border rounded-xl transition-all hover:border-indigo-500/50 group">
+                        <div key={s.id} className="flex items-center justify-between p-4 bg-theme-bg border border-theme-border rounded-xl transition-all hover:border-emerald-500/50 group">
                             <div className="flex items-center gap-4">
-                                <div className="w-10 h-10 bg-indigo-500/10 text-indigo-600 rounded-full flex items-center justify-center font-bold text-lg">
+                                <div className="w-10 h-10 bg-emerald-500/10 text-emerald-600 rounded-full flex items-center justify-center font-bold text-lg">
                                     {s.name.charAt(0).toUpperCase()}
                                 </div>
                                 <div>
@@ -254,7 +254,7 @@ export const SharedAccessPanel = () => {
                                     type="text"
                                     value={newName}
                                     onChange={(e) => setNewName(e.target.value)}
-                                    className="w-full bg-theme-bg border border-theme-border rounded-xl px-4 py-3 text-theme-text focus:ring-2 focus:ring-indigo-500/20 outline-none"
+                                    className="w-full bg-theme-bg border border-theme-border rounded-xl px-4 py-3 text-theme-text focus:ring-2 focus:ring-emerald-500/20 outline-none"
                                     placeholder="e.g. Rahul"
                                     title="Staff member name"
                                     autoFocus
@@ -265,7 +265,7 @@ export const SharedAccessPanel = () => {
                                 <select
                                     value={newRole}
                                     onChange={(e) => setNewRole(e.target.value)}
-                                    className="w-full bg-theme-bg/50 border border-theme-border/50 rounded-xl px-4 py-2.5 text-theme-text focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition-all cursor-pointer"
+                                    className="w-full bg-theme-bg/50 border border-theme-border/50 rounded-xl px-4 py-2.5 text-theme-text focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition-all cursor-pointer"
                                     title="Select staff role"
                                 >
                                     <option value="staff">Staff / Picker</option>
@@ -275,7 +275,7 @@ export const SharedAccessPanel = () => {
                                 </select>
                             </div>
 
-                            <div className="flex items-center gap-3 p-4 bg-indigo-500/5 rounded-2xl border border-indigo-500/10">
+                            <div className="flex items-center gap-3 p-4 bg-emerald-500/5 rounded-2xl border border-emerald-500/10">
                                 <div className="flex-1">
                                     <h4 className="text-sm font-bold text-theme-text">Kiosk Mode (Auto-Login QR)</h4>
                                     <p className="text-[10px] text-theme-muted mt-0.5 leading-relaxed">
@@ -290,14 +290,14 @@ export const SharedAccessPanel = () => {
                                         onChange={(e) => setIsKiosk(e.target.checked)}
                                         title="Enable kiosk mode"
                                     />
-                                    <div className="w-11 h-6 bg-theme-bg peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 border border-theme-border"></div>
+                                    <div className="w-11 h-6 bg-theme-bg peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600 border border-theme-border"></div>
                                 </label>
                             </div>
 
                             <button
                                 onClick={handleAddStaff}
                                 disabled={creating || !newName.trim()}
-                                className="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover:brightness-110 transition-all disabled:opacity-50 flex items-center justify-center gap-2 mt-4"
+                                className="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold hover:brightness-110 transition-all disabled:opacity-50 flex items-center justify-center gap-2 mt-4"
                             >
                                 {creating ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
                                 {creating ? 'Creating Account...' : 'Create & Generate QR'}
@@ -312,7 +312,7 @@ export const SharedAccessPanel = () => {
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in">
                     <div className="bg-theme-panel w-full max-w-sm rounded-[2rem] p-8 shadow-2xl border border-theme-border text-center relative overflow-hidden">
                         {/* Confetti or decorative elements can go here */}
-                        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-indigo-500 to-primary" />
+                        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-emerald-500 to-primary" />
 
                         <div className="mb-6">
                             <h3 className="text-2xl font-bold text-theme-text mb-2">Access Granted!</h3>
@@ -322,7 +322,7 @@ export const SharedAccessPanel = () => {
                                         <Loader2 size={14} className="animate-spin" /> Kiosk Token: Expires in 15m
                                     </span>
                                 ) : (
-                                    <span>Scan to log in as <span className="text-indigo-600 font-bold">{newName || 'Staff'}</span></span>
+                                    <span>Scan to log in as <span className="text-emerald-600 font-bold">{newName || 'Staff'}</span></span>
                                 )}
                             </p>
                         </div>
@@ -340,7 +340,7 @@ export const SharedAccessPanel = () => {
                         <div className="space-y-3">
                             <button
                                 onClick={handleDownloadQR}
-                                className="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold text-sm hover:brightness-110 transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/25"
+                                className="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold text-sm hover:brightness-110 transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/25"
                             >
                                 <Download size={18} />
                                 Download QR Image

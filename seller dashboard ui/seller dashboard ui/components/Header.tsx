@@ -35,7 +35,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
                     ${theme === 'dark' ? 'translate-x-6' : 'translate-x-0'}
                 `}
             >
-                {theme === 'light' ? <Sun size={10} className="text-orange-400" /> : <Moon size={10} className="text-indigo-400" />}
+                {theme === 'light' ? <Sun size={10} className="text-orange-400" /> : <Moon size={10} className="text-emerald-400" />}
             </div>
         </button>
 

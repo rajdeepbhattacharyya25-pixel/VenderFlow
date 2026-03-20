@@ -8,7 +8,7 @@ interface KPICardProps {
   suffix?: string;
   icon: LucideIcon;
   trend?: 'up' | 'down';
-  color?: 'blue' | 'yellow' | 'indigo';
+  color?: 'blue' | 'yellow' | 'primary';
   loading?: boolean;
 }
 
@@ -64,10 +64,10 @@ const KPICard: React.FC<KPICardProps> = ({
       iconColor: 'text-lime-700 dark:text-lime-400',
       border: 'border-theme-border/50'
     },
-    indigo: {
+    primary: {
       bg: 'bg-theme-accent-3 dark:bg-theme-accent-3/10',
       iconBg: 'bg-white/60 dark:bg-white/5',
-      iconColor: 'text-indigo-600 dark:text-indigo-400',
+      iconColor: 'text-emerald-600 dark:text-emerald-400',
       border: 'border-theme-border/50'
     }
   };

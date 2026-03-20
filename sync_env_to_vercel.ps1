@@ -13,7 +13,9 @@ $vars = @{
     "RAZORPAY_KEY_SECRET" = "HQtDzI00ery8fJpvHnguNiRe"
     "GEMINI_API_KEY" = "AIzaSyDqPL-z17ccJxAPBsh6IGWpAG3dzik0NBk"
     "GROQ_API_KEY" = "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"
+    "OPENROUTER_API_KEY" = "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"
 }
+
 
 foreach ($key in $vars.Keys) {
     $val = $vars[$key]

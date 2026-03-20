@@ -17,15 +17,15 @@ export const RevenueTab: React.FC<RevenueTabProps> = ({ revenueStats, chartData,
         <div className="animate-[fadeIn_0.3s] space-y-6">
             {/* Revenue Waterfall Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-                <div className="relative overflow-hidden bg-white dark:bg-white/[0.03] border border-neutral-200 dark:border-indigo-500/20 rounded-2xl p-6 backdrop-blur-sm group hover:border-indigo-500/40 transition-all duration-300">
-                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent pointer-events-none" />
+                <div className="relative overflow-hidden bg-white dark:bg-white/[0.03] border border-neutral-200 dark:border-emerald-500/20 rounded-2xl p-6 backdrop-blur-sm group hover:border-emerald-500/40 transition-all duration-300">
+                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent pointer-events-none" />
                     <div className="relative z-10">
                         <div className="flex items-center gap-2 mb-3">
-                            <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center"><DollarSign className="w-4 h-4 text-indigo-400" /></div>
+                            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center"><DollarSign className="w-4 h-4 text-emerald-400" /></div>
                             <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Gross Revenue</p>
                         </div>
                         <p className="text-3xl font-bold text-gray-900 dark:text-white mb-3">₹{revenueStats.gross.toLocaleString()}</p>
-                        <div className="h-1 w-full bg-neutral-200 dark:bg-neutral-800 rounded-full overflow-hidden"><div className="h-full bg-gradient-to-r from-indigo-500 to-indigo-400 rounded-full" style={{ width: '100%' }} /></div>
+                        <div className="h-1 w-full bg-neutral-200 dark:bg-neutral-800 rounded-full overflow-hidden"><div className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full" style={{ width: '100%' }} /></div>
                     </div>
                 </div>
                 <div className="relative overflow-hidden bg-white dark:bg-white/[0.03] border border-neutral-200 dark:border-red-500/20 rounded-2xl p-6 backdrop-blur-sm group hover:border-red-500/40 transition-all duration-300">
@@ -58,9 +58,9 @@ export const RevenueTab: React.FC<RevenueTabProps> = ({ revenueStats, chartData,
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Orders</p>
-                            <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400 mt-1">{revenueStats.totalOrders.toLocaleString()}</p>
+                            <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">{revenueStats.totalOrders.toLocaleString()}</p>
                         </div>
-                        <div className="w-12 h-12 rounded-xl bg-indigo-500/10 flex items-center justify-center"><ShoppingBag className="w-5 h-5 text-indigo-400" /></div>
+                        <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center"><ShoppingBag className="w-5 h-5 text-emerald-400" /></div>
                     </div>
                 </div>
                 <div className="bg-white dark:bg-white/[0.03] border border-neutral-200 dark:border-white/[0.08] rounded-2xl p-5 backdrop-blur-sm">
@@ -91,15 +91,15 @@ export const RevenueTab: React.FC<RevenueTabProps> = ({ revenueStats, chartData,
                         <AreaChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
                             <defs>
                                 <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
-                                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                                    <stop offset="5%" stopColor="#10B981" stopOpacity={0.3} />
+                                    <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
                                 </linearGradient>
                             </defs>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--dashboard-muted)" opacity={0.2} />
                             <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--dashboard-muted)' }} dy={10} />
                             <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--dashboard-muted)' }} tickFormatter={(v) => `₹${v}`} />
                             <Tooltip content={<CustomTooltip formatter={(v: number) => [`₹${v?.toFixed(0)}`, 'Revenue']} />} />
-                            <Area type="monotone" dataKey="revenue" stroke="#6366f1" strokeWidth={2.5} fill="url(#revenueGradient)" dot={false} activeDot={{ r: 5, fill: '#6366f1', strokeWidth: 2, stroke: '#fff' }} />
+                            <Area type="monotone" dataKey="revenue" stroke="#10B981" strokeWidth={2.5} fill="url(#revenueGradient)" dot={false} activeDot={{ r: 5, fill: '#10B981', strokeWidth: 2, stroke: '#fff' }} />
                         </AreaChart>
                     </ResponsiveContainer>
                 </div>

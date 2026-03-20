@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Store, ShieldCheck, Lock, Star, Sparkles, X, Mail } from 'lucide-react';
+import { Store, Lock, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { OwlOverlay } from './OwlOverlay';
+import { Turnstile } from '@marsidev/react-turnstile';
 
 interface LoginModalProps {
     isOpen: boolean;
@@ -19,7 +20,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
     const [password, setPassword] = useState('');
     const [isSignUp, setIsSignUp] = useState(false);
     const [mode, setMode] = useState<'customer' | 'seller'>(initialMode);
-
+    const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
     const navigate = useNavigate();
 
@@ -31,6 +32,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
             setPassword('');
             setIsSignUp(false);
             setMode(initialMode);
+            setTurnstileToken(null);
         }
     }, [isOpen, initialMode]);
 
@@ -71,33 +73,18 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
 
     const handleEmailAuth = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (!turnstileToken) {
+            setError('Please complete the security check.');
+            return;
+        }
+
         setIsLoading(true);
         setError(null);
 
         try {
             // Check if we are performing Store Customer Auth
             if (sellerId && sellerSlug && mode === 'customer') {
-                // Dynamic import to avoid circular dependencies if any, or just use the imported functions
-                // Assuming we imported them. I will add imports in a separate step or assume they are available? 
-                // Wait, I need to add imports to the file first!
-                // But I can't add imports in this chunk easily if I am only replacing this function.
-                // I will use window object or assume imports are added.
-                // Better: I will Update IMPORTS first in a separate call or do it here if possible?
-                // I'll assume I update imports in next step. For now I write the logic hoping imports exist.
-                // Actually, I can't use them if not imported.
-                // I will use strictly typed imports in next step.
-                // For this step, I will throw error if not implemented? No.
-                // I MUST update imports first. 
-                // I will abort this tool call and do imports first? 
-                // No, I can do imports in `multi_replace`?
-                // I'll stick to `replace_file_content` for simplicity. 
-                // I'll update imports AND this function if they are close? No, imports are at top.
-                // I will update this function to use a placeholder or fully qualified name if possible? No.
-                // I will update imports in a separate tool call immediately after this.
-                // Or I can use `multi_replace`.
-
-                // Let's use logic:
-                // If I am a Store Customer:
                 if (isSignUp) {
                     // Register
                     const { registerStoreCustomer } = await import('../lib/storeAuth');
@@ -112,7 +99,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
                     const { success, error } = await loginStoreCustomer(sellerId, sellerSlug, email, password);
                     if (!success) throw new Error(error);
 
-                    navigate('/store/profile'); // Or reload to update state
+                    navigate('/store/profile'); 
                     onClose();
                 }
                 return;
@@ -143,7 +130,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
                 if (data.user) {
                     // Log the session
                     try {
-                        const { data: sessionData, error: sessionFnError } = await supabase.functions.invoke('log-session', {
+                        const { data: sessionData } = await supabase.functions.invoke('log-session', {
                             body: { device_info: navigator.userAgent }
                         });
                         if (sessionData?.session_id) {
@@ -153,18 +140,14 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
                         console.error('Failed to log session:', sessionError);
                     }
 
-                    const { data: profile, error: profileError } = await supabase
+                    const { data: profile } = await supabase
                         .from('profiles')
                         .select('role')
                         .eq('id', data.user.id)
                         .maybeSingle();
 
-                    console.log("DEBUG LOGIN:", { user: data.user.email, role: profile?.role, error: profileError });
-
-
                     let currentProfile = profile;
                     if (!currentProfile) {
-                        console.log("Profile not found in LoginModal. creating one...");
                         try {
                             const { data: newProfile, error: createError } = await supabase
                                 .from('profiles')
@@ -178,8 +161,6 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
 
                             if (!createError) {
                                 currentProfile = newProfile;
-                            } else {
-                                console.error("LoginModal profile creation failed:", createError);
                             }
                         } catch (err) {
                             console.error("LoginModal profile creation exception:", err);
@@ -187,11 +168,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
                     }
 
                     if (currentProfile?.role === 'admin') {
-                        // Force a hard navigation for admin to ensure clean state
                         window.location.href = '/admin';
                         return;
                     } else if (currentProfile?.role === 'seller' || mode === 'seller') {
-                        // If we just created it or if mode is seller, go to dashboard
                         navigate('/dashboard');
                     }
                     onClose();
@@ -276,11 +255,25 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
                                         placeholder="••••••••"
                                     />
                                 </div>
+                                
+                                <div className="pt-2 flex justify-center">
+                                    <Turnstile
+                                        // @ts-expect-error - import.meta is allowed but linter might complain about target
+                                        sitekey={import.meta.env.VITE_TURNSTILE_SITEKEY || '1x00000000000000000000AA'}
+                                        onSuccess={(token) => setTurnstileToken(token)}
+                                        onExpire={() => setTurnstileToken(null)}
+                                        onError={() => setTurnstileToken(null)}
+                                        options={{
+                                            theme: 'dark',
+                                            size: 'normal',
+                                        }}
+                                    />
+                                </div>
                             </div>
 
                             <button
                                 type="submit"
-                                disabled={isLoading}
+                                disabled={isLoading || !turnstileToken}
                                 className="w-full bg-white text-stone-950 font-bold py-3.5 rounded-xl hover:bg-stone-200 active:scale-[0.98] transition-all duration-300 disabled:opacity-50 text-[10px] uppercase tracking-[0.4em] shadow-xl shadow-white/5"
                                 style={{ minHeight: '44px', WebkitTapHighlightColor: 'transparent' }}
                             >

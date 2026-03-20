@@ -13,8 +13,6 @@ import Billing from './pages/Billing';
 import AuditLogs from './pages/AuditLogs';
 import { Theme } from './types';
 
-
-
 import { supabase } from '../lib/supabase';
 import { useAutoBackup } from '../hooks/useAutoBackup';
 
@@ -89,8 +87,6 @@ function App() {
           }
 
           // Fetch store settings for business logo AND store name
-          // store_settings.store_name is what the seller edits in Settings > Business Profile
-          // sellers.store_name is from onboarding — store_settings takes priority
           try {
             const { data: storeSettings } = await supabase
               .from('store_settings')
@@ -102,7 +98,6 @@ function App() {
               setBusinessLogo(storeSettings.logo_url);
             }
 
-            // Prefer store_settings name (user-editable) over sellers name (onboarding)
             const displayName = storeSettings?.store_name || data.store_name;
             setStoreName(displayName);
 
@@ -111,7 +106,6 @@ function App() {
             }
           } catch (error) {
             console.error('Error fetching store settings:', error);
-            // Fallback to sellers table name
             setStoreName(data.store_name);
             if (data.store_name) {
               document.title = `${data.store_name} Dashboard`;
@@ -129,7 +123,7 @@ function App() {
               .maybeSingle();
 
             if (announcementData) {
-              setAnnouncement(announcementData as any);
+              setAnnouncement(announcementData as { id: string; title: string; content: string; type: string });
             }
           } catch (error) {
             console.error('Error fetching announcements:', error);
@@ -150,7 +144,7 @@ function App() {
     }
   }, [theme]);
 
-  // Dynamic Favicon - Update to seller's logo
+  // Dynamic Favicon
   useEffect(() => {
     if (businessLogo) {
       const link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
@@ -164,7 +158,6 @@ function App() {
       }
     }
 
-    // Cleanup: restore default favicon when leaving dashboard
     return () => {
       const link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
       if (link) {
@@ -188,7 +181,7 @@ function App() {
       }
     };
 
-    handleResize(); // Init
+    handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -255,10 +248,10 @@ function App() {
           </p>
           <div className="bg-neutral-800/50 rounded-xl p-4 mb-6 text-sm text-neutral-300 border border-neutral-700">
             <p className="font-medium text-white mb-1">Action Required</p>
-            Please contact <span className="text-indigo-400 font-bold">Rajdeep Admin</span> to resolve this issue and restore your store access.
+            Please contact <span className="text-emerald-400 font-bold">Admin</span> to resolve this issue and restore your store access.
           </div>
           <a
-            href="mailto:support@rajdeep.admin" // Mock email or link
+            href="mailto:support@vendorflow.admin"
             className="block w-full py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold transition-colors"
           >
             Contact Support
@@ -269,7 +262,7 @@ function App() {
   }
 
   return (
-    <div className="dashboard-root min-h-screen bg-theme-bg transition-colors duration-300 font-sans selection:bg-indigo-500 selection:text-white pb-20 md:pb-0">
+    <div className="dashboard-root min-h-screen bg-theme-bg transition-colors duration-300 font-sans selection:bg-emerald-500 selection:text-white pb-20 md:pb-0">
 
       {/* Left Sidebar */}
       <Sidebar
@@ -302,12 +295,11 @@ function App() {
           storeName={storeName}
           sellerSlug={sellerSlug}
         />
-
         <main className="p-4 sm:p-6 lg:px-10 pt-6 sm:pt-8">
           {announcement && (
-            <div className={`mb-6 p-4 rounded-xl border flex items-start gap-3 animate-in slide-in-from-top-2 ${announcement.type === 'warning' ? 'bg-amber-500/10 border-amber-500/20 text-amber-500' :
-              announcement.type === 'update' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' :
-                'bg-indigo-500/10 border-indigo-500/20 text-indigo-500'
+            <div className={`mb-6 p-4 rounded-xl border flex items-start gap-3 animate-in slide-in-from-top-2 shadow-sm ${announcement.type === 'warning' ? 'bg-amber-500/10 border-amber-500/20 text-amber-500' :
+               announcement.type === 'update' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' :
+                 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500'
               }`}>
               <Megaphone size={20} className="mt-0.5 flex-shrink-0" />
               <div className="flex-1">
@@ -316,7 +308,9 @@ function App() {
               </div>
               <button
                 onClick={() => setAnnouncement(null)}
+                title="Close Announcement"
                 className="p-1 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors"
+                aria-label="Close Announcement"
               >
                 <X size={16} />
               </button>
@@ -328,13 +322,13 @@ function App() {
             <div className={`mb-6 p-5 rounded-2xl border backdrop-blur-sm animate-in slide-in-from-top-4 fade-in duration-500 shadow-lg ${
                 backupStatus === 'error' ? 'bg-red-500/10 border-red-500/20 shadow-red-500/5' :
                 backupStatus === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 shadow-emerald-500/5' :
-                'bg-indigo-500/10 border-indigo-500/20 shadow-indigo-500/5'
+                'bg-emerald-500/10 border-emerald-500/20 shadow-emerald-500/5'
             }`}>
               <div className="flex flex-col md:flex-row items-center gap-4">
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
                     backupStatus === 'error' ? 'bg-red-500/20 text-red-500' :
                     backupStatus === 'success' ? 'bg-emerald-500/20 text-emerald-500' :
-                    'bg-indigo-500/20 text-indigo-500 animate-pulse'
+                    'bg-emerald-500/20 text-emerald-500 animate-pulse'
                 }`}>
                   <Database size={24} />
                 </div>
@@ -344,7 +338,7 @@ function App() {
                     <h3 className={`font-bold ${
                         backupStatus === 'error' ? 'text-red-500' :
                         backupStatus === 'success' ? 'text-emerald-500' :
-                        'text-indigo-500'
+                        'text-emerald-500'
                     }`}>
                         {backupStatus === 'error' ? 'Backup Failed' : 
                          backupStatus === 'success' ? 'Backup Successful' : 
@@ -352,9 +346,9 @@ function App() {
                     </h3>
                     {isBackupRunning && (
                         <div className="flex gap-1">
-                          <span className="w-1 h-1 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-                          <span className="w-1 h-1 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-                          <span className="w-1 h-1 bg-indigo-500 rounded-full animate-bounce"></span>
+                          <span className="w-1 h-1 bg-emerald-500 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                          <span className="w-1 h-1 bg-emerald-500 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                          <span className="w-1 h-1 bg-emerald-500 rounded-full animate-bounce"></span>
                         </div>
                     )}
                   </div>
@@ -373,7 +367,7 @@ function App() {
                   <div className={`flex justify-between w-full text-[10px] font-bold uppercase tracking-wider mb-1 px-1 ${
                       backupStatus === 'error' ? 'text-red-500' :
                       backupStatus === 'success' ? 'text-emerald-500' :
-                      'text-indigo-500'
+                      'text-emerald-500'
                   }`}>
                     <span>{backupStatus === 'success' ? 'Completed' : 'Progress'}</span>
                     <span>{backupProgress}%</span>
@@ -381,15 +375,15 @@ function App() {
                   <div className={`h-2 w-full rounded-full overflow-hidden border ${
                       backupStatus === 'error' ? 'bg-red-500/10 border-red-500/10' :
                       backupStatus === 'success' ? 'bg-emerald-500/10 border-emerald-500/10' :
-                      'bg-indigo-500/10 border-indigo-500/10'
+                      'bg-emerald-500/10 border-emerald-500/10'
                   }`}>
                     <div 
-                      className={`h-full transition-all duration-700 ease-out rounded-full ${
-                          backupStatus === 'error' ? 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]' :
-                          backupStatus === 'success' ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]' :
-                          'bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]'
+                      className={`h-full transition-all duration-700 ease-out rounded-full shadow-sm ${
+                          backupStatus === 'error' ? 'bg-red-500' :
+                          backupStatus === 'success' ? 'bg-emerald-500' :
+                          'bg-emerald-500'
                       }`}
-                      style={{ width: `${backupProgress}%` }}
+                      style={{ width: `${backupProgress}%` } as React.CSSProperties}
                     />
                   </div>
                 </div>

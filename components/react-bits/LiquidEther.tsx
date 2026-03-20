@@ -7,11 +7,11 @@ export default function LiquidEther({
     cursorSize = 100,
     isViscous = false,
     viscous = 30,
-    iterationsViscous = 32,
-    iterationsPoisson = 32,
+    iterationsViscous = 20, // Reduced from 32
+    iterationsPoisson = 20, // Reduced from 32
     dt = 0.014,
     BFECC = true,
-    resolution = 0.5,
+    resolution = 0.4, // Reduced from 0.5
     isBounce = false,
     colors = ['#5227FF', '#FF9FFC', '#B19EEF'],
     style = {},
@@ -23,6 +23,8 @@ export default function LiquidEther({
     autoResumeDelay = 1000,
     autoRampDuration = 0.6
 }: any) {
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
     const mountRef = useRef<HTMLDivElement>(null);
     const webglRef = useRef<any>(null);
     const resizeObserverRef = useRef<any>(null);
@@ -611,7 +613,7 @@ export default function LiquidEther({
                     this.scene.add(this.plane);
                 }
             }
-            update(_props?: any) {
+            update(_props?: any): any {
                 Common.renderer.setRenderTarget(this.props.output || null);
                 Common.renderer.render(this.scene, this.camera);
                 Common.renderer.setRenderTarget(null);
@@ -893,7 +895,7 @@ export default function LiquidEther({
                     wrapS: THREE.ClampToEdgeWrapping,
                     wrapT: THREE.ClampToEdgeWrapping
                 };
-                for (let key in this.fbos) {
+                for (const key in this.fbos) {
                     this.fbos[key] = new THREE.WebGLRenderTarget(this.fboSize.x, this.fboSize.y, opts);
                 }
             }
@@ -952,7 +954,7 @@ export default function LiquidEther({
             }
             resize() {
                 this.calcSize();
-                for (let key in this.fbos) {
+                for (const key in this.fbos) {
                     this.fbos[key].setSize(this.fboSize.x, this.fboSize.y);
                 }
             }
@@ -1282,5 +1284,6 @@ export default function LiquidEther({
         autoRampDuration
     ]);
 
+    if (isMobile) return null;
     return <div ref={mountRef} className={`liquid-ether-container ${className || ''}`} style={style} />;
 }

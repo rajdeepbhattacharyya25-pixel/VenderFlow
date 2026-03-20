@@ -210,7 +210,7 @@ const Dashboard: React.FC<DashboardProps> = ({ theme, onTabChange, sellerSlug })
                         items.forEach((item: any) => {
                             // Group primarily by Name to merge duplicates with different/missing IDs
                             // Normalize name (trim) to avoid whitespace issues
-                            let pKey = item.name ? `name:${item.name.trim()}` : (item.product_id || item.id);
+                            const pKey = item.name ? `name:${item.name.trim()}` : (item.product_id || item.id);
 
                             // If pKey is missing (should be rare), skip
                             if (!pKey) return;
@@ -507,7 +507,7 @@ const Dashboard: React.FC<DashboardProps> = ({ theme, onTabChange, sellerSlug })
                         onClick={() => onTabChange?.('sales')}
                         className="flex items-center gap-3 p-4 bg-theme-panel rounded-2xl border border-theme-border/50 shadow-soft hover:shadow-glow hover:-translate-y-1 transition-all duration-300 group"
                     >
-                        <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                        <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                             <Tag size={20} />
                         </div>
                         <div className="text-left">
@@ -522,7 +522,7 @@ const Dashboard: React.FC<DashboardProps> = ({ theme, onTabChange, sellerSlug })
                             rel="noopener noreferrer"
                             className="flex items-center gap-3 p-4 bg-theme-panel rounded-2xl border border-theme-border/50 shadow-soft hover:shadow-glow hover:-translate-y-1 transition-all duration-300 group"
                         >
-                            <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                                 <Eye size={20} />
                             </div>
                             <div className="text-left">
@@ -559,7 +559,7 @@ const Dashboard: React.FC<DashboardProps> = ({ theme, onTabChange, sellerSlug })
                         value={stats.orders}
                         suffix=" "
                         icon={ShoppingBag}
-                        color="indigo"
+                        color="primary"
                         trend="down"
                         loading={loading}
                     />
@@ -568,7 +568,7 @@ const Dashboard: React.FC<DashboardProps> = ({ theme, onTabChange, sellerSlug })
                         value={trafficData?.visitors_7d || 0}
                         suffix=" visits"
                         icon={Eye}
-                        color="indigo"
+                        color="primary"
                         trend={trafficData ? (trafficData.change_pct >= 0 ? "up" : "down") : undefined}
                         loading={loading}
                     />

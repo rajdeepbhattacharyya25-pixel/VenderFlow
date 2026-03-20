@@ -1,10 +1,15 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
 
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 const TELEGRAM_BOT_TOKEN = Deno.env.get("TELEGRAM_BOT_TOKEN");
 const TELEGRAM_CHAT_ID = Deno.env.get("TELEGRAM_CHAT_ID");
 
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
 const corsHeaders = {
-    "Access-Control-Allow-Origin": Deno.env.get('ALLOWED_ORIGIN') ?? "https://vendorflow.vercel.app",
+    "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
@@ -15,11 +20,56 @@ serve(async (req) => {
     }
 
     try {
+        console.log("📥 Received Notification Request");
+        const payload = await req.json();
+        const { type, message, data } = payload;
+        console.log("Type:", type);
+
         if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
+            console.error("❌ Missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID");
             throw new Error("Missing Telegram Configuration");
         }
 
-        const { type, message, data } = await req.json();
+        // 1. Fetch Admin Preferences
+        console.log("🔍 Fetching admin preferences...");
+        const { data: admins, error: adminError } = await supabase
+            .from('profiles')
+            .select('notification_preferences')
+            .eq('role', 'admin');
+
+        if (adminError) {
+            console.error("❌ Profile Fetch Error:", adminError);
+            throw adminError;
+        }
+
+        console.log(`✅ Found ${admins?.length || 0} admins`);
+
+        // 2. Map Type to Preference Key
+        const typeMap: Record<string, string> = {
+            "BACKUP_SUCCESS": "backup_success",
+            "BACKUP_FAILED": "backup_failed",
+            "NEW_MESSAGE": "new_message",
+            "NEW_SELLER_APPLICATION": "new_message",
+            "SYSTEM_ALERT": "system_alert"
+        };
+
+        const prefKey = typeMap[type];
+        
+        // 3. Filter: Send only if at least one admin has this preference enabled 
+        // (Since it's a shared group chat)
+        const isEnabled = admins?.some(admin => 
+            admin.notification_preferences?.[prefKey] !== false
+        );
+
+        console.log(`Filtering: type=${type}, prefKey=${prefKey}, isEnabled=${isEnabled}`);
+
+        if (prefKey && !isEnabled) {
+            console.log(`🚫 Notification of type ${type} is disabled by admin preferences. Skipping.`);
+            return new Response(JSON.stringify({ skipped: true, reason: "disabled_by_preferences" }), {
+                headers: { ...corsHeaders, "Content-Type": "application/json" },
+                status: 200,
+            });
+        }
 
         let text = "";
         const timestamp = new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
@@ -119,6 +169,7 @@ ${message}
         });
 
     } catch (error) {
+        console.error("Error in notify-admin:", error);
         return new Response(JSON.stringify({ error: error.message }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
             status: 500,

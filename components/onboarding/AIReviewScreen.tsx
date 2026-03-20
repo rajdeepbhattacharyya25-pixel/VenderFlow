@@ -50,14 +50,14 @@ export default function AIReviewScreen({ initialData, onAccept, onDiscard }: AIR
             <div className="space-y-6">
                 <div className="space-y-2">
                     <label className="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300">
-                        <Type className="w-4 h-4 mr-2 text-purple-500" />
+                        <Type className="w-4 h-4 mr-2 text-teal-500" />
                         Store Description
                     </label>
                     <textarea
                         value={data.storeDescription}
                         onChange={handleDescriptionChange}
                         rows={4}
-                        className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 bg-gray-50 dark:bg-gray-700/50 dark:text-white transition-all text-sm"
+                        className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-teal-500 bg-gray-50 dark:bg-gray-700/50 dark:text-white transition-all text-sm"
                     />
                 </div>
 
@@ -70,21 +70,21 @@ export default function AIReviewScreen({ initialData, onAccept, onDiscard }: AIR
                         type="text"
                         value={data.categories.join(', ')}
                         onChange={handleCategoriesChange}
-                        className="w-full px-4 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 bg-gray-50 dark:bg-gray-700/50 dark:text-white transition-all text-sm"
+                        className="w-full px-4 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-teal-500 bg-gray-50 dark:bg-gray-700/50 dark:text-white transition-all text-sm"
                     />
                     <p className="text-xs text-gray-400">Comma separated. E.g. Necklaces, Rings, Bracelets</p>
                 </div>
 
                 <div className="space-y-2">
                     <label className="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300">
-                        <Tag className="w-4 h-4 mr-2 text-indigo-500" />
+                        <Tag className="w-4 h-4 mr-2 text-emerald-500" />
                         SEO Tags
                     </label>
                     <input
                         type="text"
                         value={data.seoTags.join(', ')}
                         onChange={handleTagsChange}
-                        className="w-full px-4 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 bg-gray-50 dark:bg-gray-700/50 dark:text-white transition-all text-sm"
+                        className="w-full px-4 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-teal-500 bg-gray-50 dark:bg-gray-700/50 dark:text-white transition-all text-sm"
                     />
                 </div>
             </div>
@@ -98,7 +98,7 @@ export default function AIReviewScreen({ initialData, onAccept, onDiscard }: AIR
                 </button>
                 <button
                     onClick={handleSave}
-                    className="flex items-center justify-center px-6 py-2.5 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition-all shadow-md shadow-purple-500/20"
+                    className="flex items-center justify-center px-6 py-2.5 text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 rounded-lg transition-all shadow-md shadow-teal-500/20"
                 >
                     <Edit3 className="w-4 h-4 mr-2" />
                     Looks Good, Save
