@@ -26,33 +26,7 @@ export default defineConfig(({ mode }) => {
       sourcemap: true,
       rollupOptions: {
         output: {
-          manualChunks(id) {
-            if (id.includes('node_modules')) {
-              // Ensure we catch gsap even with different paths
-              if (id.includes('gsap')) {
-                return 'vendor-gsap';
-              }
-              if (id.includes('recharts')) {
-                return 'vendor-recharts';
-              }
-              if (id.includes('three') || id.includes('ogl') || id.includes('@react-three')) {
-                return 'vendor-viz';
-              }
-              if (id.includes('react') && (id.includes('react-dom') || id.includes('react-router-dom'))) {
-                return 'vendor-react-core';
-              }
-              if (id.includes('framer-motion')) {
-                return 'vendor-framer';
-              }
-              if (id.includes('lucide-react') || id.includes('react-hot-toast')) {
-                return 'vendor-ui';
-              }
-              if (id.includes('@supabase') || id.includes('posthog-js') || id.includes('@sentry')) {
-                return 'vendor-lib';
-              }
-              return 'vendor-misc';
-            }
-          }
+          // Simplified output for debugging
         }
       }
     },
