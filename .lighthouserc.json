@@ -1,0 +1,20 @@
+{
+  "ci": {
+    "collect": {
+      "numberOfRuns": 3,
+      "startServerCommand": "npm run dev",
+      "url": ["http://localhost:5173"]
+    },
+    "upload": {
+      "target": "temporary-public-storage"
+    },
+    "assert": {
+      "preset": "lighthouse:recommended",
+      "assertions": {
+        "offscreen-images": "off",
+        "uses-webp-images": "off",
+        "color-contrast": "warn"
+      }
+    }
+  }
+}
