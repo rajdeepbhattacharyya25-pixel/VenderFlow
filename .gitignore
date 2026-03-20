@@ -45,6 +45,8 @@ build_log.txt
 remaining_errors.json
 playwright-report/
 test-results/
+scripts/*.mjs
+public/sitemap.xml
 scripts/*.txt
 scripts/*.json
 !scripts/test_funnel.mjs
