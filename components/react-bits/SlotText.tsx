@@ -1,32 +1,44 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 
-import { Key } from 'react';
+
 
 interface SlotCharProps {
     targetChar: string;
     isActive: boolean;
     delay: number;
     className?: string;
-    key?: Key;
 }
 
 function SlotChar({ targetChar, isActive, delay, className }: SlotCharProps) {
     const [currentChar, setCurrentChar] = useState(targetChar);
     const [isSettled, setIsSettled] = useState(true);
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+    useEffect(() => {
+        return () => {
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+            if (intervalRef.current) clearInterval(intervalRef.current);
+        };
+    }, []);
 
     useEffect(() => {
         if (!isActive) {
             setCurrentChar(targetChar);
             setIsSettled(true);
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+            if (intervalRef.current) clearInterval(intervalRef.current);
             return;
         }
 
         if (targetChar === ' ') {
             setCurrentChar(' ');
             setIsSettled(true);
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+            if (intervalRef.current) clearInterval(intervalRef.current);
             return;
         }
 
@@ -34,22 +46,27 @@ function SlotChar({ targetChar, isActive, delay, className }: SlotCharProps) {
         const iterations = 6 + Math.floor(Math.random() * 4);
         let count = 0;
 
-        const timeout = setTimeout(() => {
-            const interval = setInterval(() => {
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        if (intervalRef.current) clearInterval(intervalRef.current);
+
+        timeoutRef.current = setTimeout(() => {
+            intervalRef.current = setInterval(() => {
                 count++;
                 if (count >= iterations) {
                     setCurrentChar(targetChar);
                     setIsSettled(true);
-                    clearInterval(interval);
+                    if (intervalRef.current) clearInterval(intervalRef.current);
+                    intervalRef.current = null;
                 } else {
                     setCurrentChar(CHARS[Math.floor(Math.random() * CHARS.length)]);
                 }
             }, 60);
-
-            return () => clearInterval(interval);
         }, delay);
 
-        return () => clearTimeout(timeout);
+        return () => {
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+            if (intervalRef.current) clearInterval(intervalRef.current);
+        };
     }, [isActive, targetChar, delay]);
 
     if (targetChar === ' ') {

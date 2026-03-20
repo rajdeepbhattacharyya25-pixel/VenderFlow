@@ -142,14 +142,14 @@ export default function AdminAnalytics() {
     }, [fetchAnalytics]);
 
     return (
-        <div className="min-h-screen bg-transparent text-neutral-300 font-sans selection:bg-indigo-500/30">
+        <div className="min-h-screen bg-transparent text-neutral-300 font-sans selection:bg-emerald-500/30">
             {/* HUD Header */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
                 <div className="space-y-1">
                     <div className="flex items-center gap-3">
                         <PulseIndicator active={!error && !loading} />
                         <h1 className="text-3xl font-black text-white tracking-tight uppercase">
-                            Command <span className="text-indigo-500">Center</span>
+                            Command <span className="text-emerald-500">Center</span>
                         </h1>
                     </div>
                     <div className="flex items-center gap-4 text-xs font-mono text-neutral-500 italic">
@@ -159,7 +159,13 @@ export default function AdminAnalytics() {
                         {data?.last_updated && (
                             <>
                                 <span>•</span>
-                                <span>SYNC: {new Date(data.last_updated).toLocaleTimeString()}</span>
+                                <span>SYNC: {(() => {
+                                    try {
+                                        return new Date(data.last_updated).toLocaleTimeString();
+                                    } catch (e) {
+                                        return 'UNKNOWN';
+                                    }
+                                })()}</span>
                             </>
                         )}
                     </div>
@@ -171,7 +177,7 @@ export default function AdminAnalytics() {
                         disabled={loading}
                         className="group relative flex items-center gap-2 px-6 py-2.5 bg-neutral-800/50 hover:bg-neutral-700/50 border border-white/5 rounded-full text-xs font-bold uppercase tracking-widest transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
                     >
-                        <RefreshCw size={14} className={`${loading ? 'animate-spin text-indigo-400' : 'text-neutral-400 group-hover:text-white'}`} />
+                        <RefreshCw size={14} className={`${loading ? 'animate-spin text-emerald-400' : 'text-neutral-400 group-hover:text-white'}`} />
                         <span>Force Sync</span>
                     </button>
                 </div>
@@ -198,8 +204,8 @@ export default function AdminAnalytics() {
                     <GlassCard className="p-8">
                         <div className="flex items-start justify-between mb-10">
                             <div className="flex items-center gap-4">
-                                <div className="p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-2xl">
-                                    <TrendingUp size={24} className="text-indigo-400" />
+                                <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl">
+                                    <TrendingUp size={24} className="text-emerald-400" />
                                 </div>
                                 <div>
                                     <h2 className="text-xl font-bold text-white uppercase tracking-tight">Conversion Funnel</h2>
@@ -210,8 +216,8 @@ export default function AdminAnalytics() {
                             {!loading && data?.funnel && (
                                 <div className="text-right">
                                     <HUDLabel>Overall Throughput</HUDLabel>
-                                    <div className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-indigo-400">
-                                        {data.funnel.conversion_rate.toFixed(1)}%
+                                    <div className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-emerald-400">
+                                        {(data.funnel.conversion_rate || 0).toFixed(1)}%
                                     </div>
                                 </div>
                             )}
@@ -242,7 +248,7 @@ export default function AdminAnalytics() {
                         <div className="overflow-x-auto">
                             {loading ? (
                                 <div className="p-20 flex flex-col items-center gap-4">
-                                    <Zap size={24} className="text-indigo-500/40 animate-pulse" />
+                                    <Zap size={24} className="text-emerald-500/40 animate-pulse" />
                                     <span className="text-xs font-mono text-neutral-600">INGESTING_LATEST_EVENTS...</span>
                                 </div>
                             ) : data?.recent_events?.length ? (
@@ -258,7 +264,7 @@ export default function AdminAnalytics() {
                                     </thead>
                                     <tbody className="divide-y divide-white/5">
                                         {data.recent_events.map((event) => (
-                                            <tr key={event.id} className="group hover:bg-indigo-500/5 transition-colors">
+                                            <tr key={event.id} className="group hover:bg-emerald-500/5 transition-colors">
                                                 <td className="px-6 py-4 text-[10px] font-mono text-neutral-500 whitespace-nowrap">
                                                     {new Date(event.timestamp).toLocaleString()}
                                                 </td>
@@ -266,7 +272,7 @@ export default function AdminAnalytics() {
                                                     {event.properties.store_name}
                                                 </td>
                                                 <td className="px-6 py-4">
-                                                    <code className="text-[10px] bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded border border-indigo-500/20">
+                                                    <code className="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20">
                                                         /{event.properties.slug}
                                                     </code>
                                                 </td>
@@ -275,7 +281,7 @@ export default function AdminAnalytics() {
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     <span className={`text-[9px] px-2 py-0.5 rounded-sm font-black uppercase tracking-widest ${event.properties.plan === 'pro'
-                                                        ? 'bg-indigo-500 text-white shadow-[0_0_10px_rgba(99,102,241,0.3)]'
+                                                        ? 'bg-emerald-500 text-white shadow-[0_0_10px_rgba(16,185,129,0.3)]'
                                                         : 'bg-neutral-800 text-neutral-500'
                                                         }`}>
                                                         {event.properties.plan || 'BASE'}
@@ -298,10 +304,10 @@ export default function AdminAnalytics() {
                 {/* ── SIDEBAR METRICS ── */}
                 <div className="space-y-6">
                     {/* TRAFFIC */}
-                    <GlassCard className="p-6 group hover:border-indigo-500/30 transition-all">
+                    <GlassCard className="p-6 group hover:border-emerald-500/30 transition-all">
                         <div className="flex items-center justify-between mb-4">
                             <HUDLabel>Traffic Flux</HUDLabel>
-                            <Globe size={16} className="text-indigo-400 group-hover:animate-spin-slow" />
+                            <Globe size={16} className="text-emerald-400 group-hover:animate-spin-slow" />
                         </div>
                         {loading ? (
                             <MetricSkeleton />
@@ -378,7 +384,7 @@ export default function AdminAnalytics() {
                     </GlassCard>
 
                     {/* INFRA STATUS */}
-                    <GlassCard className="p-4 bg-gradient-to-t from-indigo-500/10 to-transparent">
+                    <GlassCard className="p-4 bg-gradient-to-t from-emerald-500/10 to-transparent">
                         <div className="flex flex-col gap-3">
                             <div className="flex items-center gap-2">
                                 <Database size={14} className="text-neutral-500" />
@@ -408,8 +414,8 @@ function FunnelVisualization({ data }: { data: FunnelData }) {
             <div className="relative grid grid-cols-1 sm:grid-cols-4 gap-8">
                 {data.steps.map((step, i) => {
                     const nextStep = data.steps[i + 1];
-                    const dropoff = nextStep ? (100 - (nextStep.count / step.count) * 100) : 0;
-                    const cr = i > 0 ? (step.count / data.steps[i - 1].count) * 100 : 100;
+                    const dropoff = (nextStep && step.count > 0) ? (100 - (nextStep.count / step.count) * 100) : 0;
+                    const cr = (i > 0 && data.steps[i - 1].count > 0) ? (step.count / data.steps[i - 1].count) * 100 : 100;
 
                     return (
                         <div key={step.name} className="relative group">
@@ -421,8 +427,8 @@ function FunnelVisualization({ data }: { data: FunnelData }) {
                                 </div>
 
                                 <div
-                                    className={`relative z-10 w-full rounded-xl transition-all duration-1000 ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:brightness-110 shadow-[0_-10px_20px_rgba(0,0,0,0.5)] ${i === 0 ? 'bg-gradient-to-t from-indigo-600 to-indigo-400' :
-                                        i === 1 ? 'bg-gradient-to-t from-indigo-500 to-indigo-300' :
+                                    className={`relative z-10 w-full rounded-xl transition-all duration-1000 ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:brightness-110 shadow-[0_-10px_20px_rgba(0,0,0,0.5)] ${i === 0 ? 'bg-gradient-to-t from-emerald-600 to-emerald-400' :
+                                        i === 1 ? 'bg-gradient-to-t from-emerald-500 to-emerald-300' :
                                             i === 2 ? 'bg-gradient-to-t from-emerald-600 to-emerald-400' :
                                                 'bg-gradient-to-t from-amber-600 to-amber-400'
                                         }`}
@@ -455,7 +461,7 @@ function FunnelVisualization({ data }: { data: FunnelData }) {
 
             <div className="flex flex-wrap gap-10 border-t border-white/5 pt-8">
                 <div className="flex items-center gap-3">
-                    <div className="h-2 w-8 bg-indigo-500 rounded-full" />
+                    <div className="h-2 w-8 bg-emerald-500 rounded-full" />
                     <HUDLabel>Entry Phase</HUDLabel>
                 </div>
                 <div className="flex items-center gap-3">
@@ -468,7 +474,7 @@ function FunnelVisualization({ data }: { data: FunnelData }) {
                 </div>
                 <div className="ml-auto hidden xl:flex items-center gap-2">
                     <HUDLabel>Provider Status:</HUDLabel>
-                    <div className="px-2 py-0.5 bg-indigo-500/10 text-indigo-400 text-[10px] font-mono rounded border border-indigo-500/20">POSTHOG_V3_BRIDGE</div>
+                    <div className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 text-[10px] font-mono rounded border border-emerald-500/20">POSTHOG_V3_BRIDGE</div>
                 </div>
             </div>
         </div>
