@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { IndianRupee, AlertTriangle, Save, Globe, Lock, ShieldAlert, CreditCard } from 'lucide-react';
+import { IndianRupee, Save, Globe, Lock, ShieldAlert, CreditCard, Cpu } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
 
@@ -9,9 +9,11 @@ const PlatformConfigPanel: React.FC = () => {
     const [settings, setSettings] = useState<PlatformSettings | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [aiHealth, setAiHealth] = useState<{ provider: string, status: 'ok' | 'degraded' | 'critical', usage: number }[]>([]);
 
     useEffect(() => {
         fetchSettings();
+        fetchAIHealth();
     }, []);
 
     const fetchSettings = async () => {
@@ -27,9 +29,42 @@ const PlatformConfigPanel: React.FC = () => {
             setSettings(data);
         } catch (error) {
             console.error('Error fetching settings:', error);
-            // Don't show toast on 406 (empty table handled by migration, but just in case)
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchAIHealth = async () => {
+        try {
+            const last24Hours = new Date();
+            last24Hours.setHours(last24Hours.getHours() - 24);
+
+            const providers = ['groq', 'gemini', 'openrouter'];
+            const healthData = [];
+
+            const { data: limits } = await supabase.from('api_limits_config').select('*');
+
+            for (const p of providers) {
+                const { data: logs } = await supabase
+                    .from('api_usage_logs')
+                    .select('status_code')
+                    .eq('provider', p)
+                    .gte('created_at', last24Hours.toISOString());
+
+                const limit = limits?.find(l => l.provider === p)?.monthly_limit || 1000;
+                const count = logs?.length || 0;
+                const successes = logs?.filter(l => l.status_code >= 200 && l.status_code < 300).length || 0;
+                const successRate = count > 0 ? (successes / count) * 100 : 100;
+
+                let status: 'ok' | 'degraded' | 'critical' = 'ok';
+                if (successRate < 70 || count > limit) status = 'critical';
+                else if (successRate < 90 || count > limit * 0.8) status = 'degraded';
+
+                healthData.push({ provider: p, status, usage: Math.round((count / limit) * 100) });
+            }
+            setAiHealth(healthData);
+        } catch (e) {
+            console.error("AI Health Fetch Error:", e);
         }
     };
 
@@ -39,14 +74,12 @@ const PlatformConfigPanel: React.FC = () => {
         try {
             setSaving(true);
 
-            // 1. Fetch current DB state (pre-update) to check for changes
             const { data: preUpdateSettings } = await supabase
                 .from('platform_settings')
                 .select('maintenance_mode, announcement_message')
                 .eq('id', settings.id)
                 .single();
 
-            // 2. Perform Update
             const { error: updateError } = await supabase
                 .from('platform_settings')
                 .update({
@@ -61,23 +94,18 @@ const PlatformConfigPanel: React.FC = () => {
 
             toast.success('Platform settings updated successfully');
 
-            // 3. Trigger Notifications if changed
             if (preUpdateSettings) {
-                // Maintenance Mode Change
                 if (preUpdateSettings.maintenance_mode !== settings.maintenance_mode) {
                     await supabase.functions.invoke('notify-all-sellers', {
                         body: {
                             type: 'MAINTENANCE',
                             status: settings.maintenance_mode,
-                            message: settings.announcement_message // Optional context
+                            message: settings.announcement_message
                         }
                     });
-                    toast.success('Maintenance notification sent to sellers');
                 }
 
-                // Announcement Change (only if it's not empty and different)
                 if (settings.announcement_message && settings.announcement_message !== preUpdateSettings.announcement_message) {
-                    // Only send if it's NOT maintenance mode change (to avoid double notifs if both changed)
                     if (preUpdateSettings.maintenance_mode === settings.maintenance_mode) {
                         await supabase.functions.invoke('notify-all-sellers', {
                             body: {
@@ -85,7 +113,6 @@ const PlatformConfigPanel: React.FC = () => {
                                 message: settings.announcement_message
                             }
                         });
-                        toast.success('Announcement broadcasted to sellers');
                     }
                 }
             }
@@ -106,6 +133,50 @@ const PlatformConfigPanel: React.FC = () => {
 
     return (
         <div className="space-y-6">
+            {/* AI Health Summary */}
+            <div className="bg-theme-panel border border-theme-border rounded-2xl p-8">
+                <div className="flex items-center gap-4 mb-6">
+                    <div className="w-12 h-12 bg-emerald-500/10 text-emerald-500 rounded-xl flex items-center justify-center">
+                        <Cpu size={24} />
+                    </div>
+                    <div>
+                        <h2 className="text-xl font-bold text-theme-text uppercase tracking-tight">AI Infrastructure Health</h2>
+                        <p className="text-theme-muted text-sm mt-1">Real-time status of connected AI providers</p>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {aiHealth.map((ai) => (
+                        <div key={ai.provider} className="p-4 bg-theme-bg border border-theme-border rounded-xl flex items-center justify-between">
+                            <div className="space-y-1">
+                                <span className="text-[10px] text-theme-muted uppercase font-bold tracking-widest">{ai.provider}</span>
+                                <div className="flex items-center gap-2">
+                                    <div className={`h-2 w-2 rounded-full ${
+                                        ai.status === 'ok' ? 'bg-emerald-500' : 
+                                        ai.status === 'degraded' ? 'bg-amber-500' : 'bg-red-500'
+                                    }`} />
+                                    <span className={`text-xs font-black uppercase ${
+                                        ai.status === 'ok' ? 'text-emerald-400' : 
+                                        ai.status === 'degraded' ? 'text-amber-400' : 'text-red-400'
+                                    }`}>
+                                        {ai.status}
+                                    </span>
+                                </div>
+                            </div>
+                            <div className="text-right">
+                                <span className="text-[10px] text-theme-muted uppercase block">Usage</span>
+                                <span className="text-sm font-mono text-theme-text">{ai.usage}%</span>
+                            </div>
+                        </div>
+                    ))}
+                    {aiHealth.length === 0 && (
+                        <div className="col-span-3 text-center py-4 text-theme-muted text-xs italic">
+                            Initializing monitors...
+                        </div>
+                    )}
+                </div>
+            </div>
+
             {/* Financial Logic */}
             <div className="bg-theme-panel border border-theme-border rounded-2xl p-8">
                 <div className="flex items-center gap-4 mb-6">
@@ -126,12 +197,11 @@ const PlatformConfigPanel: React.FC = () => {
                                 type="number"
                                 value={settings.commission_rate}
                                 onChange={(e) => setSettings({ ...settings, commission_rate: parseFloat(e.target.value) })}
-                                className="w-full bg-theme-bg border border-theme-border rounded-xl px-4 py-3 text-theme-text focus:outline-none focus:border-indigo-500 transition-colors pl-10"
+                                className="w-full bg-theme-bg border border-theme-border rounded-xl px-4 py-3 text-theme-text focus:outline-none focus:border-emerald-500 transition-colors pl-10"
                                 placeholder="5.0"
                             />
                             <CreditCard size={16} className="absolute left-3 top-3.5 text-theme-muted" />
                         </div>
-                        <p className="text-xs text-theme-muted mt-2">Percentage taken from every successful sale.</p>
                     </div>
 
                     <div>
@@ -141,12 +211,11 @@ const PlatformConfigPanel: React.FC = () => {
                                 type="number"
                                 value={settings.min_payout_amount}
                                 onChange={(e) => setSettings({ ...settings, min_payout_amount: parseFloat(e.target.value) })}
-                                className="w-full bg-theme-bg border border-theme-border rounded-xl px-4 py-3 text-theme-text focus:outline-none focus:border-indigo-500 transition-colors pl-10"
+                                className="w-full bg-theme-bg border border-theme-border rounded-xl px-4 py-3 text-theme-text focus:outline-none focus:border-emerald-500 transition-colors pl-10"
                                 placeholder="500"
                             />
                             <IndianRupee size={16} className="absolute left-3 top-3.5 text-theme-muted" />
                         </div>
-                        <p className="text-xs text-theme-muted mt-2">Minimum earnings required for sellers to withdraw.</p>
                     </div>
                 </div>
             </div>
@@ -164,7 +233,6 @@ const PlatformConfigPanel: React.FC = () => {
                 </div>
 
                 <div className="space-y-6">
-                    {/* Maintenance Mode Toggle */}
                     <div className="flex items-center justify-between p-4 bg-theme-bg border border-theme-border rounded-xl hover:border-theme-border transition-all">
                         <div className="flex items-center gap-4">
                             <div className={`p-2 rounded-lg ${settings.maintenance_mode ? 'bg-red-500/20 text-red-500' : 'bg-green-500/10 text-green-500'}`}>
@@ -173,44 +241,38 @@ const PlatformConfigPanel: React.FC = () => {
                             <div>
                                 <h4 className="font-bold text-theme-text">Maintenance Mode</h4>
                                 <p className="text-xs text-theme-muted">
-                                    {settings.maintenance_mode
-                                        ? "Active: Store is locked for customers."
-                                        : "Inactive: Store is live and accessible."}
+                                    {settings.maintenance_mode ? "Active: Store is locked." : "Inactive: Store is live."}
                                 </p>
                             </div>
                         </div>
                         <button
                             onClick={() => setSettings({ ...settings, maintenance_mode: !settings.maintenance_mode })}
                             className={`w-14 h-7 rounded-full p-1 transition-colors ${settings.maintenance_mode ? 'bg-red-500' : 'bg-theme-muted'}`}
-                            aria-label="Toggle maintenance mode"
                         >
                             <div className={`w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${settings.maintenance_mode ? 'translate-x-7' : 'translate-x-0'}`} />
                         </button>
                     </div>
 
-                    {/* Announcement Banner */}
                     <div>
                         <label className="block text-sm font-medium text-theme-muted mb-2">Global Announcement Banner</label>
                         <div className="relative">
                             <textarea
                                 value={settings.announcement_message || ''}
                                 onChange={(e) => setSettings({ ...settings, announcement_message: e.target.value })}
-                                className="w-full bg-theme-bg border border-theme-border rounded-xl px-4 py-3 text-theme-text focus:outline-none focus:border-indigo-500 transition-colors pl-10 min-h-[80px]"
-                                placeholder="e.g., Scheduled maintenance on Sunday at 3 AM..."
+                                className="w-full bg-theme-bg border border-theme-border rounded-xl px-4 py-3 text-theme-text focus:outline-none focus:border-emerald-500 transition-colors pl-10 min-h-[80px]"
+                                placeholder="e.g., Scheduled maintenance..."
                             />
                             <Globe size={16} className="absolute left-3 top-3.5 text-theme-muted" />
                         </div>
-                        <p className="text-xs text-theme-muted mt-2">This message will appear on all seller dashboards if set.</p>
                     </div>
                 </div>
             </div>
 
-            {/* Save Button */}
             <div className="flex justify-end">
                 <button
                     onClick={handleSave}
                     disabled={saving}
-                    className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-xl font-bold text-sm transition-all shadow-lg shadow-indigo-600/20 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98]"
+                    className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-3 rounded-xl font-bold text-sm transition-all shadow-lg shadow-emerald-600/20 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98]"
                 >
                     <Save size={18} />
                     {saving ? 'Saving Changes...' : 'Save Configuration'}

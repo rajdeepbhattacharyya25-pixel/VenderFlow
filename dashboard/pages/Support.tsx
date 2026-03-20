@@ -472,7 +472,7 @@ const Support: React.FC = () => {
                             setIsCreatingTicket(true);
                             setSelectedTicket(null);
                         }}
-                        className="p-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors"
+                        className="p-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors"
                         title="New Ticket"
                         aria-label="Create new ticket"
                     >
@@ -507,8 +507,8 @@ const Support: React.FC = () => {
                                                 className={clsx(
                                                     "w-full text-left p-4 rounded-xl border-2 transition-all cursor-pointer",
                                                     selectedTicket?.id === ticket.id
-                                                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
-                                                        : 'border-neutral-200 dark:border-neutral-700 hover:border-indigo-300 dark:hover:border-indigo-700 bg-white dark:bg-neutral-800'
+                                                        ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
+                                                        : 'border-neutral-200 dark:border-neutral-700 hover:border-emerald-300 dark:hover:border-emerald-700 bg-white dark:bg-neutral-800'
                                                 )}
                                             >
                                                 <h3 className="font-semibold text-neutral-900 dark:text-white mb-2 truncate">{ticket.subject}</h3>
@@ -544,8 +544,8 @@ const Support: React.FC = () => {
                                                 className={clsx(
                                                     "w-full text-left p-4 rounded-xl border-2 transition-all cursor-pointer opacity-75 hover:opacity-100",
                                                     selectedTicket?.id === ticket.id
-                                                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 opacity-100'
-                                                        : 'border-neutral-200 dark:border-neutral-700 hover:border-indigo-300 dark:hover:border-indigo-700 bg-neutral-50 dark:bg-neutral-800/50'
+                                                        ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 opacity-100'
+                                                        : 'border-neutral-200 dark:border-neutral-700 hover:border-emerald-300 dark:hover:border-emerald-700 bg-neutral-50 dark:bg-neutral-800/50'
                                                 )}
                                             >
                                                 <h3 className="font-semibold text-neutral-900 dark:text-white mb-2 truncate">{ticket.subject}</h3>
@@ -600,7 +600,7 @@ const Support: React.FC = () => {
                                     value={newTicketSubject}
                                     onChange={(e) => setNewTicketSubject(e.target.value)}
                                     placeholder="Brief summary of the issue"
-                                    className="w-full px-4 py-3 rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white"
+                                    className="w-full px-4 py-3 rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white"
                                 />
                             </div>
                             <div className="flex-1">
@@ -609,7 +609,7 @@ const Support: React.FC = () => {
                                     value={newTicketMessage}
                                     onChange={(e) => setNewTicketMessage(e.target.value)}
                                     placeholder="Detailed description..."
-                                    className="w-full h-64 px-4 py-3 rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white resize-none"
+                                    className="w-full h-64 px-4 py-3 rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white resize-none"
                                 />
                             </div>
                             <div className="flex justify-end gap-3 pt-4">
@@ -622,7 +622,7 @@ const Support: React.FC = () => {
                                 <button
                                     onClick={createTicket}
                                     disabled={!newTicketSubject.trim() || !newTicketMessage.trim()}
-                                    className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium transition-colors disabled:opacity-50"
+                                    className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium transition-colors disabled:opacity-50"
                                 >
                                     Submit Ticket
                                 </button>
@@ -693,7 +693,7 @@ const Support: React.FC = () => {
                                                 )}>
                                                     <div className={clsx(
                                                         "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium",
-                                                        isMe ? 'bg-indigo-600 text-white' : 'bg-neutral-300 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300'
+                                                        isMe ? 'bg-emerald-600 text-white' : 'bg-neutral-300 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300'
                                                     )}>
                                                         {isMe ? sellerName.charAt(0).toUpperCase() : 'A'}
                                                     </div>
@@ -711,7 +711,7 @@ const Support: React.FC = () => {
                                                 <div className={clsx(
                                                     "px-4 py-3 shadow-sm",
                                                     isMe
-                                                        ? 'bg-indigo-600 text-white rounded-2xl rounded-tr-sm'
+                                                        ? 'bg-emerald-600 text-white rounded-2xl rounded-tr-sm'
                                                         : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 rounded-2xl rounded-tl-sm'
                                                 )}>
                                                     {msg.content && !msg.content.startsWith('Attachment:') && (
@@ -758,7 +758,7 @@ const Support: React.FC = () => {
                         {attachment && (
                             <div className="px-4 py-2 bg-neutral-100 dark:bg-neutral-800 border-t border-neutral-200 dark:border-neutral-700">
                                 <div className="flex items-center gap-3 p-2 bg-white dark:bg-neutral-900 rounded-lg">
-                                    <div className="text-indigo-600 dark:text-indigo-400">
+                                    <div className="text-emerald-600 dark:text-emerald-400">
                                         {getFileIcon(attachment.type)}
                                     </div>
                                     <span className="text-sm text-neutral-700 dark:text-neutral-300 truncate flex-1">
@@ -792,7 +792,7 @@ const Support: React.FC = () => {
                                                 //    sendMessage();
                                                 // }
                                             }}
-                                            className="whitespace-nowrap px-4 py-1.5 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 rounded-full text-xs font-medium hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors border border-indigo-100 dark:border-indigo-800 shrink-0 touch-manipulation"
+                                            className="whitespace-nowrap px-4 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 rounded-full text-xs font-medium hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors border border-emerald-100 dark:border-emerald-800 shrink-0 touch-manipulation"
                                         >
                                             {reply}
                                         </button>
@@ -805,13 +805,13 @@ const Support: React.FC = () => {
                                     e.preventDefault();
                                     sendMessage();
                                 }}
-                                className="flex items-center gap-2 md:gap-3 bg-neutral-100 dark:bg-neutral-800 p-1.5 md:p-2 pl-3 md:pl-4 rounded-full border border-neutral-300 dark:border-neutral-600 focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-transparent transition-all shadow-sm"
+                                className="flex items-center gap-2 md:gap-3 bg-neutral-100 dark:bg-neutral-800 p-1.5 md:p-2 pl-3 md:pl-4 rounded-full border border-neutral-300 dark:border-neutral-600 focus-within:ring-2 focus-within:ring-emerald-500 focus-within:border-transparent transition-all shadow-sm"
                             >
                                 <button
                                     type="button"
                                     onClick={() => fileInputRef.current?.click()}
                                     disabled={uploading || selectedTicket.status === 'closed'}
-                                    className="p-2 text-neutral-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors disabled:opacity-50 shrink-0 relative z-20"
+                                    className="p-2 text-neutral-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors disabled:opacity-50 shrink-0 relative z-20"
                                     title="Attach file (PDF, Image, Video - max 10MB)"
                                     aria-label="Attach file"
                                 >
@@ -833,7 +833,7 @@ const Support: React.FC = () => {
                                 <button
                                     type="submit"
                                     disabled={(!newMessage.trim() && !attachment) || selectedTicket.status === 'closed'}
-                                    className="w-10 h-10 flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0 relative z-20"
+                                    className="w-10 h-10 flex items-center justify-center bg-emerald-600 hover:bg-emerald-700 text-white rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0 relative z-20"
                                     title="Send message"
                                 >
                                     <Send size={18} />

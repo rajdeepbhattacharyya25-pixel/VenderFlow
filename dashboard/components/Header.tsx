@@ -155,7 +155,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
         switch (type) {
             case 'order': return 'bg-green-500/10 text-green-600';
             case 'warning': return 'bg-red-500/10 text-red-600';
-            case 'support': return 'bg-indigo-500/10 text-indigo-600';
+            case 'support': return 'bg-emerald-500/10 text-emerald-600';
             case 'customer': return 'bg-teal-500/10 text-teal-600';
             default: return 'bg-blue-500/10 text-blue-600';
         }
@@ -285,7 +285,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
                         <div className={`w-1 rounded-l-2xl ${
                             toastNotification.type === 'order' ? 'bg-green-500' :
                             toastNotification.type === 'warning' ? 'bg-red-500' :
-                            toastNotification.type === 'support' ? 'bg-indigo-500' :
+                            toastNotification.type === 'support' ? 'bg-emerald-500' :
                             toastNotification.type === 'customer' ? 'bg-teal-500' :
                             'bg-blue-500'
                         }`}></div>
@@ -293,7 +293,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
                             <div className={`mt-0.5 ${
                                 toastNotification.type === 'order' ? 'text-green-500' :
                                 toastNotification.type === 'warning' ? 'text-red-500' :
-                                toastNotification.type === 'support' ? 'text-indigo-500' :
+                                toastNotification.type === 'support' ? 'text-emerald-500' :
                                 toastNotification.type === 'customer' ? 'text-teal-500' :
                                 'text-blue-500'
                             }`}>
@@ -350,7 +350,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
                                     >
                                         <div className={`p-2 rounded-lg ${result.type === 'product' ? 'bg-orange-500/10 text-orange-600' :
                                             result.type === 'order' ? 'bg-blue-500/10 text-blue-600' :
-                                                'bg-indigo-500/10 text-indigo-600'
+                                                'bg-emerald-500/10 text-emerald-600'
                                             }`}>
                                             {result.type === 'product' ? <Package size={16} /> :
                                                 result.type === 'order' ? <FileText size={16} /> :
@@ -378,7 +378,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
                             href={`/store/${sellerSlug}?preview=true`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="hidden sm:flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-colors font-semibold text-xs uppercase tracking-wider border border-indigo-200 dark:border-indigo-500/20"
+                            className="hidden sm:flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition-colors font-semibold text-xs uppercase tracking-wider border border-emerald-200 dark:border-emerald-500/20"
                         >
                             <ExternalLink size={14} />
                             View Live
@@ -393,12 +393,12 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
                     >
                         <div className="absolute inset-0 flex justify-between items-center px-2 pointer-events-none opacity-40">
                             <Sun size={12} className={theme === 'light' ? 'text-orange-500' : 'text-theme-muted'} />
-                            <Moon size={12} className={theme === 'dark' ? 'text-indigo-400' : 'text-theme-muted'} />
+                            <Moon size={12} className={theme === 'dark' ? 'text-emerald-400' : 'text-theme-muted'} />
                         </div>
                         <div
                             className={`w-6 h-6 rounded-lg shadow-lg transform transition-all duration-500 ease-in-out flex items-center justify-center z-10
                         ${theme === 'dark' ?
-                                    'translate-x-[26px] bg-indigo-600 rotate-0 shadow-indigo-500/30' :
+                                    'translate-x-[26px] bg-emerald-600 rotate-0 shadow-emerald-500/30' :
                                     'translate-x-0 bg-gradient-to-tr from-orange-400 to-yellow-300 rotate-[360deg] shadow-orange-400/30'}
                     `}
                         >

@@ -938,7 +938,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
                                         {/* Video URL Input */}
                                         <div className="mt-4 pt-4 border-t border-theme-border/50">
                                             <p className="text-sm font-medium text-theme-text mb-3 flex items-center gap-2">
-                                                <Link size={16} className="text-purple-500" />
+                                                <Link size={16} className="text-teal-500" />
                                                 Add Video via URL
                                             </p>
                                             <div className="space-y-3">
@@ -978,7 +978,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
                                                         }
                                                     }}
                                                     placeholder="https://example.com/video.mp4"
-                                                    className="w-full p-3.5 md:p-3 rounded-xl bg-theme-bg border border-theme-border text-theme-text focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 outline-none transition-all text-sm"
+                                                    className="w-full p-3.5 md:p-3 rounded-xl bg-theme-bg border border-theme-border text-theme-text focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 outline-none transition-all text-sm"
                                                 />
                                                 <div className="flex items-center gap-3">
                                                     <button
@@ -991,7 +991,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
                                                             }
                                                         }}
                                                         disabled={!videoUrlInput.trim() || videoUrlPreviewValid === false}
-                                                        className="px-5 py-2.5 md:py-2 bg-purple-500 text-white rounded-xl md:rounded-lg text-sm font-medium hover:bg-purple-600 active:bg-purple-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center gap-1.5 min-h-[44px]"
+                                                        className="px-5 py-2.5 md:py-2 bg-teal-500 text-white rounded-xl md:rounded-lg text-sm font-medium hover:bg-teal-600 active:bg-teal-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center gap-1.5 min-h-[44px]"
                                                     >
                                                         <Plus size={16} />
                                                         Add Video

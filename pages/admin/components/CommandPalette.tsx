@@ -166,12 +166,12 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
             case 'seller': return 'from-teal-500 to-cyan-600';
             case 'order': return 'from-emerald-500 to-teal-600';
             case 'product': return 'from-amber-500 to-orange-600';
-            default: return 'from-indigo-500 to-blue-600';
+            default: return 'from-emerald-500 to-blue-600';
         }
     };
 
     const navItems = [
-        { icon: BarChart3, label: 'Dashboard', path: '/admin', key: 'R D', color: 'from-indigo-500 to-blue-600' },
+        { icon: BarChart3, label: 'Dashboard', path: '/admin', key: 'R D', color: 'from-emerald-500 to-blue-600' },
         { icon: Users, label: 'Sellers', path: '/admin/sellers', key: 'R S', color: 'from-teal-500 to-cyan-600' },
         { icon: ShoppingCart, label: 'Orders', path: '/admin/orders', key: 'R O', color: 'from-emerald-500 to-teal-600' },
         { icon: Mail, label: 'Invites', path: '/admin/invites', key: 'R I', color: 'from-pink-500 to-rose-600' },
@@ -192,17 +192,17 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
             {/* Modal */}
             <div className="relative w-full max-w-2xl mx-4 animate-in fade-in zoom-in-95 slide-in-from-top-4 duration-200">
                 {/* Glow effect */}
-                <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 via-indigo-500 to-pink-500 rounded-3xl blur-xl opacity-20" />
+                <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500 via-emerald-500 to-pink-500 rounded-3xl blur-xl opacity-20" />
 
                 <div className="relative bg-neutral-900/95 border border-neutral-700/50 rounded-2xl shadow-2xl overflow-hidden">
                     {/* Search Input */}
                     <div className="relative">
-                        <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 via-indigo-500/10 to-pink-500/10 pointer-events-none" />
+                        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 via-emerald-500/10 to-pink-500/10 pointer-events-none" />
                         <div className="relative flex items-center p-5">
                             {/* Search Icon */}
                             <div className="relative flex-shrink-0 mr-4">
-                                <div className="absolute inset-0 bg-indigo-500 rounded-xl blur-md opacity-30" />
-                                <div className="relative p-2.5 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl">
+                                <div className="absolute inset-0 bg-emerald-500 rounded-xl blur-md opacity-30" />
+                                <div className="relative p-2.5 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl">
                                     <Search className="w-5 h-5 text-white" />
                                 </div>
                             </div>
@@ -221,7 +221,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
                             {/* Loading Spinner */}
                             {loading && (
                                 <div className="p-2 flex-shrink-0 ml-2">
-                                    <Loader2 className="w-5 h-5 text-indigo-400 animate-spin" />
+                                    <Loader2 className="w-5 h-5 text-emerald-400 animate-spin" />
                                 </div>
                             )}
 
@@ -251,7 +251,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
                         {results.length > 0 && (
                             <div className="p-3 space-y-1">
                                 <div className="flex items-center gap-2 px-3 py-2">
-                                    <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+                                    <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
                                     <span className="text-[11px] text-neutral-500 uppercase tracking-wider font-semibold">Search Results</span>
                                 </div>
                                 {results.map((result, index) => {
@@ -324,10 +324,10 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
                                 </div>
 
                                 {/* Recent Tip */}
-                                <div className="flex items-center gap-3 p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-xl">
-                                    <Clock className="w-4 h-4 text-indigo-400" />
-                                    <p className="text-xs text-indigo-300">
-                                        <span className="font-semibold">Pro tip:</span> Use <kbd className="bg-indigo-500/30 px-1.5 py-0.5 rounded mx-1">R</kbd> + letter shortcuts to navigate instantly
+                                <div className="flex items-center gap-3 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+                                    <Clock className="w-4 h-4 text-emerald-400" />
+                                    <p className="text-xs text-emerald-300">
+                                        <span className="font-semibold">Pro tip:</span> Use <kbd className="bg-emerald-500/30 px-1.5 py-0.5 rounded mx-1">R</kbd> + letter shortcuts to navigate instantly
                                     </p>
                                 </div>
                             </div>

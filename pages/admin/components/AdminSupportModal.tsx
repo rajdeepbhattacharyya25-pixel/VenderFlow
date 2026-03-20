@@ -418,8 +418,8 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
                                                     key={ticket.id}
                                                     onClick={() => setSelectedTicket(ticket)}
                                                     className={`w-full text-left p-4 rounded-xl border-2 transition-all cursor-pointer ${selectedTicket?.id === ticket.id
-                                                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
-                                                        : 'border-neutral-200 dark:border-neutral-700 hover:border-indigo-300 dark:hover:border-indigo-700 bg-white dark:bg-neutral-800'
+                                                        ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
+                                                        : 'border-neutral-200 dark:border-neutral-700 hover:border-emerald-300 dark:hover:border-emerald-700 bg-white dark:bg-neutral-800'
                                                         }`}
                                                 >
                                                     <h3 className="font-semibold text-neutral-900 dark:text-white mb-1 truncate flex items-center gap-2">
@@ -453,8 +453,8 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
                                                     key={ticket.id}
                                                     onClick={() => setSelectedTicket(ticket)}
                                                     className={`w-full text-left p-4 rounded-xl border-2 transition-all cursor-pointer opacity-75 hover:opacity-100 ${selectedTicket?.id === ticket.id
-                                                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 opacity-100'
-                                                        : 'border-neutral-200 dark:border-neutral-700 hover:border-indigo-300 dark:hover:border-indigo-700 bg-neutral-50 dark:bg-neutral-800/50'
+                                                        ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 opacity-100'
+                                                        : 'border-neutral-200 dark:border-neutral-700 hover:border-emerald-300 dark:hover:border-emerald-700 bg-neutral-50 dark:bg-neutral-800/50'
                                                         }`}
                                                 >
                                                     <h3 className="font-semibold text-neutral-900 dark:text-white mb-1 truncate flex items-center gap-2">
@@ -508,7 +508,7 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
                                         ←
                                     </button>
                                     <div>
-                                        <p className="text-sm text-indigo-600 dark:text-indigo-400 font-medium">{selectedTicket.seller?.store_name || 'Unknown Seller'}</p>
+                                        <p className="text-sm text-emerald-600 dark:text-emerald-400 font-medium">{selectedTicket.seller?.store_name || 'Unknown Seller'}</p>
                                         <h2 className="text-xl font-bold text-neutral-900 dark:text-white">{selectedTicket.subject}</h2>
                                     </div>
                                 </div>
@@ -561,7 +561,7 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
                                                 {/* Sender Label */}
                                                 {showLabel && (
                                                     <div className={`flex items-center gap-2 mb-2 ${isAdmin ? 'flex-row-reverse' : ''}`}>
-                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${isAdmin ? 'bg-indigo-600 text-white' : 'bg-neutral-300 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300'
+                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${isAdmin ? 'bg-emerald-600 text-white' : 'bg-neutral-300 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300'
                                                             }`}>
                                                             {isAdmin ? 'A' : sellerName.charAt(0).toUpperCase()}
                                                         </div>
@@ -574,7 +574,7 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
                                                 {/* Message Bubble */}
                                                 <div className={`max-w-[85%] md:max-w-[70%] ${isAdmin ? 'ml-auto' : 'mr-auto'}`}>
                                                     <div className={`px-4 py-3 shadow-sm ${isAdmin
-                                                        ? 'bg-indigo-600 text-white rounded-2xl rounded-tr-sm'
+                                                        ? 'bg-emerald-600 text-white rounded-2xl rounded-tr-sm'
                                                         : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 rounded-2xl rounded-tl-sm'
                                                         }`}>
                                                         {msg.content && !msg.content.startsWith('Attachment:') && (
@@ -621,7 +621,7 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
                             {attachment && (
                                 <div className="px-4 py-2 bg-neutral-100 dark:bg-neutral-800 border-t border-neutral-200 dark:border-neutral-700">
                                     <div className="flex items-center gap-3 p-2 bg-white dark:bg-neutral-900 rounded-lg">
-                                        <div className="text-indigo-600 dark:text-indigo-400">
+                                        <div className="text-emerald-600 dark:text-emerald-400">
                                             {getFileIcon(attachment.type)}
                                         </div>
                                         <span className="text-sm text-neutral-700 dark:text-neutral-300 truncate flex-1">
@@ -660,7 +660,7 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
                                         type="button"
                                         onClick={() => fileInputRef.current?.click()}
                                         disabled={uploading}
-                                        className="p-2 text-neutral-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors disabled:opacity-50"
+                                        className="p-2 text-neutral-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors disabled:opacity-50"
                                         title="Attach file (PDF, Image, Video - max 10MB)"
                                         aria-label="Attach file"
                                     >
@@ -673,7 +673,7 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
                                     <button
                                         type="submit"
                                         disabled={!reply.trim() && !attachment}
-                                        className="w-10 h-10 flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                                        className="w-10 h-10 flex items-center justify-center bg-emerald-600 hover:bg-emerald-700 text-white rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
                                         title="Send message"
                                     >
                                         <Send size={18} />

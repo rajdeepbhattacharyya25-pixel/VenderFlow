@@ -168,7 +168,7 @@ const AuditLogs: React.FC = () => {
           <input
             type="text"
             placeholder="Search targets or actions..."
-            className="w-full bg-theme-bg/50 border border-theme-border/50 rounded-xl py-2 pl-10 pr-4 text-theme-text focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
+            className="w-full bg-theme-bg/50 border border-theme-border/50 rounded-xl py-2 pl-10 pr-4 text-theme-text focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all"
             title="Search logs"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -177,7 +177,7 @@ const AuditLogs: React.FC = () => {
         </div>
         <div className="flex gap-2">
           <select
-            className="bg-theme-bg/50 border border-theme-border/50 rounded-xl py-2 px-3 text-theme-text focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+            className="bg-theme-bg/50 border border-theme-border/50 rounded-xl py-2 px-3 text-theme-text focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
             value={filterAction}
             onChange={(e) => setFilterAction(e.target.value)}
             title="Filter by action type"
@@ -208,7 +208,7 @@ const AuditLogs: React.FC = () => {
               {loading ? (
                 <tr>
                   <td colSpan={5} className="px-6 py-20 text-center">
-                    <div className="animate-spin w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+                    <div className="animate-spin w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full mx-auto mb-4"></div>
                     <p className="text-theme-muted">Fetching audit trails...</p>
                   </td>
                 </tr>
@@ -231,7 +231,7 @@ const AuditLogs: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 bg-indigo-500/10 text-indigo-500 rounded-full flex items-center justify-center text-[10px] font-bold">
+                        <div className="w-7 h-7 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center text-[10px] font-bold">
                           {(log.store_staff?.[0]?.name || log.profiles?.full_name || log.sellers?.store_name || '?').charAt(0).toUpperCase()}
                         </div>
                         <div className="min-w-0">
@@ -256,7 +256,7 @@ const AuditLogs: React.FC = () => {
                     <td className="px-6 py-4 text-right">
                       {log.metadata && Object.keys(log.metadata).length > 0 ? (
                         <button 
-                          className="text-xs text-indigo-500 hover:text-indigo-400 font-medium transition-colors"
+                          className="text-xs text-emerald-500 hover:text-emerald-400 font-medium transition-colors"
                           title="View log details"
                           onClick={() => console.log('Log details:', log.metadata)}
                         >
@@ -302,8 +302,8 @@ const AuditLogs: React.FC = () => {
       </div>
 
       {/* Security Info */}
-      <div className="bg-indigo-500/5 border border-indigo-500/10 rounded-2xl p-4 flex gap-3">
-        <ShieldCheck className="text-indigo-500 flex-shrink-0" size={20} />
+      <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-2xl p-4 flex gap-3">
+        <ShieldCheck className="text-emerald-500 flex-shrink-0" size={20} />
         <div>
           <h4 className="text-sm font-bold text-theme-text">Security Transparency</h4>
           <p className="text-xs text-theme-muted leading-relaxed mt-1">

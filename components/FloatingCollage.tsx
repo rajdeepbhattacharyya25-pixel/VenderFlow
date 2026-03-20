@@ -282,7 +282,7 @@ export function FloatingCollage() {
     return (
         <section
             ref={containerRef}
-            className="relative w-full h-screen overflow-hidden bg-[#050505] flex items-center justify-center mb-[-100vh]"
+            className="relative w-full h-screen overflow-hidden bg-[#050505] flex items-center justify-center"
             style={{
                 /* BOTTOM LAYER: Black background with grid */
                 backgroundImage: 'radial-gradient(rgba(204,255,0,0.1) 1px, transparent 1px)',

@@ -35,7 +35,7 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ redirectTo = '/' }) => {
     if (loading) {
         return (
             <div className="min-h-screen bg-white dark:bg-neutral-950 flex flex-col items-center justify-center p-4">
-                <Loader2 className="w-12 h-12 text-indigo-500 animate-spin mb-4" />
+                <Loader2 className="w-12 h-12 text-emerald-500 animate-spin mb-4" />
                 <p className="text-neutral-500">Checking authentication...</p>
             </div>
         );

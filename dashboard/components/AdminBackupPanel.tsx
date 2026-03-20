@@ -21,7 +21,7 @@ const AdminBackupPanel: React.FC = () => {
         <div className="space-y-6">
             <div className="bg-theme-panel border border-theme-border rounded-2xl p-8">
                 <div className="flex items-center gap-4 mb-6">
-                    <div className="w-12 h-12 bg-indigo-500/10 text-indigo-500 rounded-xl flex items-center justify-center">
+                    <div className="w-12 h-12 bg-emerald-500/10 text-emerald-500 rounded-xl flex items-center justify-center">
                         <Database size={24} />
                     </div>
                     <div>
@@ -36,7 +36,7 @@ const AdminBackupPanel: React.FC = () => {
                             <h3 className="font-bold text-theme-text mb-2">Platform-wide Backup</h3>
                             <p className="text-sm text-theme-muted max-w-lg mb-2">
                                 Save a complete snapshot of all sellers, products, orders, and user data.
-                                <br /> <span className="text-indigo-400">Contains sensitive data - Handle with care.</span>
+                                <br /> <span className="text-emerald-400">Contains sensitive data - Handle with care.</span>
                             </p>
                             {lastBackupDate && (
                                 <p className="text-xs text-green-500 mt-2">
@@ -57,7 +57,7 @@ const AdminBackupPanel: React.FC = () => {
                             <button
                                 onClick={performBackup}
                                 disabled={isBackupRunning}
-                                className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 rounded-lg font-medium text-sm transition-all shadow-lg shadow-indigo-600/20 disabled:opacity-50"
+                                className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2.5 rounded-lg font-medium text-sm transition-all shadow-lg shadow-emerald-600/20 disabled:opacity-50"
                             >
                                 {isBackupRunning ? <Loader2 className="animate-spin" size={16} /> : <Database size={16} />}
                                 {isBackupRunning ? 'Backing up...' : 'Backup to Drive'}

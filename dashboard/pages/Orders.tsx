@@ -133,7 +133,7 @@ const Orders = ({ searchTerm = '' }: OrdersProps) => {
         switch (status) {
             case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-800';
             case 'processing': return 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800';
-            case 'shipped': return 'bg-indigo-100 text-indigo-800 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-400 dark:border-indigo-800';
+            case 'shipped': return 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800';
             case 'delivered': return 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800';
             case 'cancelled': return 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800';
             default: return 'bg-gray-100 text-gray-800';
@@ -189,7 +189,7 @@ const Orders = ({ searchTerm = '' }: OrdersProps) => {
                     { label: 'Pending', count: orders.filter(o => o.status === 'pending').length, color: 'text-yellow-600', bg: 'bg-yellow-50 dark:bg-yellow-900/20' },
                     { label: 'Processing', count: orders.filter(o => o.status === 'processing').length, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20' },
                     { label: 'Completed', count: orders.filter(o => o.status === 'delivered').length, color: 'text-green-600', bg: 'bg-green-50 dark:bg-green-900/20' },
-                    { label: 'Total Revenue', value: `₹${orders.reduce((sum, o) => sum + o.total, 0).toLocaleString()}`, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-900/20' },
+                    { label: 'Total Revenue', value: `₹${orders.reduce((sum, o) => sum + o.total, 0).toLocaleString()}`, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
                 ].map((stat, i) => (
                     <div key={i} className={`${stat.bg} p-4 rounded-xl border border-transparent hover:border-black/5 transition-all`}>
                         <p className={`text-sm font-bold opacity-70 ${stat.color}`}>{stat.label}</p>

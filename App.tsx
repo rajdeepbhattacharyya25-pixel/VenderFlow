@@ -1,12 +1,6 @@
 import React, { Suspense, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import Lenis from 'lenis';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-
-gsap.registerPlugin(ScrollTrigger);
-
 import SellerGuard from './components/admin/SellerGuard';
 import AdminGuard from './components/admin/AdminGuard';
 import CustomerAuthGuard from './components/CustomerAuthGuard';
@@ -18,9 +12,7 @@ import { initTelegramApp } from './lib/telegram';
 import { capturePage, initPostHog, identify, optOut } from './lib/analytics';
 import { supabase } from './lib/supabase';
 
-import LandingPage from './pages/LandingPage';
-
-// Lazy loaded pages for performance code-splitting
+const LandingPage = React.lazy(() => import('./pages/LandingPage'));
 const AuthCallback = React.lazy(() => import('./pages/AuthCallback'));
 const StaffLogin = React.lazy(() => import('./pages/StaffLogin'));
 const SellerStorefront = React.lazy(() => import('./pages/SellerStorefront'));
@@ -120,20 +112,6 @@ function App() {
 
     initTelegramApp();
 
-    // Initialize Lenis for premium smooth scrolling
-    const lenis = new Lenis({
-      duration: 1.2,
-      easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      smoothWheel: true,
-    });
-
-    // Sync Lenis with GSAP ScrollTrigger
-    lenis.on('scroll', ScrollTrigger.update);
-    gsap.ticker.add((time: number) => {
-      lenis.raf(time * 1000);
-    });
-    gsap.ticker.lagSmoothing(0);
-
     // Register Service Worker for Push Notifications
     if ('serviceWorker' in navigator && import.meta.env.DEV) {
       navigator.serviceWorker.register('/sw.js')
@@ -143,7 +121,6 @@ function App() {
     }
 
     return () => {
-      lenis.destroy();
       authListener.subscription.unsubscribe();
     };
   }, []);

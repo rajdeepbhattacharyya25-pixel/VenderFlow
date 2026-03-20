@@ -81,9 +81,9 @@ const AdminLogs: React.FC = () => {
         if (action.includes('maintenance')) {
             return {
                 icon: Lock,
-                color: 'text-indigo-400',
-                bg: 'bg-indigo-500/10',
-                border: 'border-l-4 border-l-indigo-500'
+                color: 'text-emerald-400',
+                bg: 'bg-emerald-500/10',
+                border: 'border-l-4 border-l-emerald-500'
             };
         }
         return {

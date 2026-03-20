@@ -26,8 +26,8 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ revenueStats, chartDat
                 <MetricCard
                     title="Total Orders"
                     value={revenueStats.totalOrders.toLocaleString()}
-                    icon={<ShoppingBag className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />}
-                    bgClass="bg-indigo-50 dark:bg-indigo-500/10"
+                    icon={<ShoppingBag className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />}
+                    bgClass="bg-emerald-50 dark:bg-emerald-500/10"
                 />
                 <MetricCard
                     title="Refund Rate"

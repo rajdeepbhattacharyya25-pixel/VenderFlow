@@ -213,7 +213,7 @@ const CheckoutPage = () => {
     if (loading) {
         return (
             <div className="min-h-screen bg-white dark:bg-neutral-950 flex flex-col items-center justify-center p-4">
-                <Loader2 className="w-12 h-12 text-indigo-500 animate-spin mb-4" />
+                <Loader2 className="w-12 h-12 text-emerald-500 animate-spin mb-4" />
                 <p className="text-neutral-500">Loading checkout...</p>
             </div>
         );
@@ -231,7 +231,7 @@ const CheckoutPage = () => {
                 </p>
                 <button
                     onClick={() => navigate('/')}
-                    className="flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition-colors"
+                    className="flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-medium transition-colors"
                 >
                     <ArrowLeft size={18} />
                     Continue Shopping

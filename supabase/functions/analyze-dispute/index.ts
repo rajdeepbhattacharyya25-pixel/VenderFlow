@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { logApiUsage } from "../_shared/api-monitor.ts";
 
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
 const GROQ_API_KEY = Deno.env.get("GROQ_API_KEY");
@@ -109,10 +110,20 @@ serve(async (req: Request) => {
                         response_format: { type: "json_object" },
                     })
                 });
+
+                // Log Groq Usage
+                await logApiUsage(supabase, 'groq', 'chat/completions', response.status, {
+                    dispute_id,
+                    model: 'llama-3.1-8b-instant'
+                });
+
                 const result = await response.json();
                 aiResponse = result.choices[0]?.message?.content;
             } catch (e) {
                 console.warn("Groq failed, trying fallback...");
+                await logApiUsage(supabase, 'groq', 'chat/completions', 500, { 
+                    error: e instanceof Error ? e.message : String(e) 
+                });
             }
         }
 
@@ -127,10 +138,20 @@ serve(async (req: Request) => {
                         generationConfig: { responseMimeType: "application/json" }
                     })
                 });
+
+                // Log Gemini Usage
+                await logApiUsage(supabase, 'gemini', 'generateContent', response.status, {
+                    dispute_id,
+                    model: 'gemini-1.5-flash'
+                });
+
                 const result = await response.json();
                 aiResponse = result.candidates?.[0]?.content?.parts?.[0]?.text;
             } catch (e) {
                 console.warn("Gemini failed, trying OpenRouter fallback...");
+                await logApiUsage(supabase, 'gemini', 'generateContent', 500, { 
+                    error: e instanceof Error ? e.message : String(e) 
+                });
             }
         }
 
@@ -154,10 +175,20 @@ serve(async (req: Request) => {
                         response_format: { type: "json_object" },
                     })
                 });
+
+                // Log OpenRouter Usage
+                await logApiUsage(supabase, 'openrouter', 'chat/completions', response.status, {
+                    dispute_id,
+                    model: 'google/gemini-2.0-flash-exp:free'
+                });
+
                 const result = await response.json();
                 aiResponse = result.choices?.[0]?.message?.content;
             } catch (e) {
                 console.error("All AI fallbacks failed", e);
+                await logApiUsage(supabase, 'openrouter', 'chat/completions', 500, { 
+                    error: e instanceof Error ? e.message : String(e) 
+                });
             }
         }
 

@@ -189,7 +189,7 @@ const AdminInvites: React.FC = () => {
                         value={formData.email}
                         onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                         placeholder="seller@example.com"
-                        className="w-full bg-neutral-950 border border-neutral-800 rounded-xl py-3 px-4 text-white placeholder-neutral-600 focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all"
+                        className="w-full bg-neutral-950 border border-neutral-800 rounded-xl py-3 px-4 text-white placeholder-neutral-600 focus:ring-2 focus:ring-emerald-500/50 outline-none transition-all"
                         required
                     />
                     <p className="text-xs text-neutral-500 mt-1.5">
@@ -208,7 +208,7 @@ const AdminInvites: React.FC = () => {
                         value={formData.store_name}
                         onChange={(e) => handleStoreNameChange(e.target.value)}
                         placeholder="My Amazing Store"
-                        className="w-full bg-neutral-950 border border-neutral-800 rounded-xl py-3 px-4 text-white placeholder-neutral-600 focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all"
+                        className="w-full bg-neutral-950 border border-neutral-800 rounded-xl py-3 px-4 text-white placeholder-neutral-600 focus:ring-2 focus:ring-emerald-500/50 outline-none transition-all"
                         required
                     />
                 </div>
@@ -228,7 +228,7 @@ const AdminInvites: React.FC = () => {
                             value={formData.slug}
                             onChange={(e) => handleSlugChange(e.target.value)}
                             placeholder="my-amazing-store"
-                            className={`flex-1 bg-neutral-950 border rounded-r-xl py-3 px-4 text-white placeholder-neutral-600 focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all ${slugError ? 'border-red-500' : 'border-neutral-800'
+                            className={`flex-1 bg-neutral-950 border rounded-r-xl py-3 px-4 text-white placeholder-neutral-600 focus:ring-2 focus:ring-emerald-500/50 outline-none transition-all ${slugError ? 'border-red-500' : 'border-neutral-800'
                                 }`}
                             required
                         />
@@ -256,15 +256,15 @@ const AdminInvites: React.FC = () => {
                                 onClick={() => setFormData(prev => ({ ...prev, plan }))}
                                 className={`p-4 rounded-xl border-2 transition-all ${formData.plan === plan
                                     ? plan === 'enterprise'
-                                        ? 'border-indigo-500 bg-indigo-500/10'
+                                        ? 'border-emerald-500 bg-emerald-500/10'
                                         : plan === 'pro'
-                                            ? 'border-indigo-500 bg-indigo-500/10'
+                                            ? 'border-emerald-500 bg-emerald-500/10'
                                             : 'border-neutral-500 bg-neutral-500/10'
                                     : 'border-neutral-800 hover:border-neutral-700'
                                     }`}
                             >
-                                <p className={`font-bold capitalize ${plan === 'enterprise' ? 'text-indigo-400' :
-                                    plan === 'pro' ? 'text-indigo-400' : 'text-neutral-400'
+                                <p className={`font-bold capitalize ${plan === 'enterprise' ? 'text-emerald-400' :
+                                    plan === 'pro' ? 'text-emerald-400' : 'text-neutral-400'
                                     }`}>
                                     {plan}
                                 </p>
@@ -283,7 +283,7 @@ const AdminInvites: React.FC = () => {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-bold transition-all shadow-lg shadow-indigo-600/20"
+                        className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-bold transition-all shadow-lg shadow-emerald-600/20"
                     >
                         {loading ? (
                             <>

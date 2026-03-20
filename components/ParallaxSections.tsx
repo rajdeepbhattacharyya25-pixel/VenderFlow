@@ -1,29 +1,17 @@
 import React, { useRef } from 'react';
-import { motion, useScroll, useTransform, useSpring, useAnimation, useInView } from 'framer-motion';
+import { motion, useScroll, useTransform, type MotionValue } from 'framer-motion';
 import {
     Play,
     Store,
     ShieldCheck,
     LayoutDashboard,
     CreditCard,
-    LifeBuoy,
     BarChart3,
-    Cloud,
     Megaphone,
-    Zap,
-    Database,
-    PlayCircle,
-    Pause,
-    Volume2,
-    VolumeX,
-    Maximize2,
-    Subscript as Subtitles,
-    X
 } from 'lucide-react';
-import BlurText from './react-bits/BlurText';
-import DecryptedText from './react-bits/DecryptedText';
-// @ts-ignore
-import { ParticleCard, GlobalSpotlight } from "./MagicBento";
+// import BlurText from './react-bits/BlurText';
+// import DecryptedText from './react-bits/DecryptedText';
+// import { ParticleCard, GlobalSpotlight } from "./MagicBento";
 
 /**
  * 1. DemoVideo Component
@@ -259,6 +247,41 @@ export const HowItWorks = () => {
 };
 
 /**
+ * Sub-component for individual word reveals to follow Hook Rules
+ */
+const RevealWord = ({ word, i, scrollYProgress }: { word: string, i: number, scrollYProgress: MotionValue<number> }) => {
+    const start = i * 0.20;
+    const end = 0.60 + (i * 0.20);
+    const revealAmount = useTransform(scrollYProgress, [start, end], [0, 100]);
+    const isEcosystem = word === 'Ecosystem';
+
+    return (
+        <div className="relative inline-block overflow-hidden py-1 px-1">
+            <h2 className={`text-3xl md:text-4xl lg:text-5xl font-bold tracking-tighter leading-tight m-0 ${isEcosystem ? 'text-[#ccff00] font-serif italic' : 'text-white font-heading'}`}>
+                {word}
+            </h2>
+
+            {/* The Scrubbable Neon Mask - Wiping Right-to-Left */}
+            <motion.div
+                style={{
+                    clipPath: useTransform(revealAmount, (v: number) => `inset(0 ${v}% 0 0)`),
+                }}
+                className="absolute inset-0 bg-[#ccff00] z-10 pointer-events-none"
+            />
+
+            {/* Trailing Edge Velocity Blur */}
+            <motion.div
+                style={{
+                    right: useTransform(revealAmount, (v: number) => `${v}%`),
+                    opacity: useTransform(revealAmount, [0, 5, 95, 100], [0, 1, 1, 0])
+                }}
+                className="absolute top-0 bottom-0 w-[40px] bg-gradient-to-l from-[#ccff00]/60 to-transparent blur-md z-20 pointer-events-none translate-x-full"
+            />
+        </div>
+    );
+};
+
+/**
  * 3. Ecosystem Component
  * Sticky Stacking interaction for features.
  */
@@ -308,37 +331,9 @@ export const Ecosystem = () => {
         <section ref={sectionRef} className="py-16 mt-40 px-6 md:px-12 bg-[#050505] relative z-20">
             <div className="max-w-4xl mx-auto flex flex-col items-center text-center mb-10 px-4 sticky top-[3vh] z-[5]">
                 <div className="mb-4 flex flex-wrap justify-center gap-x-4 gap-y-2">
-                    {['Complete', 'Commerce', 'Ecosystem'].map((word, i) => {
-                        const start = i * 0.20;
-                        const end = 0.60 + (i * 0.20);
-                        const revealAmount = useTransform(scrollYProgress, [start, end], [0, 100]);
-                        const isEcosystem = word === 'Ecosystem';
-
-                        return (
-                            <div key={i} className="relative inline-block overflow-hidden py-1 px-1">
-                                <h2 className={`text-3xl md:text-4xl lg:text-5xl font-bold tracking-tighter leading-tight m-0 ${isEcosystem ? 'text-[#ccff00] font-serif italic' : 'text-white font-heading'}`}>
-                                    {word}
-                                </h2>
-
-                                {/* The Scrubbable Neon Mask - Wiping Right-to-Left */}
-                                <motion.div
-                                    style={{
-                                        clipPath: useTransform(revealAmount, (v) => `inset(0 ${v}% 0 0)`),
-                                    }}
-                                    className="absolute inset-0 bg-[#ccff00] z-10 pointer-events-none"
-                                />
-
-                                {/* Trailing Edge Velocity Blur */}
-                                <motion.div
-                                    style={{
-                                        right: useTransform(revealAmount, (v) => `${v}%`),
-                                        opacity: useTransform(revealAmount, [0, 5, 95, 100], [0, 1, 1, 0])
-                                    }}
-                                    className="absolute top-0 bottom-0 w-[40px] bg-gradient-to-l from-[#ccff00]/60 to-transparent blur-md z-20 pointer-events-none translate-x-full"
-                                />
-                            </div>
-                        );
-                    })}
+                    {['Complete', 'Commerce', 'Ecosystem'].map((word, i) => (
+                         <RevealWord key={i} word={word} i={i} scrollYProgress={scrollYProgress} />
+                    ))}
                 </div>
                 <p className="text-zinc-400 text-sm md:text-base font-light leading-relaxed max-w-2xl mt-3">
                     Everything you need to run an online business without the technical headache. We handle the complexity, you handle the product.

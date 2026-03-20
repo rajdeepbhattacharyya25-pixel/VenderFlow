@@ -14,8 +14,8 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({ inventoryForecast })
                 <MetricCard
                     title="Total SKUs"
                     value={inventoryForecast.length.toString()}
-                    icon={<Package className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />}
-                    bgClass="bg-indigo-50 dark:bg-indigo-500/10"
+                    icon={<Package className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />}
+                    bgClass="bg-emerald-50 dark:bg-emerald-500/10"
                 />
                 <MetricCard
                     title="Critical Alerts"
@@ -43,9 +43,9 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({ inventoryForecast })
                         <h3 className="text-lg font-bold text-gray-900 dark:text-white">Predictive Inventory Insights</h3>
                         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">30-day forecast based on recent velocity and seasonality.</p>
                     </div>
-                    <div className="px-3 py-1.5 bg-indigo-500/10 rounded-lg flex items-center gap-2">
-                        <Zap className="w-4 h-4 text-indigo-400 animate-pulse" />
-                        <span className="text-xs font-bold text-indigo-400 uppercase tracking-wider">AI Powered</span>
+                    <div className="px-3 py-1.5 bg-emerald-500/10 rounded-lg flex items-center gap-2">
+                        <Zap className="w-4 h-4 text-emerald-400 animate-pulse" />
+                        <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider">AI Powered</span>
                     </div>
                 </div>
 
@@ -69,7 +69,7 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({ inventoryForecast })
                                                 {item.image_url && <img src={item.image_url} alt={item.name} className="w-full h-full object-cover rounded-lg" />}
                                             </div>
                                             <div>
-                                                <p className="text-sm font-bold text-gray-900 dark:text-white group-hover:text-indigo-500 transition-colors">{item.name}</p>
+                                                <p className="text-sm font-bold text-gray-900 dark:text-white group-hover:text-emerald-500 transition-colors">{item.name}</p>
                                                 <p className="text-xs text-gray-500">Category: {item.category}</p>
                                             </div>
                                         </div>

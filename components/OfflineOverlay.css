@@ -2,7 +2,7 @@
 
 :root {
     /* Colors */
-    --overlay-bg: linear-gradient(135deg, #0a0a0a 0%, #000000 100%);
+    --overlay-bg: linear-gradient(135deg, #0a0a0a 0%, #050505 100%);
     --beam-color: rgba(255, 255, 255, 0.1);
     --beam-glow: rgba(255, 248, 220, 0.4);
     /* Cornsilk Yellow Tint (Warm) */
@@ -42,7 +42,7 @@
 .offline-vignette {
     position: absolute;
     inset: 0;
-    background: radial-gradient(circle at center, transparent 0%, rgba(0, 0, 0, 0.9) 100%);
+    background: radial-gradient(circle at center, transparent 0%, rgba(5, 5, 5, 0.9) 100%);
     pointer-events: none;
     z-index: 5;
 }
@@ -136,7 +136,7 @@
     clip-path: polygon(46% 0%, 54% 0%, 92% 100%, 8% 100%);
 
     /* GRADIENT FADE: Keeps bottom edge soft. */
-    background: linear-gradient(to bottom, white 40%, black 90%);
+    background: linear-gradient(to bottom, white 40%, #050505 90%);
 
     filter: blur(25px);
     /* 25px: Controlled softness. Tighter than beam (30px) to prevent bleed. */

@@ -76,8 +76,8 @@ export const OwlOverlay: React.FC<OwlOverlayProps> = ({
             const svgCenterY = rect.top + rect.height / 2;
 
             // Calculate vector from SVG center to cursor
-            let deltaX = mouseX - svgCenterX;
-            let deltaY = mouseY - svgCenterY;
+            const deltaX = mouseX - svgCenterX;
+            const deltaY = mouseY - svgCenterY;
 
             // Normalize vector
             const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);

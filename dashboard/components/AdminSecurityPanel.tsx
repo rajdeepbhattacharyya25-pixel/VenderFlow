@@ -270,7 +270,7 @@ const AdminSecurityPanel: React.FC = () => {
                                         type={showPassword ? "text" : "password"}
                                         value={newPassword}
                                         onChange={(e) => setNewPassword(e.target.value)}
-                                        className="w-full bg-theme-panel border border-theme-border rounded-lg px-4 py-2 text-theme-text focus:outline-none focus:border-indigo-500 transition-colors"
+                                        className="w-full bg-theme-panel border border-theme-border rounded-lg px-4 py-2 text-theme-text focus:outline-none focus:border-emerald-500 transition-colors"
                                         placeholder="Enter new strong password"
                                     />
                                     <button
@@ -291,7 +291,7 @@ const AdminSecurityPanel: React.FC = () => {
                                         type={showPassword ? "text" : "password"}
                                         value={confirmPassword}
                                         onChange={(e) => setConfirmPassword(e.target.value)}
-                                        className="w-full bg-theme-panel border border-theme-border rounded-lg px-4 py-2 text-theme-text focus:outline-none focus:border-indigo-500 transition-colors"
+                                        className="w-full bg-theme-panel border border-theme-border rounded-lg px-4 py-2 text-theme-text focus:outline-none focus:border-emerald-500 transition-colors"
                                         placeholder="Confirm new password"
                                     />
                                     <Lock size={16} className="absolute right-3 top-2.5 text-theme-muted" />
@@ -330,7 +330,7 @@ const AdminSecurityPanel: React.FC = () => {
                                                 value={timeoutVal}
                                                 onChange={(e) => setTimeoutVal(e.target.value === '' ? '' : parseInt(e.target.value))}
                                                 disabled={timeoutUnit === 'never'}
-                                                className="w-full bg-theme-panel border border-theme-border rounded-lg px-4 py-2 text-theme-text focus:outline-none focus:border-indigo-500 transition-colors pl-10 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                className="w-full bg-theme-panel border border-theme-border rounded-lg px-4 py-2 text-theme-text focus:outline-none focus:border-emerald-500 transition-colors pl-10 disabled:opacity-50 disabled:cursor-not-allowed"
                                                 placeholder={timeoutUnit === 'never' ? 'Infinite' : 'Enter duration'}
                                             />
                                             <Clock size={16} className="absolute left-3 top-2.5 text-theme-muted" />
@@ -347,7 +347,7 @@ const AdminSecurityPanel: React.FC = () => {
                                                 if (unit === 'hours' && (timeoutVal === '' || typeof timeoutVal !== 'number')) setTimeoutVal(1);
                                                 if (unit === 'minutes' && (timeoutVal === '' || typeof timeoutVal !== 'number')) setTimeoutVal(60);
                                             }}
-                                            className="bg-theme-panel border border-theme-border rounded-lg px-4 py-2 text-theme-text text-sm focus:outline-none focus:border-indigo-500 transition-colors cursor-pointer hover:bg-theme-bg"
+                                            className="bg-theme-panel border border-theme-border rounded-lg px-4 py-2 text-theme-text text-sm focus:outline-none focus:border-emerald-500 transition-colors cursor-pointer hover:bg-theme-bg"
                                         >
                                             <option value="minutes">Minutes</option>
                                             <option value="hours">Hours</option>
@@ -366,7 +366,7 @@ const AdminSecurityPanel: React.FC = () => {
                                  <div className="space-y-3">
                                     <div className="flex items-center justify-between p-3 bg-theme-panel rounded-lg border border-theme-border">
                                         <div className="flex items-center gap-3">
-                                            <Smartphone size={18} className="text-indigo-400" />
+                                            <Smartphone size={18} className="text-emerald-400" />
                                             <div>
                                                 <div className="text-sm font-medium text-theme-text">Enforce 2FA</div>
                                                 <div className="text-xs text-theme-muted">Require Two-Factor Auth</div>
@@ -375,13 +375,13 @@ const AdminSecurityPanel: React.FC = () => {
                                         <div className="flex items-center gap-3">
                                             <button
                                                 onClick={() => setShow2FAModal(true)}
-                                                className="text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors"
+                                                className="text-xs font-bold text-emerald-400 hover:text-emerald-300 transition-colors"
                                             >
                                                 Manage My 2FA
                                             </button>
                                             <button
                                                 onClick={() => setSettings({ ...settings, enforce_2fa: !settings.enforce_2fa })}
-                                                className={`w-10 h-5 rounded-full p-0.5 transition-colors ${settings.enforce_2fa ? 'bg-indigo-600' : 'bg-neutral-700'}`}
+                                                className={`w-10 h-5 rounded-full p-0.5 transition-colors ${settings.enforce_2fa ? 'bg-emerald-600' : 'bg-neutral-700'}`}
                                                 aria-label="Toggle 2FA enforcement"
                                             >
                                                 <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${settings.enforce_2fa ? 'translate-x-5' : 'translate-x-0'}`} />
@@ -390,7 +390,7 @@ const AdminSecurityPanel: React.FC = () => {
                                     </div>
 
                                     {/* 2FA Explanation Box */}
-                                    <div className={`p-3 rounded-lg text-xs leading-relaxed border transition-all ${settings.enforce_2fa ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-300' : 'bg-neutral-800/30 border-neutral-800 text-neutral-500'}`}>
+                                    <div className={`p-3 rounded-lg text-xs leading-relaxed border transition-all ${settings.enforce_2fa ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300' : 'bg-neutral-800/30 border-neutral-800 text-neutral-500'}`}>
                                         <div className="flex gap-2">
                                             <Info size={14} className="flex-shrink-0 mt-0.5" />
                                             <div>
@@ -408,7 +408,7 @@ const AdminSecurityPanel: React.FC = () => {
                             <button
                                 onClick={handleSaveSettings}
                                 disabled={settingsSaving}
-                                className="mt-6 w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                                className="mt-6 w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
                             >
                                 {settingsSaving ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
                                 {settingsSaving ? 'Saving...' : 'Save Policies'}
@@ -422,7 +422,7 @@ const AdminSecurityPanel: React.FC = () => {
             <div className="bg-theme-panel border border-theme-border rounded-2xl p-8">
                 <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-indigo-500/10 text-indigo-400 rounded-xl flex items-center justify-center">
+                        <div className="w-10 h-10 bg-emerald-500/10 text-emerald-400 rounded-xl flex items-center justify-center">
                             <Users size={20} />
                         </div>
                         <div>
@@ -494,7 +494,7 @@ const AdminSecurityPanel: React.FC = () => {
                                     setSelectedSessions(new Set());
                                 }
                             }}
-                            className="w-4 h-4 rounded border-neutral-700 bg-neutral-800 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                            className="w-4 h-4 rounded border-neutral-700 bg-neutral-800 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
                         />
                         <label htmlFor="select-all-sessions-admin" className="text-xs font-bold text-neutral-500 uppercase tracking-wider cursor-pointer">
                             Select All Devices ({sessions.filter(s => s.id !== localStorage.getItem('current_session_id')).length} removable)
@@ -521,7 +521,7 @@ const AdminSecurityPanel: React.FC = () => {
                         const isSelected = selectedSessions.has(session.id);
 
                         return (
-                            <div key={session.id} className={`flex items-center justify-between p-4 border rounded-xl transition-all ${isCurrent ? 'bg-indigo-500/5 border-indigo-500/20' : isSelected ? 'bg-red-500/10 border-red-500/30' : 'bg-theme-bg border-theme-border'}`}>
+                            <div key={session.id} className={`flex items-center justify-between p-4 border rounded-xl transition-all ${isCurrent ? 'bg-emerald-500/5 border-emerald-500/20' : isSelected ? 'bg-red-500/10 border-red-500/30' : 'bg-theme-bg border-theme-border'}`}>
                                 <div className="flex items-center gap-4">
                                     {/* Checkbox for non-current sessions */}
                                     {!isCurrent && (
@@ -538,7 +538,7 @@ const AdminSecurityPanel: React.FC = () => {
                                                 }
                                                 setSelectedSessions(newSet);
                                             }}
-                                            className="w-4 h-4 rounded border-neutral-700 bg-neutral-800 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                                            className="w-4 h-4 rounded border-neutral-700 bg-neutral-800 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
                                         />
                                     )}
                                     <div className="p-2 bg-theme-panel rounded-full text-theme-muted border border-theme-border">
@@ -586,9 +586,9 @@ const AdminSecurityPanel: React.FC = () => {
             </div>
 
             {/* Audit Logs Quick Link */}
-            <div className="flex items-center justify-between p-4 bg-indigo-500/5 border border-indigo-500/10 rounded-xl">
+            <div className="flex items-center justify-between p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-xl">
                 <div className="flex items-center gap-4">
-                    <div className="p-2 bg-indigo-500/10 rounded-lg text-indigo-400">
+                    <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-400">
                         <AlertTriangle size={20} />
                     </div>
                     <div>
@@ -598,7 +598,7 @@ const AdminSecurityPanel: React.FC = () => {
                 </div>
                 <button
                     onClick={() => navigate('/admin/logs')}
-                    className="flex items-center gap-2 text-indigo-400 hover:text-indigo-300 text-sm font-medium transition-colors"
+                    className="flex items-center gap-2 text-emerald-400 hover:text-emerald-300 text-sm font-medium transition-colors"
                 >
                     View Logs <ExternalLink size={14} />
                 </button>

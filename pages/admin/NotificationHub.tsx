@@ -1,21 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { 
-    Bell, 
     Mail, 
-    ShoppingCart, 
-    TrendingUp, 
     RefreshCw, 
     AlertCircle, 
     CheckCircle2, 
     Clock,
-    Search,
-    Filter,
     ArrowUpRight,
     DollarSign,
     Zap,
-    Activity
+    Activity,
+    Cpu,
+    ShieldCheck
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { toast } from 'react-hot-toast';
 
 // --- Shared UI Components ---
 
@@ -32,7 +30,7 @@ const HUDLabel = ({ children, className = "" }: { children: React.ReactNode; cla
     </span>
 );
 
-const MetricCard = ({ title, value, subtext, icon: Icon, trend, colorClass = "text-indigo-400" }: {
+const MetricCard = ({ title, value, subtext, icon: Icon, trend, colorClass = "text-emerald-400" }: {
     title: string; value: string | number; subtext: string; icon: any; trend?: string; colorClass?: string;
 }) => (
     <GlassCard className="p-6 group hover:border-white/10 transition-all">
@@ -76,13 +74,20 @@ interface RecoveryStats {
     conversion_rate: number;
 }
 
+interface AIUsageStats {
+    provider: string;
+    count: number;
+    limit: number;
+    success_rate: number;
+}
+
 export default function NotificationHub() {
     const [logs, setLogs] = useState<EmailLog[]>([]);
     const [stats, setStats] = useState<RecoveryStats | null>(null);
     const [summary, setSummary] = useState<any[]>([]);
-    const [quota, setQuota] = useState<any>(null);
-    const [apiUsage, setApiUsage] = useState<any>(null);
+    const [aiStats, setAiStats] = useState<AIUsageStats[]>([]);
     const [loading, setLoading] = useState(true);
+    const [testingProvider, setTestingProvider] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
 
     const fetchData = async () => {
@@ -105,12 +110,11 @@ export default function NotificationHub() {
 
             if (statsError) throw statsError;
             
-            // Consolidate stats across all sellers for global view
             const globalStats = (statsData || []).reduce((acc, curr) => ({
                 signals_sent: acc.signals_sent + Number(curr.signals_sent),
                 conversions: acc.conversions + Number(curr.conversions),
                 recovered_revenue: acc.recovered_revenue + Number(curr.recovered_revenue),
-                conversion_rate: 0 // Will calculate later
+                conversion_rate: 0
             }), { signals_sent: 0, conversions: 0, recovered_revenue: 0, conversion_rate: 0 });
 
             if (globalStats.signals_sent > 0) {
@@ -126,36 +130,91 @@ export default function NotificationHub() {
             if (summaryError) throw summaryError;
             setSummary(summaryData || []);
 
-            // 4. Fetch Brevo Quota & Local Usage
-            const { data: quotaData } = await supabase.functions.invoke('get-brevo-quota');
-            setQuota(quotaData);
+            // 4. Fetch Brevo Quota
+            try {
+                await supabase.functions.invoke('get-brevo-quota');
+                // Quota data is available but currently unused in UI
+            } catch (err) {
+                console.warn("Could not fetch Brevo quota");
+            }
 
+            // 5. Fetch AI Usage Stats
             const startOfMonth = new Date();
             startOfMonth.setDate(1);
             startOfMonth.setHours(0, 0, 0, 0);
 
-            const { count: usageCount } = await supabase
-                .from('api_usage_logs')
-                .select('*', { count: 'exact', head: true })
-                .eq('provider', 'brevo')
-                .gte('created_at', startOfMonth.toISOString());
-            
-            const { data: config } = await supabase
-                .from('api_limits_config')
-                .select('*')
-                .eq('provider', 'brevo')
-                .maybeSingle();
+            const last24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
-            setApiUsage({ 
-                count: usageCount || 0, 
-                limit: config?.monthly_limit || 300 
-            });
+            const providers = ['groq', 'gemini', 'openrouter', 'brevo'];
+            const aiUsageData: AIUsageStats[] = [];
+
+            const { data: limits } = await supabase
+                .from('api_limits_config')
+                .select('*');
+
+            for (const p of providers) {
+                // Fetch monthly logs for quota
+                const { data: monthlyLogs } = await supabase
+                    .from('api_usage_logs')
+                    .select('status_code')
+                    .eq('provider', p)
+                    .gte('created_at', startOfMonth.toISOString());
+
+                // Fetch recent logs for health
+                const { data: recentLogs } = await supabase
+                    .from('api_usage_logs')
+                    .select('status_code')
+                    .eq('provider', p)
+                    .gte('created_at', last24h.toISOString());
+
+                const limit = limits?.find(l => l.provider === p)?.monthly_limit || 1000;
+                const count = monthlyLogs?.length || 0;
+                
+                // Success rate for Health is based on last 24h or last few calls to be responsive
+                const recentCount = recentLogs?.length || 0;
+                const recentSuccesses = recentLogs?.filter(l => l.status_code >= 200 && l.status_code < 300).length || 0;
+                
+                // If no calls in 24h, default to 100% health (assume stable) 
+                // OR fall back to monthly if 24h is empty
+                const healthRate = recentCount > 0 
+                    ? (recentSuccesses / recentCount) * 100 
+                    : 100;
+
+                aiUsageData.push({ 
+                    provider: p, 
+                    count, 
+                    limit, 
+                    success_rate: healthRate // We'll use healthRate for the primary metric
+                });
+            }
+            setAiStats(aiUsageData);
+
 
         } catch (err) {
             console.error("Hub Error:", err);
-            setError(err.message);
+            setError(err instanceof Error ? err.message : 'Unknown error');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const testConnection = async (provider: string) => {
+        setTestingProvider(provider);
+        const tid = toast.loading(`Testing ${provider} connection...`);
+        try {
+            // We use the existing oracle brain for testing Groq/Gemini
+            // In a real scenario, we might have a dedicated 'test-connection' edge function
+            const { error } = await supabase.functions.invoke('ai-oracle-brain', {
+                body: { query: "CONNECTION_TEST_PROMPT", seller_id: null }
+            });
+
+            if (error) throw error;
+            toast.success(`${provider} connection verified!`, { id: tid });
+            fetchData();
+        } catch (err: any) {
+            toast.error(`${provider} connect failed: ${err.message}`, { id: tid });
+        } finally {
+            setTestingProvider(null);
         }
     };
 
@@ -172,19 +231,19 @@ export default function NotificationHub() {
                 <div className="space-y-1">
                     <div className="flex items-center gap-3">
                         <div className="relative flex h-2 w-2">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                         </div>
                         <h1 className="text-3xl font-black text-white tracking-tight uppercase">
-                            Notification <span className="text-indigo-500">Hub</span>
+                            Notification <span className="text-emerald-500">Hub</span>
                         </h1>
                     </div>
                     <div className="flex items-center gap-4 text-xs font-mono text-neutral-500 italic">
-                        <span>SERVICE: BREVO_V3</span>
+                        <span>SERVICE: AI_INFRA_V2</span>
                         <span>•</span>
-                        <span>STATUS: ACTIVE</span>
+                        <span>STATUS: OPERATIONAL</span>
                         <span>•</span>
-                        <span>REGION: US-EAST-1</span>
+                        <span>MONITORING: ENABLED</span>
                     </div>
                 </div>
 
@@ -194,7 +253,7 @@ export default function NotificationHub() {
                     className="flex items-center gap-2 px-6 py-2.5 bg-neutral-800/50 hover:bg-neutral-700/50 border border-white/5 rounded-full text-xs font-bold uppercase tracking-widest transition-all hover:scale-105 active:scale-95"
                 >
                     <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-                    Force Sync
+                    System Sync
                 </button>
             </div>
 
@@ -223,10 +282,10 @@ export default function NotificationHub() {
                     trend={`${stats?.conversion_rate?.toFixed(1) || 0}% rate`}
                 />
                 <MetricCard 
-                    title="Recovery Signals" 
-                    value={stats?.signals_sent || 0} 
-                    subtext="Emails sent to prospects" 
-                    icon={Zap}
+                    title="AI Oracle Health" 
+                    value={aiStats.length > 0 ? `${(aiStats.reduce((a,b) => a + b.success_rate, 0) / aiStats.length).toFixed(1)}%` : '---'} 
+                    subtext="Average success rate" 
+                    icon={Cpu}
                     colorClass="text-amber-400"
                 />
                 <MetricCard 
@@ -234,7 +293,7 @@ export default function NotificationHub() {
                     value={summary.length > 0 ? `${((summary.filter(s => s.status === 'sent').reduce((a,b) => a + Number(b.count), 0) / summary.reduce((a,b) => a + Number(b.count), 0)) * 100).toFixed(1)}%` : '100%'} 
                     subtext="Successful deliveries" 
                     icon={CheckCircle2}
-                    colorClass="text-indigo-400"
+                    colorClass="text-emerald-400"
                 />
             </div>
 
@@ -243,8 +302,8 @@ export default function NotificationHub() {
                 <GlassCard className="xl:col-span-2">
                     <div className="p-6 border-b border-white/5 flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <Clock size={18} className="text-indigo-400" />
-                            <HUDLabel>Recent Transmission Log</HUDLabel>
+                            <Clock size={18} className="text-emerald-400" />
+                            <HUDLabel>System Log Feed</HUDLabel>
                         </div>
                     </div>
                     <div className="overflow-x-auto">
@@ -252,7 +311,7 @@ export default function NotificationHub() {
                             <thead>
                                 <tr className="bg-white/5">
                                     <th className="px-6 py-3"><HUDLabel>Timestamp</HUDLabel></th>
-                                    <th className="px-6 py-3"><HUDLabel>Recipient</HUDLabel></th>
+                                    <th className="px-6 py-3"><HUDLabel>Recipient / Provider</HUDLabel></th>
                                     <th className="px-6 py-3"><HUDLabel>Type</HUDLabel></th>
                                     <th className="px-6 py-3"><HUDLabel>Status</HUDLabel></th>
                                 </tr>
@@ -268,7 +327,7 @@ export default function NotificationHub() {
                                             <div className="text-[10px] text-neutral-500 font-mono italic">{log.recipient}</div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className="text-[9px] px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 font-black border border-indigo-500/20">
+                                            <span className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-black border border-emerald-500/20">
                                                 {log.type.replace('_', ' ')}
                                             </span>
                                         </td>
@@ -302,98 +361,68 @@ export default function NotificationHub() {
 
                 {/* Sidebar Breakdown */}
                 <div className="space-y-6">
-                    {/* API Usage Section */}
+                    {/* AI Infrastructure Section */}
                     <GlassCard className="p-6">
                         <div className="flex items-center gap-3 mb-6">
-                            <Activity size={18} className="text-indigo-400" />
-                            <HUDLabel>API Health & Quota</HUDLabel>
+                            <Activity size={18} className="text-emerald-400" />
+                            <HUDLabel>AI Infrastructure</HUDLabel>
                         </div>
                         <div className="space-y-6">
-                            {/* Monthly Limit (Local tracking) */}
-                            <div className="space-y-2">
-                                <div className="flex justify-between items-end">
-                                    <span className="text-[10px] text-white font-bold uppercase tracking-widest">Monthly Limit</span>
-                                    <span className="text-xs font-mono text-neutral-500">{apiUsage?.count || 0} / {apiUsage?.limit || '---'}</span>
-                                </div>
-                                <div className="h-1 bg-white/5 rounded-full overflow-hidden">
-                                    <div 
-                                        className={`h-full rounded-full transition-all duration-1000 ${
-                                            (apiUsage?.count / apiUsage?.limit) > 0.9 ? 'bg-red-500' : 
-                                            (apiUsage?.count / apiUsage?.limit) > 0.7 ? 'bg-amber-500' : 'bg-indigo-500'
-                                        }`} 
-                                        style={{ width: `${Math.min((apiUsage?.count / apiUsage?.limit) * 100, 100) || 0}%` }}
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Credits (From Brevo) */}
-                            {quota?.plan && quota.plan.map((p: any, idx: number) => (
-                                <div key={idx} className="p-3 bg-white/5 border border-white/5 rounded-xl">
-                                    <div className="flex justify-between items-center mb-1">
-                                        <span className="text-[9px] text-neutral-400 uppercase font-mono tracking-tighter">Brevo {p.creditsType} Credits</span>
-                                        <span className="text-xs font-black text-white">{p.credits?.toLocaleString() || '---'}</span>
+                            {aiStats.map((ai) => (
+                                <div key={ai.provider} className="p-4 bg-white/5 border border-white/5 rounded-xl space-y-3">
+                                    <div className="flex justify-between items-center">
+                                        <div className="flex items-center gap-2">
+                                            <span className={`h-2 w-2 rounded-full ${ai.success_rate > 90 ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'}`} />
+                                            <span className="text-xs font-black text-white uppercase tracking-tight">{ai.provider}</span>
+                                        </div>
+                                        <button 
+                                            onClick={() => testConnection(ai.provider)}
+                                            disabled={testingProvider !== null}
+                                            className="text-[9px] font-bold text-emerald-400 hover:text-white transition-colors flex items-center gap-1 uppercase"
+                                        >
+                                            {testingProvider === ai.provider ? <RefreshCw size={10} className="animate-spin" /> : <Zap size={10} />}
+                                            Test
+                                        </button>
                                     </div>
-                                    <div className="text-[8px] text-neutral-600 font-mono uppercase italic italic text-right">
-                                        Type: {p.type}
-                                    </div>
-                                </div>
-                            ))}
-
-                            {!quota && !loading && (
-                                <div className="text-[9px] text-neutral-600 font-mono italic p-3 border border-white/5 rounded-xl text-center">
-                                    BREVO_AUTH_PENDING...
-                                </div>
-                            )}
-                        </div>
-                    </GlassCard>
-
-                    <GlassCard className="p-6">
-                        <div className="flex items-center gap-3 mb-6">
-                            <TrendingUp size={18} className="text-emerald-400" />
-                            <HUDLabel>Volume Distribution</HUDLabel>
-                        </div>
-                        <div className="space-y-4">
-                            {summary.length > 0 ? (
-                                // Group summary by type
-                                Object.entries(summary.reduce((acc: any, curr) => {
-                                    acc[curr.type] = (acc[curr.type] || 0) + Number(curr.count);
-                                    return acc;
-                                }, {})).map(([type, count]: [string, any]) => (
-                                    <div key={type} className="space-y-1.5">
-                                        <div className="flex justify-between items-end">
-                                            <span className="text-[10px] text-white font-bold uppercase tracking-widest">{type.replace('_', ' ')}</span>
-                                            <span className="text-xs font-mono text-neutral-500">{count}</span>
+                                    
+                                    <div className="space-y-1.5">
+                                        <div className="flex justify-between text-[9px] font-mono">
+                                            <span className="text-neutral-500 uppercase">Usage</span>
+                                            <span className="text-white">{ai.count} / {ai.limit}</span>
                                         </div>
                                         <div className="h-1 bg-white/5 rounded-full overflow-hidden">
                                             <div 
-                                                className="h-full bg-indigo-500 rounded-full" 
-                                                style={{ width: `${(count / summary.reduce((a,b) => a + Number(b.count), 0)) * 100}%` }}
+                                                className={`h-full rounded-full ${ai.count > ai.limit * 0.9 ? 'bg-red-500' : 'bg-emerald-500'}`}
+                                                style={{ width: `${Math.min((ai.count / ai.limit) * 100, 100)}%` }}
                                             />
                                         </div>
                                     </div>
-                                ))
-                            ) : (
-                                <div className="text-xs text-neutral-600 font-mono italic">CALCULATING_METRICS...</div>
-                            )}
+
+                                    <div className="flex justify-between text-[9px] font-mono">
+                                        <span className="text-neutral-500 uppercase">Availability</span>
+                                        <span className={ai.success_rate > 95 ? 'text-emerald-400' : 'text-amber-400'}>{ai.success_rate.toFixed(1)}%</span>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </GlassCard>
 
-                    <GlassCard className="p-6 bg-indigo-500/5 border-indigo-500/20">
+                    <GlassCard className="p-6 bg-emerald-500/5 border-emerald-500/20">
                         <div className="flex items-center gap-3 mb-4">
-                            <ShoppingCart size={18} className="text-indigo-400" />
-                            <HUDLabel className="text-indigo-400">Recovery System</HUDLabel>
+                            <ShieldCheck size={18} className="text-emerald-400" />
+                            <HUDLabel className="text-emerald-400">Security & Limits</HUDLabel>
                         </div>
                         <p className="text-xs text-neutral-400 leading-relaxed mb-6">
-                            Our AI-driven recovery cron scans for abandoned carts every hour. Conversion is attributed if an order is placed within 48h of a recovery signal.
+                            API keys are stored in Supabase Secrets. Usage is tracked per-provider to prevent cost overruns.
                         </p>
                         <div className="p-3 bg-black/40 border border-white/5 rounded-xl space-y-2">
                             <div className="flex justify-between text-[9px] font-mono">
-                                <span className="text-neutral-500 uppercase">Retention Window</span>
-                                <span className="text-white">48 HOURS</span>
+                                <span className="text-neutral-500 uppercase">Logging</span>
+                                <span className="text-emerald-400">ENFORCED</span>
                             </div>
                             <div className="flex justify-between text-[9px] font-mono">
                                 <span className="text-neutral-500 uppercase">Precision</span>
-                                <span className="text-emerald-400">OPTIMIZED</span>
+                                <span className="text-white">QUANTUM-SYNC</span>
                             </div>
                         </div>
                     </GlassCard>

@@ -1,17 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
-  IconUser, IconShoppingBag, IconHeart, IconTruck, IconChevronRight,
+  IconUser, IconShoppingBag, IconHeart, IconChevronRight,
   IconEdit, IconCamera, IconLock, IconMapPin, IconCreditCard, IconBell,
-  IconPhone, IconMessage, IconEmail, IconInstagram, IconLogOut, IconX, IconChevronDown,
-  IconCheck, IconTrash, IconFilter, IconArrowLeft, IconPlus
+  IconPhone, IconMessage, IconEmail, IconInstagram, IconLogOut, IconX,
+  IconCheck, IconTrash, IconPlus
 } from './Icons';
 import { supabase } from '../lib/supabase';
 import { updateStoreCustomer, getStoreCards, addStoreCard, deleteStoreCard, StoreCard } from '../lib/storeAuth';
 
 interface AccountProps {
-  onNavigate: (view: any) => void;
+  onNavigate: (view: string) => void;
   showToast: (message: string) => void;
   onLogout: () => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   storeCustomer?: any;
 }
 
@@ -28,6 +29,7 @@ interface AddressData {
 }
 
 export const Account: React.FC<AccountProps> = ({ onNavigate, showToast, onLogout, storeCustomer }) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -82,6 +84,7 @@ export const Account: React.FC<AccountProps> = ({ onNavigate, showToast, onLogou
       fetchAddresses();
       fetchCards();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storeCustomer]);
 
   const fetchCards = async () => {
@@ -123,7 +126,7 @@ export const Account: React.FC<AccountProps> = ({ onNavigate, showToast, onLogou
       setUser(storeCustomer);
 
       // Self-healing: If data missing, try to get from Supabase Auth User
-      let derivedMeta = storeCustomer.metadata || {};
+      const derivedMeta = storeCustomer.metadata || {};
       let derivedName = storeCustomer.display_name || "";
       let derivedAvatar = storeCustomer.avatar_url || "";
 
@@ -493,8 +496,9 @@ export const Account: React.FC<AccountProps> = ({ onNavigate, showToast, onLogou
           {/* Form Fields */}
           <div className="flex-grow grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider pl-1">First Name</label>
+              <label htmlFor="firstName" className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider pl-1">First Name</label>
               <input
+                id="firstName"
                 type="text"
                 name="firstName"
                 value={profile.firstName}
@@ -504,8 +508,9 @@ export const Account: React.FC<AccountProps> = ({ onNavigate, showToast, onLogou
               />
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider pl-1">Last Name</label>
+              <label htmlFor="lastName" className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider pl-1">Last Name</label>
               <input
+                id="lastName"
                 type="text"
                 name="lastName"
                 value={profile.lastName}
@@ -516,9 +521,10 @@ export const Account: React.FC<AccountProps> = ({ onNavigate, showToast, onLogou
             </div>
 
             <div className="space-y-2 md:col-span-2">
-              <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider pl-1">Email Address</label>
+              <label htmlFor="email" className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider pl-1">Email Address</label>
               <div className="relative">
                 <input
+                  id="email"
                   type="email"
                   name="email"
                   value={profile.email}
@@ -534,9 +540,10 @@ export const Account: React.FC<AccountProps> = ({ onNavigate, showToast, onLogou
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider pl-1">Phone Number</label>
+              <label htmlFor="phone" className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider pl-1">Phone Number</label>
               <div className="relative">
                 <input
+                  id="phone"
                   type="tel"
                   name="phone"
                   value={profile.phone}
@@ -551,9 +558,10 @@ export const Account: React.FC<AccountProps> = ({ onNavigate, showToast, onLogou
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider pl-1">Alternate Phone</label>
+              <label htmlFor="altPhone" className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider pl-1">Alternate Phone</label>
               <div className="relative">
                 <input
+                  id="altPhone"
                   type="tel"
                   name="altPhone"
                   value={profile.altPhone}
@@ -718,7 +726,7 @@ export const Account: React.FC<AccountProps> = ({ onNavigate, showToast, onLogou
           <div className="bg-white dark:bg-surface-dark p-8 rounded-[2rem] border border-gray-100 dark:border-gray-700/50 shadow-sm transition-colors relative h-full">
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 rounded-full flex items-center justify-center">
+                <div className="w-10 h-10 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-full flex items-center justify-center">
                   <IconCreditCard className="w-5 h-5" />
                 </div>
                 <h3 className="font-bold font-heading text-gray-900 dark:text-white text-xl">Payments</h3>
@@ -742,7 +750,7 @@ export const Account: React.FC<AccountProps> = ({ onNavigate, showToast, onLogou
                     <div>
                       <p className="text-sm font-bold text-gray-900 dark:text-white transition-colors flex items-center gap-2">
                         •••• {card.last4}
-                        {card.is_default && <span className="text-[8px] bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">Default</span>}
+                        {card.is_default && <span className="text-[8px] bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">Default</span>}
                       </p>
                       <p className="text-[11px] text-gray-500 dark:text-gray-400 font-medium mt-0.5">Expires {card.expiry}</p>
                     </div>

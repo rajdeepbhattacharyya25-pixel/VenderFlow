@@ -131,8 +131,8 @@ const SellersList: React.FC = () => {
 
     const getPlanStyles = (plan: string) => {
         switch (plan) {
-            case 'enterprise': return 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20';
-            case 'pro': return 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20';
+            case 'enterprise': return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+            case 'pro': return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
             default: return 'bg-neutral-700/30 text-neutral-500 border-neutral-700/50';
         }
     };
@@ -260,7 +260,7 @@ const SellersList: React.FC = () => {
                 <div className="fixed bottom-4 left-4 right-4 md:left-1/2 md:right-auto md:-translate-x-1/2 md:bottom-6 z-50 animate-in slide-in-from-bottom-4 duration-200">
                     <div className="bg-neutral-900 border border-neutral-700 rounded-2xl shadow-2xl shadow-black/50 px-4 md:px-6 py-3 md:py-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 md:gap-6">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center font-bold text-white">
+                            <div className="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center font-bold text-white">
                                 {selectedIds.size}
                             </div>
                             <span className="text-neutral-300 text-sm">
@@ -321,7 +321,7 @@ const SellersList: React.FC = () => {
                     </button>
                     <button
                         onClick={() => navigate('/admin/invites')}
-                        className="flex items-center gap-2 px-4 py-3 md:py-2 min-h-[44px] md:min-h-0 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-indigo-600/20"
+                        className="flex items-center gap-2 px-4 py-3 md:py-2 min-h-[44px] md:min-h-0 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-emerald-600/20"
                     >
                         <Plus size={18} />
                         Invite Seller
@@ -339,14 +339,14 @@ const SellersList: React.FC = () => {
                             placeholder="Search by name or slug..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full bg-neutral-950 border border-neutral-800 rounded-xl py-3 md:py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all"
+                            className="w-full bg-neutral-950 border border-neutral-800 rounded-xl py-3 md:py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-emerald-500/50 outline-none transition-all"
                             aria-label="Search sellers by name or slug"
                         />
                     </div>
                     <button
                         onClick={() => setShowFilters(!showFilters)}
                         className={`flex items-center gap-2 px-4 py-3 md:py-2 min-h-[44px] md:min-h-0 border rounded-xl text-sm transition-all ${showFilters || statusFilter || planFilter
-                            ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400'
+                            ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
                             : 'bg-neutral-950 border-neutral-800 text-neutral-400 hover:border-neutral-700'
                             }`}
                     >
@@ -413,7 +413,7 @@ const SellersList: React.FC = () => {
             <div className="bg-neutral-900 border border-neutral-800 rounded-2xl overflow-hidden">
                 {loading ? (
                     <div className="flex items-center justify-center py-20">
-                        <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+                        <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
                     </div>
                 ) : sellers.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -438,7 +438,7 @@ const SellersList: React.FC = () => {
                                             aria-label={allSelected ? "Deselect all sellers" : "Select all sellers"}
                                         >
                                             {allSelected ? (
-                                                <CheckSquare size={18} className="text-indigo-500" />
+                                                <CheckSquare size={18} className="text-emerald-500" />
                                             ) : (
                                                 <Square size={18} className="text-neutral-500" />
                                             )}
@@ -476,7 +476,7 @@ const SellersList: React.FC = () => {
                                     return (
                                         <tr
                                             key={seller.id}
-                                            className={`hover:bg-neutral-800/30 transition-colors group ${selectedIds.has(seller.id) ? 'bg-indigo-500/10' : ''
+                                            className={`hover:bg-neutral-800/30 transition-colors group ${selectedIds.has(seller.id) ? 'bg-emerald-500/10' : ''
                                                 }`}
                                         >
                                             <td className="p-4 w-12">
@@ -487,7 +487,7 @@ const SellersList: React.FC = () => {
                                                     aria-label={selectedIds.has(seller.id) ? `Deselect ${seller.store_name}` : `Select ${seller.store_name}`}
                                                 >
                                                     {selectedIds.has(seller.id) ? (
-                                                        <CheckSquare size={18} className="text-indigo-500" />
+                                                        <CheckSquare size={18} className="text-emerald-500" />
                                                     ) : (
                                                         <Square size={18} className="text-neutral-500" />
                                                     )}
@@ -495,12 +495,12 @@ const SellersList: React.FC = () => {
                                             </td>
                                             <td className="p-4">
                                                 <div className="flex items-center gap-2">
-                                                    <span className="text-white font-medium group-hover:text-indigo-400 transition-colors">
+                                                    <span className="text-white font-medium group-hover:text-emerald-400 transition-colors">
                                                         {seller.store_name}
                                                     </span>
                                                     <button
                                                         onClick={() => setMessageModalSeller(seller)}
-                                                        className="w-11 h-11 flex items-center justify-center hover:bg-indigo-500/20 rounded-lg text-neutral-500 hover:text-indigo-400 transition-all opacity-0 group-hover:opacity-100"
+                                                        className="w-11 h-11 flex items-center justify-center hover:bg-emerald-500/20 rounded-lg text-neutral-500 hover:text-emerald-400 transition-all opacity-0 group-hover:opacity-100"
                                                         title="Send message"
                                                         aria-label={`Send message to ${seller.store_name}`}
                                                     >
@@ -616,7 +616,7 @@ const SellersList: React.FC = () => {
                                         key={pageNum}
                                         onClick={() => setPage(pageNum)}
                                         className={`w-11 h-11 md:w-8 md:h-8 flex items-center justify-center rounded-lg text-sm md:text-xs font-bold transition-colors ${page === pageNum
-                                            ? 'bg-indigo-600 text-white'
+                                            ? 'bg-emerald-600 text-white'
                                             : 'hover:bg-neutral-800 text-neutral-400'
                                             }`}
                                     >
@@ -671,7 +671,7 @@ const SellersList: React.FC = () => {
                                     value={messageSubject}
                                     onChange={(e) => setMessageSubject(e.target.value)}
                                     placeholder="e.g., Account Update, Policy Change..."
-                                    className="w-full bg-neutral-950 border border-neutral-800 rounded-xl py-3 px-4 text-white placeholder-neutral-600 focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all"
+                                    className="w-full bg-neutral-950 border border-neutral-800 rounded-xl py-3 px-4 text-white placeholder-neutral-600 focus:ring-2 focus:ring-emerald-500/50 outline-none transition-all"
                                 />
                             </div>
                             <div>
@@ -681,7 +681,7 @@ const SellersList: React.FC = () => {
                                     onChange={(e) => setMessageContent(e.target.value)}
                                     placeholder="Type your message here..."
                                     rows={4}
-                                    className="w-full bg-neutral-950 border border-neutral-800 rounded-xl py-3 px-4 text-white placeholder-neutral-600 focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all resize-none"
+                                    className="w-full bg-neutral-950 border border-neutral-800 rounded-xl py-3 px-4 text-white placeholder-neutral-600 focus:ring-2 focus:ring-emerald-500/50 outline-none transition-all resize-none"
                                 />
                             </div>
                         </div>
@@ -699,7 +699,7 @@ const SellersList: React.FC = () => {
                             <button
                                 onClick={sendDirectMessage}
                                 disabled={sendingMessage || !messageSubject.trim() || !messageContent.trim()}
-                                className="flex items-center gap-2 px-5 py-3 md:py-2 min-h-[44px] md:min-h-0 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-medium transition-all"
+                                className="flex items-center gap-2 px-5 py-3 md:py-2 min-h-[44px] md:min-h-0 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-medium transition-all"
                             >
                                 {sendingMessage ? (
                                     <Loader2 size={16} className="animate-spin" />

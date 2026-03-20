@@ -107,7 +107,7 @@ export const AnimatedIcon: React.FC<AnimatedIconProps> = ({
     const variants = getVariants() as any;
 
     // Determine which states to actually apply based on the trigger
-    let initial = 'initial';
+    const initial = 'initial';
     let animate = undefined;
     let whileHover = undefined;
     let whileTap = undefined;

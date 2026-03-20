@@ -140,7 +140,7 @@ const SellerDetail: React.FC = () => {
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[400px]">
-                <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+                <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
             </div>
         );
     }
@@ -153,7 +153,7 @@ const SellerDetail: React.FC = () => {
                 <p className="text-neutral-500 mb-6">{error || 'The seller you are looking for does not exist.'}</p>
                 <button
                     onClick={() => navigate('/admin/sellers')}
-                    className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition-colors"
+                    className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-medium transition-colors"
                 >
                     Back to Sellers
                 </button>
@@ -172,8 +172,8 @@ const SellerDetail: React.FC = () => {
 
     const getPlanColor = (plan: string) => {
         switch (plan) {
-            case 'enterprise': return 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20';
-            case 'pro': return 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20';
+            case 'enterprise': return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+            case 'pro': return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
             default: return 'bg-neutral-700/30 text-neutral-500 border-neutral-700/50';
         }
     };
@@ -207,7 +207,7 @@ const SellerDetail: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6">
                     <div className="flex items-center gap-3 mb-2">
-                        <Package className="w-5 h-5 text-indigo-400" />
+                        <Package className="w-5 h-5 text-emerald-400" />
                         <span className="text-neutral-500 text-sm">Total Products</span>
                     </div>
                     <p className="text-3xl font-bold text-white">{stats.products}</p>
@@ -275,7 +275,7 @@ const SellerDetail: React.FC = () => {
                 <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6">
                     <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center gap-3">
-                            <TrendingUp className="w-5 h-5 text-indigo-400" />
+                            <TrendingUp className="w-5 h-5 text-emerald-400" />
                             <h2 className="text-lg font-bold text-white">Subscription Usage</h2>
                         </div>
                         <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase border ${getPlanColor(seller.plan)}`}>
@@ -296,8 +296,8 @@ const SellerDetail: React.FC = () => {
                         </div>
 
                         {seller.trial_ends_at && new Date(seller.trial_ends_at) > new Date() && (
-                            <div className="p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-xl">
-                                <p className="text-[10px] text-indigo-400 font-bold uppercase mb-0.5">Trial Period Active</p>
+                            <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+                                <p className="text-[10px] text-emerald-400 font-bold uppercase mb-0.5">Trial Period Active</p>
                                 <p className="text-xs text-white">Ends on {new Date(seller.trial_ends_at).toLocaleDateString()}</p>
                             </div>
                         )}

@@ -3,7 +3,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-// @ts-ignore
+// @ts-expect-error: imagescript has no bundled types for Deno
 import { Image } from "https://deno.land/x/imagescript@1.2.14/mod.ts";
 
 console.log("Hello from generate-thumbnails!");

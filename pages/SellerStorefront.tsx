@@ -108,7 +108,7 @@ const SellerStorefront = () => {
     useEffect(() => {
         const checkMaintenance = async () => {
             const { data: settings } = await supabase
-                .from('platform_settings')
+                .from('public_platform_settings')
                 .select('maintenance_mode')
                 .single();
 
@@ -1028,7 +1028,7 @@ const SellerStorefront = () => {
     if (sellerLoading) {
         return (
             <div className="min-h-screen bg-white dark:bg-neutral-950 flex flex-col items-center justify-center p-4">
-                <Store className="w-16 h-16 text-indigo-500 animate-pulse mb-4" />
+                <Store className="w-16 h-16 text-emerald-500 animate-pulse mb-4" />
                 <p className="text-neutral-500">Loading store...</p>
             </div>
         );
@@ -1047,7 +1047,7 @@ const SellerStorefront = () => {
                 </p>
                 <button
                     onClick={() => navigate('/')}
-                    className="flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition-colors"
+                    className="flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-medium transition-colors"
                 >
                     <ArrowLeft size={18} />
                     Go to Homepage
@@ -1415,7 +1415,7 @@ const SellerStorefront = () => {
             {showJoinModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white dark:bg-neutral-900 rounded-2xl p-6 max-w-md w-full shadow-2xl">
-                        <Store className="w-12 h-12 text-indigo-500 mx-auto mb-4" />
+                        <Store className="w-12 h-12 text-emerald-500 mx-auto mb-4" />
                         <h3 className="text-lg font-bold text-center text-neutral-900 dark:text-white mb-2">
                             Join {seller.store_name}
                         </h3>
@@ -1434,7 +1434,7 @@ const SellerStorefront = () => {
                             </button>
                             <button
                                 onClick={handleJoinStore}
-                                className="flex-1 px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition-colors"
+                                className="flex-1 px-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-medium transition-colors"
                             >
                                 Join Store
                             </button>
@@ -1466,7 +1466,7 @@ const SellerStorefront = () => {
                             </button>
                             <button
                                 onClick={handleClearCartAndAdd}
-                                className="flex-1 px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition-colors"
+                                className="flex-1 px-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-medium transition-colors"
                             >
                                 Clear & Add
                             </button>

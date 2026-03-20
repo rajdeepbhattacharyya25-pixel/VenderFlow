@@ -16,7 +16,7 @@ const Section = ({ title, icon, children, defaultOpen = false }: SectionProps) =
                 onClick={() => setOpen(!open)}
                 className="w-full flex items-center gap-3 px-5 py-4 bg-white dark:bg-white/[0.03] hover:bg-neutral-50 dark:hover:bg-white/[0.05] transition-colors text-left"
             >
-                <span className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center shrink-0">{icon}</span>
+                <span className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">{icon}</span>
                 <span className="text-sm font-semibold text-gray-900 dark:text-white flex-1">{title}</span>
                 {open ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronRight className="w-4 h-4 text-gray-400" />}
             </button>
@@ -66,7 +66,7 @@ const AnalyticsGuide = () => {
                         {/* Body */}
                         <div className="p-6 space-y-3 max-h-[70vh] overflow-y-auto">
                             {/* Getting Started */}
-                            <Section title="Getting Started — Toolbar" icon={<Calendar className="w-4 h-4 text-indigo-400" />} defaultOpen={true}>
+                            <Section title="Getting Started — Toolbar" icon={<Calendar className="w-4 h-4 text-emerald-400" />} defaultOpen={true}>
                                 <p>At the top of the page you'll see a <strong>toolbar</strong> with these controls:</p>
                                 <ul className="list-disc pl-5 space-y-2">
                                     <li><strong>Date Range Selector</strong> — Pick "Last 7 Days", "Last 30 Days", "All Time", or set a "Custom Range" with start and end dates. All charts and numbers on the page update based on the date range you choose.</li>
@@ -76,7 +76,7 @@ const AnalyticsGuide = () => {
                                 <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">💡 <strong>Tip:</strong> Use "Last 7 Days" to check recent performance, "Last 30 Days" for a monthly view, and "All Time" to see the bigger picture.</p>
                             </Section>
 
-                            <Section title="Tab 1 — Overview" icon={<BarChart2 className="w-4 h-4 text-indigo-400" />}>
+                            <Section title="Tab 1 — Overview" icon={<BarChart2 className="w-4 h-4 text-emerald-400" />}>
                                 <p>The <strong>Overview</strong> tab gives you a quick snapshot of how your store is doing right now.</p>
 
                                 <h4 className="font-semibold text-gray-800 dark:text-gray-200 mt-3">📦 Metric Cards (Top Row)</h4>
@@ -161,7 +161,7 @@ const AnalyticsGuide = () => {
                                 <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">💡 <strong>How to use it:</strong> Focus on products with high revenue AND high refund rate — fixing those will have the biggest impact on your bottom line.</p>
                             </Section>
 
-                            <Section title="Tab 4 — Trend Intel" icon={<TrendingUp className="w-4 h-4 text-violet-400" />}>
+                            <Section title="Tab 4 — Trend Intel" icon={<TrendingUp className="w-4 h-4 text-cyan-400" />}>
                                 <p>The <strong>Trend Intel</strong> tab uses <strong>Moving Averages</strong> — a technique used by stock traders — to remove daily noise and show you the real direction of your business.</p>
 
                                 <h4 className="font-semibold text-gray-800 dark:text-gray-200 mt-3">📉 Trend Intelligence Chart</h4>
@@ -169,9 +169,9 @@ const AnalyticsGuide = () => {
                                 <ul className="list-disc pl-5 space-y-2">
                                     <li><strong>Gray thin line (Daily)</strong> — Your actual daily revenue. This zigzags a lot because individual days can be unpredictable.</li>
                                     <li><strong>Blue line (3-Day MA)</strong> — The average of the last 3 days. This smooths out short-term noise and shows recent trends.</li>
-                                    <li><strong>Purple thick line (7-Day MA)</strong> — The average of the last 7 days. This is the most stable and shows your <em>true business direction</em> — whether things are really going up, down, or staying flat.</li>
+                                    <li><strong>primary thick line (7-Day MA)</strong> — The average of the last 7 days. This is the most stable and shows your <em>true business direction</em> — whether things are really going up, down, or staying flat.</li>
                                 </ul>
-                                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">💡 <strong>How to read it:</strong> When the blue line crosses above the purple line, it means short-term sales are picking up. When blue drops below purple, things are slowing down.</p>
+                                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">💡 <strong>How to read it:</strong> When the blue line crosses above the primary line, it means short-term sales are picking up. When blue drops below primary, things are slowing down.</p>
 
                                 <h4 className="font-semibold text-gray-800 dark:text-gray-200 mt-3">📊 Trend Insight Cards (Bottom Row)</h4>
                                 <ul className="list-disc pl-5 space-y-3">
@@ -201,7 +201,7 @@ const AnalyticsGuide = () => {
                                 </ul>
                             </Section>
 
-                            <Section title="CSV Import — Deep Analysis Mode" icon={<Upload className="w-4 h-4 text-indigo-400" />}>
+                            <Section title="CSV Import — Deep Analysis Mode" icon={<Upload className="w-4 h-4 text-emerald-400" />}>
                                 <p>When you upload a CSV file using the <strong>Import</strong> button, the page enters <strong>Deep Analysis Mode</strong>:</p>
                                 <ul className="list-disc pl-5 space-y-2">
                                     <li>A blue banner appears at the top confirming you're in this mode.</li>
@@ -213,9 +213,9 @@ const AnalyticsGuide = () => {
                             </Section>
 
                             {/* Quick Tips */}
-                            <div className="mt-4 p-4 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/50 rounded-xl">
-                                <h4 className="font-semibold text-indigo-900 dark:text-indigo-200 mb-2">🚀 Quick Tips for Growing Your Business</h4>
-                                <ul className="text-sm text-indigo-800 dark:text-indigo-300 space-y-2 list-disc pl-5">
+                            <div className="mt-4 p-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50 rounded-xl">
+                                <h4 className="font-semibold text-emerald-900 dark:text-emerald-200 mb-2">🚀 Quick Tips for Growing Your Business</h4>
+                                <ul className="text-sm text-emerald-800 dark:text-emerald-300 space-y-2 list-disc pl-5">
                                     <li><strong>Check Overview weekly</strong> — Keep an eye on revenue growth and refund rate trends.</li>
                                     <li><strong>Use Smart Revenue monthly</strong> — Track how much of your gross revenue is lost to refunds.</li>
                                     <li><strong>Review Product Intel</strong> — Double down on your top products and fix the ones with high refund rates.</li>
@@ -229,7 +229,7 @@ const AnalyticsGuide = () => {
                         <div className="px-6 py-4 border-t border-neutral-200 dark:border-neutral-800 flex justify-end">
                             <button
                                 onClick={() => setIsOpen(false)}
-                                className="px-5 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition-colors"
+                                className="px-5 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition-colors"
                             >
                                 Got it!
                             </button>

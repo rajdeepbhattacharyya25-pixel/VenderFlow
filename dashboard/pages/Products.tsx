@@ -96,7 +96,7 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
     // Filter Logic
     useEffect(() => {
         // Universal ghost filtering: hide products named 'New Product' with no media
-        let baseProducts = products.filter(p => {
+        const baseProducts = products.filter(p => {
             if (p.name === 'New Product' || !p.name) {
                 const media = p.media || [];
                 if (media.length === 0) return false;
@@ -356,7 +356,7 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
 
         try {
             switch (action) {
-                case 'delete':
+                case 'delete': {
                     if (confirm(`Are you sure you want to delete ${selectedIds.length} products?`)) {
                         const { data: { user } } = await supabase.auth.getUser();
                         const { error } = await supabase.from('products').delete().in('id', selectedIds);
@@ -375,13 +375,14 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
                         setSelectedIds([]);
                     }
                     break;
+                }
 
                 case 'edit':
                     setIsBulkEditModalOpen(true);
                     break;
 
                 case 'status':
-                case 'archive':
+                case 'archive': {
                     const activate = action === 'status';
 
                     if (activate && !seller?.razorpay_account_id) {
@@ -399,8 +400,9 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
                     fetchProducts();
                     setSelectedIds([]);
                     break;
+                }
 
-                case 'export':
+                case 'export': {
                     const selectedProducts = products.filter(p => selectedIds.includes(p.id));
                     const headers = ['ID', 'Name', 'Category', 'Price', 'Stock', 'Status'];
                     const csvContent = [
@@ -425,6 +427,7 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
                     link.click();
                     document.body.removeChild(link);
                     break;
+                }
 
                 default:
                     console.warn('Unknown bulk action:', action);

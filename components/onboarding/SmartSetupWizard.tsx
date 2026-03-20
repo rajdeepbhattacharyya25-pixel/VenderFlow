@@ -35,8 +35,8 @@ export default function SmartSetupWizard({ onComplete, onSkip }: SmartSetupWizar
     return (
         <div className="max-w-md mx-auto p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700">
             <div className="text-center mb-8">
-                <div className="inline-flex items-center justify-center p-3 bg-purple-100 dark:bg-purple-900/30 rounded-full mb-4">
-                    <Wand2 className="w-8 h-8 text-purple-600 dark:text-purple-400" />
+                <div className="inline-flex items-center justify-center p-3 bg-teal-100 dark:bg-teal-900/30 rounded-full mb-4">
+                    <Wand2 className="w-8 h-8 text-teal-600 dark:text-teal-400" />
                 </div>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">AI Smart Setup</h2>
                 <p className="text-gray-600 dark:text-gray-300">
@@ -54,7 +54,7 @@ export default function SmartSetupWizard({ onComplete, onSkip }: SmartSetupWizar
                         placeholder="e.g. Handmade Jewelry, Electronics"
                         value={businessType}
                         onChange={(e) => setBusinessType(e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white"
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-teal-500 dark:bg-gray-700 dark:text-white"
                         autoFocus
                     />
                 </div>
@@ -68,7 +68,7 @@ export default function SmartSetupWizard({ onComplete, onSkip }: SmartSetupWizar
                         placeholder="e.g. artisan, silver, sustainable, rings"
                         value={keywords}
                         onChange={(e) => setKeywords(e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white"
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-teal-500 dark:bg-gray-700 dark:text-white"
                     />
                 </div>
 
@@ -82,7 +82,7 @@ export default function SmartSetupWizard({ onComplete, onSkip }: SmartSetupWizar
                     <button
                         onClick={handleGenerate}
                         disabled={isLoading}
-                        className="w-full relative flex items-center justify-center space-x-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-medium py-3 px-6 rounded-lg transition-all duration-200 disabled:opacity-70"
+                        className="w-full relative flex items-center justify-center space-x-2 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-medium py-3 px-6 rounded-lg transition-all duration-200 disabled:opacity-70"
                     >
                         {isLoading ? (
                             <>

@@ -190,7 +190,7 @@ const AdminPayoutControls: React.FC = () => {
                                     <p className="text-neutral-500 mb-1">{format(new Date(log.created_at), 'MMM dd HH:mm')}</p>
                                     <p className="text-white font-bold">{log.action.replace(/_/g, ' ')}</p>
                                     <p className="text-neutral-400 italic">"{log.reason}"</p>
-                                    <p className="text-indigo-400 mt-1">By: {log.profiles?.full_name || 'Admin'}</p>
+                                    <p className="text-emerald-400 mt-1">By: {log.profiles?.full_name || 'Admin'}</p>
                                 </div>
                             ))}
                         </div>
@@ -227,7 +227,7 @@ const AdminPayoutControls: React.FC = () => {
                                     {highRiskSellers.map((seller) => (
                                         <tr key={seller.id} className="hover:bg-white/5 transition-colors group">
                                             <td className="p-4">
-                                                <div className="font-bold text-white group-hover:text-indigo-400">{seller.sellers.store_name}</div>
+                                                <div className="font-bold text-white group-hover:text-emerald-400">{seller.sellers.store_name}</div>
                                                 <div className="text-[9px] text-neutral-600">{seller.sellers.slug}</div>
                                             </td>
                                             <td className="p-4">
@@ -292,7 +292,7 @@ const AdminPayoutControls: React.FC = () => {
                                 {confirmModal.type === 'global' ? (
                                     <>You are about to <span className="text-red-500 font-bold">{confirmModal.action.toUpperCase()}</span> global payouts for the entire platform.</>
                                 ) : (
-                                    <>You are <span className="text-indigo-400 font-bold">{confirmModal.action === 'hold' ? 'HOLDING' : 'RELEASING'}</span> payouts for <span className="text-white font-bold">{confirmModal.targetName}</span>.</>
+                                    <>You are <span className="text-emerald-400 font-bold">{confirmModal.action === 'hold' ? 'HOLDING' : 'RELEASING'}</span> payouts for <span className="text-white font-bold">{confirmModal.targetName}</span>.</>
                                 )}
                             </p>
 

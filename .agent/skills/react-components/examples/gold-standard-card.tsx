@@ -55,7 +55,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
             {username}
           </a>
 
-          <span className={`inline-block px-2 py-0.5 text-xs font-semibold rounded-full ${isMerged ? 'bg-purple-500/30 text-purple-300' : 'bg-primary/30 text-primary'
+          <span className={`inline-block px-2 py-0.5 text-xs font-semibold rounded-full ${isMerged ? 'bg-teal-500/30 text-teal-300' : 'bg-primary/30 text-primary'
             }`}>
             {action}
           </span>

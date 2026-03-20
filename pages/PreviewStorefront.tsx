@@ -137,7 +137,7 @@ const PreviewStorefront = () => {
     if (isLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center">
-                <Loader2 className="w-10 h-10 animate-spin text-indigo-500" />
+                <Loader2 className="w-10 h-10 animate-spin text-emerald-500" />
             </div>
         );
     }
@@ -157,7 +157,6 @@ const PreviewStorefront = () => {
     const uniqueCategories = Array.from(new Set(products.map(p => p.category).filter(Boolean)));
 
     return (
-        // eslint-disable-next-line react/forbid-dom-props
         <div style={themeStyles} className="min-h-screen flex flex-col font-body bg-[var(--color-luxury-bg)]">
             <div className="bg-yellow-400 text-black text-center py-2 px-4 shadow-md font-bold text-sm z-50 sticky top-0">
                 You are viewing a Preview Environment. Changes made here will not affect live customers. Checkout is disabled.

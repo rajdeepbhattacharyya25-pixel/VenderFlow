@@ -215,7 +215,6 @@ const ScrollStack: React.FC<ScrollStackProps> = ({
             const lenis = new Lenis({
                 duration: 1.2,
                 easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-                // @ts-ignore
                 smoothWheel: true,
                 touchMultiplier: 2,
                 infinite: false,
@@ -244,7 +243,6 @@ const ScrollStack: React.FC<ScrollStackProps> = ({
                 content: scroller.querySelector('.scroll-stack-inner') as HTMLElement,
                 duration: 1.2,
                 easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-                // @ts-ignore
                 smoothWheel: true,
                 touchMultiplier: 2,
                 infinite: false,
@@ -253,7 +251,7 @@ const ScrollStack: React.FC<ScrollStackProps> = ({
                 lerp: 0.1,
                 syncTouch: true,
                 syncTouchLerp: 0.075,
-                // @ts-ignore
+                // @ts-expect-error: Lenis touchInertia may not be in current types
                 touchInertia: 0.6
             });
 

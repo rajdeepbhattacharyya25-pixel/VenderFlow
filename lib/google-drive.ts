@@ -65,7 +65,6 @@ export const signInToGoogle = async () => {
         }
 
         // Overwrite callback to resolve the specific sign-in attempt
-        // @ts-expect-error: GSI tokenClient callback
         tokenClient.callback = (tokenResponse: any) => {
             if (tokenResponse.error) {
                 reject(tokenResponse);
@@ -87,7 +86,6 @@ export const trySilentSignIn = async () => {
             return;
         }
 
-        // @ts-ignore
         tokenClient.callback = (tokenResponse: any) => {
             if (tokenResponse.error) {
                 reject(tokenResponse);
