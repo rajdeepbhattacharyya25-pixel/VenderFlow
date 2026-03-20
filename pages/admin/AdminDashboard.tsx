@@ -100,10 +100,9 @@ const AdminDashboard: React.FC = () => {
 
             setSearchingSellers(true);
             try {
-                // Fetch recent sellers if search is empty, otherwise search
                 const params = sellerSearch.trim()
                     ? { search: sellerSearch, limit: 5 }
-                    : { limit: 5 }; // Default to 5 recent sellers
+                    : { limit: 5 };
 
                 const result = await adminDb.listSellers(params);
                 setSellerResults(result.sellers || []);
@@ -118,7 +117,6 @@ const AdminDashboard: React.FC = () => {
         return () => clearTimeout(timeoutId);
     }, [sellerSearch, targetType]);
 
-    // Real-time subscription for Unread Tickets
     useEffect(() => {
         const channel = supabase
             .channel('dashboard-support-count')
@@ -156,30 +154,15 @@ const AdminDashboard: React.FC = () => {
     const handleExportReport = async () => {
         try {
             const report = await adminDb.exportReport('all');
+            let csv = 'SELLERS REPORT\nID,Store Name,Plan,Status,Active,Created At\n';
+            report.sellers?.forEach(s => {
+                csv += `${s.id},"${s.store_name}",${s.plan},${s.status},${s.is_active},${s.created_at}\n`;
+            });
+            csv += '\nORDERS REPORT\nID,Total,Status,Created At,Seller ID\n';
+            report.orders?.forEach(o => {
+                csv += `${o.id},${o.total},${o.status},${o.created_at},${o.seller_id}\n`;
+            });
 
-            // Convert to CSV
-            let csv = '';
-
-            // Sellers section
-            if (report.sellers && report.sellers.length > 0) {
-                csv += 'SELLERS REPORT\n';
-                csv += 'ID,Store Name,Plan,Status,Active,Created At\n';
-                report.sellers.forEach(s => {
-                    csv += `${s.id},"${s.store_name}",${s.plan},${s.status},${s.is_active},${s.created_at}\n`;
-                });
-                csv += '\n';
-            }
-
-            // Orders section
-            if (report.orders && report.orders.length > 0) {
-                csv += 'ORDERS REPORT\n';
-                csv += 'ID,Total,Status,Created At,Seller ID\n';
-                report.orders.forEach(o => {
-                    csv += `${o.id},${o.total},${o.status},${o.created_at},${o.seller_id}\n`;
-                });
-            }
-
-            // Download
             const blob = new Blob([csv], { type: 'text/csv' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -216,7 +199,7 @@ const AdminDashboard: React.FC = () => {
                 setTargetSellerId('');
                 setSelectedSellerName('');
                 setSellerSearch('');
-                fetchDashboardData(); // Refresh activity
+                fetchDashboardData();
             }
         } catch (error) {
             console.error('Error creating announcement:', error);
@@ -225,7 +208,8 @@ const AdminDashboard: React.FC = () => {
         }
     };
 
-    const formatCurrency = (value: number) => {
+    const formatCurrency = (value: number | undefined | null) => {
+        if (value === undefined || value === null) return '₹0';
         if (value >= 100000) {
             return `₹${(value / 100000).toFixed(2)}L`;
         } else if (value >= 1000) {
@@ -284,7 +268,7 @@ const AdminDashboard: React.FC = () => {
             icon: AlertCircle,
             color: 'text-amber-500',
             bg: 'bg-amber-500/10',
-            border: 'border-amber-500/30 shadow-[0_0_15px_rgba(245,158,11,0.1)]'
+            border: 'border-amber-500/30'
         },
         {
             label: 'Withdrawal Requests',
@@ -292,7 +276,7 @@ const AdminDashboard: React.FC = () => {
             icon: AlertCircle,
             color: 'text-amber-500',
             bg: 'bg-amber-500/10',
-            border: 'border-amber-500/30 shadow-[0_0_15px_rgba(245,158,11,0.1)]'
+            border: 'border-amber-500/30'
         },
         {
             label: 'Support Tickets',
@@ -300,7 +284,7 @@ const AdminDashboard: React.FC = () => {
             icon: MessageSquare,
             color: 'text-red-500',
             bg: 'bg-red-500/10',
-            border: 'border-red-500/30 shadow-[0_0_15px_rgba(239,68,68,0.1)]'
+            border: 'border-red-500/30'
         },
         {
             label: 'Flagged Orders',
@@ -308,34 +292,39 @@ const AdminDashboard: React.FC = () => {
             icon: AlertCircle,
             color: 'text-red-500',
             bg: 'bg-red-500/10',
-            border: 'border-red-500/30 shadow-[0_0_15px_rgba(239,68,68,0.1)]'
+            border: 'border-red-500/30'
         }
     ];
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-500 bg-[#0B0F19] min-h-screen text-neutral-100 p-2 md:p-4">
+        <div className="admin-hud-content min-h-screen bg-[#0B0F19] text-neutral-100 px-4 md:px-6 pt-2 space-y-6">
+            <div className="hud-scanlines pointer-events-none fixed inset-0 z-50 opacity-[0.03]"></div>
+            
             {/* Page Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-white/5 pb-4">
                 <div>
-                    <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white mb-1">VendorFlow Command Center</h1>
-                    <p className="text-neutral-500 text-xs md:text-sm font-mono uppercase tracking-widest">System Status: OPERATIONAL</p>
+                    <h1 className="text-3xl font-mono lowercase tracking-tight text-white mb-2">vendorflow command center</h1>
+                    <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]"></div>
+                        <p className="text-emerald-500 text-xs font-mono uppercase tracking-[0.2em]">System Status: OPERATIONAL</p>
+                    </div>
                 </div>
-                <div className="flex items-center gap-2 md:gap-4 flex-wrap">
+                <div className="flex items-center gap-3">
                     <button
                         onClick={() => setShowSupportModal(true)}
-                        className="flex items-center justify-center gap-2 px-4 py-2 bg-[#111827] hover:bg-[#1a2333] text-indigo-400 border border-indigo-500/30 rounded-md transition-all font-mono text-xs md:text-sm shadow-[0_0_10px_rgba(99,102,241,0.1)] relative"
+                        className="flex items-center gap-2 px-6 py-2.5 bg-[#111827] hover:bg-indigo-500/10 text-indigo-400 border border-indigo-500/30 transition-all font-mono text-xs tracking-widest relative"
                     >
                         <MessageSquare size={14} />
                         <span>TICKETS</span>
                         {unreadSupportCount > 0 && (
-                            <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-sm bg-red-500 text-[9px] font-bold text-white border border-[#0B0F19]">
+                            <span className="absolute -top-2 -right-2 bg-red-500 text-[10px] font-bold text-white px-1.5 py-0.5 border border-[#0B0F19]">
                                 {unreadSupportCount}
                             </span>
                         )}
                     </button>
                     <button
                         onClick={() => setShowAnnouncementModal(true)}
-                        className="flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-md transition-all font-mono text-xs md:text-sm shadow-[0_0_15px_rgba(99,102,241,0.3)] border border-indigo-400"
+                        className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white transition-all font-mono text-xs tracking-widest border border-indigo-400"
                     >
                         <Megaphone size={14} />
                         <span>BROADCAST</span>
@@ -344,46 +333,47 @@ const AdminDashboard: React.FC = () => {
             </div>
 
             {/* Main Layout Grid */}
-            <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
 
                 {/* LEFT MAIN CONTENT (75%) */}
-                <div className="xl:col-span-3 space-y-6">
+                <div className="xl:col-span-3 space-y-8">
 
                     {/* TOP METRICS (Row 1) */}
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         {statsDisplay.map((stat, i) => (
-                            <div key={i} className="bg-gradient-to-b from-[#0F172A] to-[#0B0F19] border border-white/5 p-5 rounded-md hover:border-indigo-500/30 transition-all group relative overflow-hidden">
-                                <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                                <div className="flex items-center justify-between mb-3">
-                                    <div className={`p-2 rounded-sm ${stat.bg} ${stat.color} border border-indigo-500/20`}>
-                                        <stat.icon size={16} />
+                            <div key={i} className="hud-glass border border-white/5 p-6 relative group overflow-hidden">
+                                <div className="absolute top-0 right-0 p-1">
+                                    <div className="w-4 h-4 border-t border-r border-white/10 group-hover:border-indigo-500/50 transition-colors"></div>
+                                </div>
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className={`p-2 bg-white/5 ${stat.color} border border-white/5`}>
+                                        <stat.icon size={18} />
                                     </div>
                                     <div className={`flex items-center text-[10px] font-mono ${stat.isPositive ? 'text-emerald-400' : 'text-amber-400'}`}>
-                                        {stat.isPositive ? <ArrowUpRight size={12} className="mr-0.5" /> : <ArrowDownRight size={12} className="mr-0.5" />}
                                         {stat.change}
                                     </div>
                                 </div>
-                                <h3 className="text-xl md:text-2xl font-bold text-white mt-1 font-mono tracking-tight">{stat.value}</h3>
-                                <p className="text-neutral-400 text-[10px] font-mono uppercase tracking-wider mt-1">{stat.label}</p>
-                                <p className="text-neutral-600 text-[9px] font-mono mt-2 pt-2 border-t border-white/5">{stat.subtext}</p>
+                                <h3 className="text-2xl font-mono font-bold text-white mb-1">{stat.value}</h3>
+                                <p className="text-neutral-500 text-[10px] font-mono uppercase tracking-[0.1em]">{stat.label}</p>
+                                <div className="mt-4 pt-4 border-t border-white/5">
+                                    <p className="text-neutral-600 text-[9px] font-mono">{stat.subtext}</p>
+                                </div>
                             </div>
                         ))}
                     </div>
 
                     {/* OPERATIONS METRICS (Row 2) */}
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         {opsStatsDisplay.map((stat, i) => (
-                            <div key={i} className={`bg-[#111827] border p-4 rounded-md transition-all group ${stat.border}`}>
-                                <div className="flex items-center justify-between mb-2">
-                                    <p className="text-neutral-300 text-[10px] font-mono uppercase tracking-wider">{stat.label}</p>
-                                    <stat.icon size={14} className={stat.color} />
+                            <div key={i} className={`hud-glass border ${stat.border} p-5 transition-all group relative`}>
+                                <div className="flex items-center justify-between mb-3">
+                                    <p className="text-neutral-400 text-[10px] font-mono uppercase tracking-[0.1em]">{stat.label}</p>
+                                    <stat.icon size={16} className={stat.color} />
                                 </div>
-                                <div className="flex items-baseline gap-2 mt-1">
-                                    <h3 className={`text-2xl font-bold font-mono ${stat.color}`}>{stat.value}</h3>
+                                <div className="flex items-baseline gap-3">
+                                    <h3 className={`text-3xl font-mono font-bold ${stat.color}`}>{stat.value}</h3>
                                     {parseInt(stat.value) > 0 && (
-                                        <span className="text-[9px] uppercase font-mono text-neutral-500 flex items-center gap-1">
-                                            <div className={`w-1.5 h-1.5 rounded-full ${stat.bg.replace('/10', '')} animate-pulse`} /> action req
-                                        </span>
+                                        <span className="animate-pulse text-[10px] font-mono text-neutral-600">ACTION REQUIRED</span>
                                     )}
                                 </div>
                             </div>
@@ -391,319 +381,216 @@ const AdminDashboard: React.FC = () => {
                     </div>
 
                     {/* CHARTS (Row 3) */}
-                    <div className="bg-[#111827] border border-white/5 rounded-md p-0 overflow-hidden relative">
-                        <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent"></div>
-                        <div className="p-4 md:p-6 border-b border-white/5 flex items-center justify-between bg-gradient-to-b from-indigo-500/5 to-transparent">
-                            <div className="flex items-center gap-2 text-indigo-400">
-                                <Activity size={16} />
-                                <h2 className="text-sm font-bold font-mono tracking-widest uppercase">Revenue Growth Matrix</h2>
+                    <div className="hud-glass border border-white/5 overflow-hidden">
+                        <div className="p-6 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
+                            <div className="flex items-center gap-3 text-indigo-400">
+                                <Activity size={18} />
+                                <h2 className="text-sm font-mono font-bold uppercase tracking-[0.2em]">revenue growth matrix</h2>
                             </div>
-                            <div className="hidden md:flex bg-[#0B0F19] rounded-sm border border-white/5 p-1">
-                                {['Today', '7 Days', '30 Days', '12 Months'].map((filter, i) => (
-                                    <button key={i} className={`px-3 py-1 text-[10px] font-mono uppercase ${i === 1 ? 'bg-indigo-600/20 text-indigo-400 shadow-[0_0_10px_rgba(99,102,241,0.2)]' : 'text-neutral-500 hover:text-neutral-300'} rounded-sm transition-all`}>
+                            <div className="flex bg-black/40 p-1 border border-white/5">
+                                {['today', '7 days', '30 days', '12 months'].map((filter, i) => (
+                                    <button key={i} className={`px-4 py-1.5 text-[10px] font-mono uppercase ${i === 1 ? 'bg-indigo-600 text-white shadow-[0_0_15px_rgba(99,102,241,0.4)]' : 'text-neutral-500 hover:text-neutral-300'} transition-all`}>
                                         {filter}
                                     </button>
                                 ))}
                             </div>
                         </div>
-                        <div className="p-4 relative">
-                            {/* Pass a custom prop to RevenueChart if needed to style it darkly, assuming it adapts or has its own container */}
-                            <div className="opacity-90 contrast-125 grayscale-[20%] sepia-[10%] hue-rotate-15">
+                        <div className="p-6">
+                            <div className="h-[350px] w-full">
                                 <RevenueChart />
                             </div>
                         </div>
                     </div>
 
-                    {/* INSIGHTS & MONITORING (Row 4 & 5) */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        {/* Insights Lists */}
-                        <div className="space-y-6">
-                            <div className="bg-[#111827] border border-white/5 rounded-md p-5">
-                                <h3 className="text-xs font-bold text-neutral-400 font-mono uppercase tracking-widest mb-4 border-b border-white/5 pb-2">Top Performance / Sellers</h3>
-                                <div className="space-y-3">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-5 h-5 bg-indigo-500/20 border border-indigo-500/50 text-indigo-400 flex items-center justify-center text-[10px] font-bold rounded-sm">1</div>
-                                            <span className="text-sm text-neutral-200 font-medium">TechStore</span>
+                    {/* INSIGHTS & FEED (Row 4) */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div className="hud-glass border border-white/5 p-6">
+                            <h3 className="text-xs font-mono font-bold text-neutral-500 uppercase tracking-[0.2em] mb-6 border-b border-white/5 pb-3">top nodes / output</h3>
+                            <div className="space-y-4">
+                                {[
+                                    { name: 'TechStore', value: '₹1.2L', rank: '01', trend: 'up' },
+                                    { name: 'FashionHub', value: '₹84K', rank: '02', trend: 'up' },
+                                    { name: 'GadgetWorld', value: '₹61K', rank: '03', trend: 'down' }
+                                ].map((node, i) => (
+                                    <div key={i} className="flex items-center justify-between group">
+                                        <div className="flex items-center gap-4">
+                                            <span className="text-[10px] font-mono text-neutral-700 font-bold">{node.rank}</span>
+                                            <span className="text-sm text-neutral-300 font-mono group-hover:text-white transition-colors">{node.name}</span>
                                         </div>
-                                        <span className="text-sm text-emerald-400 font-mono">₹1.2L</span>
-                                    </div>
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-5 h-5 bg-neutral-800 border border-neutral-700 flex items-center justify-center text-[10px] font-bold rounded-sm">2</div>
-                                            <span className="text-sm text-neutral-200 font-medium">FashionHub</span>
-                                        </div>
-                                        <span className="text-sm text-emerald-400 font-mono">₹84K</span>
-                                    </div>
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-5 h-5 bg-neutral-800 border border-neutral-700 flex items-center justify-center text-[10px] font-bold rounded-sm">3</div>
-                                            <span className="text-sm text-neutral-200 font-medium">GadgetWorld</span>
-                                        </div>
-                                        <span className="text-sm text-emerald-400 font-mono">₹61K</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="bg-[#111827] border border-white/5 rounded-md p-5">
-                                <h3 className="text-xs font-bold text-neutral-400 font-mono uppercase tracking-widest mb-4 border-b border-white/5 pb-2">Top Performance / Products</h3>
-                                <div className="space-y-3">
-                                    <div className="flex items-center justify-between group cursor-pointer">
-                                        <span className="text-sm text-neutral-300 group-hover:text-indigo-400 transition-colors">Wireless Earbuds Pro</span>
-                                        <ArrowUpRight size={14} className="text-indigo-500 opacity-0 group-hover:opacity-100 transition-all" />
-                                    </div>
-                                    <div className="flex items-center justify-between group cursor-pointer">
-                                        <span className="text-sm text-neutral-300 group-hover:text-indigo-400 transition-colors">iPhone 15 Case</span>
-                                        <ArrowUpRight size={14} className="text-indigo-500 opacity-0 group-hover:opacity-100 transition-all" />
-                                    </div>
-                                    <div className="flex items-center justify-between group cursor-pointer">
-                                        <span className="text-sm text-neutral-300 group-hover:text-indigo-400 transition-colors">Minimal Smartwatch</span>
-                                        <ArrowUpRight size={14} className="text-indigo-500 opacity-0 group-hover:opacity-100 transition-all" />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Recent Activity */}
-                        <div className="bg-[#111827] border border-white/5 rounded-md p-5 flex flex-col h-full">
-                            <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-2">
-                                <h3 className="text-xs font-bold text-neutral-400 font-mono uppercase tracking-widest">Live Activity Feed</h3>
-                                <div className="flex items-center gap-2 text-[9px] text-emerald-400 font-mono uppercase">
-                                    <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div> Live
-                                </div>
-                            </div>
-                            <div className="space-y-4 flex-1 overflow-y-auto pr-2 custom-scrollbar">
-                                {(recentActivity.length > 0 ? recentActivity : [
-                                    { id: '1', user: 'TechStore', detail: 'added 12 products', time: 'Just now', status: 'success', type: 'product' },
-                                    { id: '2', user: 'System', detail: 'Order #18421 placed (₹1299)', time: '2m ago', status: 'info', type: 'order' },
-                                    { id: '3', user: 'FashionHub', detail: 'requested payout', time: '15m ago', status: 'warning', type: 'finance' },
-                                    { id: '4', user: 'SmartKart', detail: 'applied as new seller', time: '1h ago', status: 'pending', type: 'user' },
-                                ]).map((act) => (
-                                    <div key={act.id} className="group relative pl-4 border-l border-white/10 hover:border-indigo-500/50 transition-colors">
-                                        <div className={`absolute -left-[3px] top-1.5 w-1.5 h-1.5 rounded-full ${act.status === 'pending' ? 'bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.5)]' :
-                                            act.status === 'warning' ? 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]' :
-                                                act.status === 'info' ? 'bg-blue-400' : 'bg-emerald-500'
-                                            }`} />
-                                        <p className="text-xs text-neutral-300 font-mono leading-relaxed">
-                                            <span className="font-bold text-white mb-0.5 block">{act.user}</span>
-                                            {act.detail}
-                                        </p>
-                                        <p className="text-[10px] text-neutral-600 mt-1 font-mono">{act.time}</p>
+                                        <span className={`text-sm font-mono ${node.trend === 'up' ? 'text-emerald-400' : 'text-amber-400'}`}>{node.value}</span>
                                     </div>
                                 ))}
                             </div>
-                            <button
-                                onClick={() => navigate('/admin/logs')}
-                                className="mt-4 w-full py-2 border border-white/5 hover:border-indigo-500/30 hover:bg-indigo-500/5 text-neutral-400 hover:text-indigo-300 text-[10px] font-mono uppercase tracking-widest rounded-sm transition-all"
-                            >
-                                View Detailed Logs
-                            </button>
+                        </div>
+
+                        <div className="hud-glass border border-white/5 p-6">
+                            <div className="flex items-center justify-between mb-6 border-b border-white/5 pb-3">
+                                <h3 className="text-xs font-mono font-bold text-neutral-500 uppercase tracking-[0.2em]">live telemetry</h3>
+                                <div className="flex items-center gap-2 text-[10px] text-emerald-500 font-mono">
+                                    <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div> SYNCED
+                                </div>
+                            </div>
+                            <div className="space-y-5">
+                                {(recentActivity.length > 0 ? recentActivity : [
+                                    { id: '1', user: 'TechStore', detail: 'added 12 products', time: '02m ago', status: 'success' },
+                                    { id: '2', user: 'System', detail: 'Order #18421 processed', time: '14m ago', status: 'info' },
+                                    { id: '3', user: 'FashionHub', detail: 'requested payout', time: '32m ago', status: 'warning' },
+                                ]).map((act) => (
+                                    <div key={act.id} className="border-l-2 border-white/5 pl-4 hover:border-indigo-500/30 transition-colors">
+                                        <p className="text-xs font-mono text-neutral-300">
+                                            <span className="text-white font-bold block mb-0.5">{act.user}</span>
+                                            {act.detail}
+                                        </p>
+                                        <span className="text-[9px] font-mono text-neutral-600 mt-1 block uppercase">{act.time}</span>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 {/* RIGHT SIDEBAR (25%) */}
-                <div className="space-y-6">
-
+                <div className="space-y-8">
                     {/* QUICK ACTIONS */}
-                    <div className="bg-[#111827] border border-white/5 rounded-md p-5 border-t-2 border-t-indigo-500">
-                        <h3 className="text-xs font-bold text-indigo-400 font-mono uppercase tracking-widest mb-4">Quick Actions</h3>
-                        <div className="space-y-2">
-                            <button onClick={() => navigate('/admin/applications')} className="w-full flex items-center justify-between p-3 bg-[#0B0F19] border border-white/5 hover:border-indigo-500/50 rounded-sm group transition-all">
-                                <span className="text-sm text-neutral-300 font-medium group-hover:text-white transition-colors flex items-center gap-2">
-                                    <Plus size={14} className="text-emerald-500" /> Approve Seller
-                                </span>
-                                <ArrowUpRight size={14} className="text-neutral-600 group-hover:text-indigo-400 transition-colors" />
-                            </button>
-                            <button onClick={() => navigate('/admin/sellers')} className="w-full flex items-center justify-between p-3 bg-[#0B0F19] border border-white/5 hover:border-red-500/50 rounded-sm group transition-all">
-                                <span className="text-sm text-neutral-300 font-medium group-hover:text-white transition-colors flex items-center gap-2">
-                                    <X size={14} className="text-red-500" /> Ban Seller
-                                </span>
-                                <ArrowUpRight size={14} className="text-neutral-600 group-hover:text-red-400 transition-colors" />
-                            </button>
-                            <button onClick={() => setShowAnnouncementModal(true)} className="w-full flex items-center justify-between p-3 bg-[#0B0F19] border border-white/5 hover:border-indigo-500/50 rounded-sm group transition-all">
-                                <span className="text-sm text-neutral-300 font-medium group-hover:text-white transition-colors flex items-center gap-2">
-                                    <Megaphone size={14} className="text-indigo-400" /> Announcement
-                                </span>
-                                <ArrowUpRight size={14} className="text-neutral-600 group-hover:text-indigo-400 transition-colors" />
-                            </button>
-                            <button onClick={handleExportReport} className="w-full flex items-center justify-between p-3 bg-[#0B0F19] border border-white/5 hover:border-indigo-500/50 rounded-sm group transition-all">
-                                <span className="text-sm text-neutral-300 font-medium group-hover:text-white transition-colors flex items-center gap-2">
-                                    <Download size={14} className="text-blue-400" /> Export Revenue
-                                </span>
-                                <ArrowUpRight size={14} className="text-neutral-600 group-hover:text-indigo-400 transition-colors" />
-                            </button>
+                    <div className="hud-glass border border-white/5 p-6 border-t-2 border-t-indigo-500">
+                        <h3 className="text-xs font-mono font-bold text-indigo-400 uppercase tracking-[0.2em] mb-6">command override</h3>
+                        <div className="space-y-3">
+                            {[
+                                { label: 'APPROVE SELLER', icon: Plus, color: 'text-emerald-500', path: '/admin/applications' },
+                                { label: 'BAN SELLER', icon: X, color: 'text-red-500', path: '/admin/sellers' },
+                                { label: 'EMIT BROADCAST', icon: Megaphone, color: 'text-indigo-400', path: '#' },
+                                { label: 'EXPORT DATA', icon: Download, color: 'text-blue-400', action: handleExportReport }
+                            ].map((action, i) => (
+                                <button 
+                                    key={i} 
+                                    onClick={() => action.action ? action.action() : navigate(action.path)}
+                                    className="w-full flex items-center justify-between p-4 bg-white/[0.02] border border-white/5 hover:border-indigo-500/30 group transition-all"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <action.icon size={14} className={action.color} />
+                                        <span className="text-[10px] font-mono font-bold text-neutral-400 group-hover:text-white">{action.label}</span>
+                                    </div>
+                                    <ArrowUpRight size={14} className="text-neutral-700 group-hover:text-indigo-400" />
+                                </button>
+                            ))}
                         </div>
                     </div>
 
                     {/* SYSTEM HEALTH */}
-                    <div className="bg-[#111827] border border-white/5 rounded-md p-5">
-                        <h3 className="text-xs font-bold text-neutral-400 font-mono uppercase tracking-widest mb-4">System Health</h3>
-                        <div className="space-y-4">
-                            <div>
-                                <div className="flex items-center justify-between text-[10px] font-mono text-neutral-400 mb-1">
-                                    <span>API UPTIME</span>
-                                    <span className="text-emerald-400">99.98%</span>
+                    <div className="hud-glass border border-white/5 p-6">
+                        <h3 className="text-xs font-mono font-bold text-neutral-500 uppercase tracking-[0.2em] mb-6">system diagnostic</h3>
+                        <div className="space-y-6">
+                            {[
+                                { label: 'API CORE', value: '99.98%', color: 'bg-emerald-500', width: '99%' },
+                                { label: 'DB CLUSTER', value: '24%', color: 'bg-blue-500', width: '24%' },
+                                { label: 'STORAGE', value: '21%', color: 'bg-amber-500', width: '21%' }
+                            ].map((health, i) => (
+                                <div key={i}>
+                                    <div className="flex items-center justify-between text-[9px] font-mono text-neutral-500 mb-2">
+                                        <span>{health.label}</span>
+                                        <span>{health.value}</span>
+                                    </div>
+                                    <div className="h-1 bg-white/5 overflow-hidden">
+                                        <div className={`h-full ${health.color} shadow-[0_0_10px_rgba(255,255,255,0.1)]`} style={{ width: health.width }}></div>
+                                    </div>
                                 </div>
-                                <div className="h-1 bg-[#0B0F19] rounded-none overflow-hidden border border-white/5">
-                                    <div className="h-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" style={{ width: '99.98%' }}></div>
-                                </div>
-                            </div>
-                            <div>
-                                <div className="flex items-center justify-between text-[10px] font-mono text-neutral-400 mb-1">
-                                    <span>DATABASE LOAD</span>
-                                    <span className="text-blue-400">NORMAL (24%)</span>
-                                </div>
-                                <div className="h-1 bg-[#0B0F19] rounded-none overflow-hidden border border-white/5">
-                                    <div className="h-full bg-blue-500 w-[24%]"></div>
-                                </div>
-                            </div>
-                            <div>
-                                <div className="flex items-center justify-between text-[10px] font-mono text-neutral-400 mb-1">
-                                    <span>STORAGE</span>
-                                    <span className="text-amber-400">210MB / 1GB</span>
-                                </div>
-                                <div className="h-1 bg-[#0B0F19] rounded-none overflow-hidden border border-white/5">
-                                    <div className="h-full bg-amber-500 w-[21%] shadow-[0_0_10px_rgba(245,158,11,0.2)]"></div>
-                                </div>
-                            </div>
+                            ))}
                         </div>
                     </div>
 
-                    {/* CRITICAL ALERTS */}
-                    <div className="bg-[#111827] border border-red-500/20 shadow-[0_0_20px_rgba(239,68,68,0.05)] rounded-md p-5 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-full h-[1px] bg-gradient-to-l from-red-500/50 to-transparent"></div>
-                        <h3 className="text-xs font-bold text-red-500 font-mono uppercase tracking-widest mb-4 flex items-center gap-2">
-                            <AlertCircle size={14} /> Critical Alerts
+                    {/* ALERT QUEUE */}
+                    <div className="hud-glass border border-red-500/20 p-6 relative">
+                        <div className="absolute top-0 right-0 w-24 h-[1px] bg-red-500/50"></div>
+                        <h3 className="text-xs font-mono font-bold text-red-500 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
+                            <AlertCircle size={14} /> alert queue
                         </h3>
-                        <div className="space-y-3">
-                            <div className="bg-red-500/5 border border-red-500/10 p-3 rounded-sm flex items-start gap-3">
-                                <div className="w-1.5 h-1.5 bg-red-500 rounded-full mt-1.5 animate-pulse shadow-[0_0_5px_rgba(239,68,68,0.8)]"></div>
-                                <div>
-                                    <p className="text-xs font-medium text-red-400">3 sellers waiting approval</p>
-                                    <button onClick={() => navigate('/admin/applications')} className="text-[10px] font-mono text-neutral-400 hover:text-white mt-1 border-b border-neutral-700 pb-0.5 transition-colors">Review now →</button>
-                                </div>
+                        <div className="space-y-4">
+                            <div className="bg-red-500/5 border border-red-500/10 p-4">
+                                <p className="text-[11px] font-mono text-red-400 mb-1">3 SELLERS PENDING</p>
+                                <button onClick={() => navigate('/admin/applications')} className="text-[9px] font-mono text-neutral-600 hover:text-white uppercase underline underline-offset-4">verify source</button>
                             </div>
-                            <div className="bg-amber-500/5 border border-amber-500/10 p-3 rounded-sm flex items-start gap-3">
-                                <div className="w-1.5 h-1.5 bg-amber-500 rounded-full mt-1.5 shadow-[0_0_5px_rgba(245,158,11,0.5)]"></div>
-                                <div>
-                                    <p className="text-xs font-medium text-amber-400">5 payout requests pending</p>
-                                    <button className="text-[10px] font-mono text-neutral-400 hover:text-white mt-1 border-b border-neutral-700 pb-0.5 transition-colors">Open queue →</button>
-                                </div>
+                            <div className="bg-amber-500/5 border border-amber-500/10 p-4">
+                                <p className="text-[11px] font-mono text-amber-400 mb-1">5 PAYOUT REQUESTS</p>
+                                <button className="text-[9px] font-mono text-neutral-600 hover:text-white uppercase underline underline-offset-4">authorize transmission</button>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Announcement Modal (Unchanged functional structure, styled to match HUD) */}
+            {/* Announcement Modal */}
             {showAnnouncementModal && (
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-end md:items-center justify-center z-50 md:p-4">
-                    <div className="bg-[#0B0F19] border border-indigo-500/30 shadow-[0_0_40px_rgba(99,102,241,0.15)] rounded-md w-full md:max-w-lg p-5 md:p-6 animate-in slide-in-from-bottom-4 md:zoom-in-95 duration-200">
-                        <div className="flex items-center justify-between mb-6 border-b border-white/10 pb-4">
-                            <h2 className="text-lg font-mono font-bold text-white tracking-widest uppercase">System Broadcast</h2>
-                            <button
-                                onClick={() => setShowAnnouncementModal(false)}
-                                className="w-8 h-8 flex items-center justify-center hover:bg-white/5 rounded-sm transition-colors border border-transparent hover:border-white/10"
-                            >
-                                <X size={16} className="text-neutral-400" />
+                <div className="fixed inset-0 bg-black/90 backdrop-blur-xl flex items-center justify-center z-[100] p-4">
+                    <div className="hud-glass border border-indigo-500/50 w-full max-w-lg p-8 relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-2 h-2 border-t-2 border-l-2 border-indigo-500"></div>
+                        <div className="absolute top-0 right-0 w-2 h-2 border-t-2 border-r-2 border-indigo-500"></div>
+                        <div className="absolute bottom-0 left-0 w-2 h-2 border-b-2 border-l-2 border-indigo-500"></div>
+                        <div className="absolute bottom-0 right-0 w-2 h-2 border-b-2 border-r-2 border-indigo-500"></div>
+
+                        <div className="flex items-center justify-between mb-8">
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-[1px] bg-indigo-500"></div>
+                                <h2 className="text-lg font-mono font-bold text-white uppercase tracking-[0.3em]">broadcast emit</h2>
+                            </div>
+                            <button onClick={() => setShowAnnouncementModal(false)} className="text-neutral-500 hover:text-white transition-colors">
+                                <X size={20} />
                             </button>
                         </div>
 
-                        <div className="space-y-4">
+                        <div className="space-y-6">
                             <div>
-                                <label className="block text-[10px] font-mono uppercase tracking-widest text-indigo-400 mb-2">Subject</label>
+                                <label className="block text-[10px] font-mono uppercase tracking-[0.2em] text-indigo-400 mb-2">transmission subject</label>
                                 <input
                                     type="text"
                                     value={announcementTitle}
                                     onChange={(e) => setAnnouncementTitle(e.target.value)}
-                                    className="w-full bg-[#111827] border border-white/10 rounded-sm px-4 py-3 text-sm font-mono text-white placeholder-neutral-600 focus:outline-none focus:border-indigo-500 transition-colors shadow-[inset_0_2px_10px_rgba(0,0,0,0.5)]"
-                                    placeholder="Enter broadcast subject..."
+                                    className="w-full bg-black/40 border border-white/10 p-4 text-sm font-mono text-white focus:outline-none focus:border-indigo-500 transition-colors"
+                                    placeholder="Enter subject identifier..."
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-[10px] font-mono uppercase tracking-widest text-indigo-400 mb-2">Message Payload</label>
+                                <label className="block text-[10px] font-mono uppercase tracking-[0.2em] text-indigo-400 mb-2">message load</label>
                                 <textarea
                                     value={announcementContent}
                                     onChange={(e) => setAnnouncementContent(e.target.value)}
                                     rows={4}
-                                    className="w-full bg-[#111827] border border-white/10 rounded-sm px-4 py-3 text-sm font-mono text-white placeholder-neutral-600 focus:outline-none focus:border-indigo-500 transition-colors resize-none shadow-[inset_0_2px_10px_rgba(0,0,0,0.5)]"
-                                    placeholder="Enter transmission data..."
+                                    className="w-full bg-black/40 border border-white/10 p-4 text-sm font-mono text-white focus:outline-none focus:border-indigo-500 transition-colors resize-none"
+                                    placeholder="Enter encrypted message data..."
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-[10px] font-mono uppercase tracking-widest text-indigo-400 mb-2">Target Node</label>
-                                <div className="grid grid-cols-2 gap-2 mb-3">
+                                <label className="block text-[10px] font-mono uppercase tracking-[0.2em] text-indigo-400 mb-2">target vector</label>
+                                <div className="grid grid-cols-2 gap-3 mb-4">
                                     <button
                                         onClick={() => setTargetType('platform')}
-                                        className={`px-4 py-2 rounded-sm border text-xs font-mono uppercase tracking-wider transition-all ${targetType === 'platform'
-                                            ? 'bg-indigo-600/20 border-indigo-500 text-indigo-400 shadow-[0_0_15px_rgba(99,102,241,0.2)]'
-                                            : 'bg-[#111827] border-white/10 text-neutral-500 hover:border-white/20'
-                                            }`}
+                                        className={`p-3 border text-[10px] font-mono uppercase tracking-widest transition-all ${targetType === 'platform' ? 'bg-indigo-600 border-indigo-400 text-white' : 'bg-white/5 border-white/10 text-neutral-500 hover:border-white/20'}`}
                                     >
-                                        Global (All)
+                                        GLOBAL BROADCAST
                                     </button>
                                     <button
                                         onClick={() => setTargetType('seller')}
-                                        className={`px-4 py-2 rounded-sm border text-xs font-mono uppercase tracking-wider transition-all ${targetType === 'seller'
-                                            ? 'bg-indigo-600/20 border-indigo-500 text-indigo-400 shadow-[0_0_15px_rgba(99,102,241,0.2)]'
-                                            : 'bg-[#111827] border-white/10 text-neutral-500 hover:border-white/20'
-                                            }`}
+                                        className={`p-3 border text-[10px] font-mono uppercase tracking-widest transition-all ${targetType === 'seller' ? 'bg-indigo-600 border-indigo-400 text-white' : 'bg-white/5 border-white/10 text-neutral-500 hover:border-white/20'}`}
                                     >
-                                        Direct Link
+                                        DIRECT NODE LINK
                                     </button>
                                 </div>
 
                                 {targetType === 'seller' && (
-                                    <div className="space-y-2">
+                                    <div className="relative">
                                         {!selectedSellerName ? (
-                                            <div className="relative">
-                                                <input
-                                                    type="text"
-                                                    value={sellerSearch}
-                                                    onChange={(e) => setSellerSearch(e.target.value)}
-                                                    className="w-full bg-[#111827] border border-white/10 rounded-sm px-4 py-3 text-sm font-mono text-white placeholder-neutral-600 focus:outline-none focus:border-indigo-500 transition-colors"
-                                                    placeholder="Query merchant database..."
-                                                />
-                                                {searchingSellers && (
-                                                    <div className="absolute right-3 top-3.5 text-indigo-500 font-mono text-xs animate-pulse">Scanning...</div>
-                                                )}
-                                                {sellerResults.length > 0 && (
-                                                    <div className="absolute z-10 w-full mt-1 bg-[#0F172A] border border-indigo-500/30 rounded-sm shadow-[0_10px_30px_rgba(0,0,0,0.8)] max-h-48 overflow-y-auto">
-                                                        {sellerResults.map(s => (
-                                                            <button
-                                                                key={s.id}
-                                                                onClick={() => {
-                                                                    setTargetSellerId(s.id);
-                                                                    setSelectedSellerName(s.store_name);
-                                                                    setSellerResults([]);
-                                                                    setSellerSearch('');
-                                                                }}
-                                                                className="w-full text-left px-4 py-3 hover:bg-indigo-500/10 text-sm font-mono text-white border-b border-white/5 last:border-0"
-                                                            >
-                                                                <div className="font-bold">{s.store_name}</div>
-                                                                <div className="text-[10px] text-neutral-500 mt-0.5">UID: {s.id.split('-')[0]}</div>
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </div>
+                                            <input
+                                                type="text"
+                                                value={sellerSearch}
+                                                onChange={(e) => setSellerSearch(e.target.value)}
+                                                className="w-full bg-black/40 border border-white/10 p-4 text-sm font-mono text-white focus:outline-none focus:border-indigo-500"
+                                                placeholder="Query merchant nodes..."
+                                            />
                                         ) : (
-                                            <div className="flex items-center justify-between bg-emerald-500/10 border border-emerald-500/30 rounded-sm px-4 py-2">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-                                                    <span className="text-emerald-400 font-mono text-xs">{selectedSellerName} [CONNECTED]</span>
-                                                </div>
-                                                <button
-                                                    onClick={() => {
-                                                        setSelectedSellerName('');
-                                                        setTargetSellerId('');
-                                                    }}
-                                                    className="w-8 h-8 flex items-center justify-center hover:bg-red-500/20 rounded-sm text-red-500 transition-colors"
-                                                >
-                                                    <X size={14} />
-                                                </button>
+                                            <div className="flex items-center justify-between bg-emerald-500/10 border border-emerald-500/30 p-4">
+                                                <span className="text-emerald-400 font-mono text-xs">{selectedSellerName} [ACTIVE LINK]</span>
+                                                <button onClick={() => { setSelectedSellerName(''); setTargetSellerId(''); }} className="text-red-500"><X size={14} /></button>
                                             </div>
                                         )}
                                     </div>
@@ -711,19 +598,14 @@ const AdminDashboard: React.FC = () => {
                             </div>
                         </div>
 
-                        <div className="flex gap-3 mt-8">
-                            <button
-                                onClick={() => setShowAnnouncementModal(false)}
-                                className="flex-1 py-2 bg-[#111827] border border-white/10 hover:border-white/30 hover:bg-white/5 text-white font-mono text-xs uppercase tracking-widest rounded-sm transition-colors"
-                            >
-                                Abort
-                            </button>
-                            <button
+                        <div className="flex gap-4 mt-10">
+                            <button onClick={() => setShowAnnouncementModal(false)} className="flex-1 py-3 border border-white/10 text-white font-mono text-xs uppercase tracking-widest hover:bg-white/5 transition-colors">ABORT</button>
+                            <button 
                                 onClick={handleCreateAnnouncement}
-                                disabled={isSubmitting || !announcementTitle.trim() || !announcementContent.trim() || (targetType === 'seller' && !targetSellerId)}
-                                className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:bg-[#111827] disabled:text-neutral-600 border border-indigo-500 text-white font-mono text-xs uppercase tracking-widest rounded-sm transition-colors shadow-[0_0_15px_rgba(99,102,241,0.3)] disabled:shadow-none"
+                                disabled={isSubmitting || !announcementTitle.trim() || !announcementContent.trim()}
+                                className="flex-1 py-3 bg-indigo-600 border border-indigo-400 text-white font-mono text-xs uppercase tracking-widest hover:bg-indigo-500 transition-all shadow-[0_0_20px_rgba(99,102,241,0.4)] disabled:opacity-50"
                             >
-                                {isSubmitting ? 'Transmitting...' : 'Transmit'}
+                                {isSubmitting ? 'TRANSMITTING...' : 'INITIATE TRANSMISSION'}
                             </button>
                         </div>
                     </div>
@@ -731,14 +613,10 @@ const AdminDashboard: React.FC = () => {
             )}
 
             {showSupportModal && (
-                <AdminSupportModal onClose={() => {
-                    setShowSupportModal(false);
-                    fetchDashboardData();
-                }} />
+                <AdminSupportModal onClose={() => { setShowSupportModal(false); fetchDashboardData(); }} />
             )}
         </div>
     );
 };
 
 export default AdminDashboard;
-

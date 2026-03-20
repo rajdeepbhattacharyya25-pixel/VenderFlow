@@ -70,7 +70,7 @@ const RevenueChart: React.FC<RevenueChartProps> = ({ className = '' }) => {
                     <button
                         onClick={() => setTimeRange('weekly')}
                         className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${timeRange === 'weekly'
-                            ? 'bg-indigo-600 text-white'
+                            ? 'bg-emerald-600 text-white'
                             : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700'
                             }`}
                     >
@@ -79,7 +79,7 @@ const RevenueChart: React.FC<RevenueChartProps> = ({ className = '' }) => {
                     <button
                         onClick={() => setTimeRange('monthly')}
                         className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${timeRange === 'monthly'
-                            ? 'bg-indigo-600 text-white'
+                            ? 'bg-emerald-600 text-white'
                             : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700'
                             }`}
                     >
@@ -105,8 +105,8 @@ const RevenueChart: React.FC<RevenueChartProps> = ({ className = '' }) => {
                         >
                             <defs>
                                 <linearGradient id="adminColorValue" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
-                                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                                    <stop offset="5%" stopColor="#10B981" stopOpacity={0.3} />
+                                    <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
                                 </linearGradient>
                             </defs>
                             <CartesianGrid
@@ -127,6 +127,7 @@ const RevenueChart: React.FC<RevenueChartProps> = ({ className = '' }) => {
                                 tickLine={false}
                                 tick={{ fill: '#737373', fontSize: 11 }}
                                 tickFormatter={(value) => {
+                                    if (value === null || value === undefined || isNaN(value)) return '0';
                                     if (value >= 100000) return `${(value / 100000).toFixed(0)}L`;
                                     if (value >= 1000) return `${(value / 1000).toFixed(0)}K`;
                                     return value.toString();
@@ -134,13 +135,13 @@ const RevenueChart: React.FC<RevenueChartProps> = ({ className = '' }) => {
                             />
                             <Tooltip
                                 content={<CustomTooltip />}
-                                cursor={{ stroke: '#6366f1', strokeWidth: 1, strokeDasharray: '4 4' }}
+                                cursor={{ stroke: '#10B981', strokeWidth: 1, strokeDasharray: '4 4' }}
                             />
                             <Area
                                 key={timeRange}
                                 type="monotone"
                                 dataKey="value"
-                                stroke="#6366f1"
+                                stroke="#10B981"
                                 strokeWidth={2}
                                 fillOpacity={1}
                                 fill="url(#adminColorValue)"
