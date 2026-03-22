@@ -1,23 +1,33 @@
-console.log("[VenderFlow] index.tsx execution started");
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
-console.log("[VenderFlow] Imports completed");
+import './index.css';
+import { ThemeProvider } from 'next-themes';
+import './instrument'; // Sentry initialization
 
 const rootElement = document.getElementById('root');
-
 if (!rootElement) {
-  console.error("[VenderFlow] FATAL: Could not find root element");
   throw new Error("Could not find root element to mount to");
 }
 
-console.log("[VenderFlow] Creating React root...");
-const root = ReactDOM.createRoot(rootElement);
+const rootOptions = {
+  onUncaughtError: (error: Error, errorInfo: React.ErrorInfo) => {
+    console.error("React Uncaught Error:", error, errorInfo);
+  },
+  onCaughtError: (error: Error, errorInfo: React.ErrorInfo) => {
+    console.error("React Caught Error:", error, errorInfo);
+  },
+  onRecoverableError: (error: Error, errorInfo: React.ErrorInfo) => {
+    console.error("React Recoverable Error:", error, errorInfo);
+  }
+};
 
-console.log("[VenderFlow] Starting initial render...");
+const root = ReactDOM.createRoot(rootElement, rootOptions);
+
 root.render(
   <React.StrictMode>
-    <App />
+    <ThemeProvider attribute="class">
+      <App />
+    </ThemeProvider>
   </React.StrictMode>
 );
-console.log("[VenderFlow] root.render() called");
