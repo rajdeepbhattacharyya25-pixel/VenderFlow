@@ -120,14 +120,14 @@ export default function LandingPage() {
     const handleLogin = async () => {
         if (user) {
             try {
+                // Short timeout: don't block the user for more than 1.5s
                 const profilePromise = supabase
                     .from('profiles')
                     .select('role')
                     .eq('id', user.id)
-                    .maybeSingle()
-                    .then(res => res);
+                    .maybeSingle();
 
-                const { data: profile } = await withTimeout(profilePromise, 5000, 'fetch-profile') as any;
+                const { data: profile } = await withTimeout(profilePromise, 1500, 'fetch-profile') as any;
 
                 if (profile?.role === 'admin') {
                     navigate('/admin');
@@ -135,7 +135,8 @@ export default function LandingPage() {
                     navigate('/dashboard');
                 }
             } catch (err) {
-                console.warn('handleLogin redirecting with fallback:', err);
+                console.warn('handleLogin redirecting with fallback (timeout or error):', err);
+                // Graceful fallback: go to dashboard anyway if we have a user
                 navigate('/dashboard');
             }
         } else {
@@ -246,13 +247,13 @@ export default function LandingPage() {
                 <div ref={containerRef} className="bg-[#050505] min-h-screen text-white font-body overflow-x-clip selection:bg-[#ccff00] selection:text-black">
                     {/* Fixed Anchor Logo */}
                     <div
-                        className="fixed top-8 left-8 z-[9999] flex items-center gap-3 cursor-pointer group/logo"
+                        className="fixed top-4 left-4 sm:top-8 sm:left-8 z-[9999] flex items-center gap-2 sm:gap-3 cursor-pointer group/logo"
                         onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
                     >
-                        <img src="/logo.jpg" alt="VendorFlow Logo" className="w-8 h-8 md:w-10 md:h-10 rounded-full object-cover shadow-sm" />
-                        <div className="flex items-center gap-1.5">
+                        <img src="/logo.jpg" alt="VendorFlow Logo" className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 rounded-full object-cover shadow-sm" />
+                        <div className="flex items-center gap-1 sm:gap-1.5">
                             <span
-                                className="text-[15px] sm:text-[20px] font-extrabold uppercase text-white"
+                                className="text-[13px] sm:text-[18px] md:text-[20px] font-extrabold uppercase text-white"
                                 style={{
                                     fontFamily: "'Syne', sans-serif",
                                     letterSpacing: '-0.03em',
@@ -261,7 +262,7 @@ export default function LandingPage() {
                                 VENDORFLOW
                             </span>
                             <span
-                                className="inline-block text-[#ccff00] text-[12px] sm:text-[16px] font-black leading-none transition-all duration-300 group-hover/logo:drop-shadow-[0_0_8px_#ccff00] translate-y-[-1px]"
+                                className="inline-block text-[#ccff00] text-[10px] sm:text-[14px] md:text-[16px] font-black leading-none transition-all duration-300 group-hover/logo:drop-shadow-[0_0_8px_#ccff00] translate-y-[-1px]"
                                 style={{ fontFamily: "'Syne', sans-serif" }}
                             >
                                 &#9654;
@@ -270,9 +271,9 @@ export default function LandingPage() {
                     </div>
 
                     {/* Minimalist Nav (Actions only on right) */}
-                    <header className="fixed top-0 w-full z-[100] px-4 sm:px-8 py-6 pointer-events-none">
+                    <header className="fixed top-0 w-full z-[100] px-3 sm:px-8 py-4 sm:py-6 pointer-events-none">
                         <div className="max-w-[1600px] mx-auto flex items-center justify-end pointer-events-auto">
-                            <div className="flex gap-4 sm:gap-6 items-center">
+                            <div className="flex gap-3 sm:gap-6 items-center">
                                 {/* Desktop only secondary links */}
                                 <button
                                     onClick={() => {
@@ -287,7 +288,7 @@ export default function LandingPage() {
                                 <motion.button
                                     whileTap={{ scale: 0.95 }}
                                     onClick={handleLogin}
-                                    className="nav-item text-sm sm:text-base font-bold cursor-pointer text-white/70 hover:text-[#ccff00] transition-colors flex items-center justify-center gap-2 p-3 sm:p-2 -mr-3 sm:mr-0 min-h-[44px]"
+                                    className="nav-item text-xs sm:text-base font-bold cursor-pointer text-white/70 hover:text-[#ccff00] transition-colors flex items-center justify-center gap-1.5 sm:gap-2 p-2 sm:p-2 -mr-2 sm:mr-0 min-h-[40px] sm:min-h-[44px]"
                                     title={user ? "Go to Dashboard" : "Seller Login"}
                                 >
                                     <Suspense fallback={<span>{user ? "Dashboard" : "Seller Login"}</span>}>
