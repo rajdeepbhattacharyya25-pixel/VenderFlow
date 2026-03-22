@@ -15,7 +15,6 @@ export const OwlOverlay: React.FC<OwlOverlayProps> = ({
     targetSelector = '.login-panel',
     maxPupilOffset = 8,
     isError = false,
-    palette = { body: '#0b0b0d', accent: '#8A2BE2' }
 }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const svgRef = useRef<SVGSVGElement>(null);
@@ -122,8 +121,8 @@ export const OwlOverlay: React.FC<OwlOverlayProps> = ({
         // Initial reset
         const resetPupils = () => {
             if (!svgRef.current) return;
-            const eyes = svgRef.current.querySelectorAll(`.${styles.pupil}`);
-            eyes.forEach((eye: any) => {
+            const eyes = svgRef.current.querySelectorAll(`.${styles.pupil}`) as NodeListOf<SVGGElement>;
+            eyes.forEach((eye) => {
                 eye.style.transform = 'translate(0px, 0px)';
             });
         };
@@ -142,59 +141,35 @@ export const OwlOverlay: React.FC<OwlOverlayProps> = ({
 
     // Password field tracking logic
     useEffect(() => {
-        const checkPasswordFields = () => {
-            // Re-bind listeners just in case modal re-rendered
-            const target = document.querySelector(targetSelector);
-            if (!target) return;
-
-            const pwInputs = target.querySelectorAll('input[type="password"]') as NodeListOf<HTMLInputElement>;
-
-            let coverTimeout: number;
-
-            const updateCoverState = (inputNode: HTMLInputElement) => {
-                const isFocused = document.activeElement === inputNode;
-
-                if (isFocused) {
-                    setIsCoveringEyes(true);
-                } else {
-                    // Debounce opening wings slightly to avoid flicker when erasing quickly
-                    clearTimeout(coverTimeout);
-                    coverTimeout = window.setTimeout(() => {
-                        // Double check not focused
-                        if (document.activeElement !== inputNode) {
-                            setIsCoveringEyes(false);
-                        }
-                    }, 200);
-                }
-            };
-
-            const handleFocusIn = (e: Event) => updateCoverState(e.target as HTMLInputElement);
-            const handleFocusOut = (e: Event) => updateCoverState(e.target as HTMLInputElement);
-            const handleInput = (e: Event) => updateCoverState(e.target as HTMLInputElement);
-
-            pwInputs.forEach(input => {
-                input.addEventListener('focus', handleFocusIn);
-                input.addEventListener('blur', handleFocusOut);
-                input.addEventListener('input', handleInput);
-
-                // Initial check in case it's autofilled immediately
-                updateCoverState(input);
-            });
-
-            return () => {
-                pwInputs.forEach(input => {
-                    input.removeEventListener('focus', handleFocusIn);
-                    input.removeEventListener('blur', handleFocusOut);
-                    input.removeEventListener('input', handleInput);
-                });
-                clearTimeout(coverTimeout);
-            };
+        const handleFocusChange = () => {
+            const activeElement = document.activeElement as HTMLInputElement;
+            const isPassword = activeElement?.type === 'password' && activeElement.closest(targetSelector);
+            
+            if (isPassword) {
+                setIsCoveringEyes(true);
+            } else {
+                // Small delay to prevent flickering during focus transitions
+                setTimeout(() => {
+                    const currentActive = document.activeElement as HTMLInputElement;
+                    const stillPassword = currentActive?.type === 'password' && currentActive.closest(targetSelector);
+                    if (!stillPassword) {
+                        setIsCoveringEyes(false);
+                    }
+                }, 100);
+            }
         };
 
-        // Poll or try once after mount (since the target panel might mount simultaneously or slightly after)
-        const timeout = setTimeout(checkPasswordFields, 100);
+        // Listen for both focus and input to handle all ways the field can be interacted with
+        document.addEventListener('focusin', handleFocusChange);
+        document.addEventListener('focusout', handleFocusChange);
+        
+        // Initial check
+        handleFocusChange();
 
-        return () => clearTimeout(timeout);
+        return () => {
+            document.removeEventListener('focusin', handleFocusChange);
+            document.removeEventListener('focusout', handleFocusChange);
+        };
     }, [targetSelector]);
 
     return (
