@@ -1,6 +1,5 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App';
 import { ThemeProvider } from 'next-themes';
 
 const rootElement = document.getElementById('root');
@@ -11,9 +10,10 @@ if (!rootElement) {
 const root = ReactDOM.createRoot(rootElement);
 
 root.render(
-  <React.StrictMode>
-    <ThemeProvider attribute="class">
-      <App />
-    </ThemeProvider>
-  </React.StrictMode>
+  <ThemeProvider attribute="class">
+    <div style={{ background: 'white', color: 'black', padding: '50px', fontSize: '24px', fontFamily: 'sans-serif' }}>
+      <h1>ThemeProvider Debug Mode</h1>
+      <p>If you see this, ThemeProvider is working.</p>
+    </div>
+  </ThemeProvider>
 );
