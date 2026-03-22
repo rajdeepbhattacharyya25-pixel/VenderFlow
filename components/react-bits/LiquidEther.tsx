@@ -109,9 +109,11 @@ export default function LiquidEther({
                 this.renderer.setSize(this.width, this.height);
                 this.renderer.domElement.style.width = '100%';
                 this.renderer.domElement.style.height = '100%';
+                this.renderer.setSize(this.width, this.height);
+                this.renderer.domElement.style.width = '100%';
+                this.renderer.domElement.style.height = '100%';
                 this.renderer.domElement.style.display = 'block';
-                this.clock = new THREE.Clock();
-                this.clock.start();
+                this.time = performance.now() * 0.001;
             }
             resize() {
                 if (!this.container) return;
@@ -122,8 +124,9 @@ export default function LiquidEther({
                 if (this.renderer) this.renderer.setSize(this.width, this.height, false);
             }
             update() {
-                this.delta = this.clock.getDelta();
-                this.time += this.delta;
+                const now = performance.now() * 0.001;
+                this.delta = Math.min(now - this.time, 0.1); // cap delta at 100ms
+                this.time = now;
             }
         }
         const Common = new CommonClass();
