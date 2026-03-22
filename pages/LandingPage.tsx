@@ -53,13 +53,22 @@ export default function LandingPage() {
     const [isContactModalOpen, setIsContactModalOpen] = useState(false);
     const [showEffect, setShowEffect] = useState(false);
     const [showMobileSticky, setShowMobileSticky] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
     const { setTheme } = useTheme();
     const containerRef = useRef<HTMLDivElement>(null);
     const scrollSentinelRef = useRef<HTMLDivElement>(null);
 
+    // Initial Mobile Detection
+    useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 768);
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
     // Delay heavy visual effects
     useEffect(() => {
-        const timer = setTimeout(() => setShowEffect(true), 3000);
+        const timer = setTimeout(() => setShowEffect(true), 4000); // Increased to 4s
         return () => clearTimeout(timer);
     }, []);
 
@@ -109,7 +118,7 @@ export default function LandingPage() {
     }, []);
 
     const handleApplyToSell = () => {
-        window.location.href = 'mailto:vendorflowofficial@gmail.com?subject=Apply to Sell on VendorFlow';
+        navigate('/apply');
     };
 
     useMotionValueEvent(scrollYProgress, "change", (latest) => {
@@ -127,7 +136,7 @@ export default function LandingPage() {
                     .eq('id', user.id)
                     .maybeSingle();
 
-                const { data: profile } = await withTimeout(profilePromise, 1500, 'fetch-profile') as any;
+                const { data: profile } = await withTimeout(profilePromise, 1500, 'fetch-profile') as { data: { role: string } | null };
 
                 if (profile?.role === 'admin') {
                     navigate('/admin');
@@ -174,8 +183,8 @@ export default function LandingPage() {
         );
 
         // Features Parallax
-        const features = gsap.utils.toArray('.feature-card');
-        features.forEach((feature: any, i) => {
+        const features = gsap.utils.toArray('.feature-card') as HTMLElement[];
+        features.forEach((feature) => {
             gsap.fromTo(feature,
                 { y: 100, opacity: 0 },
                 {
@@ -436,11 +445,11 @@ export default function LandingPage() {
                         {/* -mt-[100vh] collapses the empty gap after FloatingCollage unpins (all screen sizes) */}
                         {/* min-h-screen ensures bg-[#050505] fully covers the 100vh overlap so no marquee bleeds through */}
                         <div className="-mt-[100vh] relative z-20 bg-[#050505] min-h-screen">
-                            <DemoVideo />
+                            <DemoVideo isMobile={isMobile} />
                         </div>
                     </Suspense>
                     <Suspense fallback={<div className="h-screen" />}>
-                        <Ecosystem />
+                        <Ecosystem isMobile={isMobile} />
                     </Suspense>
 
                     {/* Smooth Color Transition: Ecosystem grey → Cube black */}
@@ -476,21 +485,21 @@ export default function LandingPage() {
                                     {showEffect && (
                                         <LiquidEther
                                             colors={['#ccff00', '#00ff88', '#88ff44']}
-                                            mouseForce={8}
-                                            cursorSize={45}
+                                            mouseForce={isMobile ? 8 : 4} // Further reduced from 10 : 6
+                                            cursorSize={isMobile ? 60 : 45}
                                             isViscous
-                                            viscous={24}
-                                            iterationsViscous={24}
-                                            iterationsPoisson={22}
+                                            viscous={isMobile ? 18 : 24}
+                                            iterationsViscous={isMobile ? 8 : 24}
+                                            iterationsPoisson={isMobile ? 10 : 22}
                                             dt={0.02}
-                                            resolution={0.4}
+                                            resolution={isMobile ? 0.2 : 0.4}
                                             isBounce={false}
                                             autoDemo
-                                            autoSpeed={0.25}
-                                            autoIntensity={0.8}
+                                            autoSpeed={0.1} // Further reduced from 0.15
+                                            autoIntensity={0.4} // Further reduced from 0.6
                                             takeoverDuration={0.3}
                                             autoResumeDelay={1200}
-                                            autoRampDuration={0.8}
+                                            autoRampDuration={1.5} // Even smoother ramp
                                         />
                                     )}
                                 </Suspense>

@@ -17,7 +17,7 @@ import {
  * 1. DemoVideo Component
  * Features a scroll-triggered zoom-in parallax with glassmorphic borders.
  */
-export const DemoVideo = () => {
+export const DemoVideo = ({ isMobile }: { isMobile?: boolean }) => {
     const sectionRef = useRef(null);
     const { scrollYProgress } = useScroll({
         target: sectionRef,
@@ -28,23 +28,23 @@ export const DemoVideo = () => {
     const opacity = useTransform(scrollYProgress, [0, 0.15], [0, 1]);
 
     return (
-        <section ref={sectionRef} className="pt-8 pb-24 px-6 md:px-12 bg-[#050505] flex justify-center overflow-hidden relative z-20">
+        <section ref={sectionRef} className="pt-8 pb-24 px-4 sm:px-12 bg-[#050505] flex justify-center overflow-hidden relative z-20">
             <motion.div
                 style={{ scale, opacity }}
-                className="relative w-full max-w-6xl aspect-video rounded-3xl border-2 border-[#ccff00]/30 overflow-hidden flex items-center justify-center group cursor-pointer shadow-[0_0_100px_rgba(204,255,0,0.08)] hover:shadow-[0_0_120px_rgba(204,255,0,0.15)] transition-shadow duration-700"
+                className={`relative w-full max-w-6xl ${isMobile ? 'aspect-[4/3]' : 'aspect-video'} rounded-3xl border-2 border-[#ccff00]/30 overflow-hidden flex items-center justify-center group cursor-pointer shadow-[0_0_80px_rgba(204,255,0,0.06)] hover:shadow-[0_0_120px_rgba(204,255,0,0.15)] transition-shadow duration-700`}
             >
                 {/* Visible gradient background */}
                 <div className="absolute inset-0 bg-gradient-to-br from-[#0a0a0a] via-[#111] to-[#0a0a0a]" />
 
                 {/* Radial glow behind play button */}
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(204,255,0,0.08)_0%,_transparent_60%)]" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(204,255,0,0.06)_0%,_transparent_70%)]" />
 
                 {/* Animated grid pattern */}
                 <div
                     className="absolute inset-0 opacity-[0.06]"
                     style={{
                         backgroundImage: `linear-gradient(to right, #ccff00 1px, transparent 1px), linear-gradient(to bottom, #ccff00 1px, transparent 1px)`,
-                        backgroundSize: '40px 40px'
+                        backgroundSize: isMobile ? '30px 30px' : '40px 40px'
                     }}
                 />
 
@@ -52,20 +52,25 @@ export const DemoVideo = () => {
                 <div className="absolute inset-0 bg-[#ccff00]/[0.03] opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
 
                 {/* Center Play Button */}
-                <div className="relative z-10 flex flex-col items-center gap-6">
-                    <div className="w-20 h-20 md:w-24 md:h-24 bg-[#ccff00] rounded-full flex items-center justify-center text-black shadow-xl shadow-[#ccff00]/30 group-hover:scale-110 group-hover:shadow-[#ccff00]/50 transition-all duration-500 ease-out">
-                        <Play fill="currentColor" className="ml-1.5" size={32} />
+                <div className="relative z-10 flex flex-col items-center gap-4 sm:gap-6">
+                    <div className="w-16 h-16 sm:w-24 sm:h-24 bg-[#ccff00] rounded-full flex items-center justify-center text-black shadow-xl shadow-[#ccff00]/30 group-hover:scale-110 group-hover:shadow-[#ccff00]/50 transition-all duration-500 ease-out">
+                        <Play fill="currentColor" className="ml-1 sm:ml-1.5" size={isMobile ? 24 : 32} />
                     </div>
-                    <span className="text-white/60 text-sm md:text-base font-medium uppercase tracking-[0.2em] group-hover:text-white/80 transition-colors duration-500">
+                    <span className="text-white/60 text-xs sm:text-base font-medium uppercase tracking-[0.2em] group-hover:text-white/80 transition-colors duration-500">
                         Watch Demo
                     </span>
                 </div>
 
                 {/* Decorative corner accents */}
-                <div className="absolute top-6 left-6 w-10 h-10 border-t-2 border-l-2 border-[#ccff00]/40 rounded-tl-xl" />
-                <div className="absolute top-6 right-6 w-10 h-10 border-t-2 border-r-2 border-[#ccff00]/40 rounded-tr-xl" />
-                <div className="absolute bottom-6 left-6 w-10 h-10 border-b-2 border-l-2 border-[#ccff00]/40 rounded-bl-xl" />
-                <div className="absolute bottom-6 right-6 w-10 h-10 border-b-2 border-r-2 border-[#ccff00]/40 rounded-br-xl" />
+                <div className="absolute top-4 left-4 sm:top-6 sm:left-6 w-8 h-8 sm:w-10 sm:h-10 border-t-2 border-l-2 border-[#ccff00]/40 rounded-tl-xl" />
+                <div className="absolute top-4 right-4 sm:top-6 sm:right-6 w-8 h-8 sm:w-10 sm:h-10 border-t-2 border-r-2 border-[#ccff00]/40 rounded-tr-xl" />
+                <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 w-8 h-8 sm:w-10 sm:h-10 border-b-2 border-l-2 border-[#ccff00]/40 rounded-bl-xl" />
+                <div className="absolute bottom-4 right-4 sm:bottom-6 sm:right-6 w-8 h-8 sm:w-10 sm:h-10 border-b-2 border-r-2 border-[#ccff00]/40 rounded-br-xl" />
+
+                {/* Subtle border pulse for mobile */}
+                {isMobile && (
+                    <div className="absolute inset-0 border-2 border-[#ccff00]/10 rounded-3xl animate-pulse" />
+                )}
             </motion.div>
         </section>
     );
@@ -285,7 +290,7 @@ const RevealWord = ({ word, i, scrollYProgress }: { word: string, i: number, scr
  * 3. Ecosystem Component
  * Sticky Stacking interaction for features.
  */
-export const Ecosystem = () => {
+export const Ecosystem = ({ isMobile }: { isMobile?: boolean }) => {
     const sectionRef = useRef<HTMLElement>(null);
     const { scrollYProgress } = useScroll({
         target: sectionRef,
@@ -328,34 +333,39 @@ export const Ecosystem = () => {
     ];
 
     return (
-        <section ref={sectionRef} className="py-16 mt-40 px-6 md:px-12 bg-[#050505] relative z-20">
-            <div className="max-w-4xl mx-auto flex flex-col items-center text-center mb-10 px-4 sticky top-[3vh] z-[5]">
+        <section ref={sectionRef} className="pt-24 pb-16 sm:pt-40 px-4 sm:px-12 bg-[#050505] relative z-20">
+            <div 
+                className={`max-w-4xl mx-auto flex flex-col items-center text-center mb-10 px-4 z-[5] ${isMobile ? '' : 'sticky'}`}
+                style={{
+                    top: isMobile ? '100px' : '3vh'
+                }}
+            >
                 <div className="mb-4 flex flex-wrap justify-center gap-x-4 gap-y-2">
                     {['Complete', 'Commerce', 'Ecosystem'].map((word, i) => (
                          <RevealWord key={i} word={word} i={i} scrollYProgress={scrollYProgress} />
                     ))}
                 </div>
-                <p className="text-zinc-400 text-sm md:text-base font-light leading-relaxed max-w-2xl mt-3">
+                <p className="text-zinc-400 text-xs sm:text-base font-light leading-relaxed max-w-2xl mt-3">
                     Everything you need to run an online business without the technical headache. We handle the complexity, you handle the product.
                 </p>
             </div>
 
             {/* Sticky Stacking Container */}
-            <div className="max-w-4xl mx-auto relative z-10">
+            <div className="max-w-4xl mx-auto relative z-10 p-2 sm:p-0">
                 <div className="relative">
                     {cards.map((card, idx) => (
                         <React.Fragment key={idx}>
                             <div
-                                className={`sticky flex flex-col justify-between rounded-3xl border p-6 md:p-10 shadow-[0_-10px_40px_rgba(0,0,0,0.3)] origin-top ${card.bgClassName}`}
+                                className={`sticky flex flex-col justify-between rounded-3xl border p-5 sm:p-10 shadow-[0_-10px_40px_rgba(0,0,0,0.3)] origin-top ${card.bgClassName}`}
                                 style={{
-                                    top: `calc(28vh + ${idx * 30}px)`,
-                                    minHeight: "280px",
+                                    top: isMobile ? `${90 + idx * 20}px` : `calc(28vh + ${idx * 30}px)`,
+                                    minHeight: isMobile ? "180px" : "280px",
                                     zIndex: idx + 10,
                                 }}
                             >
                                 <div className="flex justify-between items-start">
                                     <h3
-                                        className="text-3xl md:text-4xl lg:text-5xl font-black italic tracking-tighter w-full max-w-[80%]"
+                                        className="text-2xl sm:text-5xl font-black italic tracking-tighter w-full max-w-[85%]"
                                         style={{
                                             fontFamily: 'Inter, sans-serif',
                                             lineHeight: 1.05
@@ -368,17 +378,17 @@ export const Ecosystem = () => {
                                     </div>
                                 </div>
 
-                                <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mt-8 md:mt-12">
-                                    <p className="text-base md:text-lg font-medium max-w-lg opacity-80 leading-relaxed font-body">
+                                <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mt-6 sm:mt-12">
+                                    <p className="text-sm sm:text-lg font-medium max-w-lg opacity-80 leading-relaxed font-body">
                                         {card.desc}
                                     </p>
-                                    <div className={`md:hidden flex items-center justify-center w-16 h-16 rounded-full backdrop-blur-sm border mt-4 ${card.iconContainerClassName}`}>
-                                        <card.icon size={28} className={`opacity-80 ${card.iconColorClassName}`} />
+                                    <div className={`md:hidden flex items-center justify-center w-12 h-12 rounded-full backdrop-blur-sm border mt-2 ${card.iconContainerClassName}`}>
+                                        <card.icon size={24} className={`opacity-80 ${card.iconColorClassName}`} />
                                     </div>
                                 </div>
                             </div>
                             {/* Spacer: gives scroll distance for the next card to arrive */}
-                            <div className="h-[40vh]" />
+                            <div style={{ height: isMobile ? '25vh' : '40vh' }} />
                         </React.Fragment>
                     ))}
                 </div>

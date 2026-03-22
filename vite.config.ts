@@ -26,7 +26,13 @@ export default defineConfig(({ mode }) => {
       sourcemap: true,
       rollupOptions: {
         output: {
-          // Simplified output for debugging
+          manualChunks: {
+            'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+            'vendor-three': ['three'],
+            'vendor-anim': ['framer-motion', 'gsap', '@gsap/react'],
+            'vendor-sentry': ['@sentry/react'],
+            'vendor-ui': ['lucide-react', 'clsx', 'tailwind-merge'],
+          }
         }
       }
     },

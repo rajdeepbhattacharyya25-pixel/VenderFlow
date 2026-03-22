@@ -37,7 +37,7 @@ const STEPS = [
 /* ─── Animation Variants ────────────────────────────────── */
 const pageVariants = {
     initial: { opacity: 0, y: 20 },
-    animate: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] as any } },
+    animate: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] } },
     exit: { opacity: 0, y: -20, transition: { duration: 0.3 } }
 } as const;
 
@@ -57,11 +57,11 @@ const fieldVariants = {
 /* ─── Step Progress Indicator ─────────────── */
 function StepIndicator({ currentStep }: { currentStep: number }) {
     return (
-        <div className="flex items-center justify-between w-full mb-10 md:mb-16 relative px-1">
+        <div className="flex items-center justify-between w-full mb-14 md:mb-16 relative px-1">
             {/* Background Trace Line */}
-            <div className="absolute top-[20px] md:top-[24px] left-0 right-0 h-[1.5px] bg-white/5 z-0" />
+            <div className="absolute top-[20px] md:top-[28px] left-0 right-0 h-[1.5px] bg-white/5 z-0" />
             
-            {STEPS.map((step, i) => {
+            {STEPS.map((step) => {
                 const isActive = currentStep === step.id;
                 const isCompleted = currentStep > step.id;
                 
@@ -115,7 +115,7 @@ function StepIndicator({ currentStep }: { currentStep: number }) {
                             }}
                             className="absolute -bottom-7 flex flex-col items-center"
                         >
-                            <span className="text-[7px] md:text-[10px] uppercase tracking-[0.2em] md:tracking-[0.3em] font-black whitespace-nowrap text-white">
+                            <span className="text-[8px] md:text-[10px] uppercase tracking-tighter md:tracking-[0.3em] font-black whitespace-nowrap text-white">
                                 {step.label.split(' ')[0]}
                             </span>
                         </motion.div>
@@ -140,10 +140,10 @@ function FloatingInput({ label, icon: Icon, required, error, ...props }: {
     return (
         <div className="relative group w-full">
             <div
-                className="absolute left-5 top-1/2 -translate-y-1/2 transition-colors duration-200 pointer-events-none"
+                className="absolute left-4 md:left-5 top-1/2 -translate-y-1/2 transition-colors duration-200 pointer-events-none"
                 style={{ color: focused ? THEME.primary : 'rgba(255,255,255,0.15)' }}
             >
-                <Icon className="w-[18px] h-[18px]" />
+                <Icon className="w-4 h-4 md:w-[18px] md:h-[18px]" />
             </div>
             <input
                 {...props}
@@ -153,7 +153,7 @@ function FloatingInput({ label, icon: Icon, required, error, ...props }: {
                 placeholder=" "
                 className="peer w-full text-base outline-none placeholder-transparent"
                 style={{
-                    padding: '28px 16px 10px 52px',
+                    padding: '28px 16px 10px 44px',
                     borderRadius: '2px', // Sharp
                     background: THEME.inputBg,
                     border: `1px solid ${error ? '#ef4444' : focused ? THEME.inputFocus : THEME.inputBorder}`,
@@ -169,10 +169,10 @@ function FloatingInput({ label, icon: Icon, required, error, ...props }: {
             <label
                 className="absolute pointer-events-none transition-all duration-300"
                 style={{
-                    left: '52px',
+                    left: '44px',
                     ...(isFloating
                         ? {
-                            top: '12px',
+                            top: '10px',
                             fontSize: '10px',
                             fontWeight: 900,
                             letterSpacing: '0.2em',
@@ -211,10 +211,10 @@ function FloatingSelect({ label, icon: Icon, required, children, error, ...props
     return (
         <div className="relative group w-full">
             <div
-                className="absolute left-5 top-1/2 -translate-y-1/2 transition-colors duration-200 pointer-events-none z-10"
+                className="absolute left-4 md:left-5 top-1/2 -translate-y-1/2 transition-colors duration-200 pointer-events-none z-10"
                 style={{ color: focused ? THEME.primary : 'rgba(255,255,255,0.15)' }}
             >
-                <Icon className="w-[18px] h-[18px]" />
+                <Icon className="w-4 h-4 md:w-[18px] md:h-[18px]" />
             </div>
             <select
                 {...props}
@@ -223,7 +223,7 @@ function FloatingSelect({ label, icon: Icon, required, children, error, ...props
                 onBlur={(e) => { setFocused(false); props.onBlur?.(e); }}
                 className="peer w-full text-base appearance-none cursor-pointer outline-none"
                 style={{
-                    padding: '28px 40px 10px 52px',
+                    padding: '28px 40px 10px 44px',
                     borderRadius: '2px', // Sharp
                     background: THEME.inputBg,
                     border: `1px solid ${error ? '#ef4444' : focused ? THEME.inputFocus : THEME.inputBorder}`,
@@ -237,10 +237,10 @@ function FloatingSelect({ label, icon: Icon, required, children, error, ...props
             <label
                 className="absolute pointer-events-none transition-all duration-300"
                 style={{
-                    left: '52px',
+                    left: '44px',
                     ...(isFloating
                         ? {
-                            top: '12px',
+                            top: '10px',
                             fontSize: '10px',
                             fontWeight: 900,
                             letterSpacing: '0.2em',
@@ -281,10 +281,10 @@ function FloatingTextarea({ label, icon: Icon, ...props }: {
     return (
         <div className="relative group w-full">
             <div
-                className="absolute left-5 top-7 transition-colors duration-200 pointer-events-none"
+                className="absolute left-4 md:left-5 top-7 transition-colors duration-200 pointer-events-none"
                 style={{ color: focused ? THEME.primary : 'rgba(255,255,255,0.15)' }}
             >
-                <Icon className="w-[18px] h-[18px]" />
+                <Icon className="w-4 h-4 md:w-[18px] md:h-[18px]" />
             </div>
             <textarea
                 {...props}
@@ -293,7 +293,7 @@ function FloatingTextarea({ label, icon: Icon, ...props }: {
                 placeholder=" "
                 className="peer w-full text-base resize-none outline-none placeholder-transparent"
                 style={{
-                    padding: '32px 16px 16px 52px',
+                    padding: '30px 16px 16px 44px',
                     borderRadius: '2px', // Sharp
                     background: THEME.inputBg,
                     border: `1px solid ${focused ? THEME.inputFocus : THEME.inputBorder}`,
@@ -305,10 +305,10 @@ function FloatingTextarea({ label, icon: Icon, ...props }: {
             <label
                 className="absolute pointer-events-none transition-all duration-300"
                 style={{
-                    left: '52px',
+                    left: '44px',
                     ...(isFloating
                         ? {
-                            top: '12px',
+                            top: '10px',
                             fontSize: '10px',
                             fontWeight: 900,
                             letterSpacing: '0.2em',
@@ -350,6 +350,25 @@ export default function ApplyToSell() {
         message: ''
     });
 
+    const [isAdmin, setIsAdmin] = useState(false);
+
+    React.useEffect(() => {
+        const checkAdmin = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('role')
+                    .eq('id', user.id)
+                    .maybeSingle();
+                if (profile?.role === 'admin') {
+                    setIsAdmin(true);
+                }
+            }
+        };
+        checkAdmin();
+    }, []);
+
     const [errors, setErrors] = useState<Record<string, string>>({});
 
     React.useEffect(() => {
@@ -369,7 +388,7 @@ export default function ApplyToSell() {
         }
     }, [formData, step, success]);
 
-    const validateField = (name: string, value: any) => {
+    const validateField = (name: string, value: unknown) => {
         let error = '';
         if (name === 'name' && String(value).trim().length < 2 && value !== '') error = 'Name is too short';
         if (name === 'email' && value !== '' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value))) error = 'Invalid email format';
@@ -432,8 +451,9 @@ export default function ApplyToSell() {
             localStorage.removeItem('vendorflow_apply_draft');
             window.scrollTo(0, 0);
 
-        } catch (err: any) {
-            toast.error(err.message || 'Failed to submit application.');
+        } catch (err) {
+            const error = err as Error;
+            toast.error(error.message || 'Failed to submit application.');
         } finally {
             setLoading(false);
         }
@@ -492,14 +512,14 @@ export default function ApplyToSell() {
                     className="max-w-xl w-full relative z-10"
                 >
                     <div
-                        className="relative rounded-[40px] p-12 md:p-16 text-center overflow-hidden border border-white/10"
+                        className="relative rounded-[30px] md:rounded-[40px] p-6 md:p-16 text-center overflow-hidden border border-white/10"
                         style={{
                             background: 'rgba(255, 255, 255, 0.03)',
                             boxShadow: `0 40px 100px -20px rgba(0,0,0,0.8), inset 0 1px 1px rgba(255,255,255,0.05)`,
                         }}
                     >
                         {/* Animated Checkmark Container */}
-                        <div className="relative w-32 h-32 mx-auto mb-10">
+                        <div className="relative w-20 h-20 md:w-32 md:h-32 mx-auto mb-8 md:mb-10">
                             {/* Outer Rings */}
                             {[1, 1.2, 1.4].map((scale, i) => (
                                 <motion.div
@@ -543,7 +563,7 @@ export default function ApplyToSell() {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 1.1, duration: 0.6 }}
-                            className="text-4xl md:text-5xl font-black uppercase tracking-tight mb-6 text-white"
+                            className="text-2xl md:text-5xl font-black uppercase tracking-tight mb-4 md:mb-6 text-white"
                         >
                             Application <br />
                             <span style={{ color: THEME.primary }}>Submitted</span>
@@ -555,7 +575,7 @@ export default function ApplyToSell() {
                             transition={{ delay: 1.4, duration: 1 }}
                             className="space-y-6"
                         >
-                            <p className="text-white/50 text-lg md:text-xl font-light leading-relaxed max-w-sm mx-auto">
+                            <p className="text-white/50 text-base md:text-xl font-light leading-relaxed max-w-sm mx-auto">
                                 We've received your business details and will reach out within 24 hours.
                             </p>
 
@@ -563,14 +583,14 @@ export default function ApplyToSell() {
                                 <motion.button
                                     whileHover={{ scale: 1.02 }}
                                     whileTap={{ scale: 0.98 }}
-                                    onClick={() => navigate('/')}
+                                    onClick={() => navigate(isAdmin ? '/admin/applications' : '/')}
                                     className="px-10 py-5 text-black font-black uppercase tracking-widest text-xs rounded-none transition-all"
                                     style={{ 
                                         background: THEME.primary,
                                         boxShadow: `0 20px 40px ${THEME.primaryDim}`
                                     }}
                                 >
-                                    Return to Home
+                                    {isAdmin ? 'View Applications' : 'Return to Home'}
                                 </motion.button>
                             </div>
                         </motion.div>
@@ -596,7 +616,7 @@ export default function ApplyToSell() {
                 </div>
                 <button
                     onClick={() => navigate('/')}
-                    className="p-3 bg-white/5 hover:bg-white/10 transition-colors border border-white/5 text-slate-400 hover:text-white"
+                    className="p-3 bg-white/5 hover:bg-white/10 transition-colors border border-white/5 text-slate-400 hover:text-white scale-85 md:scale-100"
                     title="Close and return to home"
                     aria-label="Close form"
                 >
@@ -612,18 +632,18 @@ export default function ApplyToSell() {
                 />
             </div>
 
-            <main className="w-full max-w-6xl mx-auto px-6 pb-32 md:pb-12 flex-1 relative z-10 flex flex-col md:flex-row items-start justify-between pt-8 md:pt-24 gap-10 md:gap-20">
+            <main className="w-full max-w-6xl mx-auto px-6 pb-32 md:pb-12 flex-1 relative z-10 flex flex-col md:flex-row items-start justify-between pt-4 md:pt-24 gap-6 md:gap-20">
                 <motion.div
                     initial={{ opacity: 0, x: -30 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.1, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                     className="w-full md:w-1/2 text-left"
                 >
-                    <h1 className="text-4xl md:text-8xl font-black mb-4 md:mb-6 leading-[0.85] uppercase italic tracking-tighter text-white">
+                    <h1 className="text-2xl md:text-8xl font-black mb-4 md:mb-6 leading-[0.85] uppercase italic tracking-tighter text-white">
                         Vendor <br />
                         <span style={{ color: THEME.primary }}>// Flow</span>
                     </h1>
-                    <p className="text-white/40 text-sm md:text-base font-light max-w-sm leading-relaxed tracking-wide">
+                    <p className="text-white/40 text-[13px] md:text-base font-light max-w-[280px] md:max-w-sm leading-relaxed tracking-wide">
                         Join an elite circle of commerce. Secure your place in the future of decentralized luxury retail and global distribution.
                     </p>
                     
@@ -827,7 +847,7 @@ export default function ApplyToSell() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.3 }}
-                        className="fixed md:relative bottom-0 left-0 right-0 md:bottom-auto md:left-auto md:right-auto bg-[#07080a]/80 md:bg-transparent backdrop-blur-xl md:backdrop-blur-none border-t border-white/10 md:border-none p-6 md:p-0 md:mt-16 z-50 flex items-center gap-3 md:gap-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] md:pb-0"
+                        className="fixed md:relative bottom-0 left-0 right-0 md:bottom-auto md:left-auto md:right-auto bg-[#07080a]/80 md:bg-transparent backdrop-blur-xl md:backdrop-blur-none border-t border-white/10 md:border-none p-4 md:p-0 md:mt-16 z-50 flex items-center gap-3 md:gap-4 pb-[calc(1rem+env(safe-area-inset-bottom))] md:pb-0"
                     >
                         {step > 1 && (
                             <button
