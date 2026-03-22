@@ -198,7 +198,10 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
             {/* Backdrop */}
             <div
                 className="absolute inset-0 bg-stone-950/60 backdrop-blur-xl transition-opacity animate-in fade-in duration-500"
-                onClick={onClose}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    onClose();
+                }}
             ></div>
 
             <div id="login-panel" className={`relative w-full max-h-[calc(100vh-80px)] md:max-w-[340px] bg-stone-950 rounded-[1.2rem] sm:rounded-[2rem] overflow-visible shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] animate-in slide-in-from-bottom-4 zoom-in-95 duration-500 border border-white/10 flex flex-col mt-2 md:mt-0 ${viewportWidth < 340 ? 'scale-[0.85]' : (viewportWidth < 360 ? 'scale-[0.92]' : '')}`}>

@@ -11,6 +11,13 @@ interface ClickSparkProps {
     children?: React.ReactNode;
 }
 
+interface Spark {
+    x: number;
+    y: number;
+    angle: number;
+    startTime: number;
+}
+
 const ClickSpark: React.FC<ClickSparkProps> = ({
     sparkColor = '#fff',
     sparkSize = 10,
@@ -22,7 +29,7 @@ const ClickSpark: React.FC<ClickSparkProps> = ({
     children
 }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const sparksRef = useRef<any[]>([]);
+    const sparksRef = useRef<Spark[]>([]);
     const startTimeRef = useRef<number | null>(null);
 
     useEffect(() => {
@@ -80,13 +87,19 @@ const ClickSpark: React.FC<ClickSparkProps> = ({
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
-        let animationId: number;
+        let animationId: number | null = null;
 
         const draw = (timestamp: number) => {
             if (!startTimeRef.current) {
                 startTimeRef.current = timestamp;
             }
+
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (sparksRef.current.length === 0) {
+                animationId = null;
+                return;
+            }
 
             sparksRef.current = sparksRef.current.filter(spark => {
                 const elapsed = timestamp - spark.startTime;
@@ -118,30 +131,36 @@ const ClickSpark: React.FC<ClickSparkProps> = ({
             animationId = requestAnimationFrame(draw);
         };
 
-        animationId = requestAnimationFrame(draw);
+        const handleClick = (e: MouseEvent) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            const now = performance.now();
+            const newSparks = Array.from({ length: sparkCount }, (_, i) => ({
+                x,
+                y,
+                angle: (2 * Math.PI * i) / sparkCount,
+                startTime: now
+            }));
+
+            sparksRef.current.push(...newSparks);
+
+            if (animationId === null) {
+                animationId = requestAnimationFrame(draw);
+            }
+        };
+
+        const parent = canvas.parentElement;
+        if (parent) {
+            parent.addEventListener('click', handleClick);
+        }
 
         return () => {
-            cancelAnimationFrame(animationId);
+            if (animationId !== null) cancelAnimationFrame(animationId);
+            if (parent) parent.removeEventListener('click', handleClick);
         };
     }, [sparkColor, sparkSize, sparkRadius, sparkCount, duration, easeFunc, extraScale]);
-
-    const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        const rect = canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-
-        const now = performance.now();
-        const newSparks = Array.from({ length: sparkCount }, (_, i) => ({
-            x,
-            y,
-            angle: (2 * Math.PI * i) / sparkCount,
-            startTime: now
-        }));
-
-        sparksRef.current.push(...newSparks);
-    };
 
     return (
         <div
@@ -150,7 +169,6 @@ const ClickSpark: React.FC<ClickSparkProps> = ({
                 width: '100%',
                 height: '100%'
             }}
-            onClick={handleClick}
         >
             <canvas
                 ref={canvasRef}
