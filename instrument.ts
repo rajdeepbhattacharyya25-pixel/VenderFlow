@@ -49,5 +49,5 @@ export const initSentry = async () => {
 
 // Auto-init if not in a server environment
 if (typeof window !== 'undefined') {
-    initSentry();
+    // initSentry();
 }
