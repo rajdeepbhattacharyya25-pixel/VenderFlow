@@ -90,11 +90,16 @@ export async function loadSellerById(id: string): Promise<Seller | null> {
 }
 
 // localStorage keys
-const CURRENT_SELLER_KEY = 'current_seller_id';
+/**
+ * @deprecated Use views_store_id for browsing context. 
+ * NEVER use this for authentication or dashboard data fetching.
+ * Use supabase.auth.getUser() instead.
+ */
+const CURRENT_SELLER_KEY = 'viewed_store_id';
 
 /**
  * Set the current seller ID in localStorage
- * Used to track which store the user is currently browsing
+ * Used ONLY to track which store the user is currently BROWSING (storefront context)
  */
 export function setCurrentSeller(sellerId: string): void {
     localStorage.setItem(CURRENT_SELLER_KEY, sellerId);
@@ -102,6 +107,8 @@ export function setCurrentSeller(sellerId: string): void {
 
 /**
  * Get the current seller ID from localStorage
+ * WARNING: Do NOT use this for security-critical operations or dashboard data.
+ * This is for UI-only storefront context.
  */
 export function getCurrentSeller(): string | null {
     return localStorage.getItem(CURRENT_SELLER_KEY);

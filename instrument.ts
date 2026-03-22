@@ -44,3 +44,11 @@ if (SENTRY_DSN) {
 } else {
   console.warn("Sentry DSN not found. Monitoring is disabled.");
 }
+
+// Debug helper to verify status in production console
+(window as any).SENTRY_STATUS = {
+    initialized: isSentryInitialized,
+    dsn_exists: !!SENTRY_DSN,
+    env: import.meta.env.MODE,
+    prod: import.meta.env.PROD
+};

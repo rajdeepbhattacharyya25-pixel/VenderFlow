@@ -184,16 +184,16 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
     };
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 pt-28 md:pt-32 pb-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 pt-16 md:pt-20 pb-4">
             {/* Backdrop */}
             <div
                 className="absolute inset-0 bg-stone-950/40 backdrop-blur-md transition-opacity animate-in fade-in duration-500"
                 onClick={onClose}
             ></div>
 
-            <div id="login-panel" className="relative w-full max-h-[calc(100vh-140px)] md:max-h-[calc(100vh-160px)] md:max-w-[360px] bg-stone-950 rounded-[2rem] overflow-visible shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] animate-in slide-in-from-bottom-4 zoom-in-95 duration-500 border border-white/10 flex flex-col mt-4 md:mt-0">
+            <div id="login-panel" className="relative w-full max-h-[calc(100vh-100px)] md:max-w-[340px] bg-stone-950 rounded-[2rem] overflow-visible shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] animate-in slide-in-from-bottom-4 zoom-in-95 duration-500 border border-white/10 flex flex-col mt-4 md:mt-0">
                 <OwlOverlay targetSelector="#login-panel" isError={!!error} />
-                <div className="p-6 sm:p-8 flex-1 overflow-y-auto hide-scroll" style={{ paddingTop: 'max(env(safe-area-inset-top, 24px), 24px)' }}>
+                <div className="p-5 sm:p-6 flex-1 overflow-y-auto hide-scroll" style={{ paddingTop: 'max(env(safe-area-inset-top, 24px), 24px)' }}>
                     {/* Close Button */}
                     <button
                         onClick={onClose}
@@ -205,7 +205,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
 
                     <div className="flex flex-col items-center">
                         {/* Header */}
-                        <div className="text-center mb-5 w-full">
+                        <div className="text-center mb-3 w-full">
                             <div className="mx-auto w-10 h-10 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center mb-3">
                                 <Lock className="w-5 h-5 text-stone-100" strokeWidth={1.2} />
                             </div>
@@ -225,7 +225,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
                             </div>
                         )}
 
-                        <form onSubmit={handleEmailAuth} className="w-full space-y-4" autoComplete="off">
+                        <form onSubmit={handleEmailAuth} className="w-full space-y-3" autoComplete="off">
                             <div className="space-y-3">
                                 <div className="space-y-1.5">
                                     <label className="block text-[9px] font-bold text-stone-500 uppercase tracking-[0.3em] ml-1">Email</label>
@@ -288,7 +288,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
                             </button>
                         </form>
 
-                        <div className="w-full relative my-6">
+                        <div className="w-full relative my-4">
                             <div className="absolute inset-0 flex items-center">
                                 <div className="w-full border-t border-white/5"></div>
                             </div>

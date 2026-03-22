@@ -156,7 +156,11 @@ const AuthCallback = () => {
                         }
 
                         // Check if seller record exists, if not create it (Store Creation Point)
-                        if (currentProfile?.role === 'seller') {
+                        // CRITICAL: only create store if the user is explicitly in a "seller login/onboarding" flow
+                        let authType = sessionStorage.getItem('auth_type');
+                        const isSellerAuth = authType === 'seller' || authType === 'staff';
+
+                        if (currentProfile?.role === 'seller' && isSellerAuth) {
                             addLog('Checking for seller record...');
                             const { data: seller } = await supabase
                                 .from('sellers')
@@ -165,7 +169,7 @@ const AuthCallback = () => {
                                 .maybeSingle();
 
                             if (!seller) {
-                                addLog('Seller record missing. Creating store...');
+                                addLog('Seller record missing and user in seller flow. Creating store...');
                                 try {
                                     setStatus('Creating your store...');
 
@@ -253,7 +257,7 @@ const AuthCallback = () => {
 
                         // Get stored metadata for store-specific logins
                         const storedRedirect = sessionStorage.getItem('auth_redirect');
-                        const authType = sessionStorage.getItem('auth_type');
+                        authType = sessionStorage.getItem('auth_type');
 
                         let redirectPath = '/';
 

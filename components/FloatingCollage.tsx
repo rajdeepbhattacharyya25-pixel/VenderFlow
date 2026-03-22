@@ -56,6 +56,7 @@ const inactiveSlots = [
     { x: "-38vw", y: "-35vh", rotation: -6, scale: 0.6 },
     { x: "-35vw", y: "-30vh", rotation: 4, scale: 0.6 },
     { x: "-32vw", y: "-25vh", rotation: -2, scale: 0.6 },
+    { x: "-29vw", y: "-20vh", rotation: 3, scale: 0.6 },
 ];
 
 export function FloatingCollage() {
@@ -115,7 +116,7 @@ export function FloatingCollage() {
                 scrollTrigger: {
                     trigger: containerRef.current,
                     start: "top top",
-                    end: "+=500%",
+                    end: "+=350%",
                     scrub: 1.5,
                     pin: true,
                     anticipatePin: 1,
@@ -246,33 +247,187 @@ export function FloatingCollage() {
 
             /* ═══ EXIT ═══ */
             const exitStart = 4.2;
-            [0, 1, 2, 3].forEach(i => {
-                tl.to(`.deck-card-${i}`, { opacity: 0, duration: 0.4, ease: LEAVE_EASE }, exitStart);
-            });
-            tl.to(".deck-caption-3", { opacity: 0, duration: 0.3 }, exitStart);
-            tl.to(textRef.current, { opacity: 0, duration: 0.4 }, exitStart);
-            tl.to(".marquee-row", { opacity: 0, duration: 0.4 }, exitStart);
-            tl.to(".scroll-indicator", { opacity: 0, duration: 0.3 }, exitStart);
+            tl.to(".deck-card-0", { opacity: 0, duration: 0.8 }, exitStart);
+            tl.to(".deck-card-1", { opacity: 0, duration: 0.8 }, exitStart);
+            tl.to(".deck-card-2", { opacity: 0, duration: 0.8 }, exitStart);
+            tl.to(".deck-card-3", {
+                x: inactiveSlots[3].x, y: inactiveSlots[3].y,
+                scale: inactiveSlots[3].scale, rotation: inactiveSlots[3].rotation,
+                opacity: INACTIVE_OPACITY, filter: INACTIVE_FILTER,
+                duration: 0.8, ease: LEAVE_EASE,
+            }, exitStart);
+            tl.to(".deck-caption-3", { opacity: 0, duration: 0.2 }, exitStart);
         });
 
         mm.add("(max-width: 767px)", () => {
-            // Mobile: Simple fade-in for cards, no pinning
-            cards.forEach((_, i) => {
-                gsap.fromTo(`.deck-card-${i}`, {
-                    opacity: 0, y: 50
-                }, {
-                    opacity: 1, y: 0,
-                    scrollTrigger: {
-                        trigger: `.deck-card-${i}`,
-                        start: "top 80%",
-                        end: "top 20%",
-                        toggleActions: "play none none reverse"
-                    }
-                });
+            // Mobile: Same pinned scroll storytelling but with smaller sizing and vertical flex
+            const mobileInactiveSlots = [
+                { x: "-20vw", y: "-35vh", rotation: -6, scale: 0.4 },
+                { x: "-10vw", y: "-30vh", rotation: 4, scale: 0.4 },
+                { x: "0vw", y: "-25vh", rotation: -2, scale: 0.4 },
+                { x: "10vw", y: "-20vh", rotation: 3, scale: 0.4 },
+            ];
+
+            const tlMobile = gsap.timeline({
+                scrollTrigger: {
+                    trigger: containerRef.current,
+                    start: "top top",
+                    end: "+=350%",
+                    scrub: 1.5,
+                    pin: true,
+                    anticipatePin: 1,
+                },
             });
-            
-            // Hide pinning elements on mobile
-            gsap.set([".marquee-row", ".scroll-indicator"], { display: 'none' });
+
+            /* ═══ MARQUEE: Continuous crawl (mobile) ═══ */
+            const crawl1 = gsap.to(marqueeRow1Ref.current, {
+                xPercent: -50,
+                duration: 80, // Slightly faster than desktop (120s) for narrower viewport
+                ease: 'none',
+                repeat: -1,
+            });
+            const crawl2 = gsap.fromTo(marqueeRow2Ref.current, {
+                xPercent: -50,
+            }, {
+                xPercent: 0,
+                duration: 80,
+                ease: 'none',
+                repeat: -1,
+            });
+
+            /* ═══ Scroll Indicator Pulsing ═══ */
+            gsap.to(scrollIndicatorRef.current, {
+                opacity: 0.8,
+                duration: 1.5,
+                yoyo: true,
+                repeat: -1,
+                ease: "sine.inOut"
+            });
+
+            /* ═══ MARQUEE: Velocity-sync via ScrollTrigger (Flywheel) ═══ */
+            ScrollTrigger.create({
+                trigger: containerRef.current,
+                start: 'top top',
+                end: '+=500%',
+                onUpdate: (self) => {
+                    const velocity = Math.abs(self.getVelocity()) / 1000;
+                    const newSpeed = Math.max(1, 1 + velocity * 3);
+                    gsap.to([crawl1, crawl2], {
+                        timeScale: newSpeed,
+                        duration: 2.5,
+                        ease: 'power3.out',
+                        overwrite: true,
+                    });
+                },
+            });
+
+            const INACTIVE_FILTER = "blur(10px) brightness(0.4)";
+            const INACTIVE_OPACITY = 0.05;
+            const ENTER_EASE = "power4.out";
+            const LEAVE_EASE = "expo.out";
+
+            /* ═══ STEP 01 ═══ */
+            tlMobile.fromTo(".deck-card-0", {
+                y: "40vh", opacity: 0,
+                rotation: 10, scale: 0.8,
+            }, {
+                y: "0", opacity: 1,
+                rotation: cards[0].landRotation, scale: 1.0,
+                duration: 0.8, ease: ENTER_EASE,
+            }, 0.1);
+
+            tlMobile.fromTo(".deck-caption-0", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4 }, 0.3);
+
+            /* ═══ STEP 02 ═══ */
+            const step2Start = 1.2;
+            tlMobile.to(".deck-card-0", {
+                x: mobileInactiveSlots[0].x, y: mobileInactiveSlots[0].y,
+                scale: mobileInactiveSlots[0].scale, rotation: mobileInactiveSlots[0].rotation,
+                opacity: INACTIVE_OPACITY, filter: INACTIVE_FILTER,
+                duration: 0.8, ease: LEAVE_EASE,
+            }, step2Start);
+            tlMobile.to(".deck-caption-0", { opacity: 0, duration: 0.2 }, step2Start);
+
+            tlMobile.fromTo(".deck-card-1", {
+                y: "40vh", opacity: 0,
+                rotation: -12, scale: 0.8,
+            }, {
+                y: "0", opacity: 1,
+                rotation: cards[1].landRotation, scale: 1.0,
+                duration: 0.8, ease: ENTER_EASE,
+            }, step2Start + 0.15);
+
+            tlMobile.fromTo(".deck-caption-1", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4 }, step2Start + 0.3);
+
+            /* ═══ STEP 03 ═══ */
+            const step3Start = 2.2;
+            tlMobile.to(".deck-card-0", {
+                x: mobileInactiveSlots[1].x, y: mobileInactiveSlots[1].y,
+                scale: mobileInactiveSlots[1].scale, rotation: mobileInactiveSlots[1].rotation,
+                duration: 0.8, ease: LEAVE_EASE,
+            }, step3Start);
+            tlMobile.to(".deck-card-1", {
+                x: mobileInactiveSlots[0].x, y: mobileInactiveSlots[0].y,
+                scale: mobileInactiveSlots[0].scale, rotation: mobileInactiveSlots[0].rotation,
+                opacity: INACTIVE_OPACITY, filter: INACTIVE_FILTER,
+                duration: 0.8, ease: LEAVE_EASE,
+            }, step3Start);
+            tlMobile.to(".deck-caption-1", { opacity: 0, duration: 0.2 }, step3Start);
+
+            tlMobile.fromTo(".deck-card-2", {
+                y: "40vh", opacity: 0,
+                rotation: 15, scale: 0.8,
+            }, {
+                y: "0", opacity: 1,
+                rotation: cards[2].landRotation, scale: 1.0,
+                duration: 0.8, ease: ENTER_EASE,
+            }, step3Start + 0.15);
+
+            tlMobile.fromTo(".deck-caption-2", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4 }, step3Start + 0.3);
+
+            /* ═══ STEP 04 ═══ */
+            const step4Start = 3.2;
+            tlMobile.to(".deck-card-0", {
+                x: mobileInactiveSlots[2].x, y: mobileInactiveSlots[2].y,
+                scale: mobileInactiveSlots[2].scale, rotation: mobileInactiveSlots[2].rotation,
+                duration: 0.8, ease: LEAVE_EASE,
+            }, step4Start);
+            tlMobile.to(".deck-card-1", {
+                x: mobileInactiveSlots[1].x, y: mobileInactiveSlots[1].y,
+                scale: mobileInactiveSlots[1].scale, rotation: mobileInactiveSlots[1].rotation,
+                duration: 0.8, ease: LEAVE_EASE,
+            }, step4Start);
+            tlMobile.to(".deck-card-2", {
+                x: mobileInactiveSlots[0].x, y: mobileInactiveSlots[0].y,
+                scale: mobileInactiveSlots[0].scale, rotation: mobileInactiveSlots[0].rotation,
+                opacity: INACTIVE_OPACITY, filter: INACTIVE_FILTER,
+                duration: 0.8, ease: LEAVE_EASE,
+            }, step4Start);
+            tlMobile.to(".deck-caption-2", { opacity: 0, duration: 0.2 }, step4Start);
+
+            tlMobile.fromTo(".deck-card-3", {
+                y: "40vh", opacity: 0,
+                rotation: -8, scale: 0.8,
+            }, {
+                y: "0", opacity: 1,
+                rotation: cards[3].landRotation, scale: 1.0,
+                duration: 0.8, ease: ENTER_EASE,
+            }, step4Start + 0.15);
+
+            tlMobile.fromTo(".deck-caption-3", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4 }, step4Start + 0.3);
+
+            /* ═══ EXIT ═══ */
+            const exitStart = 4.2;
+            tlMobile.to(".deck-card-0", { opacity: 0, duration: 0.8 }, exitStart);
+            tlMobile.to(".deck-card-1", { opacity: 0, duration: 0.8 }, exitStart);
+            tlMobile.to(".deck-card-2", { opacity: 0, duration: 0.8 }, exitStart);
+            tlMobile.to(".deck-card-3", {
+                x: mobileInactiveSlots[3].x, y: mobileInactiveSlots[3].y,
+                scale: mobileInactiveSlots[3].scale, rotation: mobileInactiveSlots[3].rotation,
+                opacity: INACTIVE_OPACITY, filter: INACTIVE_FILTER,
+                duration: 0.8, ease: LEAVE_EASE,
+            }, exitStart);
+            tlMobile.to(".deck-caption-3", { opacity: 0, duration: 0.2 }, exitStart);
         });
 
         return () => mm.revert();
@@ -379,7 +534,7 @@ export function FloatingCollage() {
                 {cards.map((card, i) => (
                     <div
                         key={i}
-                        className={`deck-card-${i} absolute flex items-center gap-6 md:gap-10 transform-gpu will-change-transform`}
+                        className={`deck-card-${i} absolute flex flex-col md:flex-row items-center gap-4 md:gap-10 transform-gpu will-change-transform`}
                         style={{ opacity: 0 }}
                     >
                         {/* Browser Window active scale handled by GSAP (1.1x) */}
@@ -413,7 +568,7 @@ export function FloatingCollage() {
 
                         {/* Caption Block — HUD style, glitches in */}
                         <div
-                            className={`deck-caption-${i} hidden md:flex flex-col gap-3 max-w-[220px] lg:max-w-[260px] text-white`}
+                            className={`deck-caption-${i} flex flex-col items-center md:items-start text-center md:text-left gap-2 md:gap-3 w-[85vw] md:w-auto md:max-w-[280px] lg:max-w-[320px] text-white`}
                         >
                             {/* Step Label with Blinking HUD dot */}
                             <div className="flex items-center gap-2">
