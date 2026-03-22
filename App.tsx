@@ -110,7 +110,7 @@ function App() {
       }
     });
 
-    initTelegramApp();
+    // initTelegramApp();
 
     // Register Service Worker for Push Notifications
     if ('serviceWorker' in navigator && import.meta.env.DEV) {
@@ -132,7 +132,7 @@ function App() {
         <Toaster position="top-right" />
         <OfflineOverlay />
         <CookieConsent />
-        <TelegramInitializer />
+{/* <TelegramInitializer /> */}
 
         <Suspense fallback={<PageLoader />}>
           <div className="relative w-full h-full">
