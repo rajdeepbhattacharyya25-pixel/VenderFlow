@@ -24,22 +24,7 @@ export default defineConfig(({ mode }) => {
     ],
     build: {
       sourcemap: false, 
-      minify: 'esbuild',
-      rollupOptions: {
-        output: {
-          manualChunks(id) {
-            if (id.includes('node_modules')) {
-              if (id.includes('react')) return 'vendor-react';
-              if (id.includes('three')) return 'vendor-three';
-              if (id.includes('gsap')) return 'vendor-anim';
-              if (id.includes('framer-motion')) return 'vendor-framer';
-              if (id.includes('sentry')) return 'vendor-sentry';
-              if (id.includes('lucide')) return 'vendor-icons';
-              return 'vendor-others';
-            }
-          }
-        }
-      }
+      minify: 'esbuild'
     },
     define: {
       // Allow process.env for legacy support if needed, but prefer import.meta.env
