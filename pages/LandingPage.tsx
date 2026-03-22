@@ -50,6 +50,7 @@ export default function LandingPage() {
     const navigate = useNavigate();
     const { user } = useAuth();
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+    const [loginMode, setLoginMode] = useState<'customer' | 'seller'>('customer');
     const [isContactModalOpen, setIsContactModalOpen] = useState(false);
     const [showEffect, setShowEffect] = useState(false);
     const [showMobileSticky, setShowMobileSticky] = useState(false);
@@ -126,7 +127,7 @@ export default function LandingPage() {
         else if (latest <= 0.05 && showMobileSticky) setShowMobileSticky(false);
     });
 
-    const handleLogin = async () => {
+    const handleLogin = async (mode: 'customer' | 'seller' = 'customer') => {
         if (user) {
             try {
                 // Short timeout: don't block the user for more than 1.5s
@@ -149,6 +150,7 @@ export default function LandingPage() {
                 navigate('/dashboard');
             }
         } else {
+            setLoginMode(mode);
             setIsLoginModalOpen(true);
         }
     };
@@ -203,7 +205,11 @@ export default function LandingPage() {
 
     return (
         <Suspense fallback={null}>
-            <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
+            <LoginModal
+                isOpen={isLoginModalOpen}
+                onClose={() => setIsLoginModalOpen(false)}
+                initialMode={loginMode}
+            />
             <Suspense fallback={<div className="h-20" />}>
                 <ContactUsModal isOpen={isContactModalOpen} onClose={() => setIsContactModalOpen(false)} />
             </Suspense>
@@ -243,7 +249,7 @@ export default function LandingPage() {
                         </motion.div>
                         <motion.button
                             whileTap={{ scale: 0.95 }}
-                            onClick={handleLogin}
+                            onClick={() => handleLogin('customer')}
                             className="flex-1 h-12 bg-transparent border border-white/20 text-white font-bold uppercase tracking-wider text-sm rounded-full hover:border-white transition-colors touch-manipulation"
                         >
                             {user ? "Dashboard" : "Login"}
@@ -293,10 +299,10 @@ export default function LandingPage() {
                                 >
                                     Pricing
                                 </button>
-                                
+
                                 <motion.button
                                     whileTap={{ scale: 0.95 }}
-                                    onClick={handleLogin}
+                                    onClick={() => handleLogin(user ? 'customer' : 'seller')}
                                     className="nav-item text-xs sm:text-base font-bold cursor-pointer text-white/70 hover:text-[#ccff00] transition-colors flex items-center justify-center gap-1.5 sm:gap-2 p-2 sm:p-2 -mr-2 sm:mr-0 min-h-[40px] sm:min-h-[44px]"
                                     title={user ? "Go to Dashboard" : "Seller Login"}
                                 >
@@ -321,7 +327,7 @@ export default function LandingPage() {
                                     </Suspense>
                                     {user && <div className="w-1.5 h-1.5 bg-[#ccff00] rounded-full animate-pulse shadow-[0_0_8px_#ccff00]" />}
                                 </motion.button>
-                                
+
                                 {/* Hide Apply on mobile header - it's in BottomNav or Hero */}
                                 <div className="hidden sm:block">
                                     <MagneticButton onClick={handleApplyToSell} className="nav-item !h-10 !p-0 overflow-hidden w-[96px] !bg-transparent rounded-[22px]">
@@ -442,9 +448,9 @@ export default function LandingPage() {
 
                     {/* Phase 3 Parallax Sections */}
                     <Suspense fallback={<div className="h-screen" />}>
-                        {/* -mt-[100vh] collapses the empty gap after FloatingCollage unpins (all screen sizes) */}
+                        {/* -mt-[85vh] introduces a 15vh gap after FloatingCollage unpins to prevent tight transitions */}
                         {/* min-h-screen ensures bg-[#050505] fully covers the 100vh overlap so no marquee bleeds through */}
-                        <div className="-mt-[100vh] relative z-20 bg-[#050505] min-h-screen">
+                        <div className="-mt-[85vh] relative z-20 bg-[#050505] min-h-screen">
                             <DemoVideo isMobile={isMobile} />
                         </div>
                     </Suspense>
@@ -485,7 +491,7 @@ export default function LandingPage() {
                                     {showEffect && (
                                         <LiquidEther
                                             colors={['#ccff00', '#00ff88', '#88ff44']}
-                                            mouseForce={isMobile ? 6 : 4} 
+                                            mouseForce={isMobile ? 6 : 4}
                                             cursorSize={isMobile ? 50 : 45}
                                             isViscous
                                             viscous={isMobile ? 18 : 24}
@@ -495,11 +501,11 @@ export default function LandingPage() {
                                             resolution={isMobile ? 0.2 : 0.4}
                                             isBounce={false}
                                             autoDemo
-                                            autoSpeed={0.08} 
-                                            autoIntensity={0.25} 
+                                            autoSpeed={0.08}
+                                            autoIntensity={0.25}
                                             takeoverDuration={0.3}
                                             autoResumeDelay={4000}
-                                            autoRampDuration={2.0} 
+                                            autoRampDuration={2.0}
                                         />
                                     )}
                                 </Suspense>
@@ -557,7 +563,7 @@ export default function LandingPage() {
                             </div>
 
                             <button
-                                onClick={handleLogin}
+                                onClick={() => handleLogin('seller')}
                                 className="mt-6 text-base cursor-pointer group/login text-white/40 hover:text-[#ccff00] transition-colors"
                                 onMouseEnter={(e) => {
                                     const spans = e.currentTarget.querySelectorAll('.shuffle-parent > span > span');
@@ -634,7 +640,7 @@ export default function LandingPage() {
                         categories={[]}
                     />
 
-                    <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} initialMode="seller" />
+                    {/* Removed duplicate LoginModal instance to fix INP issues */}
 
                     {/* Mobile Sticky CTA Bar */}
                     <AnimatePresence>
@@ -648,7 +654,7 @@ export default function LandingPage() {
                             >
                                 <motion.button
                                     whileTap={{ scale: 0.95 }}
-                                    onClick={handleLogin}
+                                    onClick={() => handleLogin('customer')}
                                     className="text-white/70 font-bold text-sm px-4 py-3 min-w-[80px]"
                                 >
                                     Login
@@ -658,7 +664,7 @@ export default function LandingPage() {
                                     onClick={handleApplyToSell}
                                     className="flex-1 bg-[#ccff00] text-black font-bold py-3 px-6 rounded-full text-sm flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(204,255,0,0.15)]"
                                 >
-                                    START SCALING 
+                                    START SCALING
                                     <span className="text-[10px] leading-none mb-[2px]">▶</span>
                                 </motion.button>
                             </motion.div>
