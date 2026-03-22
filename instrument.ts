@@ -1,30 +1,21 @@
-import * as Sentry from "@sentry/react";
+export const initSentry = async () => {
+  const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN;
+  if (!SENTRY_DSN) {
+    console.warn("Sentry DSN not found. Monitoring is disabled.");
+    return;
+  }
 
-const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN;
+  // Dynamically import Sentry to keep it out of the main bundle
+  const Sentry = await import("@sentry/react");
 
-export const isSentryInitialized = !!SENTRY_DSN;
-
-if (SENTRY_DSN) {
   Sentry.init({
     dsn: SENTRY_DSN,
     environment: import.meta.env.MODE,
-    
-    // Set tracesSampleRate to 1.0 to capture 100%
-    // of transactions for performance monitoring.
-    tracesSampleRate: import.meta.env.PROD ? 0.2 : 1.0,
-
-    // Set 'tracePropagationTargets' to control for which URLs distributed tracing should be enabled
+    tracesSampleRate: import.meta.env.PROD ? 0.1 : 1.0, 
     tracePropagationTargets: ["localhost", /^https:\/\/gqwgvhxcssooxbmwgiwt\.supabase\.co/],
-
-    // Capture Replay for 10% of all sessions,
-    // plus for 100% of sessions with an error
-    replaysSessionSampleRate: 0.1,
+    replaysSessionSampleRate: 0.05,
     replaysOnErrorSampleRate: 1.0,
-
-    // Enable PII data collection
-    sendDefaultPii: false, // Security: Disabled PII by default
-
-    // Ignore noisy errors from browser extensions and local files
+    sendDefaultPii: false,
     denyUrls: [
       /extensions\//i,
       /^chrome-extension:\/\//i,
@@ -32,7 +23,6 @@ if (SENTRY_DSN) {
       /^graph:\/\//i,
       /localhost:\d+\/assets\//i,
     ],
-
     integrations: [
       Sentry.browserTracingIntegration(),
       Sentry.replayIntegration({
@@ -41,14 +31,20 @@ if (SENTRY_DSN) {
       }),
     ],
   });
-} else {
-  console.warn("Sentry DSN not found. Monitoring is disabled.");
-}
 
-// Debug helper to verify status in production console
-(window as any).SENTRY_STATUS = {
-    initialized: isSentryInitialized,
-    dsn_exists: !!SENTRY_DSN,
-    env: import.meta.env.MODE,
-    prod: import.meta.env.PROD
+  // Export Sentry to window for the error handlers to use
+  (window as unknown as { Sentry: typeof Sentry }).Sentry = Sentry;
+
+  // Debug helper to verify status in production console
+  (window as unknown as { SENTRY_STATUS: object }).SENTRY_STATUS = {
+      initialized: true,
+      dsn_exists: !!SENTRY_DSN,
+      env: import.meta.env.MODE,
+      prod: import.meta.env.PROD
+  };
 };
+
+// Auto-init if not in a server environment
+if (typeof window !== 'undefined') {
+    initSentry();
+}

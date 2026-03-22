@@ -23,15 +23,26 @@ export default defineConfig(({ mode }) => {
       })
     ],
     build: {
-      sourcemap: true,
+      sourcemap: false, // Disable sourcemaps in production for smaller builds
+      minify: 'terser',
+      terserOptions: {
+        compress: {
+          drop_console: true,
+          drop_debugger: true,
+        },
+      },
       rollupOptions: {
         output: {
-          manualChunks: {
-            'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-            'vendor-three': ['three'],
-            'vendor-anim': ['framer-motion', 'gsap', '@gsap/react'],
-            'vendor-sentry': ['@sentry/react'],
-            'vendor-ui': ['lucide-react', 'clsx', 'tailwind-merge'],
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              if (id.includes('react')) return 'vendor-react';
+              if (id.includes('three')) return 'vendor-three';
+              if (id.includes('gsap')) return 'vendor-anim';
+              if (id.includes('framer-motion')) return 'vendor-framer';
+              if (id.includes('sentry')) return 'vendor-sentry';
+              if (id.includes('lucide')) return 'vendor-icons';
+              return 'vendor-others';
+            }
           }
         }
       }

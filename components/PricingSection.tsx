@@ -50,19 +50,33 @@ interface PricingPlan {
 const PricingCard = ({ plan, index, isAnnual }: { plan: PricingPlan; index: number; isAnnual: boolean }) => {
     const mouseX = useMotionValue(0);
     const mouseY = useMotionValue(0);
+    const cardRef = useRef<HTMLDivElement>(null);
+    const rectRef = useRef<DOMRect | null>(null);
 
-    function handleMouseMove({ currentTarget, clientX, clientY }: React.MouseEvent) {
-        const { left, top } = currentTarget.getBoundingClientRect();
-        mouseX.set(clientX - left);
-        mouseY.set(clientY - top);
+    function handleMouseEnter() {
+        if (cardRef.current) {
+            rectRef.current = cardRef.current.getBoundingClientRect();
+        }
+    }
+
+    function handleMouseMove({ clientX, clientY }: React.MouseEvent) {
+        if (!rectRef.current) {
+            rectRef.current = cardRef.current?.getBoundingClientRect() || null;
+        }
+        if (rectRef.current) {
+            mouseX.set(clientX - rectRef.current.left);
+            mouseY.set(clientY - rectRef.current.top);
+        }
     }
 
     return (
         <motion.div
+            ref={cardRef}
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 * index }}
+            onMouseEnter={handleMouseEnter}
             onMouseMove={handleMouseMove}
             className={`relative flex flex-col h-full p-4 sm:p-7 rounded-2xl bg-[#0a0a0a]/90 backdrop-blur-xl border ${plan.isPopular ? 'border-[#ccff00] shadow-[0_0_40px_rgba(204,255,0,0.12)] z-20' : 'border-white/10'} group transition-all duration-500 hover:translate-y-[-5px]`}
         >

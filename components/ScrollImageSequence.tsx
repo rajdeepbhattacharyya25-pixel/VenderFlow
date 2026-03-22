@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
@@ -27,6 +27,29 @@ export const ScrollImageSequence: React.FC<ScrollImageSequenceProps> = ({
     const currentFrameRef = useRef(1);
     const [isInView, setIsInView] = useState(false);
     const [reducedMotion, setReducedMotion] = useState(false);
+
+    const rectRef = useRef<{ top: number; bottom: number; height: number }>({ top: 0, bottom: 0, height: 0 });
+
+    const updateMetrics = () => {
+        if (!containerRef.current) return;
+        const rect = containerRef.current.getBoundingClientRect();
+        const scrollY = window.scrollY;
+        rectRef.current = {
+            top: rect.top + scrollY,
+            bottom: rect.bottom + scrollY,
+            height: rect.height
+        };
+    };
+
+    useEffect(() => {
+        updateMetrics();
+        window.addEventListener('resize', updateMetrics);
+        window.addEventListener('scroll', updateMetrics, { passive: true }); // Also update on scroll if needed, but top/bottom are absolute
+        return () => {
+            window.removeEventListener('resize', updateMetrics);
+            window.removeEventListener('scroll', updateMetrics);
+        };
+    }, []);
 
     // Initialize preloader
     const preloader = useMemo(() => new ImagePreloader({
@@ -63,22 +86,8 @@ export const ScrollImageSequence: React.FC<ScrollImageSequenceProps> = ({
         return () => observer.disconnect();
     }, []);
 
-    // Initialize and load first frames
-    useEffect(() => {
-        let active = true;
-
-        preloader.initialize().then(() => {
-            // Draw first frame when ready
-            if (active) {
-                drawFrame(1);
-            }
-        });
-
-        return () => { active = false; };
-    }, [preloader]);
-
     // Scroll logic and Canvas drawing
-    const drawFrame = (frameIndex: number) => {
+    const drawFrame = useCallback((frameIndex: number) => {
         const canvas = canvasRef.current;
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
@@ -114,7 +123,21 @@ export const ScrollImageSequence: React.FC<ScrollImageSequenceProps> = ({
         const drawY = (height - drawHeight) / 2;
 
         ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
-    };
+    }, [preloader]);
+
+    // Initialize and load first frames
+    useEffect(() => {
+        let active = true;
+
+        preloader.initialize().then(() => {
+            // Draw first frame when ready
+            if (active) {
+                drawFrame(1);
+            }
+        });
+
+        return () => { active = false; };
+    }, [preloader, drawFrame]);
 
     useEffect(() => {
         if (!isInView || reducedMotion) return;
@@ -125,18 +148,14 @@ export const ScrollImageSequence: React.FC<ScrollImageSequenceProps> = ({
         const handleScroll = () => {
             if (!containerRef.current) return;
 
-            const rect = containerRef.current.getBoundingClientRect();
-            const rectTop = rect.top + window.scrollY;
-            const rectBottom = rect.bottom + window.scrollY;
-
+            const { top: rectTop, bottom: rectBottom, height: offsetHeight } = rectRef.current;
             const windowHeight = window.innerHeight;
             const scrollY = window.scrollY;
 
             // Ensure we are only calculating when the section is relevant
             if (scrollY + windowHeight >= rectTop && scrollY <= rectBottom) {
-                // The sticky section itself takes 100vh. 
                 // Active scrollable area is (container height) - 100vh.
-                const scrollTravel = containerRef.current.offsetHeight - windowHeight;
+                const scrollTravel = offsetHeight - windowHeight;
                 // How far have we scrolled past the top of the container
                 const scrolledPast = Math.max(0, scrollY - rectTop);
 
@@ -169,7 +188,7 @@ export const ScrollImageSequence: React.FC<ScrollImageSequenceProps> = ({
         handleScroll(); // Initial check
 
         return () => cancelAnimationFrame(rAF_ID);
-    }, [isInView, frameCount, reducedMotion, preloader]);
+    }, [isInView, frameCount, reducedMotion, preloader, drawFrame]);
 
     // GSAP Scroll-triggered zoom/reveal & Light Blowout
     useGSAP(() => {

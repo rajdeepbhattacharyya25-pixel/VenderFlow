@@ -1,7 +1,6 @@
-import { isSentryInitialized } from './instrument';
+import './instrument';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import * as Sentry from "@sentry/react";
 import App from './App';
 
 import { ThemeProvider } from 'next-themes';
@@ -12,11 +11,18 @@ if (!rootElement) {
   throw new Error("Could not find root element to mount to");
 }
 
-const rootOptions = isSentryInitialized ? {
-    onUncaughtError: Sentry.reactErrorHandler(),
-    onCaughtError: Sentry.reactErrorHandler(),
-    onRecoverableError: Sentry.reactErrorHandler(),
-} : {};
+// React 19 error handlers (Late-bound to Sentry once initialized)
+const rootOptions = {
+    onUncaughtError: (error: Error, errorInfo: React.ErrorInfo) => {
+        (window as unknown as { Sentry?: { captureException: (error: Error, options: object) => void } }).Sentry?.captureException(error, { extra: errorInfo });
+    },
+    onCaughtError: (error: Error, errorInfo: React.ErrorInfo) => {
+        (window as unknown as { Sentry?: { captureException: (error: Error, options: object) => void } }).Sentry?.captureException(error, { extra: errorInfo });
+    },
+    onRecoverableError: (error: Error, errorInfo: React.ErrorInfo) => {
+        (window as unknown as { Sentry?: { captureException: (error: Error, options: object) => void } }).Sentry?.captureException(error, { extra: errorInfo });
+    },
+};
 
 const root = ReactDOM.createRoot(rootElement, rootOptions);
 

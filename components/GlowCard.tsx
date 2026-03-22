@@ -15,14 +15,24 @@ export function GlowCard({
     glowColor = 'rgba(16, 185, 129, 0.15)', // Default to emerald glow
 }: GlowCardProps) {
     const cardRef = useRef<HTMLDivElement>(null);
+    const rectRef = useRef<DOMRect | null>(null);
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
     const [isHovered, setIsHovered] = useState(false);
 
-    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-        if (!cardRef.current) return;
+    const handleMouseEnter = () => {
+        setIsHovered(true);
+        if (cardRef.current) {
+            rectRef.current = cardRef.current.getBoundingClientRect();
+        }
+    };
 
-        // Get mouse position relative to the card container
-        const rect = cardRef.current.getBoundingClientRect();
+    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+        if (!rectRef.current) {
+            if (cardRef.current) rectRef.current = cardRef.current.getBoundingClientRect();
+            else return;
+        }
+
+        const rect = rectRef.current;
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
 
@@ -33,8 +43,8 @@ export function GlowCard({
         <m.div
             ref={cardRef}
             onMouseMove={handleMouseMove}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={() => { setIsHovered(false); rectRef.current = null; }}
             whileHover={{ y: -8, transition: { duration: 0.2 } }}
             style={{
                 '--glow-x': `${mousePosition.x}px`,
