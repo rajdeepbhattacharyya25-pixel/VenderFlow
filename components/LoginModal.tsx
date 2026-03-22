@@ -21,8 +21,16 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
     const [isSignUp, setIsSignUp] = useState(false);
     const [mode, setMode] = useState<'customer' | 'seller'>(initialMode);
     const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+    const [viewportWidth, setViewportWidth] = useState(window.innerWidth);
 
     const navigate = useNavigate();
+
+    // Track viewport for Turnstile size
+    useEffect(() => {
+        const handleResize = () => setViewportWidth(window.innerWidth);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     // Reset state when modal opens/closes
     useEffect(() => {
@@ -187,32 +195,32 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 pt-16 md:pt-20 pb-4">
             {/* Backdrop */}
             <div
-                className="absolute inset-0 bg-stone-950/40 backdrop-blur-md transition-opacity animate-in fade-in duration-500"
+                className="absolute inset-0 bg-stone-950/60 backdrop-blur-xl transition-opacity animate-in fade-in duration-500"
                 onClick={onClose}
             ></div>
 
-            <div id="login-panel" className="relative w-full max-h-[calc(100vh-100px)] md:max-w-[340px] bg-stone-950 rounded-[2rem] overflow-visible shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] animate-in slide-in-from-bottom-4 zoom-in-95 duration-500 border border-white/10 flex flex-col mt-4 md:mt-0">
+            <div id="login-panel" className="relative w-full max-h-[calc(100vh-80px)] md:max-w-[340px] bg-stone-950 rounded-[1.5rem] sm:rounded-[2rem] overflow-visible shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] animate-in slide-in-from-bottom-4 zoom-in-95 duration-500 border border-white/10 flex flex-col mt-2 md:mt-0">
                 <OwlOverlay targetSelector="#login-panel" isError={!!error} />
-                <div className="p-5 sm:p-6 flex-1 overflow-y-auto hide-scroll" style={{ paddingTop: 'max(env(safe-area-inset-top, 24px), 24px)' }}>
+                <div className="p-4 sm:p-6 flex-1 overflow-y-auto hide-scroll" style={{ paddingTop: 'max(env(safe-area-inset-top, 24px), 24px)' }}>
                     {/* Close Button */}
                     <button
                         onClick={onClose}
                         aria-label="Close modal"
-                        className="absolute top-8 right-8 p-2 text-stone-500 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-all duration-300"
+                        className="absolute top-4 right-4 sm:top-8 sm:right-8 p-1.5 sm:p-2 text-stone-500 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-all duration-300 z-50"
                     >
-                        <X className="w-5 h-5" strokeWidth={1.5} />
+                        <X className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={1.5} />
                     </button>
 
                     <div className="flex flex-col items-center">
                         {/* Header */}
                         <div className="text-center mb-3 w-full">
-                            <div className="mx-auto w-10 h-10 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center mb-3">
-                                <Lock className="w-5 h-5 text-stone-100" strokeWidth={1.2} />
+                            <div className="mx-auto w-8 h-8 sm:w-10 sm:h-10 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center mb-2 sm:mb-3">
+                                <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-stone-100" strokeWidth={1.2} />
                             </div>
-                            <h3 className="text-2xl font-display font-medium text-white mb-1.5 tracking-tight">
+                            <h3 className="text-xl sm:text-2xl font-display font-medium text-white mb-1 tracking-tight">
                                 {isSignUp ? 'Create Account' : (mode === 'seller' ? 'Vendor Portal' : 'Welcome Back')}
                             </h3>
-                            <p className="text-stone-500 text-[9px] font-bold uppercase tracking-[0.3em]">
+                            <p className="text-stone-500 text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.2em] sm:tracking-[0.3em]">
                                 {mode === 'seller'
                                     ? 'Manage your boutique'
                                     : (isSignUp ? 'Join the community' : 'Sign in to continue')}
@@ -265,7 +273,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
                                         onError={() => setTurnstileToken(null)}
                                         options={{
                                             theme: 'dark',
-                                            size: 'normal',
+                                            size: viewportWidth < 340 ? 'compact' : 'normal',
                                         }}
                                     />
                                 </div>

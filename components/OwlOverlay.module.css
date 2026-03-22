@@ -12,6 +12,13 @@
     align-items: flex-end;
 }
 
+@media (max-width: 360px) {
+    .owlOverlayContainer {
+        width: 100px;
+        height: 100px;
+    }
+}
+
 /* Base styles for decorative SVG */
 .owlOverlaySvg {
     width: 100%;
