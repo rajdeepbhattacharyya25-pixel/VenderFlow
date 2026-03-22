@@ -67,6 +67,20 @@ export default function LandingPage() {
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
 
+    // Preload critical collage images for seamless scroll transitions
+    useEffect(() => {
+        const collageImages = [
+            "/assets/collage/admin dashboard.webp",
+            "/assets/collage/seller dashboard.webp",
+            "/assets/collage/storefront.webp",
+            "/assets/collage/payment-verified.webp",
+        ];
+        collageImages.forEach((src) => {
+            const img = new Image();
+            img.src = src;
+        });
+    }, []);
+
     // Delay heavy visual effects
     useEffect(() => {
         const timer = setTimeout(() => setShowEffect(true), 4000); // Increased to 4s

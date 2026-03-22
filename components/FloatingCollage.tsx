@@ -560,8 +560,8 @@ export function FloatingCollage() {
                                 <img
                                     src={card.src}
                                     alt={card.alt}
-                                    loading="lazy"
-                                    className="w-full h-full object-cover filter contrast-[1.1] brightness-[0.88] saturate-[0.9]"
+                                    {...({ fetchPriority: "high" } as any)}
+                                    className="w-full h-full object-cover filter contrast-[1.1] brightness-[0.88] saturate-[0.9] transition-opacity duration-500"
                                 />
                             </div>
                         </div>
