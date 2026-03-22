@@ -485,8 +485,8 @@ export default function LandingPage() {
                                     {showEffect && (
                                         <LiquidEther
                                             colors={['#ccff00', '#00ff88', '#88ff44']}
-                                            mouseForce={isMobile ? 8 : 4} // Further reduced from 10 : 6
-                                            cursorSize={isMobile ? 60 : 45}
+                                            mouseForce={isMobile ? 6 : 4} 
+                                            cursorSize={isMobile ? 50 : 45}
                                             isViscous
                                             viscous={isMobile ? 18 : 24}
                                             iterationsViscous={isMobile ? 8 : 24}
@@ -495,11 +495,11 @@ export default function LandingPage() {
                                             resolution={isMobile ? 0.2 : 0.4}
                                             isBounce={false}
                                             autoDemo
-                                            autoSpeed={0.1} // Further reduced from 0.15
-                                            autoIntensity={0.4} // Further reduced from 0.6
+                                            autoSpeed={0.08} 
+                                            autoIntensity={0.25} 
                                             takeoverDuration={0.3}
-                                            autoResumeDelay={1200}
-                                            autoRampDuration={1.5} // Even smoother ramp
+                                            autoResumeDelay={4000}
+                                            autoRampDuration={2.0} 
                                         />
                                     )}
                                 </Suspense>

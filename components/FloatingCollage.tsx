@@ -14,7 +14,7 @@ gsap.registerPlugin(ScrollTrigger);
 
 const cards = [
     {
-        src: "/assets/collage/admin dashboard.jpg",
+        src: "/assets/collage/admin dashboard.webp",
         alt: "Admin Platform Overview",
         browserTitle: "ADMIN_VIEW",
         step: "STEP 01",
@@ -23,7 +23,7 @@ const cards = [
         landRotation: -1.5,
     },
     {
-        src: "/assets/collage/seller dashboard.png",
+        src: "/assets/collage/seller dashboard.webp",
         alt: "Seller Business Analytics",
         browserTitle: "SELLER_DASHBOARD",
         step: "STEP 02",
@@ -32,7 +32,7 @@ const cards = [
         landRotation: 1.2,
     },
     {
-        src: "/assets/collage/storefront.png",
+        src: "/assets/collage/storefront.webp",
         alt: "Product Storefront",
         browserTitle: "LIVE_STOREFRONT",
         step: "STEP 03",
@@ -41,7 +41,7 @@ const cards = [
         landRotation: -2,
     },
     {
-        src: "/assets/collage/payment-verified.png",
+        src: "/assets/collage/payment-verified.webp",
         alt: "Payment Verified",
         browserTitle: "PAYMENT_GATEWAY",
         step: "STEP 04",

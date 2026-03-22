@@ -33,53 +33,23 @@
     content="Premium e-commerce marketplace. Shop curated products from verified Indian sellers." />
   <meta name="twitter:image" content="https://vendorflow.vercel.app/logo.jpg" />
 
-  <link rel="canonical" href="https://vendorflow.vercel.app/" />
+  <link rel="canonical" href="https://venderflow.vercel.app/" />
   <title>VenderFlow | Scale Without Compromise</title>
-  <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "Organization",
-      "url": "https://vendorflow.vercel.app",
-      "logo": "https://vendorflow.vercel.app/logo.jpg",
-      "name": "VendorFlow",
-      "description": "Premium e-commerce marketplace platform for independent stores."
-    }
-  </script>
-  <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "SoftwareApplication",
-      "name": "VendorFlow",
-      "applicationCategory": "BusinessApplication",
-      "offers": {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "USD"
-      }
-    }
-  </script>
-  <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "WebSite",
-      "name": "VendorFlow",
-      "url": "https://vendorflow.vercel.app",
-      "potentialAction": {
-        "@type": "SearchAction",
-        "target": "https://vendorflow.vercel.app/search?q={search_term_string}",
-        "query-input": "required name=search_term_string"
-      }
-    }
-  </script>
-  <link rel="manifest" href="/manifest.json" />
-  <link rel="icon" type="image/jpeg" href="/logo.jpg" />
-  <link rel="apple-touch-icon" href="/logo-maskable.jpg" />
+  
+  <!-- Preconnect to Font origins -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Syne:wght@800&display=swap"
-    rel="stylesheet" />
+  
+  <!-- Preload fonts to avoid FOUT/FOIT -->
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Syne:wght@800&family=Playfair+Display:wght@400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&family=Orbitron:wght@400;500;700;900&display=swap">
+  
+  <!-- High priority Styles -->
   <link rel="stylesheet" href="/index.css">
+  
+  <!-- Async loading for fonts -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Syne:wght@800&family=Playfair+Display:wght@400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&family=Orbitron:wght@400;500;700;900&display=swap"
+    rel="stylesheet" media="print" onload="this.media='all'" />
   <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
 </head>
 

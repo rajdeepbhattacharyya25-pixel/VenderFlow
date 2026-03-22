@@ -27,15 +27,22 @@ export function MagneticButton({
     const smoothX = useSpring(x, springConfig);
     const smoothY = useSpring(y, springConfig);
 
-    const handleMouseMove = (e: React.MouseEvent<HTMLButtonElement>) => {
-        if (!ref.current) return;
+    const rectRef = useRef<DOMRect | null>(null);
 
-        // Get the button's position and dimensions
-        const { left, top, width, height } = ref.current.getBoundingClientRect();
+    const updateRect = () => {
+        if (ref.current) {
+            rectRef.current = ref.current.getBoundingClientRect();
+        }
+    };
+
+    const handleMouseMove = (e: React.MouseEvent<HTMLButtonElement>) => {
+        if (!rectRef.current) updateRect();
+        const rect = rectRef.current;
+        if (!rect) return;
 
         // Calculate distance from center of the button
-        const centerX = left + width / 2;
-        const centerY = top + height / 2;
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
 
         const distanceX = e.clientX - centerX;
         const distanceY = e.clientY - centerY;
@@ -47,6 +54,7 @@ export function MagneticButton({
 
     const handleMouseLeave = () => {
         setIsHovered(false);
+        rectRef.current = null;
         // Snap back to center
         x.set(0);
         y.set(0);
@@ -54,6 +62,7 @@ export function MagneticButton({
 
     const handleMouseEnter = () => {
         setIsHovered(true);
+        updateRect();
     };
 
     return (

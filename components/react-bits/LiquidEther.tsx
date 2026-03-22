@@ -7,11 +7,11 @@ export default function LiquidEther({
     cursorSize = 100,
     isViscous = false,
     viscous = 30,
-    iterationsViscous = 20, // Reduced from 32
-    iterationsPoisson = 20, // Reduced from 32
+    iterationsViscous = 24,
+    iterationsPoisson = 24,
     dt = 0.014,
     BFECC = true,
-    resolution = 0.4, // Reduced from 0.5
+    resolution = 0.45,
     isBounce = false,
     colors = ['#5227FF', '#FF9FFC', '#B19EEF'],
     style = {},
@@ -74,6 +74,7 @@ export default function LiquidEther({
             height: number;
             aspect: number;
             pixelRatio: number;
+            rect: DOMRect | null;
             isMobile: boolean;
             breakpoint: number;
             fboWidth: any;
@@ -88,6 +89,7 @@ export default function LiquidEther({
                 this.height = 0;
                 this.aspect = 1;
                 this.pixelRatio = 1;
+                this.rect = null;
                 this.isMobile = false;
                 this.breakpoint = 768;
                 this.fboWidth = null;
@@ -117,9 +119,10 @@ export default function LiquidEther({
             }
             resize() {
                 if (!this.container) return;
-                const rect = this.container.getBoundingClientRect();
-                this.width = Math.max(1, Math.floor(rect.width));
-                this.height = Math.max(1, Math.floor(rect.height));
+                this.rect = this.container.getBoundingClientRect();
+                if (!this.rect) return;
+                this.width = Math.max(1, Math.floor(this.rect.width));
+                this.height = Math.max(1, Math.floor(this.rect.height));
                 this.aspect = this.width / this.height;
                 if (this.renderer) this.renderer.setSize(this.width, this.height, false);
             }
@@ -210,8 +213,8 @@ export default function LiquidEther({
                 this.container = null;
             }
             isPointInside(clientX: number, clientY: number) {
-                if (!this.container) return false;
-                const rect = this.container.getBoundingClientRect();
+                if (!Common.rect) return false;
+                const rect = Common.rect;
                 if (rect.width === 0 || rect.height === 0) return false;
                 return clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom;
             }
@@ -220,9 +223,9 @@ export default function LiquidEther({
                 return this.isHoverInside;
             }
             setCoords(x: number, y: number) {
-                if (!this.container) return;
+                if (!Common.rect) return;
                 if (this.timer) window.clearTimeout(this.timer);
-                const rect = this.container.getBoundingClientRect();
+                const rect = Common.rect;
                 if (rect.width === 0 || rect.height === 0) return;
                 const nx = (x - rect.left) / rect.width;
                 const ny = (y - rect.top) / rect.height;
@@ -240,8 +243,8 @@ export default function LiquidEther({
                 if (!this.updateHoverState(event.clientX, event.clientY)) return;
                 if (this.onInteract) this.onInteract();
                 if (this.isAutoActive && !this.hasUserControl && !this.takeoverActive) {
-                    if (!this.container) return;
-                    const rect = this.container.getBoundingClientRect();
+                    if (!Common.rect) return;
+                    const rect = Common.rect;
                     if (rect.width === 0 || rect.height === 0) return;
                     const nx = (event.clientX - rect.left) / rect.width;
                     const ny = (event.clientY - rect.top) / rect.height;
@@ -1152,11 +1155,11 @@ export default function LiquidEther({
                 cursor_size: cursorSize,
                 isViscous,
                 viscous,
-                iterations_viscous: iterationsViscous,
-                iterations_poisson: iterationsPoisson,
+                iterations_viscous: isMobile ? 12 : iterationsViscous,
+                iterations_poisson: isMobile ? 12 : iterationsPoisson,
                 dt,
                 BFECC,
-                resolution,
+                resolution: isMobile ? 0.35 : resolution,
                 isBounce
             });
             if (resolution !== prevRes) {

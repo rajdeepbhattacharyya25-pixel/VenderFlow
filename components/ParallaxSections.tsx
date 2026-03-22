@@ -270,6 +270,7 @@ const RevealWord = ({ word, i, scrollYProgress }: { word: string, i: number, scr
             <motion.div
                 style={{
                     clipPath: useTransform(revealAmount, (v: number) => `inset(0 ${v}% 0 0)`),
+                    opacity: useTransform(revealAmount, [0, 95, 100], [1, 1, 0]),
                 }}
                 className="absolute inset-0 bg-[#ccff00] z-10 pointer-events-none"
             />
@@ -278,9 +279,10 @@ const RevealWord = ({ word, i, scrollYProgress }: { word: string, i: number, scr
             <motion.div
                 style={{
                     right: useTransform(revealAmount, (v: number) => `${v}%`),
-                    opacity: useTransform(revealAmount, [0, 5, 95, 100], [0, 1, 1, 0])
+                    opacity: useTransform(revealAmount, [0, 5, 95, 100], [0, 1, 1, 0]),
+                    x: "100%"
                 }}
-                className="absolute top-0 bottom-0 w-[40px] bg-gradient-to-l from-[#ccff00]/60 to-transparent blur-md z-20 pointer-events-none translate-x-full"
+                className="absolute top-0 bottom-0 w-[40px] bg-gradient-to-l from-[#ccff00]/60 to-transparent blur-md z-20 pointer-events-none"
             />
         </div>
     );

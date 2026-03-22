@@ -100,9 +100,39 @@ const VariableProximity = forwardRef((props, ref) => {
         }
     };
 
-    useAnimationFrame(() => {
+    const [isVisible, setIsVisible] = React.useState(true);
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(([entry]) => {
+            setIsVisible(entry.isIntersecting);
+        }, { threshold: 0.1 });
+        if (containerRef?.current) observer.observe(containerRef.current);
+        return () => observer.disconnect();
+    }, [containerRef]);
+
+    const positionsRef = useRef([]);
+
+    const updatePositions = () => {
         if (!containerRef?.current) return;
         const containerRect = containerRef.current.getBoundingClientRect();
+        positionsRef.current = letterRefs.current.map(letterRef => {
+            if (!letterRef) return null;
+            const rect = letterRef.getBoundingClientRect();
+            return {
+                x: rect.left + rect.width / 2 - containerRect.left,
+                y: rect.top + rect.height / 2 - containerRect.top
+            };
+        });
+    };
+
+    useEffect(() => {
+        updatePositions();
+        window.addEventListener('resize', updatePositions);
+        return () => window.removeEventListener('resize', updatePositions);
+    }, [label]); // Re-calculate if label changes
+
+    useAnimationFrame(() => {
+        if (!isVisible || !containerRef?.current) return;
         const { x, y } = mousePositionRef.current;
         if (lastPositionRef.current.x === x && lastPositionRef.current.y === y) {
             return;
@@ -110,21 +140,21 @@ const VariableProximity = forwardRef((props, ref) => {
         lastPositionRef.current = { x, y };
 
         letterRefs.current.forEach((letterRef, index) => {
-            if (!letterRef) return;
+            if (!letterRef || !positionsRef.current[index]) return;
 
-            const rect = letterRef.getBoundingClientRect();
-            const letterCenterX = rect.left + rect.width / 2 - containerRect.left;
-            const letterCenterY = rect.top + rect.height / 2 - containerRect.top;
+            const { x: letterCenterX, y: letterCenterY } = positionsRef.current[index];
 
             const distance = calculateDistance(
-                mousePositionRef.current.x,
-                mousePositionRef.current.y,
+                x,
+                y,
                 letterCenterX,
                 letterCenterY
             );
 
             if (distance >= radius) {
-                letterRef.style.fontVariationSettings = fromFontVariationSettings;
+                if (letterRef.style.fontVariationSettings !== fromFontVariationSettings) {
+                    letterRef.style.fontVariationSettings = fromFontVariationSettings;
+                }
                 return;
             }
 

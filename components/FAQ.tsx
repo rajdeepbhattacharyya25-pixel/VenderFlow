@@ -1,29 +1,38 @@
 import React, { useState, useRef } from 'react';
-import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
+import { motion, AnimatePresence, useScroll, useTransform, MotionValue } from 'framer-motion';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { useGSAP } from '@gsap/react';
 import { Plus } from 'lucide-react';
 
 gsap.registerPlugin(ScrollTrigger);
 
-interface FAQItemProps {
-    question: string;
-    answer: string;
-    isOpen: boolean;
-    onClick: () => void;
-    index: number;
-}
-
-const FAQCard: React.FC<FAQItemProps> = ({ question, answer, isOpen, onClick, index }) => {
+const FAQCard: React.FC<{ 
+    question: string, 
+    answer: string, 
+    isOpen: boolean, 
+    onClick: () => void, 
+    index: number 
+}> = ({ question, answer, isOpen, onClick, index }) => {
     const paddedIndex = (index + 1).toString().padStart(2, '0');
     const cardRef = useRef<HTMLDivElement>(null);
     const [isHovered, setIsHovered] = useState(false);
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+    const rectRef = useRef<DOMRect | null>(null);
+
+    const handleMouseEnter = () => {
+        setIsHovered(true);
+        if (cardRef.current) {
+            rectRef.current = cardRef.current.getBoundingClientRect();
+        }
+    };
+
+    const handleMouseLeave = () => {
+        setIsHovered(false);
+    };
 
     const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-        if (!cardRef.current) return;
-        const rect = cardRef.current.getBoundingClientRect();
+        if (!rectRef.current) return;
+        const rect = rectRef.current;
         setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
     };
 
@@ -32,8 +41,8 @@ const FAQCard: React.FC<FAQItemProps> = ({ question, answer, isOpen, onClick, in
             layout
             ref={cardRef}
             onClick={onClick}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
             onMouseMove={handleMouseMove}
             className={`relative cursor-pointer rounded-3xl overflow-hidden transition-all duration-500 border group ${isOpen
                 ? 'bg-[#111] text-white border-white/20'
@@ -107,7 +116,7 @@ const FAQCard: React.FC<FAQItemProps> = ({ question, answer, isOpen, onClick, in
     );
 };
 
-const FAQWord: React.FC<{ word: string, index: number, revealScroll: any }> = ({ word, index, revealScroll }) => {
+const FAQWord: React.FC<{ word: string, index: number, revealScroll: MotionValue<number> }> = ({ word, index, revealScroll }) => {
     const start = index * 0.02;
     const end = 0.04 + (index * 0.02);
     const revealAmount = useTransform(revealScroll, [start, end], [0, 100]);
