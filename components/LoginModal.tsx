@@ -266,7 +266,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
                                     />
                                 </div>
                                 
-                                <div className="pt-2 flex justify-center">
+                                <div className="flex justify-center">
                                     <Turnstile
                                         // @ts-expect-error - import.meta is allowed but linter might complain about target
                                         sitekey={String(import.meta.env.VITE_TURNSTILE_SITEKEY || '1x00000000000000000000AA')}
