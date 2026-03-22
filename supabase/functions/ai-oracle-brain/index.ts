@@ -1,6 +1,6 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { logApiUsage } from "../_shared/api-monitor.ts";
+import { withSentry, Sentry } from "../_shared/sentry.ts";
 
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
 const GROQ_API_KEY = Deno.env.get("GROQ_API_KEY");
@@ -8,11 +8,10 @@ const GROQ_API_KEY = Deno.env.get("GROQ_API_KEY");
 const corsHeaders = {
     "Access-Control-Allow-Origin": Deno.env.get('ALLOWED_ORIGIN') ?? "*",
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, baggage, sentry-trace",
-
     "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-serve(async (req: Request) => {
+Deno.serve(withSentry(async (req: Request) => {
     if (req.method === "OPTIONS") {
         return new Response("ok", { headers: corsHeaders });
     }
@@ -217,5 +216,5 @@ serve(async (req: Request) => {
             status: 500,
         });
     }
-});
+}));
 

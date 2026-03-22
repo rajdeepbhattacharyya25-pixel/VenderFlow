@@ -25,10 +25,10 @@ export const DemoVideo = () => {
     });
 
     const scale = useTransform(scrollYProgress, [0, 0.4], [0.85, 1]);
-    const opacity = useTransform(scrollYProgress, [0, 0.2], [0, 1]);
+    const opacity = useTransform(scrollYProgress, [0, 0.15], [0, 1]);
 
     return (
-        <section ref={sectionRef} className="py-24 px-6 md:px-12 bg-[#050505] flex justify-center overflow-hidden relative z-20">
+        <section ref={sectionRef} className="pt-8 pb-24 px-6 md:px-12 bg-[#050505] flex justify-center overflow-hidden relative z-20">
             <motion.div
                 style={{ scale, opacity }}
                 className="relative w-full max-w-6xl aspect-video rounded-3xl border-2 border-[#ccff00]/30 overflow-hidden flex items-center justify-center group cursor-pointer shadow-[0_0_100px_rgba(204,255,0,0.08)] hover:shadow-[0_0_120px_rgba(204,255,0,0.15)] transition-shadow duration-700"

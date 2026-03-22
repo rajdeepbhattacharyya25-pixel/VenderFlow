@@ -239,8 +239,8 @@ export const FAQ: React.FC = () => {
                                             onClick={() => setOpenIndex(openIndex === index ? null : index)}
                                         />
                                     </motion.div>
-                                    {/* Spacer after each card */}
-                                    <div className="h-[50vh]" />
+                                    {/* Spacer after each card except the last one */}
+                                    {index < faqs.length - 1 && <div className="h-[50vh]" />}
                                 </React.Fragment>
                             ))}
                         </div>

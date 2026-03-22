@@ -11,8 +11,8 @@ const DemoVideo = React.lazy(() => import('../components/ParallaxSections').then
 const Ecosystem = React.lazy(() => import('../components/ParallaxSections').then(module => ({ default: module.Ecosystem })));
 const BlurText = React.lazy(() => import('../components/react-bits/BlurText'));
 const StarBorder = React.lazy(() => import('../components/react-bits/StarBorder'));
-const ClickSpark = React.lazy(() => import('../components/react-bits/ClickSpark'));
-const BottomNav = React.lazy(() => import('../components/BottomNav').then(module => ({ default: module.BottomNav })));
+import ClickSpark from '../components/react-bits/ClickSpark';
+
 const LiquidEther = React.lazy(() => import('../components/react-bits/LiquidEther'));
 const Shuffle = React.lazy(() => import('../components/react-bits/Shuffle'));
 const DecryptedText = React.lazy(() => import('../components/react-bits/DecryptedText'));
@@ -39,7 +39,7 @@ import { MagneticButton } from '../components/InteractiveUI';
 import { useTheme } from 'next-themes';
 // import { ScrollImageSequence } from '../components/ScrollImageSequence'; // Temporarily disabled
 
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion, useScroll, useTransform, useMotionValueEvent, AnimatePresence } from 'framer-motion';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
@@ -51,8 +51,8 @@ export default function LandingPage() {
     const { user } = useAuth();
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
     const [isContactModalOpen, setIsContactModalOpen] = useState(false);
-    const [activeTab, setActiveTab] = useState('home');
     const [showEffect, setShowEffect] = useState(false);
+    const [showMobileSticky, setShowMobileSticky] = useState(false);
     const { setTheme } = useTheme();
     const containerRef = useRef<HTMLDivElement>(null);
     const scrollSentinelRef = useRef<HTMLDivElement>(null);
@@ -109,9 +109,13 @@ export default function LandingPage() {
     }, []);
 
     const handleApplyToSell = () => {
-        Events.heroCTAClicked({ location: 'hero', variant: 'apply_to_sell' });
-        navigate('/apply');
+        window.location.href = 'mailto:vendorflowofficial@gmail.com?subject=Apply to Sell on VendorFlow';
     };
+
+    useMotionValueEvent(scrollYProgress, "change", (latest) => {
+        if (latest > 0.05 && !showMobileSticky) setShowMobileSticky(true);
+        else if (latest <= 0.05 && showMobileSticky) setShowMobileSticky(false);
+    });
 
     const handleLogin = async () => {
         if (user) {
@@ -137,14 +141,6 @@ export default function LandingPage() {
         } else {
             setIsLoginModalOpen(true);
         }
-    };
-
-    const handleNavigate = (view: string) => {
-        setActiveTab(view);
-        if (view === 'cart') navigate('/cart');
-        if (view === 'account') handleLogin();
-        // For 'home', 'wishlist', 'viewAll', we can scroll or show a message
-        if (view === 'home') window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     useGSAP(() => {
@@ -197,23 +193,66 @@ export default function LandingPage() {
 
     return (
         <Suspense fallback={null}>
+            <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
+            <Suspense fallback={<div className="h-20" />}>
+                <ContactUsModal isOpen={isContactModalOpen} onClose={() => setIsContactModalOpen(false)} />
+            </Suspense>
+
+            {/* Mobile Sticky CTA Bar */}
+            <AnimatePresence>
+                {showMobileSticky && (
+                    <motion.div
+                        initial={{ y: 100, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: 100, opacity: 0 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                        className="fixed bottom-0 left-0 right-0 z-[999] bg-[#050505]/90 backdrop-blur-md border-t border-white/10 p-3 sm:hidden flex justify-around items-center gap-3"
+                    >
+                        <motion.div whileTap={{ scale: 0.95 }} className="flex-1">
+                            <MagneticButton onClick={handleApplyToSell} className="w-full h-12 !p-0 overflow-hidden !bg-transparent rounded-full">
+                                <Suspense fallback={<div className="bg-[#ccff00]/20 w-full h-full rounded-full" />}>
+                                    <StarBorder
+                                        as="div"
+                                        color="#ccff00"
+                                        speed="4s"
+                                        thickness={2}
+                                        className="w-full h-full !rounded-full"
+                                        innerClassName="w-full h-full p-[2px] pointer-events-none"
+                                    >
+                                        <div className="bg-[#070707] w-full h-full rounded-full flex items-center justify-center border border-white/5 shadow-inner">
+                                            <motion.span
+                                                animate={{ opacity: [0.5, 1, 0.5], scale: [0.98, 1.02, 0.98] }}
+                                                transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+                                                className="mr-2 w-2 h-2 rounded-full bg-[#ccff00] shadow-[0_0_10px_#ccff00]"
+                                            />
+                                            <span className="font-bold text-white tracking-widest text-sm relative z-10">APPLY</span>
+                                        </div>
+                                    </StarBorder>
+                                </Suspense>
+                            </MagneticButton>
+                        </motion.div>
+                        <motion.button
+                            whileTap={{ scale: 0.95 }}
+                            onClick={handleLogin}
+                            className="flex-1 h-12 bg-transparent border border-white/20 text-white font-bold uppercase tracking-wider text-sm rounded-full hover:border-white transition-colors touch-manipulation"
+                        >
+                            {user ? "Dashboard" : "Login"}
+                        </motion.button>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             <ClickSpark sparkColor='#ccff00' sparkSize={10} sparkRadius={15} sparkCount={8} duration={400}>
                 <div ref={containerRef} className="bg-[#050505] min-h-screen text-white font-body overflow-x-clip selection:bg-[#ccff00] selection:text-black">
-                    {/* ... (rest of the component) */}
-                    <Suspense fallback={<div className="h-20" />}>
-                        <ContactUsModal isOpen={isContactModalOpen} onClose={() => setIsContactModalOpen(false)} />
-                    </Suspense>
-
                     {/* Fixed Anchor Logo */}
-                    {/* ... (lines 184-206) */}
                     <div
                         className="fixed top-8 left-8 z-[9999] flex items-center gap-3 cursor-pointer group/logo"
                         onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
                     >
                         <img src="/logo.jpg" alt="VendorFlow Logo" className="w-8 h-8 md:w-10 md:h-10 rounded-full object-cover shadow-sm" />
-                        <div className="flex items-center gap-1.5 hidden sm:flex">
+                        <div className="flex items-center gap-1.5">
                             <span
-                                className="text-[20px] font-extrabold uppercase text-white"
+                                className="text-[15px] sm:text-[20px] font-extrabold uppercase text-white"
                                 style={{
                                     fontFamily: "'Syne', sans-serif",
                                     letterSpacing: '-0.03em',
@@ -222,7 +261,7 @@ export default function LandingPage() {
                                 VENDORFLOW
                             </span>
                             <span
-                                className="inline-block text-[#ccff00] text-[16px] font-black leading-none transition-all duration-300 group-hover/logo:drop-shadow-[0_0_8px_#ccff00] translate-y-[-1px]"
+                                className="inline-block text-[#ccff00] text-[12px] sm:text-[16px] font-black leading-none transition-all duration-300 group-hover/logo:drop-shadow-[0_0_8px_#ccff00] translate-y-[-1px]"
                                 style={{ fontFamily: "'Syne', sans-serif" }}
                             >
                                 &#9654;
@@ -245,9 +284,10 @@ export default function LandingPage() {
                                     Pricing
                                 </button>
                                 
-                                <button
+                                <motion.button
+                                    whileTap={{ scale: 0.95 }}
                                     onClick={handleLogin}
-                                    className="nav-item text-sm sm:text-base font-bold cursor-pointer text-white/70 hover:text-[#ccff00] transition-colors flex items-center gap-2"
+                                    className="nav-item text-sm sm:text-base font-bold cursor-pointer text-white/70 hover:text-[#ccff00] transition-colors flex items-center justify-center gap-2 p-3 sm:p-2 -mr-3 sm:mr-0 min-h-[44px]"
                                     title={user ? "Go to Dashboard" : "Seller Login"}
                                 >
                                     <Suspense fallback={<span>{user ? "Dashboard" : "Seller Login"}</span>}>
@@ -270,7 +310,7 @@ export default function LandingPage() {
                                         />
                                     </Suspense>
                                     {user && <div className="w-1.5 h-1.5 bg-[#ccff00] rounded-full animate-pulse shadow-[0_0_8px_#ccff00]" />}
-                                </button>
+                                </motion.button>
                                 
                                 {/* Hide Apply on mobile header - it's in BottomNav or Hero */}
                                 <div className="hidden sm:block">
@@ -316,8 +356,8 @@ export default function LandingPage() {
                             className="absolute bottom-[-20%] right-[10%] w-[40vw] h-[40vw] min-w-[400px] min-h-[400px] bg-[#00ff88]/[0.02] rounded-full blur-[120px] pointer-events-none z-0"
                         />
 
-                        <div className="relative z-10 flex flex-col items-center justify-center text-center px-4 w-full">
-                            <div className="hero-element scan-pulse-container border border-white/10 bg-white/5 backdrop-blur-sm px-4 py-1.5 mb-8 rounded-full shadow-[0_0_20px_rgba(204,255,0,0.1)]">
+                        <div className="relative z-10 flex flex-col items-center justify-center text-center px-4 w-full h-[100svh] pt-20 pb-10 sm:h-auto sm:pt-0 sm:pb-0">
+                            <div className="hero-element scan-pulse-container border border-white/10 bg-white/5 backdrop-blur-sm px-4 py-1.5 mt-4 sm:mt-0 mb-6 sm:mb-8 rounded-full shadow-[0_0_20px_rgba(204,255,0,0.1)]">
                                 <div className="scan-pulse-beam" />
                                 <Suspense fallback={<span className="text-white/40 text-[11px] uppercase tracking-[0.2em]">The Ultimate Commerce OS</span>}>
                                     <DecryptedText
@@ -331,7 +371,7 @@ export default function LandingPage() {
                                 </Suspense>
                             </div>
 
-                            <h1 className="hero-element font-orbitron font-bold text-6xl sm:text-7xl md:text-8xl lg:text-[120px] leading-[0.9] tracking-tighter uppercase mb-6 flex flex-col">
+                            <h1 className="hero-element font-orbitron font-bold text-[10.5vw] sm:text-7xl md:text-8xl lg:text-[120px] leading-[0.9] tracking-tighter uppercase mb-4 sm:mb-6 flex flex-col">
                                 <SplitText
                                     text="Scale Without"
                                     className="hero-text-top block text-white/90"
@@ -350,38 +390,40 @@ export default function LandingPage() {
                                 />
                             </h1>
 
-                            <p className="hero-element hero-subtitle text-lg sm:text-xl md:text-2xl text-white/50 max-w-2xl font-light">
+                            <p className="hero-element hero-subtitle text-[15px] sm:text-xl md:text-2xl text-white/50 max-w-2xl font-light px-2">
                                 Real infrastructure for high-volume merchants.
                                 No bloated plugins. Just raw speed and analytics.
                             </p>
 
-                            <div className="hero-element mt-12 sm:hidden w-full px-4">
-                                <MagneticButton onClick={handleApplyToSell} className="mx-auto w-[220px] h-14 sm:h-16 !p-0 overflow-hidden !bg-transparent rounded-[24px]">
-                                    <Suspense fallback={<div className="bg-[#ccff00]/20 w-full h-full rounded-[24px]" />}>
-                                        <StarBorder
-                                            as="div"
-                                            color="#ccff00"
-                                            speed="4s"
-                                            thickness={2}
-                                            className="w-full h-full"
-                                            innerClassName="w-full h-full p-[6px] pointer-events-none"
-                                        >
-                                            <div className="bg-[#070707] w-full h-full rounded-[20px] flex items-center justify-center border border-white/5 shadow-inner">
-                                                <motion.span
-                                                    animate={{ opacity: [0.5, 1, 0.5], scale: [0.98, 1.02, 0.98] }}
-                                                    transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-                                                    className="text-[#ccff00] text-lg sm:text-xl font-black uppercase tracking-wider"
-                                                >
-                                                    Start Scaling
-                                                </motion.span>
-                                            </div>
-                                        </StarBorder>
-                                    </Suspense>
-                                </MagneticButton>
+                            <div className="hero-element mt-6 sm:hidden w-full px-4">
+                                <motion.div whileTap={{ scale: 0.95 }}>
+                                    <MagneticButton onClick={handleApplyToSell} className="mx-auto w-[220px] h-14 sm:h-16 !p-0 overflow-hidden !bg-transparent rounded-full">
+                                        <Suspense fallback={<div className="bg-[#ccff00]/20 w-full h-full rounded-full" />}>
+                                            <StarBorder
+                                                as="div"
+                                                color="#ccff00"
+                                                speed="4s"
+                                                thickness={2}
+                                                className="w-full h-full !rounded-full"
+                                                innerClassName="w-full h-full p-[2px] pointer-events-none"
+                                            >
+                                                <div className="bg-[#070707] w-full h-full rounded-full flex items-center justify-center border border-white/5 shadow-inner">
+                                                    <motion.span
+                                                        animate={{ opacity: [0.5, 1, 0.5], scale: [0.98, 1.02, 0.98] }}
+                                                        transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+                                                        className="mr-2 w-2 h-2 rounded-full bg-[#ccff00] shadow-[0_0_10px_#ccff00]"
+                                                    />
+                                                    <span className="font-bold text-white tracking-widest text-sm relative z-10">START SCALING</span>
+                                                </div>
+                                            </StarBorder>
+                                        </Suspense>
+                                    </MagneticButton>
+                                </motion.div>
                             </div>
                         </div>
 
                     </section>
+
 
                     {/* Floating Collage Section */}
                     <Suspense fallback={<div className="h-screen" />}>
@@ -390,7 +432,11 @@ export default function LandingPage() {
 
                     {/* Phase 3 Parallax Sections */}
                     <Suspense fallback={<div className="h-screen" />}>
-                        <DemoVideo />
+                        {/* -mt-[100vh] collapses the empty gap after FloatingCollage unpins (all screen sizes) */}
+                        {/* min-h-screen ensures bg-[#050505] fully covers the 100vh overlap so no marquee bleeds through */}
+                        <div className="-mt-[100vh] relative z-20 bg-[#050505] min-h-screen">
+                            <DemoVideo />
+                        </div>
                     </Suspense>
                     <Suspense fallback={<div className="h-screen" />}>
                         <Ecosystem />
@@ -424,13 +470,13 @@ export default function LandingPage() {
                     {/* Mobile-Optimized CTA */}
                     <section className="py-16 sm:py-24 px-4 border-t border-white/10 relative overflow-hidden group">
                         <div className="absolute inset-0 z-0 transition-opacity duration-1000 pointer-events-none">
-                            <div className="w-full h-full relative pointer-events-auto opacity-80 hidden sm:block">
+                            <div className="w-full h-full relative pointer-events-auto opacity-80 block">
                                 <Suspense fallback={<div className="w-full h-full bg-[#ccff00]/5" />}>
                                     {showEffect && (
                                         <LiquidEther
                                             colors={['#ccff00', '#00ff88', '#88ff44']}
-                                            mouseForce={13}
-                                            cursorSize={55}
+                                            mouseForce={8}
+                                            cursorSize={45}
                                             isViscous
                                             viscous={24}
                                             iterationsViscous={24}
@@ -439,8 +485,8 @@ export default function LandingPage() {
                                             resolution={0.4}
                                             isBounce={false}
                                             autoDemo
-                                            autoSpeed={0.45}
-                                            autoIntensity={1.6}
+                                            autoSpeed={0.25}
+                                            autoIntensity={0.8}
                                             takeoverDuration={0.3}
                                             autoResumeDelay={1200}
                                             autoRampDuration={0.8}
@@ -448,7 +494,6 @@ export default function LandingPage() {
                                     )}
                                 </Suspense>
                             </div>
-                            <div className="absolute inset-0 bg-gradient-to-b from-[#ccff00]/5 to-transparent sm:hidden" />
                         </div>
                         <div className="max-w-4xl mx-auto text-center relative z-10 flex flex-col items-center">
                             <div className="text-3xl sm:text-5xl md:text-6xl font-heading font-bold uppercase leading-[0.9] tracking-tighter mb-6 flex items-center justify-center gap-3">
@@ -474,8 +519,8 @@ export default function LandingPage() {
                             </p>
 
                             <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto px-4 sm:px-0">
-                                <button onClick={handleApplyToSell} className="w-full sm:w-[240px] h-16 !p-0 overflow-hidden !bg-transparent rounded-[24px] hover:scale-[1.02] transition-transform duration-300">
-                                    <Suspense fallback={<div className="bg-[#ccff00]/20 w-full h-full rounded-[24px]" />}>
+                                <button onClick={handleApplyToSell} className="w-full sm:w-[240px] h-[48px] sm:h-16 !p-0 overflow-hidden !bg-transparent rounded-[16px] sm:rounded-[20px] focus:outline-none focus:ring-2 focus:ring-[#ccff00] touch-manipulation">
+                                    <Suspense fallback={<div className="bg-[#ccff00]/20 w-full h-full rounded-[16px] sm:rounded-[20px]" />}>
                                         <StarBorder
                                             as="div"
                                             color="#ccff00"
@@ -484,11 +529,11 @@ export default function LandingPage() {
                                             className="w-full h-full"
                                             innerClassName="w-full h-full p-[6px] pointer-events-none"
                                         >
-                                            <div className="bg-[#070707] w-full h-full rounded-[20px] flex items-center justify-center border border-white/5 shadow-inner">
+                                            <div className="bg-[#070707] w-full h-full rounded-[14px] sm:rounded-[18px] flex items-center justify-center border border-white/5 shadow-inner">
                                                 <motion.span
                                                     animate={{ opacity: [0.5, 1, 0.5], scale: [0.98, 1.02, 0.98] }}
                                                     transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-                                                    className="text-[#ccff00] text-lg sm:text-xl font-black uppercase tracking-wider text-center w-full"
+                                                    className="text-[#ccff00] text-base sm:text-xl font-black uppercase tracking-wider text-center w-full"
                                                 >
                                                     Apply to Sell
                                                 </motion.span>
@@ -496,7 +541,7 @@ export default function LandingPage() {
                                         </StarBorder>
                                     </Suspense>
                                 </button>
-                                <button onClick={() => setIsContactModalOpen(true)} className="w-full sm:w-[240px] h-16 bg-transparent border border-white/20 text-white font-bold uppercase tracking-wider text-sm hover:border-white transition-colors touch-manipulation">
+                                <button onClick={() => setIsContactModalOpen(true)} className="w-full sm:w-[240px] h-[48px] sm:h-16 rounded-[16px] sm:rounded-none bg-transparent border border-white/20 text-white font-bold uppercase tracking-wider text-xs sm:text-sm hover:border-white transition-colors touch-manipulation">
                                     Contact Sales
                                 </button>
                             </div>
@@ -581,13 +626,34 @@ export default function LandingPage() {
 
                     <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} initialMode="seller" />
 
-                    <Suspense fallback={null}>
-                        <BottomNav 
-                            onNavigate={handleNavigate} 
-                            cartCount={0} 
-                            activeTab={activeTab}
-                        />
-                    </Suspense>
+                    {/* Mobile Sticky CTA Bar */}
+                    <AnimatePresence>
+                        {showMobileSticky && (
+                            <motion.div
+                                initial={{ y: 100, opacity: 0 }}
+                                animate={{ y: 0, opacity: 1 }}
+                                exit={{ y: 100, opacity: 0 }}
+                                transition={{ duration: 0.3, ease: "easeOut" }}
+                                className="fixed bottom-0 left-0 w-full z-[90] p-4 sm:hidden bg-[#050505]/70 backdrop-blur-xl border-t border-white/10 flex items-center justify-between gap-4 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]"
+                            >
+                                <motion.button
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={handleLogin}
+                                    className="text-white/70 font-bold text-sm px-4 py-3 min-w-[80px]"
+                                >
+                                    Login
+                                </motion.button>
+                                <motion.button
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={handleApplyToSell}
+                                    className="flex-1 bg-[#ccff00] text-black font-bold py-3 px-6 rounded-full text-sm flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(204,255,0,0.15)]"
+                                >
+                                    START SCALING 
+                                    <span className="text-[10px] leading-none mb-[2px]">▶</span>
+                                </motion.button>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
             </ClickSpark>
         </Suspense>

@@ -333,8 +333,8 @@ export default function LiquidEther({
                 this.lastTime = performance.now();
                 this.activationTime = 0;
                 this.pathStartTime = 0;
-                this.pathDuration = 3500; // 3.5 seconds of movement
-                this.cycleDuration = 7000; // 7 seconds total cycle
+                this.pathDuration = 1000; // 1 second of movement
+                this.cycleDuration = 4000; // 4 seconds total cycle (1s move + 3s gap)
                 this.margin = 0.2;
                 this._tmpDir = new THREE.Vector2(); // reuse temp vector to avoid per-frame alloc
                 this.pickNewTarget();
@@ -1284,6 +1284,6 @@ export default function LiquidEther({
         autoRampDuration
     ]);
 
-    if (isMobile) return null;
+    // Removed mobile block so fluid properly renders on mobile screens
     return <div ref={mountRef} className={`liquid-ether-container ${className || ''}`} style={style} />;
 }
