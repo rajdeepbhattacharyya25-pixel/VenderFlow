@@ -203,7 +203,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
 
             <div id="login-panel" className={`relative w-full max-h-[calc(100vh-80px)] md:max-w-[340px] bg-stone-950 rounded-[1.2rem] sm:rounded-[2rem] overflow-visible shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] animate-in slide-in-from-bottom-4 zoom-in-95 duration-500 border border-white/10 flex flex-col mt-2 md:mt-0 ${viewportWidth < 340 ? 'scale-[0.85]' : (viewportWidth < 360 ? 'scale-[0.92]' : '')}`}>
                 <OwlOverlay targetSelector="#login-panel" isError={!!error} />
-                <div className={`${viewportWidth < 360 ? 'p-3' : 'p-4 sm:p-6'} flex-1 overflow-y-auto hide-scroll`} style={{ paddingTop: 'max(env(safe-area-inset-top, 24px), 24px)' }}>
+                <div className={`${viewportWidth < 360 ? 'p-3 pb-10' : 'p-4 sm:p-6 pb-8'} flex-1 overflow-y-auto hide-scroll`} style={{ paddingTop: 'max(env(safe-area-inset-top, 24px), 24px)' }}>
                     {/* Close Button */}
                     <button
                         onClick={onClose}
@@ -336,7 +336,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
                             <span>Google Auth</span>
                         </button>
 
-                        <div className="mt-6 w-full text-center space-y-3">
+                        <div className={`${viewportWidth < 360 ? 'mt-4' : 'mt-6'} w-full text-center space-y-3`}>
                             {!isSignUp && (
                                 <button
                                     onClick={() => setMode(mode === 'customer' ? 'seller' : 'customer')}
