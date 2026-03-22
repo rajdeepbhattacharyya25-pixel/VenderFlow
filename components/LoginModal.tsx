@@ -259,7 +259,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
                                 <div className="pt-2 flex justify-center">
                                     <Turnstile
                                         // @ts-expect-error - import.meta is allowed but linter might complain about target
-                                        sitekey={import.meta.env.VITE_TURNSTILE_SITEKEY || '1x00000000000000000000AA'}
+                                        sitekey={String(import.meta.env.VITE_TURNSTILE_SITEKEY || '1x00000000000000000000AA')}
                                         onSuccess={(token) => setTurnstileToken(token)}
                                         onExpire={() => setTurnstileToken(null)}
                                         onError={() => setTurnstileToken(null)}
