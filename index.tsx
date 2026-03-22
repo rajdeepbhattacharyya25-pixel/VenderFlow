@@ -27,9 +27,7 @@ const rootOptions = {
 const root = ReactDOM.createRoot(rootElement, rootOptions);
 
 root.render(
-  <React.StrictMode>
-    <ThemeProvider attribute="class">
-      <App />
-    </ThemeProvider>
-  </React.StrictMode>
+    <div style={{ background: 'white', color: 'black', padding: '50px', fontSize: '24px' }}>
+      VenderFlow Debug Mode: Is this rendering?
+    </div>
 );
