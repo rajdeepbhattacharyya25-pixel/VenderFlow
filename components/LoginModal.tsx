@@ -73,8 +73,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
             });
 
             if (error) throw error;
-        } catch (err: any) {
-            setError(err.message || 'Login failed. Please try again.');
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Login failed. Please try again.';
+            setError(message);
             setIsLoading(false);
         }
     };
@@ -184,24 +185,25 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
                     onClose();
                 }
             }
-        } catch (err: any) {
-            setError(err.message || 'Authentication failed. Please try again.');
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Authentication failed. Please try again.';
+            setError(message);
         } finally {
             setIsLoading(false);
         }
     };
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 pt-16 md:pt-20 pb-4">
+        <div className={`fixed inset-0 z-[100] flex items-center justify-center p-4 ${viewportWidth < 360 ? 'pt-24' : 'pt-16 md:pt-20'} pb-4`}>
             {/* Backdrop */}
             <div
                 className="absolute inset-0 bg-stone-950/60 backdrop-blur-xl transition-opacity animate-in fade-in duration-500"
                 onClick={onClose}
             ></div>
 
-            <div id="login-panel" className="relative w-full max-h-[calc(100vh-80px)] md:max-w-[340px] bg-stone-950 rounded-[1.5rem] sm:rounded-[2rem] overflow-visible shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] animate-in slide-in-from-bottom-4 zoom-in-95 duration-500 border border-white/10 flex flex-col mt-2 md:mt-0">
+            <div id="login-panel" className={`relative w-full max-h-[calc(100vh-80px)] md:max-w-[340px] bg-stone-950 rounded-[1.2rem] sm:rounded-[2rem] overflow-visible shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] animate-in slide-in-from-bottom-4 zoom-in-95 duration-500 border border-white/10 flex flex-col mt-2 md:mt-0 ${viewportWidth < 340 ? 'scale-[0.85]' : (viewportWidth < 360 ? 'scale-[0.92]' : '')}`}>
                 <OwlOverlay targetSelector="#login-panel" isError={!!error} />
-                <div className="p-4 sm:p-6 flex-1 overflow-y-auto hide-scroll" style={{ paddingTop: 'max(env(safe-area-inset-top, 24px), 24px)' }}>
+                <div className={`${viewportWidth < 360 ? 'p-3' : 'p-4 sm:p-6'} flex-1 overflow-y-auto hide-scroll`} style={{ paddingTop: 'max(env(safe-area-inset-top, 24px), 24px)' }}>
                     {/* Close Button */}
                     <button
                         onClick={onClose}
@@ -213,11 +215,11 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
 
                     <div className="flex flex-col items-center">
                         {/* Header */}
-                        <div className="text-center mb-3 w-full">
-                            <div className="mx-auto w-8 h-8 sm:w-10 sm:h-10 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center mb-2 sm:mb-3">
-                                <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-stone-100" strokeWidth={1.2} />
+                        <div className={`text-center ${viewportWidth < 360 ? 'mb-2' : 'mb-3'} w-full`}>
+                            <div className={`mx-auto ${viewportWidth < 360 ? 'w-6 h-6' : 'w-8 h-8 sm:w-10 sm:h-10'} bg-white/5 border border-white/10 rounded-xl flex items-center justify-center mb-2 sm:mb-3`}>
+                                <Lock className={`${viewportWidth < 360 ? 'w-3 h-3' : 'w-4 h-4 sm:w-5 sm:h-5'} text-stone-100`} strokeWidth={1.2} />
                             </div>
-                            <h3 className="text-xl sm:text-2xl font-display font-medium text-white mb-1 tracking-tight">
+                            <h3 className={`${viewportWidth < 360 ? 'text-lg' : 'text-xl sm:text-2xl'} font-display font-medium text-white mb-1 tracking-tight`}>
                                 {isSignUp ? 'Create Account' : (mode === 'seller' ? 'Vendor Portal' : 'Welcome Back')}
                             </h3>
                             <p className="text-stone-500 text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.2em] sm:tracking-[0.3em]">
@@ -228,13 +230,13 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
                         </div>
 
                         {error && (
-                            <div className="w-full mb-6 p-3 bg-red-950/20 border border-red-900/30 rounded-xl animate-in slide-in-from-top-2">
+                            <div className={`w-full ${viewportWidth < 360 ? 'mb-3' : 'mb-6'} p-3 bg-red-950/20 border border-red-900/30 rounded-xl animate-in slide-in-from-top-2`}>
                                 <p className="text-red-400 text-[10px] font-medium text-center">{error}</p>
                             </div>
                         )}
 
-                        <form onSubmit={handleEmailAuth} className="w-full space-y-3" autoComplete="off">
-                            <div className="space-y-3">
+                        <form onSubmit={handleEmailAuth} className={`w-full ${viewportWidth < 360 ? 'space-y-2' : 'space-y-3'}`} autoComplete="off">
+                            <div className={`${viewportWidth < 360 ? 'space-y-2' : 'space-y-3'}`}>
                                 <div className="space-y-1.5">
                                     <label className="block text-[9px] font-bold text-stone-500 uppercase tracking-[0.3em] ml-1">Email</label>
                                     <input
@@ -243,7 +245,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
                                         onChange={(e) => setEmail(e.target.value)}
                                         required
                                         autoComplete="off"
-                                        className="w-full bg-stone-900/50 border border-white/5 rounded-xl px-4 py-3 text-white placeholder-stone-700 focus:outline-none focus:ring-1 focus:ring-white/20 transition-all text-sm font-medium"
+                                        className={`w-full bg-stone-900/50 border border-white/5 rounded-xl ${viewportWidth < 360 ? 'px-3 py-2.5 text-xs' : 'px-4 py-3 text-sm'} text-white placeholder-stone-700 focus:outline-none focus:ring-1 focus:ring-white/20 transition-all font-medium`}
                                         placeholder="Email Address"
                                         inputMode="email"
                                         autoCapitalize="off"
@@ -259,7 +261,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
                                         required
                                         minLength={6}
                                         autoComplete="new-password"
-                                        className="w-full bg-stone-900/50 border border-white/5 rounded-xl px-4 py-3 text-white placeholder-stone-700 focus:outline-none focus:ring-1 focus:ring-white/20 transition-all text-sm font-medium"
+                                        className={`w-full bg-stone-900/50 border border-white/5 rounded-xl ${viewportWidth < 360 ? 'px-3 py-2.5 text-xs' : 'px-4 py-3 text-sm'} text-white placeholder-stone-700 focus:outline-none focus:ring-1 focus:ring-white/20 transition-all font-medium`}
                                         placeholder="••••••••"
                                     />
                                 </div>
@@ -282,8 +284,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
                             <button
                                 type="submit"
                                 disabled={isLoading || !turnstileToken}
-                                className="w-full bg-white text-stone-950 font-bold py-3.5 rounded-xl hover:bg-stone-200 active:scale-[0.98] transition-all duration-300 disabled:opacity-50 text-[10px] uppercase tracking-[0.4em] shadow-xl shadow-white/5"
-                                style={{ minHeight: '44px', WebkitTapHighlightColor: 'transparent' }}
+                                className={`w-full bg-white text-stone-950 font-bold ${viewportWidth < 360 ? 'py-2.5 text-[9px]' : 'py-3.5 text-[10px]'} rounded-xl hover:bg-stone-200 active:scale-[0.98] transition-all duration-300 disabled:opacity-50 uppercase tracking-[0.4em] shadow-xl shadow-white/5`}
+                                style={{ minHeight: viewportWidth < 360 ? '38px' : '44px', WebkitTapHighlightColor: 'transparent' }}
                             >
                                 {isLoading ? (
                                     <div className="flex items-center justify-center gap-3">
@@ -296,12 +298,12 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
                             </button>
                         </form>
 
-                        <div className="w-full relative my-4">
+                        <div className={`w-full relative ${viewportWidth < 360 ? 'my-2' : 'my-4'}`}>
                             <div className="absolute inset-0 flex items-center">
                                 <div className="w-full border-t border-white/5"></div>
                             </div>
                             <div className="relative flex justify-center">
-                                <span className="px-6 bg-stone-950 text-[9px] font-bold text-stone-600 uppercase tracking-[0.5em]">
+                                <span className={`px-6 bg-stone-950 ${viewportWidth < 360 ? 'text-[8px]' : 'text-[9px]'} font-bold text-stone-600 uppercase tracking-[0.5em]`}>
                                     OR
                                 </span>
                             </div>
@@ -310,8 +312,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
                         <button
                             onClick={handleGoogleLogin}
                             disabled={isLoading}
-                            className="w-full flex items-center justify-center gap-4 bg-stone-900/50 border border-white/5 text-white font-bold py-3.5 rounded-xl hover:bg-stone-800 transition-all active:scale-[0.98] disabled:opacity-50 text-[10px] uppercase tracking-[0.4em]"
-                            style={{ minHeight: '44px' }}
+                            className={`w-full flex items-center justify-center gap-4 bg-stone-900/50 border border-white/5 text-white font-bold ${viewportWidth < 360 ? 'py-2.5 text-[9px]' : 'py-3.5 text-[10px]'} rounded-xl hover:bg-stone-800 transition-all active:scale-[0.98] disabled:opacity-50 uppercase tracking-[0.4em]`}
+                            style={{ minHeight: viewportWidth < 360 ? '38px' : '44px' }}
                         >
                             <svg className="w-5 h-5" viewBox="0 0 24 24">
                                 <path
