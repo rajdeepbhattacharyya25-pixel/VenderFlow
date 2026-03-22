@@ -1,20 +1,19 @@
-
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useTelegram } from '../lib/telegram';
 import { supabase } from '../lib/supabase';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 
 const TelegramInitializer: React.FC = () => {
-    const { tg, user, isTelegram } = useTelegram();
+    const { tg, isTelegram } = useTelegram();
     const [isLinking, setIsLinking] = useState(false);
-    const navigate = useNavigate();
     const location = useLocation();
+    const hasInitialized = useRef(false);
 
     useEffect(() => {
-        if (isTelegram && tg?.initData) {
-            // Store raw initData for AuthCallback (secure verification)
-            // We use the raw string which contains the hash for backend verification
+        if (isTelegram && tg?.initData && !hasInitialized.current) {
+            hasInitialized.current = true;
+            
             sessionStorage.setItem('telegram_init_data', tg.initData);
 
             const checkAndLinkAccount = async () => {
@@ -22,39 +21,31 @@ const TelegramInitializer: React.FC = () => {
 
                 if (session?.user) {
                     setIsLinking(true);
-
-                    // Call the secure backend function to link account
                     try {
                         const { data, error } = await supabase.functions.invoke('link-telegram', {
                             body: { initData: tg.initData }
                         });
-
                         if (error) throw error;
-
                         if (data?.success) {
-                            console.log("Telegram account linked successfully via backend verification");
+                            console.log("Telegram account linked successfully");
                         }
                     } catch (error) {
-                        console.error("Failed to link Telegram account securely:", error);
+                        console.error("Failed to link Telegram account:", error);
                     } finally {
                         setIsLinking(false);
                     }
                 } else if (!location.pathname.includes('/auth-callback')) {
-                    // Not logged in. Attempt auto-login via Telegram Web App!
                     setIsLinking(true);
                     try {
                         const { data, error } = await supabase.functions.invoke('link-telegram', {
                             body: { initData: tg.initData, mode: 'login' }
                         });
-
-                        // Error here usually means account is not linked, which is fine, they just proceed as guest.
                         if (!error && data?.success && data?.url) {
-                            console.log("Auto-login successful, redirecting...");
                             window.location.href = data.url;
-                            return; // Do not set isLinking to false to avoid flash of unauthenticated content
+                            return;
                         }
                     } catch (err) {
-                        console.error("Auto-login via Telegram failed:", err);
+                        console.error("Auto-login failed:", err);
                     }
                     setIsLinking(false);
                 }
@@ -62,7 +53,7 @@ const TelegramInitializer: React.FC = () => {
 
             checkAndLinkAccount();
         }
-    }, [isTelegram, tg]);
+    }, [isTelegram, tg, location.pathname]);
 
     if (isLinking) {
         return (
@@ -75,7 +66,7 @@ const TelegramInitializer: React.FC = () => {
         );
     }
 
-    return null; // Renderless component (except when linking)
+    return null;
 };
 
 export default TelegramInitializer;

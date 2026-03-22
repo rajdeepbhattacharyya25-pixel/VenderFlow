@@ -1,4 +1,7 @@
 export const initSentry = async () => {
+  if ((window as any).SENTRY_INITIALIZED) return;
+  (window as any).SENTRY_INITIALIZED = true;
+  
   const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN;
   if (!SENTRY_DSN) {
     console.warn("Sentry DSN not found. Monitoring is disabled.");

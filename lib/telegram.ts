@@ -1,4 +1,6 @@
 
+import { useEffect, useState, useMemo, useCallback } from 'react';
+
 // Telegram Web App SDK Types
 // Reference: https://core.telegram.org/bots/webapps#initializing-mini-apps
 
@@ -126,21 +128,18 @@ export const getTelegramWebApp = (): TelegramWebApp | undefined => {
 
 /**
  * Initializes the Telegram Web App
- * Call this early in your app (e.g., in App.tsx or useTelegram hook)
  */
 export const initTelegramApp = () => {
     const tg = getTelegramWebApp();
     if (tg) {
         tg.ready();
-        tg.expand(); // Auto-expand to full height
+        tg.expand();
     }
 };
 
 /**
  * Hook to use Telegram Web App features
  */
-import { useEffect, useState } from 'react';
-
 export const useTelegram = () => {
     const [tg, setTg] = useState<TelegramWebApp | null>(null);
     const [user, setUser] = useState<TelegramUser | null>(null);
@@ -153,19 +152,18 @@ export const useTelegram = () => {
         }
     }, []);
 
-    const onClose = () => tg?.close();
+    const onClose = useCallback(() => tg?.close(), [tg]);
 
-    // Toggle confirmation when closing via standard specific logic
-    const toggleClosingConfirmation = (enable: boolean) => {
+    const toggleClosingConfirmation = useCallback((enable: boolean) => {
         if (!tg) return;
         if (enable) {
             tg.enableClosingConfirmation();
         } else {
             tg.disableClosingConfirmation();
         }
-    }
+    }, [tg]);
 
-    return {
+    return useMemo(() => ({
         tg,
         user,
         onClose,
@@ -173,5 +171,5 @@ export const useTelegram = () => {
         isTelegram: !!tg,
         themeParams: tg?.themeParams,
         platform: tg?.platform
-    };
+    }), [tg, user, onClose, toggleClosingConfirmation]);
 };
