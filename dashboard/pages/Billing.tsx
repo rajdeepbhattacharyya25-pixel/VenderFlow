@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { Seller } from '../../lib/seller';
+import { loadRazorpay } from '../../lib/razorpay';
 
 const Billing: React.FC = () => {
     const [seller, setSeller] = useState<Seller | null>(null);
@@ -137,6 +138,12 @@ const Billing: React.FC = () => {
 
             const data = await response.json();
             if (data.error) throw new Error(data.error);
+
+            // Dynamically load Razorpay script before initializing
+            const isLoaded = await loadRazorpay();
+            if (!isLoaded) {
+                throw new Error('Failed to load payment gateway. Please check your connection.');
+            }
 
             // Razorpay Checkout Integration
             const options = {
