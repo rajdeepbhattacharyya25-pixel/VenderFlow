@@ -28,7 +28,16 @@ export async function uploadToImgBB(file: File): Promise<string> {
     });
 
     if (!res.ok) {
-        throw new Error(`ImgBB upload failed (${res.status})`);
+        let errorMsg = `ImgBB upload failed (${res.status})`;
+        try {
+            const errJson = await res.json();
+            if (errJson.error && errJson.error.message) {
+                errorMsg = `ImgBB: ${errJson.error.message} (${res.status})`;
+            }
+        } catch (e) {
+            // ignore JSON parse error
+        }
+        throw new Error(errorMsg);
     }
 
     const json: ImgBBResponse = await res.json();
