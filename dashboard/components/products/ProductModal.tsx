@@ -744,9 +744,16 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
                                                 for (let i = 0; i < files.length; i++) {
                                                     setUploadStatus(`Uploading image ${i + 1} of ${files.length}...`);
                                                     const { file: compressedFile } = await compressImage(files[i]);
+                                                    
+                                                    // Ensure the file has a proper name/extension to prevent ImgBB 400 Bad Request
+                                                    const safeFileName = files[i].name.replace(/\.[^/.]+$/, "") + ".webp";
+                                                    const finalFile = new File([compressedFile], safeFileName, {
+                                                        type: compressedFile.type || 'image/webp'
+                                                    });
+
                                                     const productId = product?.id || 'temp-new-product';
                                                     const result = await unifiedUpload({
-                                                        file: compressedFile,
+                                                        file: finalFile,
                                                         productId,
                                                         isPrimary: formData.images.length === 0 && i === 0,
                                                         mediaType: 'image'
