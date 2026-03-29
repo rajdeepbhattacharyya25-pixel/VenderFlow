@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Image as ImageIcon, Plus, Trash, Star, Check, AlertCircle, Command, Video, Link, Upload, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, Image as ImageIcon, Plus, Trash, Star, Check, AlertCircle, Command, Video, Link, Upload, ChevronLeft, ChevronRight, Pencil } from 'lucide-react';
 import { Product } from '../../types';
 import { unifiedUpload } from '../../lib/vault';
 import { compressImage } from '../../lib/imageUtils';
@@ -89,6 +89,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
     const [editorImageSrc, setEditorImageSrc] = useState('');
     const imgbbFileInputRef = useRef<HTMLInputElement>(null);
     const [activePreviewIndex, setActivePreviewIndex] = useState(0);
+    const [editingImageIndex, setEditingImageIndex] = useState<number | null>(null);
 
     // Video URL input state
     const [videoUrlInput, setVideoUrlInput] = useState('');
@@ -716,16 +717,51 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
                                         type="file"
                                         className="hidden"
                                         accept="image/*"
-                                        onChange={(e) => {
-                                            const file = e.target.files?.[0];
-                                            if (!file) return;
-                                            const reader = new FileReader();
-                                            reader.onload = () => {
-                                                setEditorImageSrc(reader.result as string);
-                                                setEditorOpen(true);
-                                            };
-                                            reader.readAsDataURL(file);
-                                            e.target.value = '';
+                                        multiple
+                                        onChange={async (e) => {
+                                            const files = e.target.files;
+                                            if (!files || files.length === 0) return;
+                                            
+                                            // Handle single file (goes to editor)
+                                            if (files.length === 1) {
+                                                const file = files[0];
+                                                const reader = new FileReader();
+                                                reader.onload = () => {
+                                                    setEditingImageIndex(null); // appending new
+                                                    setEditorImageSrc(reader.result as string);
+                                                    setEditorOpen(true);
+                                                };
+                                                reader.readAsDataURL(file);
+                                                e.target.value = '';
+                                                return;
+                                            }
+                                            
+                                            // Handle multiple files (bulk direct upload)
+                                            setUploading(true);
+                                            setUploadStatus(`Uploading ${files.length} images...`);
+                                            try {
+                                                const uploadedUrls: string[] = [];
+                                                for (let i = 0; i < files.length; i++) {
+                                                    setUploadStatus(`Uploading image ${i + 1} of ${files.length}...`);
+                                                    const { file: compressedFile } = await compressImage(files[i]);
+                                                    const productId = product?.id || 'temp-new-product';
+                                                    const result = await unifiedUpload({
+                                                        file: compressedFile,
+                                                        productId,
+                                                        isPrimary: formData.images.length === 0 && i === 0,
+                                                        mediaType: 'image'
+                                                    });
+                                                    uploadedUrls.push(result.url);
+                                                }
+                                                updateField('images', [...formData.images, ...uploadedUrls]);
+                                            } catch (err: any) {
+                                                console.error('Bulk upload failed:', err);
+                                                alert(err.message || 'Upload failed for one or more images');
+                                            } finally {
+                                                setUploading(false);
+                                                setUploadStatus('');
+                                                if (e.target) e.target.value = '';
+                                            }
                                         }}
                                         title="Select image for editing"
                                     />
@@ -851,6 +887,19 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
 
                                                 {/* Action Buttons — always visible on mobile */}
                                                 <div className="absolute bottom-2.5 md:bottom-3 right-2.5 md:right-3 flex items-center gap-2 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                                                    {active.type === 'image' && (
+                                                        <button
+                                                            onClick={() => {
+                                                                setEditingImageIndex(active.index);
+                                                                setEditorImageSrc(active.src);
+                                                                setEditorOpen(true);
+                                                            }}
+                                                            className="px-3 py-2 md:py-1.5 bg-theme-panel/90 text-theme-text rounded-lg text-xs font-medium shadow hover:bg-sky-500 hover:text-white active:scale-95 transition-all flex items-center gap-1 min-h-[36px]"
+                                                            title="Edit photo"
+                                                        >
+                                                            <Pencil size={12} /> Edit
+                                                        </button>
+                                                    )}
                                                     {active.type === 'image' && active.index !== formData.mainImageIndex && (
                                                         <button
                                                             onClick={() => setMainImage(active.index)}
@@ -1347,10 +1396,20 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
                 isOpen={editorOpen}
                 imageSrc={editorImageSrc}
                 productId={product?.id || 'temp-new-product'}
-                onClose={() => setEditorOpen(false)}
-                onComplete={(url) => {
-                    updateField('images', [...formData.images, url]);
+                onClose={() => {
                     setEditorOpen(false);
+                    setEditingImageIndex(null);
+                }}
+                onComplete={(url) => {
+                    if (editingImageIndex !== null) {
+                        const newImages = [...formData.images];
+                        newImages[editingImageIndex] = url;
+                        updateField('images', newImages);
+                    } else {
+                        updateField('images', [...formData.images, url]);
+                    }
+                    setEditorOpen(false);
+                    setEditingImageIndex(null);
                 }}
             />
         </>
