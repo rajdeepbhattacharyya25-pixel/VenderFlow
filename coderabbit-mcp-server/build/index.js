@@ -1,22 +1,21 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const index_js_1 = require("@modelcontextprotocol/sdk/server/index.js");
-const stdio_js_1 = require("@modelcontextprotocol/sdk/server/stdio.js");
-const types_js_1 = require("@modelcontextprotocol/sdk/types.js");
-const axios_1 = __importDefault(require("axios"));
-const dotenv_1 = __importDefault(require("dotenv"));
-const coderabbit_client_js_1 = require("./coderabbit-client.js");
-dotenv_1.default.config();
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { CallToolRequestSchema, ListToolsRequestSchema, } from "@modelcontextprotocol/sdk/types.js";
+import axios from "axios";
+import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
+import { CodeRabbitClient } from "./coderabbit-client.js";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.join(__dirname, "../.env") });
 const API_KEY = process.env.CODERABBIT_API_KEY;
 if (!API_KEY) {
     console.error("Error: CODERABBIT_API_KEY environment variable is required.");
     process.exit(1);
 }
-const coderabbit = new coderabbit_client_js_1.CodeRabbitClient(API_KEY);
-const server = new index_js_1.Server({
+const coderabbit = new CodeRabbitClient(API_KEY);
+const server = new Server({
     name: "coderabbit-mcp-server",
     version: "1.0.0",
 }, {
@@ -26,7 +25,7 @@ const server = new index_js_1.Server({
 });
 // Helper to format error responses
 function formatError(error) {
-    if (axios_1.default.isAxiosError(error)) {
+    if (axios.isAxiosError(error)) {
         const status = error.response?.status;
         const data = error.response?.data;
         if (status === 401) {
@@ -40,94 +39,62 @@ function formatError(error) {
     return `Error: ${error.message}`;
 }
 // List all available tools
-server.setRequestHandler(types_js_1.ListToolsRequestSchema, async () => {
+server.setRequestHandler(ListToolsRequestSchema, async () => {
     return {
         tools: [
             {
                 name: "coderabbit_generate_report",
-                description: "Generate a code review report for a specified date range using CodeRabbit API. Reports can include developer activity, review trends, etc.",
+                description: "Generate report",
                 inputSchema: {
                     type: "object",
                     properties: {
-                        from: {
-                            type: "string",
-                            description: "Start date in ISO 8601 format (YYYY-MM-DD)"
-                        },
-                        to: {
-                            type: "string",
-                            description: "End date in ISO 8601 format (YYYY-MM-DD)"
-                        },
-                        prompt: {
-                            type: "string",
-                            description: "Custom prompt for additional report information"
-                        },
+                        from: { type: "string" },
+                        to: { type: "string" },
+                        prompt: { type: "string" },
                         promptTemplate: {
                             type: "string",
                             enum: ["Daily Standup Report", "Sprint Report", "Weekly Summary"],
-                            description: "Pre-defined report template"
                         },
-                        groupBy: {
-                            type: "string",
-                            description: "Primary grouping for the report (e.g., 'developer', 'repository')"
-                        },
+                        groupBy: { type: "string" },
                     },
                     required: ["from", "to"],
                 },
             },
             {
                 name: "coderabbit_analyze_code",
-                description: "Perform static code analysis to detect security issues, code quality problems, and potential bugs",
+                description: "Static code analysis",
                 inputSchema: {
                     type: "object",
                     properties: {
-                        code: {
-                            type: "string",
-                            description: "The code to analyze"
-                        },
-                        language: {
-                            type: "string",
-                            description: "Programming language (e.g., 'typescript', 'javascript', 'python')"
-                        },
-                        filename: {
-                            type: "string",
-                            description: "Optional filename for context"
-                        },
+                        code: { type: "string" },
+                        language: { type: "string" },
+                        filename: { type: "string" },
                     },
                     required: ["code", "language"],
                 },
             },
             {
                 name: "coderabbit_analyze_dependencies",
-                description: "Analyze package.json for dependency vulnerabilities, version conflicts, and best practices",
+                description: "Analyze dependencies",
                 inputSchema: {
                     type: "object",
                     properties: {
-                        packageJson: {
-                            type: "string",
-                            description: "The package.json content as a string"
-                        },
+                        packageJson: { type: "string" },
                     },
                     required: ["packageJson"],
                 },
             },
             {
                 name: "coderabbit_security_scan",
-                description: "Perform a comprehensive security scan on code to identify injection risks, auth flaws, secrets exposure, and permission issues",
+                description: "Security scan",
                 inputSchema: {
                     type: "object",
                     properties: {
-                        code: {
-                            type: "string",
-                            description: "The code to scan"
-                        },
-                        language: {
-                            type: "string",
-                            description: "Programming language"
-                        },
+                        code: { type: "string" },
+                        language: { type: "string" },
                         context: {
                             type: "string",
                             enum: ["frontend", "backend", "api", "database", "infrastructure"],
-                            description: "Code context for targeted scanning"
                         },
                     },
                     required: ["code", "language"],
@@ -135,22 +102,15 @@ server.setRequestHandler(types_js_1.ListToolsRequestSchema, async () => {
             },
             {
                 name: "coderabbit_refactor_suggestions",
-                description: "Get refactoring suggestions to improve code readability, performance, and maintainability",
+                description: "Refactoring suggestions",
                 inputSchema: {
                     type: "object",
                     properties: {
-                        code: {
-                            type: "string",
-                            description: "The code to analyze for refactoring"
-                        },
-                        language: {
-                            type: "string",
-                            description: "Programming language"
-                        },
+                        code: { type: "string" },
+                        language: { type: "string" },
                         focus: {
                             type: "string",
                             enum: ["performance", "readability", "maintainability", "all"],
-                            description: "Focus area for refactoring suggestions"
                         },
                     },
                     required: ["code", "language"],
@@ -158,22 +118,15 @@ server.setRequestHandler(types_js_1.ListToolsRequestSchema, async () => {
             },
             {
                 name: "coderabbit_test_plan",
-                description: "Generate a test plan for code including unit, integration, and test case suggestions",
+                description: "Generate test plan",
                 inputSchema: {
                     type: "object",
                     properties: {
-                        code: {
-                            type: "string",
-                            description: "The code to generate tests for"
-                        },
-                        language: {
-                            type: "string",
-                            description: "Programming language"
-                        },
+                        code: { type: "string" },
+                        language: { type: "string" },
                         testType: {
                             type: "string",
                             enum: ["unit", "integration", "e2e", "all"],
-                            description: "Type of tests to generate"
                         },
                     },
                     required: ["code", "language"],
@@ -181,42 +134,31 @@ server.setRequestHandler(types_js_1.ListToolsRequestSchema, async () => {
             },
             {
                 name: "coderabbit_health_check",
-                description: "Get a system health summary with severity-ranked issues and root cause analysis",
+                description: "System health check",
                 inputSchema: {
                     type: "object",
                     properties: {
-                        code: {
-                            type: "string",
-                            description: "The code to check"
-                        },
-                        language: {
-                            type: "string",
-                            description: "Programming language"
-                        },
+                        code: { type: "string" },
+                        language: { type: "string" },
                     },
                     required: ["code", "language"],
                 },
             },
             {
                 name: "coderabbit_deployment_checklist",
-                description: "Generate a deployment checklist with safety verifications and rollback strategies",
+                description: "Deployment checklist",
                 inputSchema: {
                     type: "object",
                     properties: {
                         projectType: {
                             type: "string",
                             enum: ["web", "api", "microservice", "mobile", "serverless"],
-                            description: "Type of project being deployed"
                         },
                         environment: {
                             type: "string",
                             enum: ["development", "staging", "production"],
-                            description: "Target deployment environment"
                         },
-                        changes: {
-                            type: "string",
-                            description: "Description of changes being deployed"
-                        },
+                        changes: { type: "string" },
                     },
                     required: ["projectType", "environment"],
                 },
@@ -225,7 +167,7 @@ server.setRequestHandler(types_js_1.ListToolsRequestSchema, async () => {
     };
 });
 // Handle tool calls
-server.setRequestHandler(types_js_1.CallToolRequestSchema, async (request) => {
+server.setRequestHandler(CallToolRequestSchema, async (request) => {
     try {
         const { name, arguments: args } = request.params;
         switch (name) {
@@ -518,7 +460,7 @@ ${coderabbit.formatAnalysisResults(issues)}
     }
 });
 async function main() {
-    const transport = new stdio_js_1.StdioServerTransport();
+    const transport = new StdioServerTransport();
     await server.connect(transport);
     console.error("CodeRabbit MCP Server running on stdio");
 }

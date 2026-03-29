@@ -2,6 +2,7 @@
     "name": "vercel-mcp-server",
     "version": "1.0.0",
     "description": "MCP server to control Vercel resources",
+    "type": "module",
     "main": "build/index.js",
     "scripts": {
         "build": "tsc",

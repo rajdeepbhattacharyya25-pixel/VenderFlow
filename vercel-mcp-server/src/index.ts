@@ -6,9 +6,14 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
 import { VercelClient } from "./vercel-client.js";
 
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({ path: path.join(__dirname, "../.env") });
 
 const API_TOKEN = process.env.VERCEL_API_TOKEN;
 
@@ -48,28 +53,27 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         tools: [
             {
                 name: "vercel_list_projects",
-                description: "List Vercel projects",
+                description: "List projects",
                 inputSchema: {
                     type: "object",
                     properties: {
-                        search: { type: "string", description: "Search query for projects" },
+                        search: { type: "string", description: "Search query" },
                     },
                 },
             },
             {
                 name: "vercel_create_project",
-                description: "Create a new Vercel project",
+                description: "Create project",
                 inputSchema: {
                     type: "object",
                     properties: {
-                        name: { type: "string", description: "Name of the project" },
+                        name: { type: "string" },
                         gitRepository: {
                             type: "object",
                             properties: {
                                 type: { type: "string", enum: ["github", "gitlab", "bitbucket"] },
-                                repo: { type: "string", description: "Repository name (e.g. user/repo)" },
+                                repo: { type: "string" },
                             },
-                            description: "Optional Git repository to connect",
                         },
                     },
                     required: ["name"],
@@ -77,96 +81,95 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             {
                 name: "vercel_delete_project",
-                description: "Delete a Vercel project",
+                description: "Delete project",
                 inputSchema: {
                     type: "object",
                     properties: {
-                        idOrName: { type: "string", description: "Project ID or Name" },
+                        idOrName: { type: "string" },
                     },
                     required: ["idOrName"],
                 },
             },
             {
                 name: "vercel_list_deployments",
-                description: "List deployments for a project or all deployments",
+                description: "List deployments",
                 inputSchema: {
                     type: "object",
                     properties: {
-                        projectId: { type: "string", description: "Filter by project ID" },
-                        limit: { type: "number", description: "Number of deployments to return" },
+                        projectId: { type: "string" },
+                        limit: { type: "number" },
                     },
                 },
             },
             {
                 name: "vercel_get_deployment",
-                description: "Get details of a specific deployment",
+                description: "Get deployment details",
                 inputSchema: {
                     type: "object",
                     properties: {
-                        id: { type: "string", description: "Deployment ID" },
+                        id: { type: "string" },
                     },
                     required: ["id"],
                 },
             },
             {
                 name: "vercel_list_domains",
-                description: "List domains for a project",
+                description: "List domains",
                 inputSchema: {
                     type: "object",
                     properties: {
-                        projectId: { type: "string", description: "Project ID or Name" },
+                        projectId: { type: "string" },
                     },
                     required: ["projectId"],
                 },
             },
             {
                 name: "vercel_add_domain",
-                description: "Add a domain to a project",
+                description: "Add domain",
                 inputSchema: {
                     type: "object",
                     properties: {
-                        projectId: { type: "string", description: "Project ID or Name" },
-                        name: { type: "string", description: "Domain name" },
+                        projectId: { type: "string" },
+                        name: { type: "string" },
                     },
                     required: ["projectId", "name"],
                 },
             },
             {
                 name: "vercel_remove_domain",
-                description: "Remove a domain from a project",
+                description: "Remove domain",
                 inputSchema: {
                     type: "object",
                     properties: {
-                        projectId: { type: "string", description: "Project ID or Name" },
-                        domainName: { type: "string", description: "Domain name to remove" },
+                        projectId: { type: "string" },
+                        domainName: { type: "string" },
                     },
                     required: ["projectId", "domainName"],
                 },
             },
             {
                 name: "vercel_list_env_vars",
-                description: "List environment variables for a project",
+                description: "List environment variables",
                 inputSchema: {
                     type: "object",
                     properties: {
-                        projectId: { type: "string", description: "Project ID or Name" },
+                        projectId: { type: "string" },
                     },
                     required: ["projectId"],
                 },
             },
             {
                 name: "vercel_create_env_var",
-                description: "Create an environment variable for a project",
+                description: "Create environment variable",
                 inputSchema: {
                     type: "object",
                     properties: {
-                        projectId: { type: "string", description: "Project ID or Name" },
-                        key: { type: "string", description: "Variable key" },
-                        value: { type: "string", description: "Variable value" },
+                        projectId: { type: "string" },
+                        key: { type: "string" },
+                        value: { type: "string" },
                         target: {
                             type: "array",
                             items: { type: "string", enum: ["production", "preview", "development"] },
-                            description: "Environments to apply to",
                         },
                     },
                     required: ["projectId", "key", "value"],
@@ -174,12 +177,12 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             {
                 name: "vercel_delete_env_var",
-                description: "Delete an environment variable from a project",
+                description: "Delete environment variable",
                 inputSchema: {
                     type: "object",
                     properties: {
-                        projectId: { type: "string", description: "Project ID or Name" },
-                        envId: { type: "string", description: "Environment Variable ID" },
+                        projectId: { type: "string" },
+                        envId: { type: "string" },
                     },
                     required: ["projectId", "envId"],
                 },

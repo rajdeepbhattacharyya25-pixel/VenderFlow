@@ -1,14 +1,8 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.CodeRabbitClient = void 0;
-const axios_1 = __importDefault(require("axios"));
-class CodeRabbitClient {
+import axios from 'axios';
+export class CodeRabbitClient {
     client;
     constructor(apiKey) {
-        this.client = axios_1.default.create({
+        this.client = axios.create({
             baseURL: 'https://api.coderabbit.ai',
             headers: {
                 'x-coderabbitai-api-key': apiKey,
@@ -257,4 +251,3 @@ class CodeRabbitClient {
         return output;
     }
 }
-exports.CodeRabbitClient = CodeRabbitClient;

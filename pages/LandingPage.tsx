@@ -83,7 +83,7 @@ export default function LandingPage() {
 
     // Delay heavy visual effects
     useEffect(() => {
-        const timer = setTimeout(() => setShowEffect(true), 4000); // Increased to 4s
+        const timer = setTimeout(() => setShowEffect(true), 1000); // reduced from 4s for faster layout stability
         return () => clearTimeout(timer);
     }, []);
 
@@ -181,8 +181,8 @@ export default function LandingPage() {
         });
 
         // 1. Text splits apart
-        tl.to(".hero-text-top", { y: -100, opacity: 0, duration: 1 }, 0)
-            .to(".hero-text-bottom", { y: 100, opacity: 0, duration: 1 }, 0)
+        tl.to(".hero-text-top", { y: -150, opacity: 0, duration: 1 }, 0)
+            .to(".hero-text-bottom", { y: 150, opacity: 0, duration: 1 }, 0)
             .to(".hero-subtitle", { opacity: 0, scale: 0.8, duration: 0.5 }, 0);
 
         // 2. (Removed parallax-cards animation here as it's been replaced by FloatingCollage)
@@ -390,34 +390,47 @@ export default function LandingPage() {
                             <div className="hero-element scan-pulse-container border border-white/10 bg-white/5 backdrop-blur-sm px-4 py-1.5 mt-4 sm:mt-0 mb-6 sm:mb-8 rounded-full shadow-[0_0_20px_rgba(204,255,0,0.1)]">
                                 <div className="scan-pulse-beam" />
                                 <Suspense fallback={<span className="text-white/40 text-[11px] uppercase tracking-[0.2em]">The Ultimate Commerce OS</span>}>
-                                    <DecryptedText
-                                        text="The Ultimate Commerce OS"
-                                        speed={80}
-                                        maxIterations={20}
-                                        animateOn="view"
-                                        className="text-[11px] uppercase tracking-[0.2em] text-[#ccff00] font-bold digital-glow"
-                                        encryptedClassName="text-white/40"
-                                    />
+                                    {!isMobile ? (
+                                        <DecryptedText
+                                            text="The Ultimate Commerce OS"
+                                            speed={80}
+                                            maxIterations={20}
+                                            animateOn="view"
+                                            className="text-[11px] uppercase tracking-[0.2em] text-[#ccff00] font-bold digital-glow"
+                                            encryptedClassName="text-white/40"
+                                        />
+                                    ) : (
+                                        <span className="text-[11px] uppercase tracking-[0.2em] text-[#ccff00] font-bold digital-glow">The Ultimate Commerce OS</span>
+                                    )}
                                 </Suspense>
                             </div>
 
                             <h1 className="hero-element font-orbitron font-bold text-[10.5vw] sm:text-7xl md:text-8xl lg:text-[120px] leading-[0.9] tracking-tighter uppercase mb-4 sm:mb-6 flex flex-col">
-                                <SplitText
-                                    text="Scale Without"
-                                    className="hero-text-top block text-white/90"
-                                    delay={40}
-                                    duration={1.2}
-                                    tag="span"
-                                    onLetterAnimationComplete={() => { }}
-                                />
-                                <SplitText
-                                    text="Compromise"
-                                    className="hero-text-bottom block text-[#ccff00]"
-                                    delay={40}
-                                    duration={1.2}
-                                    tag="span"
-                                    onLetterAnimationComplete={() => { }}
-                                />
+                                {!isMobile ? (
+                                    <>
+                                        <SplitText
+                                            text="SCALE WITHOUT"
+                                            className="hero-text-top block text-white/90"
+                                            delay={50}
+                                            duration={1.25}
+                                            tag="span"
+                                            onLetterAnimationComplete={() => { }}
+                                        />
+                                        <SplitText
+                                            text="COMPROMISE"
+                                            className="hero-text-bottom block text-[#ccff00]"
+                                            delay={70}
+                                            duration={1.4}
+                                            tag="span"
+                                            onLetterAnimationComplete={() => { }}
+                                        />
+                                    </>
+                                ) : (
+                                    <>
+                                        <span className="hero-text-top block text-white/90">SCALE WITHOUT</span>
+                                        <span className="hero-text-bottom block text-[#ccff00]">COMPROMISE</span>
+                                    </>
+                                )}
                             </h1>
 
                             <p className="hero-element hero-subtitle text-[15px] sm:text-xl md:text-2xl text-white/50 max-w-2xl font-light px-2">
@@ -505,21 +518,21 @@ export default function LandingPage() {
                                     {showEffect && (
                                         <LiquidEther
                                             colors={['#ccff00', '#00ff88', '#88ff44']}
-                                            mouseForce={isMobile ? 6 : 4}
-                                            cursorSize={isMobile ? 50 : 45}
+                                            mouseForce={isMobile ? 5 : 8}
+                                            cursorSize={isMobile ? 80 : 130}
                                             isViscous
-                                            viscous={isMobile ? 18 : 24}
-                                            iterationsViscous={isMobile ? 8 : 24}
-                                            iterationsPoisson={isMobile ? 10 : 22}
-                                            dt={0.02}
-                                            resolution={isMobile ? 0.2 : 0.4}
+                                            viscous={isMobile ? 35 : 50}
+                                            iterationsViscous={isMobile ? 16 : 32}
+                                            iterationsPoisson={isMobile ? 16 : 32}
+                                            dt={0.014}
+                                            resolution={isMobile ? 0.35 : 0.5}
                                             isBounce={false}
                                             autoDemo
-                                            autoSpeed={0.08}
-                                            autoIntensity={0.25}
-                                            takeoverDuration={0.3}
-                                            autoResumeDelay={4000}
-                                            autoRampDuration={2.0}
+                                            autoSpeed={isMobile ? 0.08 : 0.15}
+                                            autoIntensity={isMobile ? 0.5 : 0.7}
+                                            takeoverDuration={0.4}
+                                            autoResumeDelay={2000}
+                                            autoRampDuration={2.5}
                                         />
                                     )}
                                 </Suspense>
@@ -528,7 +541,11 @@ export default function LandingPage() {
                         <div className="max-w-4xl mx-auto text-center relative z-10 flex flex-col items-center">
                             <div className="text-3xl sm:text-5xl md:text-6xl font-heading font-bold uppercase leading-[0.9] tracking-tighter mb-6 flex items-center justify-center gap-3">
                                 <Suspense fallback={<span>Ready To</span>}>
-                                    <BlurText text="Ready To" delay={50} direction="bottom" />
+                                    {!isMobile ? (
+                                        <BlurText text="Ready To" delay={50} direction="bottom" />
+                                    ) : (
+                                        <span>Ready To</span>
+                                    )}
                                 </Suspense>
                                 <Suspense fallback={<span className="text-[#ccff00] italic">Scale?</span>}>
                                     <RotatingText

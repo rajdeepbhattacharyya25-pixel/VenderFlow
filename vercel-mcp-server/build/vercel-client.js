@@ -1,14 +1,8 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.VercelClient = void 0;
-const axios_1 = __importDefault(require("axios"));
-class VercelClient {
+import axios from 'axios';
+export class VercelClient {
     client;
     constructor(apiToken) {
-        this.client = axios_1.default.create({
+        this.client = axios.create({
             baseURL: 'https://api.vercel.com',
             headers: {
                 Authorization: `Bearer ${apiToken}`,
@@ -81,4 +75,3 @@ class VercelClient {
         return response.data;
     }
 }
-exports.VercelClient = VercelClient;
