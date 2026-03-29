@@ -51,8 +51,8 @@ const CookiePage = React.lazy(() => import('./pages/legal/CookiePage'));
 const AboutPage = React.lazy(() => import('./pages/AboutPage'));
 
 // Blog Pages
-const BlogIndex = React.lazy(() => import('@/pages/blog/BlogIndex'));
-const BlogPost = React.lazy(() => import('@/pages/blog/BlogPost'));
+const BlogIndex = React.lazy(() => import('./pages/blog/BlogIndex'));
+const BlogPost = React.lazy(() => import('./pages/blog/BlogPost'));
 
 // Alternative Pages (SEO)
 const AlternativePage = React.lazy(() => import('./pages/alternatives/AlternativePage'));

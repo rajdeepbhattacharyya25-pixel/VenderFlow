@@ -279,7 +279,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               ) : (
                 <button
                   onClick={onLogin}
-                  className="hover:text-emerald-600 transition-colors font-bold text-sm"
+                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold uppercase tracking-wider rounded-full transition-all shadow-sm hover:shadow-md hover:shadow-emerald-500/20 hover:-translate-y-0.5 active:scale-95"
                   aria-label="Seller Login"
                 >
                   Seller Login
