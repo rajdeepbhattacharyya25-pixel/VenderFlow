@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { RazorpayService } from "../_shared/payments/razorpay.ts";
 import { TelegramProvider } from "../_shared/notifications/telegram.ts";
+import { captureServerEvent } from "../_shared/posthog-edge.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -108,6 +109,14 @@ serve(async (req) => {
                     plan_name: planInfo.name,
                     current_period_start: new Date(sub.current_start * 1000).toISOString(),
                     current_period_end: endDate.toISOString(),
+                });
+
+                // Analytics
+                await captureServerEvent(sellerId, 'subscription_activated', {
+                    plan_name: planInfo.name,
+                    external_subscription_id: sub.id,
+                    amount: sub.amount / 100,
+                    status: sub.status
                 });
                 break;
             }
@@ -318,6 +327,17 @@ Reserve (${reservePercent}%): ₹${(reserveAmtPaise / 100).toFixed(2)}
 ---
 Transfer: Queued via Outbox
                     `.trim());
+
+                    // Analytics
+                    await captureServerEvent(sellerId, 'order_paid', {
+                        order_id: storeOrderId,
+                        payment_id: paymentId,
+                        total_amount: totalAmountPaise / 100,
+                        seller_amount: availableAmtPaise / 100,
+                        commission_amount: platformAmtPaise / 100,
+                        reserve_amount: reserveAmtPaise / 100,
+                        currency: 'INR'
+                    });
                 }
                 break;
             }
@@ -406,6 +426,13 @@ Status: Ledger debited (Reserve → Available → Negative)
 Reversal: Queued via Outbox
 Payment ID: ${paymentId}
                 `.trim());
+
+                // Analytics
+                await captureServerEvent(sellerId, 'refund_processed', {
+                    payment_id: paymentId,
+                    amount: refundAmountPaise / 100,
+                    seller_id: sellerId
+                });
                 break;
             }
         }

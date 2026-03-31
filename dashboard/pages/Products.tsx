@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Plus, Filter, Upload, Check } from 'lucide-react';
 import ProductTable from '../components/products/ProductTable';
@@ -10,6 +9,8 @@ import BulkEditModal from '../components/products/BulkEditModal';
 import { Product } from '../types';
 import { supabase } from '../../lib/supabase';
 import { Seller } from '../../lib/seller';
+import { Events } from '../../lib/analytics';
+import { logAlert } from '../../lib/notifications';
 
 interface ProductsProps {
     searchTerm?: string;
@@ -88,8 +89,20 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
                 });
 
             setProducts(mappedProducts as Product[]);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error fetching products:', error);
+            const { data: { user } } = await supabase.auth.getUser();
+            logAlert({
+                type: 'PRODUCT_FETCH_FAILED',
+                severity: 'warning',
+                title: 'Failed to Load Products',
+                message: `Could not retrieve your product catalog. ${error?.message || 'Unknown error'}`,
+                seller_id: user?.id,
+                metadata: {
+                    operation_type: 'product_fetch',
+                    error_code: error?.code || 'FETCH_ERROR'
+                }
+            });
         }
     };
 
@@ -176,7 +189,13 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
             console.error('No authenticated user found');
-            alert('You must be logged in to add products.');
+            logAlert({
+                type: 'AUTH_REQUIRED',
+                severity: 'warning',
+                title: 'Authentication Required',
+                message: 'You must be logged in to add products.',
+                metadata: { operation_type: 'product_create', error_code: 'NO_AUTH' }
+            });
             return;
         }
         
@@ -200,7 +219,24 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
 
             const currentLimit = limits[seller.plan as keyof typeof limits] || 10;
             if (seller.product_count >= currentLimit) {
-                alert(`Limit Reached: You can only have ${currentLimit} products on the ${seller.plan} plan. Please upgrade to add more.`);
+                logAlert({
+                    type: 'PRODUCT_QUOTA_REACHED',
+                    severity: 'warning',
+                    title: 'Product Limit Reached',
+                    message: `You can only have ${currentLimit} products on the ${seller.plan} plan. Upgrade to add more.`,
+                    seller_id: user.id,
+                    metadata: {
+                        operation_type: 'product_create',
+                        error_code: 'QUOTA_EXCEEDED',
+                        current_plan: seller.plan,
+                        current_count: seller.product_count,
+                        limit: currentLimit
+                    },
+                    action: {
+                        type: 'UPGRADE_PLAN',
+                        payload: { redirect: '/dashboard?tab=billing', current_plan: seller.plan }
+                    }
+                });
                 return;
             }
 
@@ -235,10 +271,28 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
                 };
                 setEditingProduct(newProduct);
                 setIsModalOpen(true);
+
+                // Events Tracking
+                Events.productCreated({
+                    vendor_id: user.id,
+                    product_id: data.id,
+                    category: 'Uncategorized',
+                    price: 0
+                });
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error creating product:', error);
-            alert('Failed to initialize new product');
+            logAlert({
+                type: 'PRODUCT_CREATE_FAILED',
+                severity: 'critical',
+                title: 'Product Creation Failed',
+                message: `Failed to initialize new product. ${error?.message || 'Database error'}`,
+                seller_id: user.id,
+                metadata: {
+                    operation_type: 'product_create',
+                    error_code: error?.code || 'INSERT_ERROR'
+                }
+            });
         }
     };
 
@@ -268,7 +322,18 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
                     }
                 });
             } else {
-                alert('Failed to delete product');
+                logAlert({
+                    type: 'PRODUCT_DELETE_FAILED',
+                    severity: 'critical',
+                    title: 'Product Deletion Failed',
+                    message: `Could not delete product (ID: ${id}). The database operation failed.`,
+                    seller_id: user?.id,
+                    metadata: {
+                        operation_type: 'product_delete',
+                        resource_id: id,
+                        error_code: error?.code || 'DELETE_ERROR'
+                    }
+                });
             }
         }
     };
@@ -280,7 +345,23 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
 
             // 1. Validation for Publication
             if (productData.is_active && !seller?.razorpay_account_id) {
-                alert('You must link your Razorpay account in Billing before publishing products.');
+                const { data: { user: currentUser } } = await supabase.auth.getUser();
+                logAlert({
+                    type: 'RAZORPAY_NOT_LINKED',
+                    severity: 'warning',
+                    title: 'Payment Account Required',
+                    message: 'You must link your Razorpay account in Billing before publishing products.',
+                    seller_id: currentUser?.id,
+                    metadata: {
+                        operation_type: 'product_publish',
+                        resource_id: productId,
+                        error_code: 'NO_RAZORPAY'
+                    },
+                    action: {
+                        type: 'LINK_RAZORPAY',
+                        payload: { redirect: '/dashboard?tab=settings' }
+                    }
+                });
                 return;
             }
 
@@ -300,6 +381,17 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
 
             if (productError) throw productError;
 
+            // Events Tracking
+            if (productData.is_active) {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (user) {
+                    Events.productPublished({
+                        vendor_id: user.id,
+                        product_id: productId
+                    });
+                }
+            }
+
             // 2. Update Stock
             if (typeof productData.stock_quantity === 'number') {
                 const { error: stockError } = await supabase
@@ -309,7 +401,18 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
                         stock_quantity: productData.stock_quantity,
                         track_stock: true
                     });
-                if (stockError) console.error('Stock update failed', stockError);
+                if (stockError) {
+                    console.error('Stock update failed', stockError);
+                    const { data: { user: stockUser } } = await supabase.auth.getUser();
+                    logAlert({
+                        type: 'STOCK_UPDATE_FAILED',
+                        severity: 'warning',
+                        title: 'Stock Update Failed',
+                        message: `Stock quantity could not be updated for product. ${stockError.message}`,
+                        seller_id: stockUser?.id,
+                        metadata: { operation_type: 'stock_update', resource_id: productId, error_code: stockError.code || 'STOCK_ERROR' }
+                    });
+                }
             }
 
             // 3. Update Variants
@@ -348,7 +451,18 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
                         .from('product_variants')
                         .upsert(variantsToUpsert, { onConflict: 'id' });
 
-                    if (variantsError) console.error('Error upserting variants:', variantsError);
+                    if (variantsError) {
+                        console.error('Error upserting variants:', variantsError);
+                        const { data: { user: varUser } } = await supabase.auth.getUser();
+                        logAlert({
+                            type: 'VARIANT_UPSERT_FAILED',
+                            severity: 'warning',
+                            title: 'Variant Update Failed',
+                            message: `Product variants could not be saved. ${variantsError.message}`,
+                            seller_id: varUser?.id,
+                            metadata: { operation_type: 'variant_upsert', resource_id: productId, error_code: variantsError.code || 'VARIANT_ERROR' }
+                        });
+                    }
                 }
             }
 
@@ -360,6 +474,15 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
 
             if (deleteMediaError) {
                 console.error('Error clearing old media:', deleteMediaError);
+                const { data: { user: mediaUser } } = await supabase.auth.getUser();
+                logAlert({
+                    type: 'MEDIA_CLEAR_FAILED',
+                    severity: 'warning',
+                    title: 'Media Cleanup Failed',
+                    message: `Old product images could not be cleared. ${deleteMediaError.message}`,
+                    seller_id: mediaUser?.id,
+                    metadata: { operation_type: 'media_delete', resource_id: productId, error_code: deleteMediaError.code || 'MEDIA_ERROR' }
+                });
             }
 
             if (productData.images && productData.images.length > 0) {
@@ -377,6 +500,15 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
 
                 if (insertMediaError) {
                     console.error('Error inserting new media:', insertMediaError);
+                    const { data: { user: imgUser } } = await supabase.auth.getUser();
+                    logAlert({
+                        type: 'MEDIA_INSERT_FAILED',
+                        severity: 'warning',
+                        title: 'Image Upload Failed',
+                        message: `New product images could not be saved. ${insertMediaError.message}`,
+                        seller_id: imgUser?.id,
+                        metadata: { operation_type: 'media_insert', resource_id: productId, error_code: insertMediaError.code || 'MEDIA_ERROR' }
+                    });
                 }
             }
 
@@ -398,9 +530,21 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
                     }
                 });
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error saving:', error);
-            alert('Failed to save product.');
+            const { data: { user: saveUser } } = await supabase.auth.getUser();
+            logAlert({
+                type: 'PRODUCT_SAVE_FAILED',
+                severity: 'critical',
+                title: 'Product Save Failed',
+                message: `Failed to save product changes. ${error?.message || 'Unknown error'}`,
+                seller_id: saveUser?.id,
+                metadata: {
+                    operation_type: 'product_save',
+                    resource_id: editingProduct?.id,
+                    error_code: error?.code || 'SAVE_ERROR'
+                }
+            });
         }
     };
 
@@ -416,7 +560,10 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
 
             if (newImageFile) {
                 const fileExt = newImageFile.name.split('.').pop();
-                const fileName = `bulk-shared/${crypto.randomUUID()}.${fileExt}`;
+                const bulkUUID = (typeof crypto !== 'undefined' && crypto.randomUUID)
+                    ? crypto.randomUUID()
+                    : `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+                const fileName = `bulk-shared/${bulkUUID}.${fileExt}`;
                 const { error: uploadError } = await supabase.storage.from('products-images').upload(fileName, newImageFile);
                 if (uploadError) throw uploadError;
                 
@@ -429,15 +576,38 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
                     sort_order: 0
                 }));
                 const { error: dbError } = await supabase.from('product_media').insert(mediaInserts);
-                if (dbError) console.error("Error inserting bulk product media:", dbError);
+                if (dbError) {
+                    console.error('Error inserting bulk product media:', dbError);
+                    const { data: { user: bulkUser } } = await supabase.auth.getUser();
+                    logAlert({
+                        type: 'BULK_MEDIA_INSERT_FAILED',
+                        severity: 'warning',
+                        title: 'Bulk Image Upload Failed',
+                        message: `Could not attach images to ${selectedIds.length} products. ${dbError.message}`,
+                        seller_id: bulkUser?.id,
+                        metadata: { operation_type: 'bulk_media_insert', error_code: dbError.code || 'BULK_MEDIA_ERROR' }
+                    });
+                }
             }
 
             fetchProducts();
             setSelectedIds([]);
-        } catch (error: unknown) {
-            const err = error as { message?: string };
-            console.error('Bulk edit failed:', err);
-            throw err; // Re-throw to be caught by BulkEditModal
+        } catch (error: any) {
+            console.error('Bulk edit failed:', error);
+            const { data: { user: editUser } } = await supabase.auth.getUser();
+            logAlert({
+                type: 'BULK_EDIT_FAILED',
+                severity: 'critical',
+                title: 'Bulk Edit Failed',
+                message: `Bulk edit operation failed for ${selectedIds.length} products. ${error?.message || 'Unknown error'}`,
+                seller_id: editUser?.id,
+                metadata: {
+                    operation_type: 'bulk_edit',
+                    error_code: error?.code || 'BULK_EDIT_ERROR',
+                    affected_count: selectedIds.length
+                }
+            });
+            throw error; // Re-throw to be caught by BulkEditModal
         }
     };
 
@@ -492,7 +662,19 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
                     const activate = action === 'status';
 
                     if (activate && !seller?.razorpay_account_id) {
-                        alert('You must link your Razorpay account in Billing before publishing products.');
+                        const { data: { user: rpUser } } = await supabase.auth.getUser();
+                        logAlert({
+                            type: 'RAZORPAY_NOT_LINKED',
+                            severity: 'warning',
+                            title: 'Payment Account Required',
+                            message: 'You must link your Razorpay account in Billing before publishing products.',
+                            seller_id: rpUser?.id,
+                            metadata: { operation_type: 'bulk_publish', error_code: 'NO_RAZORPAY' },
+                            action: {
+                                type: 'LINK_RAZORPAY',
+                                payload: { redirect: '/dashboard?tab=settings' }
+                            }
+                        });
                         return;
                     }
 
@@ -538,10 +720,21 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
                 default:
                     console.warn('Unknown bulk action:', action);
             }
-        } catch (error: unknown) {
-            const err = error as { message?: string };
-            console.error('Bulk action failed:', err);
-            alert('Bulk action failed: ' + err.message);
+        } catch (error: any) {
+            console.error('Bulk action failed:', error);
+            const { data: { user: actionUser } } = await supabase.auth.getUser();
+            logAlert({
+                type: 'BULK_ACTION_FAILED',
+                severity: 'critical',
+                title: 'Bulk Action Failed',
+                message: `Bulk ${action} failed for ${selectedIds.length} products. ${error?.message || 'Unknown error'}`,
+                seller_id: actionUser?.id,
+                metadata: {
+                    operation_type: `bulk_${action}`,
+                    error_code: error?.code || 'BULK_ACTION_ERROR',
+                    affected_count: selectedIds.length
+                }
+            });
         }
     };
 

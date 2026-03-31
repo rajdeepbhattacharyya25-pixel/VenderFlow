@@ -46,7 +46,10 @@ export async function uploadProductImage(
         }
 
         const fileExt = file.name.split('.').pop();
-        const fileName = `${productId}/${crypto.randomUUID()}.${fileExt}`;
+        const uuid = (typeof crypto !== 'undefined' && crypto.randomUUID) 
+            ? crypto.randomUUID() 
+            : `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+        const fileName = `${productId}/${uuid}.${fileExt}`;
 
         // 3. Upload to Storage
         const { error: uploadError } = await supabase.storage

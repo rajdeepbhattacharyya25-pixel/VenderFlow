@@ -175,7 +175,9 @@ const AuthCallback = () => {
 
                                     let clientRequestId = sessionStorage.getItem('seller_creation_request_id');
                                     if (!clientRequestId) {
-                                        clientRequestId = crypto.randomUUID();
+                                        clientRequestId = (typeof crypto !== 'undefined' && crypto.randomUUID)
+                                            ? crypto.randomUUID()
+                                            : `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
                                         sessionStorage.setItem('seller_creation_request_id', clientRequestId);
                                     }
 

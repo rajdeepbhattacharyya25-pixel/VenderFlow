@@ -2,8 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { IconBell, IconX } from './Icons';
 import { supabase } from '../lib/supabase';
 import { usePushNotifications } from '../hooks/usePushNotifications';
-import clsx from 'clsx';
-import { formatDistanceToNow } from 'date-fns';
+import { AlertItem, AlertAction } from './AlertItem';
 
 interface Notification {
     id: string;
@@ -12,6 +11,12 @@ interface Notification {
     created_at: string;
     read: boolean;
     link?: string;
+    metadata?: {
+        alert_id?: string;
+        action_type?: string;
+        action_payload?: any;
+        severity?: 'info' | 'warning' | 'critical' | 'emergency';
+    };
 }
 
 export const NotificationBell: React.FC = () => {
@@ -36,7 +41,9 @@ export const NotificationBell: React.FC = () => {
                 (payload) => {
                     const newNotification = payload.new as Notification;
                     setNotifications((prev) => [newNotification, ...prev]);
-                    setUnreadCount((prev) => prev + 1);
+                    if (!newNotification.read) {
+                        setUnreadCount((prev) => prev + 1);
+                    }
                 }
             )
             .subscribe();
@@ -64,11 +71,44 @@ export const NotificationBell: React.FC = () => {
     };
 
     const markAsRead = async (id: string) => {
-        await supabase.from('notifications').update({ read: true }).eq('id', id);
-        setNotifications((prev) =>
-            prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-        );
-        setUnreadCount((prev) => Math.max(0, prev - 1));
+        try {
+            const { error } = await supabase.from('notifications').update({ read: true }).eq('id', id);
+            if (error) throw error;
+            
+            setNotifications((prev) =>
+                prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+            );
+            setUnreadCount((prev) => Math.max(0, prev - 1));
+        } catch (err) {
+            console.error("Failed to mark notification as read:", err);
+        }
+    };
+
+    const handleActionClick = async (action: AlertAction) => {
+        console.log("🚀 Executing Action:", action);
+        
+        switch (action.type) {
+            case 'RETRY_BACKUP':
+                // logic for retrying backup
+                break;
+            case 'RECONNECT_GOOGLE_DRIVE':
+                window.location.href = '/dashboard/settings?tab=integrations';
+                break;
+            case 'FIX_PRODUCT_SYNC':
+                window.location.href = `/dashboard/products/${action.payload.product_id}`;
+                break;
+            case 'UPGRADE_PLAN':
+                window.location.href = action.payload?.redirect || '/dashboard?tab=billing';
+                break;
+            case 'LINK_RAZORPAY':
+                window.location.href = action.payload?.redirect || '/dashboard?tab=settings';
+                break;
+            default:
+                if (action.payload?.url) {
+                    window.location.href = action.payload.url;
+                }
+        }
+        setIsOpen(false);
     };
 
     const markAllAsRead = async () => {
@@ -104,6 +144,7 @@ export const NotificationBell: React.FC = () => {
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className="relative hover:text-primary transition-transform hover:scale-110 p-1"
+                aria-label="Toggle notifications"
             >
                 <IconBell className="w-5 h-5 text-gray-700 dark:text-gray-200" />
                 {unreadCount > 0 && (
@@ -145,29 +186,21 @@ export const NotificationBell: React.FC = () => {
                             ) : (
                                 <div className="divide-y divide-gray-50 dark:divide-gray-800">
                                     {notifications.map((notification) => (
-                                        <div
+                                        <AlertItem
                                             key={notification.id}
-                                            className={clsx(
-                                                'p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer group relative',
-                                                !notification.read && 'bg-primary/5 dark:bg-primary/10'
-                                            )}
-                                            onClick={() => !notification.read && markAsRead(notification.id)}
-                                        >
-                                            {!notification.read && (
-                                                <div className="absolute left-2 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-primary rounded-full"></div>
-                                            )}
-                                            <div className="pl-3">
-                                                <h4 className={clsx("text-sm mb-1", !notification.read ? "font-bold text-gray-900 dark:text-gray-100" : "font-medium text-gray-700 dark:text-gray-300")}>
-                                                    {notification.title}
-                                                </h4>
-                                                <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed mb-2">
-                                                    {notification.message}
-                                                </p>
-                                                <span className="text-[10px] text-gray-400 font-medium">
-                                                    {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
-                                                </span>
-                                            </div>
-                                        </div>
+                                            id={notification.id}
+                                            title={notification.title}
+                                            message={notification.message}
+                                            created_at={notification.created_at}
+                                            read={notification.read}
+                                            severity={notification.metadata?.severity}
+                                            action={notification.metadata?.action_type ? {
+                                                type: notification.metadata.action_type,
+                                                payload: notification.metadata.action_payload
+                                            } : null}
+                                            onMarkAsRead={markAsRead}
+                                            onActionClick={handleActionClick}
+                                        />
                                     ))}
                                 </div>
                             )}

@@ -133,6 +133,7 @@ export default function LandingPage() {
     }, []);
 
     const handleApplyToSell = () => {
+        Events.heroCTAClicked({ section: 'hero', type: 'apply' });
         navigate('/apply');
     };
 
@@ -142,6 +143,7 @@ export default function LandingPage() {
     });
 
     const handleLogin = async (mode: 'customer' | 'seller' = 'customer') => {
+        Events.heroCTAClicked({ section: 'nav', type: 'login', mode });
         if (user) {
             try {
                 // Short timeout: don't block the user for more than 1.5s

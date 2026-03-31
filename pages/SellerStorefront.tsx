@@ -515,7 +515,9 @@ const SellerStorefront = () => {
         // Generate a simple anonymous visitor id from sessionStorage
         let visitorId = sessionStorage.getItem('vf_vid');
         if (!visitorId) {
-            visitorId = crypto.randomUUID();
+            visitorId = (typeof crypto !== 'undefined' && crypto.randomUUID)
+                ? crypto.randomUUID()
+                : `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
             sessionStorage.setItem('vf_vid', visitorId);
         }
 

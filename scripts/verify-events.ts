@@ -60,23 +60,49 @@ async function runAcceptanceTest() {
         email_hash: "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92" // 'secret'
     });
 
-    // Test B: Storefront Funnel
-    console.log("\n--- Funnel: Storefront Conversion ---");
+    // Test B: Storefront & Payment Funnel
+    console.log("\n--- Funnel: Storefront & Payment ---");
     const mockBuyerId = `anon_${Math.random().toString(36).substring(7)}`;
     const mockOrderId = `order_${Math.random().toString(36).substring(7)}`;
 
     await sendMockEvent('$pageview', mockBuyerId, { $current_url: "https://vendorflow.com/store/mock" });
     await sendMockEvent('checkout_started', mockBuyerId, { items: 2, value: 15.99 });
 
-    // Simulate server-side order created 
-    await sendMockEvent('order_created', mockBuyerId, {
+    // Simulate server-side order created (from Razorpay Webhook)
+    await sendMockEvent('order_paid', mockVendorId, {
         order_id: mockOrderId,
-        vendor_id: mockVendorId,
-        order_value: 15.99,
-        items_count: 2
+        total_amount: 15.99,
+        seller_amount: 14.39,
+        commission_amount: 1.60,
+        currency: 'INR'
     });
 
-    // Test C: Admin Actions
+    // Test C: Subscription & KYC Onboarding
+    console.log("\n--- Funnel: Onboarding & Subscription ---");
+    await sendMockEvent('payment_setup_initiated', mockVendorId, {
+        plan_name: 'pro',
+        trial_days: 7
+    });
+
+    await sendMockEvent('subscription_activated', mockVendorId, {
+        plan_name: 'pro',
+        amount: 49.99,
+        status: 'active'
+    });
+
+    await sendMockEvent('kyc_submitted', mockVendorId, {
+        has_gst: true,
+        has_pan: true,
+        documents_count: 2
+    });
+
+    // Test Ensure PII is redacted (simulating the client-side/server-side masking before dispatch)
+    await sendMockEvent('vendor_onboard_step_completed', mockVendorId, {
+        step_name: "profile_setup",
+        email_hash: "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92" // 'secret'
+    });
+
+    // Test D: Admin Actions
     console.log("\n--- Admin Events ---");
     await sendMockEvent('admin_login', mockAdminId, {});
     await sendMockEvent('seller_approved', mockAdminId, { vendor_id: mockVendorId });

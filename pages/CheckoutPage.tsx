@@ -3,10 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { Checkout } from '../components/Checkout';
 import { Product } from '../types';
 import { supabase } from '../lib/supabase';
-import { getCartSeller, getCartItems, clearCart as clearCartStorage, CartItem as StoredCartItem } from '../lib/cart';
+import { getCartSeller, getCartItems, clearCart as clearCartStorage } from '../lib/cart';
 import { loadSellerById, Seller, checkStoreMembership, joinStore } from '../lib/seller';
 import { ToastContainer } from '../components/Toast';
 import { Loader2, ShoppingBag, ArrowLeft } from 'lucide-react';
+import { Events } from '../lib/analytics';
 
 interface CartItem {
     product: Product;
@@ -169,6 +170,17 @@ const CheckoutPage = () => {
                 alert(`Supabase Error: ${error.message} (Code: ${error.code})`);
                 showToast(`Failed to place order: ${error.message}`);
                 return false;
+            }
+
+            // Events Tracking
+            if (order) {
+                Events.orderCreated({
+                    order_id: order.id,
+                    buyer_id: user.id,
+                    vendor_id: seller.id,
+                    order_value: total,
+                    items_count: orderedItems.reduce((sum, item) => sum + item.quantity, 0)
+                });
             }
 
             // Record Promo Usage

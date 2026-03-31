@@ -82,11 +82,13 @@ const NavigateToRootStore = () => {
 function App() {
   React.useEffect(() => {
     // Initialize Analytics
-    const POSTHOG_KEY = import.meta.env.VITE_NEXT_PUBLIC_POSTHOG_KEY || import.meta.env.VITE_POSTHOG_KEY;
+    const POSTHOG_KEY = import.meta.env.VITE_POSTHOG_API_KEY || import.meta.env.VITE_NEXT_PUBLIC_POSTHOG_KEY;
     const POSTHOG_HOST = import.meta.env.VITE_POSTHOG_HOST || 'https://app.posthog.com';
 
-    if (POSTHOG_KEY) {
+    if (POSTHOG_KEY && (POSTHOG_KEY as string).startsWith('phc_')) {
       initPostHog(POSTHOG_KEY as string, POSTHOG_HOST as string);
+    } else if (POSTHOG_KEY) {
+      console.warn('[App] PostHog key found but appears invalid (must start with phc_). Skipping initialization.');
     }
 
     // Subscribe to Auth changes to identify users

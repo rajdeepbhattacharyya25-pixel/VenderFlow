@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { NotificationService } from "../_shared/notifications/index.ts";
+import { captureServerEvent } from "../_shared/posthog-edge.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -19,6 +20,13 @@ serve(async (req) => {
 
         const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
         if (authError || !user) throw new Error("Authentication failed");
+
+        // Analytics
+        await captureServerEvent(user.id, 'kyc_submitted', {
+            has_gst: !!gst_number,
+            has_pan: !!pan_number,
+            documents_count: document_urls?.length || 0
+        });
 
         // 1. Update Seller KYC Status
         const kycData = {

@@ -36,6 +36,13 @@ interface AdminStats {
     totalAvailable: number;
     totalReserves: number;
     totalNegative: number;
+    // Technical Health
+    max_latency_ms?: number;
+    mean_latency_ms?: number;
+    unindexed_fks?: number;
+    missing_rls_count?: number;
+    realtime_calls_total?: number;
+    databaseSize: string;
 }
 
 interface ActivityItem {
@@ -69,7 +76,13 @@ const AdminDashboard: React.FC = () => {
         healthStatus: 'Normal',
         totalAvailable: 0,
         totalReserves: 0,
-        totalNegative: 0
+        totalNegative: 0,
+        max_latency_ms: 0,
+        mean_latency_ms: 0,
+        unindexed_fks: 0,
+        missing_rls_count: 0,
+        realtime_calls_total: 0,
+        databaseSize: '...'
     });
     const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([]);
     const [alerts, setAlerts] = useState<Alert[]>([]);
@@ -296,6 +309,37 @@ const AdminDashboard: React.FC = () => {
         }
     ];
 
+    const techStatsDisplay = [
+        {
+            label: 'Peak Latency',
+            value: `${stats.max_latency_ms || 0}ms`,
+            icon: Activity,
+            color: (stats.max_latency_ms || 0) > 300 ? 'text-red-500' : (stats.max_latency_ms || 0) > 100 ? 'text-amber-500' : 'text-emerald-500',
+            subtext: `Mean: ${stats.mean_latency_ms || 0}ms`
+        },
+        {
+            label: 'Index Efficiency',
+            value: stats.unindexed_fks === 0 ? 'OPTIMIZED' : `${stats.unindexed_fks} UNINDEXED`,
+            icon: ShoppingBag,
+            color: (stats.unindexed_fks || 0) > 0 ? 'text-amber-500' : 'text-emerald-500',
+            subtext: 'Scan for missing FK indexes'
+        },
+        {
+            label: 'Security Posture',
+            value: stats.missing_rls_count === 0 ? 'PROTECTED' : `${stats.missing_rls_count} VULNERABLE`,
+            icon: Users,
+            color: (stats.missing_rls_count || 0) > 0 ? 'text-red-500' : 'text-emerald-500',
+            subtext: 'RLS Policy Coverage'
+        },
+        {
+            label: 'DB Footprint',
+            value: stats.databaseSize,
+            icon: ArrowUpRight,
+            color: 'text-blue-400',
+            subtext: `${stats.storagePercentage || 0}% of 1GB Free Tier`
+        }
+    ];
+
     return (
         <div className="admin-hud-content min-h-screen bg-[#0B0F19] text-neutral-100 px-4 md:px-6 pt-2 space-y-6">
             <div className="hud-scanlines pointer-events-none fixed inset-0 z-50 opacity-[0.03]"></div>
@@ -376,6 +420,20 @@ const AdminDashboard: React.FC = () => {
                                         <span className="animate-pulse text-[10px] font-mono text-neutral-600">ACTION REQUIRED</span>
                                     )}
                                 </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* TECHNICAL TELEMETRY (NEW Row) */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {techStatsDisplay.map((stat, i) => (
+                            <div key={i} className="hud-glass border border-white/5 p-5 bg-white/[0.01]">
+                                <div className="flex items-center justify-between mb-3">
+                                    <p className="text-neutral-500 text-[9px] font-mono uppercase tracking-[0.1em]">{stat.label}</p>
+                                    <stat.icon size={14} className={stat.color} />
+                                </div>
+                                <h3 className={`text-xl font-mono font-bold ${stat.color}`}>{stat.value}</h3>
+                                <p className="text-neutral-600 text-[9px] font-mono mt-1 uppercase">{stat.subtext}</p>
                             </div>
                         ))}
                     </div>
@@ -482,8 +540,8 @@ const AdminDashboard: React.FC = () => {
                         <div className="space-y-6">
                             {[
                                 { label: 'API CORE', value: '99.98%', color: 'bg-emerald-500', width: '99%' },
-                                { label: 'DB CLUSTER', value: '24%', color: 'bg-blue-500', width: '24%' },
-                                { label: 'STORAGE', value: '21%', color: 'bg-amber-500', width: '21%' }
+                                { label: 'LATENCY (MAX)', value: `${stats.max_latency_ms || 0}ms`, color: (stats.max_latency_ms || 0) > 300 ? 'bg-red-500' : 'bg-emerald-500', width: `${Math.min(100, (stats.max_latency_ms || 0) / 5)}%` },
+                                { label: 'STORAGE', value: `${stats.storagePercentage || 0}%`, color: (stats.storagePercentage || 0) > 80 ? 'bg-red-500' : 'bg-amber-500', width: `${stats.storagePercentage || 0}%` }
                             ].map((health, i) => (
                                 <div key={i}>
                                     <div className="flex items-center justify-between text-[9px] font-mono text-neutral-500 mb-2">

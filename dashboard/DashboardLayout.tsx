@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import Dashboard from './pages/Dashboard';
@@ -15,8 +15,10 @@ import { Theme } from './types';
 
 import { supabase } from '../lib/supabase';
 import { useAutoBackup } from '../hooks/useAutoBackup';
+import { useSystemAlertListener, SystemAlert } from '../hooks/useSystemAlert';
 
-import { AlertCircle, Megaphone, X, Database, ShieldAlert } from 'lucide-react';
+import { AlertCircle, Megaphone, X, Database, ShieldAlert, AlertTriangle } from 'lucide-react';
+import { Events } from '../lib/analytics';
 
 function App() {
   const { isBackupRunning, backupProgress, backupMessage, backupStatus } = useAutoBackup(true); // Enable auto-backup on dashboard load
@@ -32,6 +34,27 @@ function App() {
   });
 
   const [searchTerm, setSearchTerm] = useState('');
+  const [systemAlerts, setSystemAlerts] = useState<SystemAlert[]>([]);
+
+  // Listen for global system errors (from vault.ts, storage.ts, etc.)
+  const handleSystemAlert = useCallback((alert: SystemAlert) => {
+    setSystemAlerts(prev => {
+      // Avoid duplicates: same code shown within 5s = replace, not append
+      const existingIndex = prev.findIndex(a => a.code === alert.code);
+      if (existingIndex !== -1) {
+        const updated = [...prev];
+        updated[existingIndex] = alert;
+        return updated;
+      }
+      return [alert, ...prev];
+    });
+  }, []);
+
+  useSystemAlertListener(handleSystemAlert);
+
+  const dismissAlert = useCallback((id: string) => {
+    setSystemAlerts(prev => prev.filter(a => a.id !== id));
+  }, []);
   
   // Sync activeTab with URL
   useEffect(() => {
@@ -132,7 +155,19 @@ function App() {
       }
     };
     fetchSellerStatus();
-  }, []);
+    
+    // Analytics Tracking
+    const trackDashboardVisit = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        Events.dashboardOpened({
+          vendor_id: user.id,
+          section: activeTab
+        });
+      }
+    };
+    trackDashboardVisit();
+  }, [activeTab]);
 
   // Theme Handling
   useEffect(() => {
@@ -296,6 +331,39 @@ function App() {
           sellerSlug={sellerSlug}
         />
         <main className="p-4 sm:p-6 lg:px-10 pt-6 sm:pt-8">
+          {/* ── System Error Alerts (stays until manually dismissed) ── */}
+          {systemAlerts.length > 0 && (
+            <div className="flex flex-col gap-3 mb-6">
+              {systemAlerts.map(alert => (
+                <div
+                  key={alert.id}
+                  className="flex items-start gap-3 p-4 rounded-xl border bg-red-500/10 border-red-500/25 shadow-sm animate-in slide-in-from-top-2 duration-300"
+                >
+                  <div className="w-9 h-9 rounded-lg bg-red-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <AlertTriangle size={18} className="text-red-500" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <h3 className="font-bold text-sm text-red-500">{alert.title}</h3>
+                      <span className="text-[10px] font-mono text-red-400/60 bg-red-500/10 px-1.5 py-0.5 rounded">{alert.code}</span>
+                    </div>
+                    <p className="text-sm text-theme-text opacity-80">{alert.message}</p>
+                    <p className="text-[11px] text-red-400/50 mt-1">
+                      {alert.timestamp.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })} — Admin has been notified via Telegram
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => dismissAlert(alert.id)}
+                    title="Dismiss error"
+                    aria-label="Dismiss error"
+                    className="p-1.5 hover:bg-red-500/10 rounded-lg transition-colors flex-shrink-0 text-red-400"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
           {announcement && (
             <div className={`mb-6 p-4 rounded-xl border flex items-start gap-3 animate-in slide-in-from-top-2 shadow-sm ${announcement.type === 'warning' ? 'bg-amber-500/10 border-amber-500/20 text-amber-500' :
                announcement.type === 'update' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' :

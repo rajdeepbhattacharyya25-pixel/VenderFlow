@@ -245,7 +245,8 @@ export const Cart: React.FC<CartProps> = ({
                       <img src={product.image} alt={product.name} className="w-full h-full object-cover mix-blend-multiply dark:mix-blend-normal" />
                       <button
                         onClick={() => onAddToCart(product)}
-                        className="absolute bottom-2 right-2 w-8 h-8 bg-white dark:bg-surface-dark shadow-md rounded-full flex items-center justify-center text-gray-900 dark:text-white hover:bg-primary hover:text-white dark:hover:bg-white dark:hover:text-black transition-colors"
+                        className="absolute bottom-1.5 right-1.5 w-11 h-11 bg-white dark:bg-surface-dark shadow-md rounded-full flex items-center justify-center text-gray-900 dark:text-white hover:bg-primary hover:text-white dark:hover:bg-white dark:hover:text-black transition-colors active:scale-95"
+                        style={{ WebkitTapHighlightColor: 'transparent' }}
                         aria-label={`Add ${product.name} to cart`}
                       >
                         <IconShoppingBag className="w-4 h-4" />

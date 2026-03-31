@@ -336,6 +336,7 @@ export default function ApplyToSell() {
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
     const [step, setStep] = useState(1);
+    const [signupStarted, setSignupStarted] = useState(false);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -400,6 +401,10 @@ export default function ApplyToSell() {
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+        if (!signupStarted) {
+            Events.signupStarted();
+            setSignupStarted(true);
+        }
         const { name, value, type } = e.target;
         const finalValue = type === 'checkbox' ? (e.target as HTMLInputElement).checked : value;
         setFormData(prev => ({

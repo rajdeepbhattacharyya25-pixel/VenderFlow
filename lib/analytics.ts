@@ -40,47 +40,58 @@ export function initPostHog(
     const isSampledIn = Math.random() < 0.05;
     const disableRecording = isSensitivePage || !isDashboard || !isSampledIn;
 
-    posthog.init(apiKey, {
-        api_host: apiHost,
-        capture_pageview: false, // We call capturePage() manually on route change
-        capture_pageleave: true,
-        persistence: 'localStorage',
+    // ── Pre-init check ──
+    if (!apiKey || !apiKey.startsWith('phc_')) {
+        console.warn(`[Analytics] PostHog initialization aborted: Invalid API key format. Ensure it starts with "phc_". (Received: ${apiKey?.substring(0, 4)}...)`);
+        return;
+    }
 
-        // Session replay — privacy-first settings
-        session_recording: {
-            maskAllInputs: true,          // Mask all <input> by default
-            maskInputFn: (text, element) => {
-                // Extra masking for payment, password, and PII fields
-                const el = element as HTMLElement;
-                const type = (el as HTMLInputElement).type?.toLowerCase();
-                const name = (el as HTMLInputElement).name?.toLowerCase() || '';
-                const dataSensitive = el.dataset?.sensitive;
+    try {
+        posthog.init(apiKey, {
+            api_host: apiHost,
+            capture_pageview: false, // We call capturePage() manually on route change
+            capture_pageleave: true,
+            persistence: 'localStorage',
 
-                const isPII = name.includes('email') || name.includes('phone') || name.includes('card') || name.includes('name');
-                const isAuthOrPayment = type === 'password' || type === 'creditcard';
+            // Session replay — privacy-first settings
+            session_recording: {
+                maskAllInputs: true,          // Mask all <input> by default
+                maskInputFn: (text, element) => {
+                    // Extra masking for payment, password, and PII fields
+                    const el = element as HTMLElement;
+                    const type = (el as HTMLInputElement).type?.toLowerCase();
+                    const name = (el as HTMLInputElement).name?.toLowerCase() || '';
+                    const dataSensitive = el.dataset?.sensitive;
 
-                if (isAuthOrPayment || isPII || dataSensitive) {
-                    return '*'.repeat(text.length);
-                }
-                return text;
+                    const isPII = name.includes('email') || name.includes('phone') || name.includes('card') || name.includes('name');
+                    const isAuthOrPayment = type === 'password' || type === 'creditcard';
+
+                    if (isAuthOrPayment || isPII || dataSensitive) {
+                        return '*'.repeat(text.length);
+                    }
+                    return text;
+                },
             },
-        },
 
-        // Disable session recording based on logic above
-        disable_session_recording: disableRecording,
+            // Disable session recording based on logic above
+            disable_session_recording: disableRecording,
 
-        // Bootstrap feature flags (session replay toggle handled via flag)
-        bootstrap: {},
+            // Bootstrap feature flags (session replay toggle handled via flag)
+            bootstrap: {},
 
-        loaded(ph) {
-            if (process.env.NODE_ENV === 'development') {
-                console.debug('[Analytics] PostHog initialized', ph.get_distinct_id());
-            }
-        },
-    });
+            loaded(ph) {
+                if (process.env.NODE_ENV === 'development') {
+                    console.debug('[Analytics] PostHog initialized', ph.get_distinct_id());
+                }
+            },
+        });
 
-    _initialized = true;
-    _consentGranted = true;
+        _initialized = true;
+        _consentGranted = true;
+    } catch (err) {
+        console.error('[Analytics] Critical failure during PostHog initialization:', err);
+        _initialized = false;
+    }
 }
 
 // ── Identify ────────────────────────────────────────────────────────────────────
