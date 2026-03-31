@@ -334,29 +334,38 @@ const SellerStorefront = () => {
                     setCanViewDrafts(true);
                 }
 
-                // Load products for this seller
-                let productQuery = supabase
-                    .from('products')
-                    .select('*, product_media(file_url, is_primary, sort_order, media_type), product_variants(*)')
-                    .eq('seller_id', seller.id);
-
-                // Only allow viewing drafts if it's the authenticated seller in preview mode
-                if (!isAuthorizedSeller) {
-                    productQuery = productQuery.eq('is_active', true);
+                interface RawProduct extends Omit<Product, 'image' | 'images' | 'category' | 'sizes' | 'rating' | 'reviews'> {
+                    image?: string;
+                    images?: string[] | string;
+                    category?: string | string[];
+                    categories?: string | string[];
+                    rating?: number | string;
+                    reviews?: number | string;
+                    product_media?: ProductMedia[];
+                    product_variants?: Record<string, any>[];
                 }
 
-                const { data: productsData } = await productQuery;
+                // Load products for this seller
+                let query = supabase
+                    .from('products')
+                    .select('*, product_media(file_url, is_primary, sort_order, media_type, variant_value), product_variants(*)')
+                    .eq('seller_id', seller.id)
+                    .order('created_at', { ascending: false });
 
-                // Strip demo/ghost products regardless of auth state.
-                // Deduplicate by id — prevents the same product appearing twice
-                // if the seller accidentally created duplicates.
+                if (!isAuthorizedSeller) {
+                    query = query.eq('is_active', true);
+                }
+
+                const { data: productsData } = await query;
+
+
                 const seenIds = new Set<string>();
-                const cleanProducts = (productsData || []).filter((p: Product) => {
+                const cleanProducts = ((productsData as unknown as RawProduct[]) || []).filter((p) => {
                     if (seenIds.has(p.id)) return false;
                     seenIds.add(p.id);
 
                     const name = (p.name || '').toLowerCase().trim();
-                    const hasNoMedia = !p.product_media?.length && !p.image && (!p.images || p.images.length === 0);
+                    const hasNoMedia = !p.product_media?.length && !p.image && (!p.images || (Array.isArray(p.images) && p.images.length === 0));
                     const isDraftName = !name || name === 'new product' || name === 'demo' || name === 'test' || name === 'demo product' || name.includes('demo');
                     
                     const isGhostProduct = (
@@ -368,7 +377,7 @@ const SellerStorefront = () => {
                     return !isGhostProduct;
                 });
 
-                const mappedProducts = cleanProducts.map((p: Product) => {
+                const mappedProducts = cleanProducts.map((p): Product => {
                     // Sort media: primary first, then by sort_order
                     const rawMedia: ProductMedia[] = p.product_media || [];
                     const sortedMedia = [...rawMedia].sort((a, b) => {
@@ -389,7 +398,7 @@ const SellerStorefront = () => {
 
                     // Use product_media if available, otherwise fallback to legacy images array
                     const images = sortedMedia.length > 0
-                        ? sortedMedia.filter((m: { media_type: string; file_url: string }) => m.media_type !== 'video').map((m: { file_url: string }) => m.file_url)
+                        ? sortedMedia.filter((m: ProductMedia) => m.media_type !== 'video').map((m: ProductMedia) => m.file_url)
                         : (Array.isArray(p.images) && p.images.length > 0 ? p.images : (p.image ? [p.image] : []));
 
                     const sizes = (p.product_variants || []).length > 0
@@ -397,41 +406,39 @@ const SellerStorefront = () => {
                         : ['Standard'];
 
                     const hasDiscount = p.discount_price && Number(p.discount_price) > 0;
+                    
                     return {
                         ...p,
                         seller_id: seller.id,
                         image: primaryImageUrl,
                         images: images,
-                        variants: p.product_variants || [],
+                        media: sortedMedia,
+                        product_media: sortedMedia,
+                        product_variants: p.product_variants || [],
                         sizes: sizes,
                         category: (() => {
-                            // Support both 'category' and 'categories' fields
-                            const raw = p.category || (p as any).categories || (p as any).product_categories;
-                            
-                            // 1. If it's already an array, use it
+                            const raw = p.category || (p as any).categories;
                             if (Array.isArray(raw)) return raw.filter(Boolean);
-                            
-                            // 2. If it's a string, check if it's a JSON-encoded array (e.g. '["cat1", "cat2"]')
                             if (typeof raw === 'string' && raw.trim().startsWith('[')) {
                                 try {
                                     const parsed = JSON.parse(raw);
                                     if (Array.isArray(parsed)) return parsed.filter(Boolean);
-                                } catch (e) {
-                                    // Not valid JSON, fall through to single string handling
+                                } catch {
+                                    // Invalid JSON - fallback
                                 }
                             }
-                            
-                            // 3. Fallback to single non-empty string
                             if (typeof raw === 'string' && raw.trim().length > 0) return [raw.trim()];
-                            
                             return [];
                         })(),
-                        rating: p.rating || 4.5,
-                        reviews: p.reviews || 0,
+                        rating: Number(p.rating) || 0,
+                        reviews: Number(p.reviews) || 0,
                         price: hasDiscount ? Number(p.discount_price) : Number(p.price),
                         original_price: hasDiscount ? Number(p.price) : undefined
                     };
                 });
+
+
+
 
                 setAllProducts(mappedProducts);
                 setProducts(mappedProducts);

@@ -458,26 +458,26 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, e
     return (
         <>
             {createPortal(
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
-                    <div className="bg-theme-panel rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl border border-theme-border" onClick={(e) => e.stopPropagation()}>
-                <div className="flex items-center justify-between p-6 border-b border-theme-border/50">
+                <div className="fixed inset-0 z-50 flex items-center justify-center sm:p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
+                    <div className="bg-theme-panel sm:rounded-2xl w-full h-full sm:h-auto sm:max-w-4xl sm:max-h-[90vh] flex flex-col shadow-2xl border border-theme-border" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center justify-between p-4 sm:p-6 border-b border-theme-border/50 shrink-0">
                     <h2 className="text-xl font-bold text-theme-text">{product ? 'Edit Product' : 'Add New Product'}</h2>
                     <button onClick={onClose} className="absolute right-4 top-4 rounded-full p-2 text-white/50 hover:bg-white/10 hover:text-white transition-colors" title="Close"><X size={20} /></button>
                 </div>
-                <div className="flex-1 flex min-h-0 overflow-hidden">
-                    <div className="w-48 border-r border-theme-border/50 p-4 space-y-1 overflow-y-auto">
+                <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-hidden">
+                    <div className="w-full md:w-48 border-b md:border-b-0 md:border-r border-theme-border/50 p-3 md:p-4 flex md:flex-col gap-2 md:block md:space-y-1 overflow-x-auto md:overflow-y-auto no-scrollbar shrink-0">
                         {sections.map(section => (
                             <button 
                                 key={section.id} 
                                 onClick={() => setActiveSection(section.id)} 
                                 title={`Switch to ${section.label} (${section.shortcut})`}
-                                className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${activeSection === section.id ? 'bg-sky-500/10 text-sky-600' : 'text-theme-muted hover:bg-theme-border/20'}`}
+                                className={`shrink-0 md:w-full flex items-center justify-center md:justify-start px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${activeSection === section.id ? 'bg-sky-500/10 text-sky-600' : 'text-theme-muted hover:bg-theme-border/20'}`}
                             >
                                 <span>{section.label}</span>
                             </button>
                         ))}
                     </div>
-                    <div className="flex-1 p-6 overflow-y-auto">
+                    <div className="flex-1 p-4 sm:p-6 overflow-y-auto">
                         {activeSection === 'basic' && (
                             <div className="space-y-6 max-w-xl animate-[fadeIn_0.2s_ease-out]">
                                 <div className="space-y-2">
@@ -508,16 +508,16 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, e
                                     />
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium text-theme-text">Categories</label>
                                         <TagInput
                                             tags={formData.category}
                                             onChange={(tags) => updateField('category', tags)}
                                             suggestions={existingCategories}
-                                            placeholder="Add categories (e.g. Electronics, Sale)..."
+                                            placeholder="Add categories (e.g. Sale)..."
                                         />
-                                        <p className="text-[10px] text-theme-muted">Press Enter or comma to add multiple categories.</p>
+                                        <p className="text-[10px] text-theme-muted">Press Enter or comma to add categories.</p>
                                     </div>
 
                                     <div className="space-y-2">
@@ -1086,8 +1086,8 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, e
                 </div>
 
                 {/* Footer */}
-                <div className="p-4 border-t border-theme-border/50 flex justify-between items-center bg-theme-bg/50 rounded-b-2xl">
-                    <div className="flex items-center gap-2 text-sm">
+                <div className="p-4 border-t border-theme-border/50 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 bg-theme-bg/50 rounded-b-none sm:rounded-b-2xl shrink-0">
+                    <div className="flex items-center gap-2 text-sm min-h-[36px]">
                         {hasChanges && (
                             <span className="flex items-center gap-2 text-yellow-600">
                                 <span className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></span>
@@ -1103,14 +1103,14 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, e
                     <div className="flex gap-3">
                         <button
                             onClick={onClose}
-                            className="px-4 py-2.5 rounded-xl border border-theme-border text-theme-text font-medium hover:bg-theme-bg transition-colors"
+                            className="flex-1 sm:flex-none px-4 py-3 sm:py-2.5 rounded-xl border border-theme-border text-theme-text font-medium hover:bg-theme-bg transition-colors min-h-[44px]"
                         >
                             Cancel
                         </button>
                         <button
                             onClick={handleSave}
                             disabled={saveStatus === 'saving'}
-                            className={`px-6 py-2.5 rounded-xl font-bold transition-all flex items-center gap-2 ${saveStatus === 'saving'
+                            className={`flex-1 sm:flex-none px-6 py-3 sm:py-2.5 rounded-xl font-bold transition-all flex items-center justify-center gap-2 min-h-[44px] ${saveStatus === 'saving'
                                 ? 'bg-theme-muted text-theme-bg cursor-not-allowed'
                                 : saveStatus === 'saved'
                                     ? 'bg-green-500 text-white'
@@ -1129,7 +1129,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, e
                             ) : (
                                 <>
                                     Save Product
-                                    <span className="text-[10px] opacity-60 font-mono ml-1 border border-white/30 px-1 rounded flex items-center gap-0.5">
+                                    <span className="hidden sm:flex text-[10px] opacity-60 font-mono ml-1 border border-white/30 px-1 rounded items-center gap-0.5">
                                         <Command size={10} /> ↵
                                     </span>
                                 </>

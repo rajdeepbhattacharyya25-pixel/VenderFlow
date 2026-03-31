@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Tag, ShoppingBag, Plus, FileText, BarChart2, AlertTriangle, ArrowRight, Eye, IndianRupee, MoreHorizontal } from 'lucide-react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { Tag, ShoppingBag, Plus, FileText, BarChart2, Eye, IndianRupee } from 'lucide-react';
 import KPICard from '../components/KPICard';
 import EarningsChart from '../components/EarningsChart';
 import ProductTable from '../components/ProductTable';
@@ -285,7 +284,7 @@ const Dashboard: React.FC<DashboardProps> = ({ theme, onTabChange, sellerSlug })
                                 amount: stat.revenue,
                                 orders: stat.quantity,
                                 stock: 0,
-                                category: 'Legacy',
+                                category: ['Legacy'],
                                 sizes: [],
                                 rating: 0,
                                 reviews: 0,
@@ -293,7 +292,7 @@ const Dashboard: React.FC<DashboardProps> = ({ theme, onTabChange, sellerSlug })
                                 has_variants: false,
                                 created_at: new Date().toISOString(),
                                 updated_at: new Date().toISOString()
-                            } as Product;
+                            } as unknown as Product;
                         }
                     });
 

@@ -398,6 +398,17 @@ html {
   padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem);
 }
 
+/* Notch-safe bottom padding for full-screen overlays */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Disable overscroll gestures inside the Studio Editor */
+.editor-touch-container {
+  touch-action: none;
+  overscroll-behavior: none;
+}
+
 .thumb-zone-active {
   min-height: 48px;
   padding: 0.75rem;
@@ -610,6 +621,15 @@ html {
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(16, 185, 129, 0.4);
+}
+
+/* Hide scrollbar while keeping scroll functionality (used in horizontal tab strips) */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
 .lowercase-headings h1,

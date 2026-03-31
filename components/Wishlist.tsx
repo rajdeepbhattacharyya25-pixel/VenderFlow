@@ -5,13 +5,8 @@ import {
   IconTrash,
   IconShoppingBag,
   IconShare,
-  IconFilter,
-  IconSort,
-  IconAlert,
   IconTrending,
-  IconZap,
-  IconCheck,
-  IconX
+  IconZap
 } from './Icons';
 
 interface WishlistProps {
@@ -25,7 +20,7 @@ interface WishlistProps {
 type SortOption = 'newest' | 'price-low' | 'price-high' | 'popular';
 type FilterOption = 'all' | 'on-sale';
 
-export const Wishlist: React.FC<WishlistProps> = ({ products, onQuickView, onToggleWishlist, onNavigateHome, onAddToCart }) => {
+export const Wishlist: React.FC<WishlistProps> = ({ products, onQuickView, onToggleWishlist, onNavigateHome, onAddToCart: _onAddToCart }) => {
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [filterBy, setFilterBy] = useState<FilterOption>('all');
   const [alertsEnabled, setAlertsEnabled] = useState(false);
@@ -37,7 +32,7 @@ export const Wishlist: React.FC<WishlistProps> = ({ products, onQuickView, onTog
 
     // Filter
     if (filterBy === 'on-sale') {
-      result = result.filter(p => p.originalPrice && p.originalPrice > p.price);
+      result = result.filter(p => p.original_price && p.original_price > p.price);
     }
 
     // Sort
@@ -195,8 +190,8 @@ const WishlistItem: React.FC<{
   // Smart Triggers Logic (Mocked for Demo)
   const isLowStock = product.id.length % 3 === 0; // Randomly low stock
   const isTrending = product.rating > 4.7;
-  const hasPriceDrop = product.originalPrice && product.originalPrice > product.price;
-  const discount = product.originalPrice ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) : 0;
+  const hasPriceDrop = product.original_price && product.original_price > product.price;
+  const discount = product.original_price ? Math.round(((product.original_price - product.price) / product.original_price) * 100) : 0;
 
   return (
     <div className="group bg-white dark:bg-surface-dark rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col relative animate-in zoom-in-50 duration-300">
@@ -267,8 +262,8 @@ const WishlistItem: React.FC<{
 
         <div className="flex items-baseline gap-2 mb-3">
           <span className="font-bold text-gray-900 dark:text-white">${product.price.toFixed(2)}</span>
-          {product.originalPrice && (
-            <span className="text-xs text-gray-400 line-through">${product.originalPrice.toFixed(2)}</span>
+          {product.original_price && (
+            <span className="text-xs text-gray-400 line-through">${product.original_price.toFixed(2)}</span>
           )}
           {hasPriceDrop && (
             <span className="text-xs font-medium text-green-600 dark:text-green-400">Price dropped!</span>

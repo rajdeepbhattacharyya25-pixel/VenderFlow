@@ -5,7 +5,7 @@ import { Navbar } from '../components/Navbar';
 import { TopBar } from '../components/TopBar';
 import { Hero } from '../components/Hero';
 import { QuickViewModal } from '../components/QuickViewModal';
-import { Product, StoreSettings, ThemeConfig, Address } from '../types';
+import { Product, StoreSettings, ThemeConfig, Address, ProductMedia } from '../types';
 import { Cart } from '../components/Cart';
 import { Checkout } from '../components/Checkout';
 import { ViewAll } from '../components/ViewAll';
@@ -63,10 +63,22 @@ const PreviewStorefront = () => {
                 setStoreSettings(data.preview.snapshot as StoreSettings || {} as StoreSettings);
 
                 // Map products - check both top-level and snapshot-embedded products
-                const rawProducts = data.products || (data.preview?.snapshot as any)?.products || [];
+                const rawProductsData = data.products || (data.preview?.snapshot as { products?: any[] })?.products || [];
                 
-                if (rawProducts && rawProducts.length > 0) {
-                    const mappedProducts = rawProducts.map((p: any) => {
+                if (rawProductsData && rawProductsData.length > 0) {
+                    interface RawProduct extends Omit<Product, 'image' | 'images' | 'category' | 'sizes' | 'rating' | 'reviews'> {
+
+                        image?: string;
+                        images?: string[] | string;
+                        category?: string | string[];
+                        categories?: string | string[];
+                        rating?: number | string;
+                        reviews?: number | string;
+                        product_media?: ProductMedia[];
+                        product_variants?: { variant_name: string }[];
+                    }
+
+                    const mappedProducts = (rawProductsData as RawProduct[]).map((p): Product => {
                         const hasDiscount = p.discount_price && Number(p.discount_price) > 0;
                         const media = p.product_media || [];
                         const primaryMedia = media.find(m => m.is_primary && m.media_type !== 'video');
@@ -76,7 +88,7 @@ const PreviewStorefront = () => {
                         
                         // Robust category handling: ensure it's always an array of strings
                         let productCategory: string[] = [];
-                        const rawCategory = p.category || (p as any).categories;
+                        const rawCategory = p.category || p.categories;
                         if (Array.isArray(rawCategory)) {
                             productCategory = rawCategory;
                         } else if (typeof rawCategory === 'string' && rawCategory.length > 0) {
@@ -88,14 +100,15 @@ const PreviewStorefront = () => {
                             image: primaryImageUrl,
                             images,
                             media,
-                            sizes: (p as any).product_variants?.map((v: { variant_name: string }) => v.variant_name) || ['Standard'],
+                            sizes: p.product_variants?.map(v => v.variant_name) || ['Standard'],
                             category: productCategory,
-                            rating: p.rating || 4.5,
-                            reviews: p.reviews || 0,
+                            rating: Number(p.rating) || 0,
+                            reviews: Number(p.reviews) || 0,
                             price: hasDiscount ? Number(p.discount_price) : Number(p.price),
                             original_price: hasDiscount ? Number(p.price) : undefined
                         } as Product;
                     });
+
                     setProducts(mappedProducts);
                 }
 

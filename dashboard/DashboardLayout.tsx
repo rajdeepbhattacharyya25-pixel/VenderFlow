@@ -57,7 +57,7 @@ function App() {
         const { data: settings } = await supabase
           .from('platform_settings')
           .select('*')
-          .single();
+          .maybeSingle();
 
         // 2. Announcements
         if (settings?.announcement_message) {
