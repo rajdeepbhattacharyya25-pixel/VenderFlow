@@ -3,10 +3,24 @@
  * Used for deduplication in "The Vault" infrastructure.
  */
 export async function generateFileHash(file: File): Promise<string> {
-    const buffer = await file.arrayBuffer();
-    const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    try {
+        // SubtleCrypto is only available in Secure Contexts (HTTPS/localhost)
+        // On mobile devices accessing via local IP, this will be undefined.
+        if (typeof crypto !== 'undefined' && crypto.subtle) {
+            const buffer = await file.arrayBuffer();
+            const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            return hashHex;
+        }
+    } catch (e) {
+        console.warn('Crypto API failed, falling back to metadata hash:', e);
+    }
+
+    // Fallback: Deterministic "hash" for non-secure contexts (local IP testing)
+    // This allows the upload to proceed even if the browser restricts crypto APIs.
+    const cleanName = file.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    return `lb-${cleanName}-${file.size}-${file.lastModified}`;
 }
 
 /**

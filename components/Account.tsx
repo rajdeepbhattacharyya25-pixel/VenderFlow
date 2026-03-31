@@ -784,36 +784,42 @@ export const Account: React.FC<AccountProps> = ({ onNavigate, showToast, onLogou
               <h3 className="font-bold font-heading text-gray-900 dark:text-white text-xl">Notifications</h3>
             </div>
 
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div>
+            <div className="space-y-4">
+              {/* Delivery Updates — full row tappable */}
+              <button
+                type="button"
+                onClick={() => setNotifications(prev => ({ ...prev, delivery: !prev.delivery }))}
+                className="flex items-center justify-between w-full min-h-[52px] py-3 rounded-xl active:bg-gray-50 dark:active:bg-gray-800/50 transition-colors group"
+                aria-label="Toggle delivery updates notifications"
+                aria-pressed={notifications.delivery}
+                style={{ WebkitTapHighlightColor: 'transparent' }}
+              >
+                <div className="text-left">
                   <p className="font-bold text-gray-900 dark:text-white">Delivery Updates</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Get notified when your order is on the way.</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Get notified when your order is on the way.</p>
                 </div>
-                <button
-                  onClick={() => setNotifications(prev => ({ ...prev, delivery: !prev.delivery }))}
-                  className={`w-12 h-6 rounded-full relative transition-colors duration-300 ${notifications.delivery ? 'bg-green-800' : 'bg-gray-200 dark:bg-gray-700'}`}
-                  aria-label="Toggle delivery updates notifications"
-                  aria-pressed={notifications.delivery}
-                >
+                <div className={`w-12 h-6 rounded-full relative transition-colors duration-300 flex-shrink-0 ml-4 ${notifications.delivery ? 'bg-emerald-600' : 'bg-gray-200 dark:bg-gray-700'}`}>
                   <span className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow transition-transform duration-300 ${notifications.delivery ? 'translate-x-6' : 'translate-x-0'}`} />
-                </button>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-bold text-gray-900 dark:text-white">Offers & Promotions</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Receive exclusive deals and discounts.</p>
                 </div>
-                <button
-                  onClick={() => setNotifications(prev => ({ ...prev, offers: !prev.offers }))}
-                  className={`w-12 h-6 rounded-full relative transition-colors duration-300 ${notifications.offers ? 'bg-green-800' : 'bg-gray-200 dark:bg-gray-700'}`}
-                  aria-label="Toggle offers and promotions notifications"
-                  aria-pressed={notifications.offers}
-                >
+              </button>
+
+              {/* Offers & Promotions — full row tappable */}
+              <button
+                type="button"
+                onClick={() => setNotifications(prev => ({ ...prev, offers: !prev.offers }))}
+                className="flex items-center justify-between w-full min-h-[52px] py-3 rounded-xl active:bg-gray-50 dark:active:bg-gray-800/50 transition-colors group"
+                aria-label="Toggle offers and promotions notifications"
+                aria-pressed={notifications.offers}
+                style={{ WebkitTapHighlightColor: 'transparent' }}
+              >
+                <div className="text-left">
+                  <p className="font-bold text-gray-900 dark:text-white">Offers &amp; Promotions</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Receive exclusive deals and discounts.</p>
+                </div>
+                <div className={`w-12 h-6 rounded-full relative transition-colors duration-300 flex-shrink-0 ml-4 ${notifications.offers ? 'bg-emerald-600' : 'bg-gray-200 dark:bg-gray-700'}`}>
                   <span className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow transition-transform duration-300 ${notifications.offers ? 'translate-x-6' : 'translate-x-0'}`} />
-                </button>
-              </div>
+                </div>
+              </button>
             </div>
           </div>
 

@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const TOKEN = process.env.VERCEL_API_TOKEN;
-const PROJECT_ID = 'prj_7H4UXeTz3X2u4NtA6x7YIlUCwhQv';
+const PROJECT_ID = 'prj_fsTOUgr1TjtaVwyXaT8kooI1Dmll';
 
 const client = new VercelClient(TOKEN!);
 

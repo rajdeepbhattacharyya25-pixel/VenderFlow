@@ -191,97 +191,120 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
       )}
 
-      {/* Mobile Menu Drawer */}
+      {/* Mobile Menu Drawer — Auth-only. Core nav lives in BottomNav. */}
       {isMenuOpen && (
         <div className="md:hidden fixed inset-0 z-[70] flex flex-col animate-in fade-in duration-300">
           <div
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             onClick={() => setIsMenuOpen(false)}
           />
-          <div className="relative ml-auto h-full w-[280px] bg-white dark:bg-neutral-950 shadow-2xl flex flex-col animate-in slide-in-from-right duration-300 ease-out border-l border-white/5">
+          <div className="relative ml-auto h-full w-[260px] bg-white dark:bg-neutral-950 shadow-2xl flex flex-col animate-in slide-in-from-right duration-300 ease-out border-l border-white/5">
+
+            {/* Header */}
             <div className="p-4 border-b border-gray-100 dark:border-neutral-800 flex items-center justify-between safe-top">
-              <span className="font-bold text-gray-900 dark:text-white uppercase tracking-widest text-[10px]">Menu</span>
+              <span className="font-black text-gray-900 dark:text-white uppercase tracking-widest text-[10px]">Account</span>
               <button
                 onClick={() => setIsMenuOpen(false)}
-                className="w-10 h-10 flex items-center justify-center rounded-full active:bg-gray-100 dark:active:bg-neutral-900 transition-colors"
+                className="w-11 h-11 flex items-center justify-center rounded-full active:bg-gray-100 dark:active:bg-neutral-900 transition-colors"
+                aria-label="Close menu"
               >
                 <IconX className="w-5 h-5 text-gray-500" />
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto py-6 flex flex-col gap-8 custom-scrollbar">
-              {/* Account Section */}
-              <div className="px-6">
-                <div className="flex items-center gap-4 p-4 rounded-2xl bg-gray-50 dark:bg-neutral-900/50 border border-gray-100 dark:border-neutral-800">
-                  <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-                    <IconUser className="w-6 h-6" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    {user ? (
-                      <>
-                        <h4 className="text-sm font-bold text-gray-900 dark:text-white truncate">My Account</h4>
-                        <button
-                          onClick={() => handleNavClick('account')}
-                          className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 uppercase tracking-wider"
-                        >
-                          View Profile
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <h4 className="text-sm font-bold text-gray-900 dark:text-white truncate">Guest User</h4>
-                        <button
-                          onClick={onLogin}
-                          className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 uppercase tracking-wider"
-                        >
-                          Login Now
-                        </button>
-                      </>
-                    )}
-                  </div>
+            {/* Auth identity card */}
+            <div className="px-5 pt-6">
+              <div className="flex items-center gap-4 p-4 rounded-2xl bg-gray-50 dark:bg-neutral-900/60 border border-gray-100 dark:border-neutral-800">
+                <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 flex-shrink-0">
+                  <IconUser className="w-6 h-6" />
                 </div>
-              </div>
-
-              {/* Categories */}
-              <div className="px-6 flex flex-col gap-4">
-                <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 px-2">Store Sections</h3>
-                <div className="grid grid-cols-1 gap-1">
-                  {categories.map(cat => (
-                    <button
-                      key={cat}
-                      onClick={() => handleCategorySelect(cat)}
-                      className="flex items-center justify-between w-full p-4 rounded-xl text-sm font-bold text-gray-700 dark:text-gray-200 active:bg-gray-50 dark:active:bg-neutral-900 transition-all border border-transparent active:border-emerald-500/20"
-                    >
-                      <span>{cat}</span>
-                      <IconChevronDown className="w-4 h-4 -rotate-90 text-gray-300" />
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Quick Links */}
-              <div className="px-6 flex flex-col gap-4">
-                <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 px-2">Common</h3>
-                <div className="flex flex-col gap-1">
-                  <button onClick={() => handleNavClick('orders')} className="flex items-center gap-3 p-4 text-sm font-bold text-gray-700 dark:text-gray-200 active:bg-gray-50 dark:active:bg-neutral-900 rounded-xl">
-                    <IconShoppingBag className="w-5 h-5 text-emerald-600" />
-                    <span>My Orders</span>
-                  </button>
-                  <button onClick={() => handleNavClick('wishlist')} className="flex items-center gap-3 p-4 text-sm font-bold text-gray-700 dark:text-gray-200 active:bg-gray-50 dark:active:bg-neutral-900 rounded-xl">
-                    <IconHeart className="w-5 h-5 text-rose-500" />
-                    <span>Wishlist</span>
-                  </button>
+                <div className="flex-1 min-w-0">
+                  {user ? (
+                    <>
+                      <p className="text-[11px] text-gray-400 dark:text-gray-500 uppercase tracking-wider font-bold">Welcome back</p>
+                      <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{user.email?.split('@')[0] ?? 'My Account'}</p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-[11px] text-gray-400 dark:text-gray-500 uppercase tracking-wider font-bold">Guest</p>
+                      <p className="text-sm font-bold text-gray-900 dark:text-white">Not signed in</p>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
 
-            <div className="p-6 safe-bottom">
+            {/* Auth actions */}
+            <div className="flex-1 overflow-y-auto px-5 py-6 flex flex-col gap-2">
+              {user ? (
+                <>
+                  {isAdmin ? (
+                    <a
+                      href="/admin"
+                      className="flex items-center gap-3 w-full p-4 min-h-[52px] rounded-xl text-sm font-bold text-white bg-rose-600 active:bg-rose-700 transition-colors"
+                    >
+                      <span className="w-2 h-2 rounded-full bg-white/60" />
+                      Admin Dashboard
+                    </a>
+                  ) : (
+                    <a
+                      href="/dashboard"
+                      className="flex items-center gap-3 w-full p-4 min-h-[52px] rounded-xl text-sm font-bold text-white bg-emerald-600 active:bg-emerald-700 transition-colors"
+                    >
+                      <span className="w-2 h-2 rounded-full bg-white/60 animate-pulse" />
+                      Seller Dashboard
+                    </a>
+                  )}
+                  <button
+                    onClick={() => handleNavClick('account')}
+                    className="flex items-center gap-3 w-full p-4 min-h-[52px] rounded-xl text-sm font-bold text-gray-700 dark:text-gray-200 active:bg-gray-50 dark:active:bg-neutral-900 transition-colors border border-gray-100 dark:border-neutral-800"
+                  >
+                    <IconUser className="w-5 h-5 text-gray-400" />
+                    My Profile
+                  </button>
+                  <button
+                    onClick={() => handleNavClick('orders')}
+                    className="flex items-center gap-3 w-full p-4 min-h-[52px] rounded-xl text-sm font-bold text-gray-700 dark:text-gray-200 active:bg-gray-50 dark:active:bg-neutral-900 transition-colors border border-gray-100 dark:border-neutral-800"
+                  >
+                    <IconShoppingBag className="w-5 h-5 text-emerald-600" />
+                    My Orders
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => { onLogin?.(); setIsMenuOpen(false); }}
+                    className="flex items-center justify-center gap-2 w-full p-4 min-h-[52px] rounded-xl text-sm font-bold text-white bg-emerald-600 active:bg-emerald-700 transition-colors shadow-md shadow-emerald-600/20"
+                  >
+                    Sign In / Register
+                  </button>
+                  <button
+                    onClick={() => { handleNavClick('storeLogin'); }}
+                    className="flex items-center gap-3 w-full p-4 min-h-[52px] rounded-xl text-sm font-bold text-gray-700 dark:text-gray-200 active:bg-gray-50 dark:active:bg-neutral-900 transition-colors border border-gray-100 dark:border-neutral-800"
+                  >
+                    <IconShoppingBag className="w-5 h-5 text-emerald-600" />
+                    Seller Login
+                  </button>
+                </>
+              )}
+
+              {/* Divider */}
+              <div className="border-t border-gray-100 dark:border-neutral-800 my-2" />
+
+              {/* Dark mode toggle */}
               <button
-                onClick={() => handleNavClick('home')}
-                className="w-full py-4 bg-gray-900 dark:bg-white text-white dark:text-black rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl active:scale-95 transition-all"
+                onClick={() => { toggleDarkMode(); }}
+                className="flex items-center gap-3 w-full p-4 min-h-[52px] rounded-xl text-sm font-bold text-gray-700 dark:text-gray-200 active:bg-gray-50 dark:active:bg-neutral-900 transition-colors border border-gray-100 dark:border-neutral-800"
+                style={{ WebkitTapHighlightColor: 'transparent' }}
               >
-                Continue Shopping
+                {isDarkMode ? <IconSun className="w-5 h-5 text-amber-400" /> : <IconMoon className="w-5 h-5 text-gray-400" />}
+                {isDarkMode ? 'Light Mode' : 'Dark Mode'}
               </button>
+            </div>
+
+            {/* Footer hint */}
+            <div className="px-5 pb-6 safe-bottom">
+              <p className="text-[10px] text-center text-gray-300 dark:text-neutral-700 uppercase tracking-widest font-bold">Use bottom bar to navigate</p>
             </div>
           </div>
         </div>

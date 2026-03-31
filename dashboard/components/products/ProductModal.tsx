@@ -371,9 +371,9 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, e
                 setUploading(true);
                 const result = await unifiedUpload({ file, productId: product?.id || 'temp', isPrimary: false, mediaType: 'video' });
                 updateField('videoUrl', result.url);
-            } catch (err: unknown) { 
-                const error = err as { message?: string };
-                alert(error.message || 'Video upload failed'); 
+            } catch (err: any) { 
+                console.error('Video upload error:', err);
+                alert(`Video upload failed: ${err.message || 'Unknown error'}`); 
             }
             finally { setUploading(false); e.target.value = ''; }
         };
@@ -436,9 +436,9 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, e
             });
             const newVariantImages = { ...formData.variantImages, [variantValue]: result.url };
             updateField('variantImages', newVariantImages);
-        } catch (err: unknown) {
-            const error = err as { message?: string };
-            alert(error.message || 'Variant image upload failed');
+        } catch (err: any) {
+            console.error('Variant upload error:', err);
+            alert(`Variant image upload failed: ${err.message || 'Unknown error'}`);
         } finally {
             setUploading(false);
         }
@@ -558,19 +558,41 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, e
                                     <Upload size={32} className="text-emerald-400" />
                                     <span className="text-sm text-emerald-600">Choose Image to Upload</span>
                                 </button>
-                                <input ref={imgbbFileInputRef} type="file" className="hidden" accept="image/*" multiple onChange={async (e) => {
+                                 <input ref={imgbbFileInputRef} type="file" className="hidden" accept="image/*" multiple onChange={async (e) => {
                                     const files = e.target.files;
                                     if (!files) return;
                                     setUploading(true);
                                     try {
                                         const uploadedUrls: string[] = [];
                                         for (let i = 0; i < files.length; i++) {
-                                            const { file: compressedFile } = await compressImage(files[i]);
-                                            const result = await unifiedUpload({ file: compressedFile, productId: product?.id || 'temp', isPrimary: false, mediaType: 'image' });
-                                            uploadedUrls.push(result.url);
+                                            try {
+                                                const { file: compressedFile } = await compressImage(files[i]);
+                                                const result = await unifiedUpload({ 
+                                                    file: compressedFile, 
+                                                    productId: product?.id || 'temp', 
+                                                    isPrimary: false, 
+                                                    mediaType: 'image' 
+                                                });
+                                                uploadedUrls.push(result.url);
+                                            } catch (fileErr: any) {
+                                                console.error(`Error uploading file ${files[i].name}:`, fileErr);
+                                                alert(`Failed to upload ${files[i].name}: ${fileErr.message || 'Unknown error'}`);
+                                            }
                                         }
-                                        updateField('images', [...formData.images, ...uploadedUrls.map(url => ({ id: Math.random().toString(), url }))]);
-                                    } finally { setUploading(false); }
+                                        if (uploadedUrls.length > 0) {
+                                            const newImages = uploadedUrls.map(url => ({ 
+                                                id: `img-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, 
+                                                url 
+                                            }));
+                                            updateField('images', [...formData.images, ...newImages]);
+                                        }
+                                    } catch (err: any) {
+                                        console.error('Bulk upload error:', err);
+                                        alert(`Upload process failed: ${err.message || 'Unknown error'}`);
+                                    } finally { 
+                                        setUploading(false); 
+                                        if (imgbbFileInputRef.current) imgbbFileInputRef.current.value = '';
+                                    }
                                 }} />
                                 {(allMedia.length > 0) && (() => {
                                     const safeIndex = Math.min(activePreviewIndex, allMedia.length - 1);

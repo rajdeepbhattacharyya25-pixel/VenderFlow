@@ -65,7 +65,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             >
               {/* Active indicator bar */}
               {isActive && (
-                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-4 h-1 bg-emerald-500 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.5)] animate-in slide-in-from-top-1 duration-300" />
+                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-[3px] bg-emerald-500 rounded-full shadow-[0_0_12px_rgba(16,185,129,0.7)] animate-in slide-in-from-top-1 duration-300" />
               )}
 
               {/* Icon with badge */}

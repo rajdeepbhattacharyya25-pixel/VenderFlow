@@ -6,7 +6,7 @@ import path from 'path';
 dotenv.config();
 
 const TOKEN = process.env.VERCEL_API_TOKEN;
-const PROJECT_NAME = 'e-commerce-landing-page-demo';
+const PROJECT_NAME = 'venderflow';
 const APP_DIR = path.resolve(__dirname, '..');
 
 if (!TOKEN) {

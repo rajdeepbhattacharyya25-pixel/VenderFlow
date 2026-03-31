@@ -393,8 +393,25 @@ export const adminDb = {
             const estimatedStorageMB = productStorageMB + imageStorageMB;
             const storagePercentage = Math.min((estimatedStorageMB / STORAGE_LIMIT_MB) * 100, 100);
 
+            // 6.5. Get Advanced Health (Latency, Indexes, RLS)
+            let advancedHealth = {
+                max_latency_ms: 0,
+                mean_latency_ms: 0,
+                unindexed_fks: 0,
+                missing_rls_count: 0,
+                realtime_calls_total: 0
+            };
+            try {
+                const { data: advMetrics } = await supabase.rpc('get_advanced_health_metrics');
+                if (advMetrics) {
+                    advancedHealth = advMetrics as any;
+                }
+            } catch (rpcError) {
+                console.error("Failed to fetch advanced health metrics:", rpcError);
+            }
+
             // 6. HEALTH STATUS based on thresholds
-            // Factors: Storage usage, pending orders, seller count
+            // Factors: Storage usage, pending orders, seller count, and now LATENCY
             let healthScore = 100;
             let healthStatus: 'Normal' | 'Warning' | 'Critical' = 'Normal';
             const healthIssues: string[] = [];
@@ -415,6 +432,21 @@ export const adminDb = {
             } else if ((activeOrders || 0) > 50) {
                 healthScore -= 10;
                 healthIssues.push('High pending orders');
+            }
+
+            // Latency check (NEW)
+            if (advancedHealth.max_latency_ms > 500) {
+                healthScore -= 40;
+                healthIssues.push('Critical query latency (>500ms)');
+            } else if (advancedHealth.max_latency_ms > 200) {
+                healthScore -= 20;
+                healthIssues.push('High query latency (>200ms)');
+            }
+
+            // Indexing check (NEW)
+            if (advancedHealth.unindexed_fks > 5) {
+                healthScore -= 10;
+                healthIssues.push('Multiple unindexed foreign keys');
             }
 
             // Determine status from score
@@ -494,7 +526,13 @@ export const adminDb = {
                 databaseSize: databaseSize,
                 totalAvailable,
                 totalReserves,
-                totalNegative
+                totalNegative,
+                // Advanced Performance Metrics
+                max_latency_ms: advancedHealth.max_latency_ms,
+                mean_latency_ms: advancedHealth.mean_latency_ms,
+                unindexed_fks: advancedHealth.unindexed_fks,
+                missing_rls_count: advancedHealth.missing_rls_count,
+                realtime_calls_total: advancedHealth.realtime_calls_total
             };
         } catch (error) {
             console.error('Error fetching admin stats:', error);
@@ -515,7 +553,12 @@ export const adminDb = {
                 databaseSize: 'Unknown',
                 totalAvailable: 0,
                 totalReserves: 0,
-                totalNegative: 0
+                totalNegative: 0,
+                max_latency_ms: 0,
+                mean_latency_ms: 0,
+                unindexed_fks: 0,
+                missing_rls_count: 0,
+                realtime_calls_total: 0
             };
         }
     },
