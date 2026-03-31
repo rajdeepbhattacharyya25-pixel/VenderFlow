@@ -5,6 +5,7 @@ import { IconFilter, IconChevronDown, IconCheck } from './Icons';
 
 interface ViewAllProps {
   products: Product[];
+  allCategories?: string[];
   title?: string;
   subtitle?: string;
   onQuickView: (product: Product) => void;
@@ -15,6 +16,7 @@ interface ViewAllProps {
 
 export const ViewAll: React.FC<ViewAllProps> = ({
   products,
+  allCategories: propAllCategories,
   title = "All Products",
   subtitle,
   onQuickView,
@@ -32,15 +34,23 @@ export const ViewAll: React.FC<ViewAllProps> = ({
   const [priceRange, setPriceRange] = useState<string>('all');
 
   // Extract Data for Filter Options
-  const allCategories = useMemo(() => Array.from(new Set(products.map(p => p.category))), [products]);
+  const allCategories = useMemo(() => {
+    if (propAllCategories && propAllCategories.length > 0) return propAllCategories;
+    const cats = products.flatMap(p => Array.isArray(p.category) ? p.category : (p.category ? [String(p.category)] : []));
+    return Array.from(new Set(cats)).filter(Boolean).sort();
+  }, [products, propAllCategories]);
+
   const allSizes = useMemo(() => Array.from(new Set(products.flatMap(p => p.sizes))).sort(), [products]);
 
   // Filtering Logic
   const filteredProducts = useMemo(() => {
     return products.filter(product => {
       // Category Filter
-      if (selectedCategories.length > 0 && !selectedCategories.includes(product.category)) {
-        return false;
+      if (selectedCategories.length > 0) {
+        const productCats = Array.isArray(product.category) ? product.category : [String(product.category)];
+        if (!productCats.some(c => selectedCategories.includes(c))) {
+          return false;
+        }
       }
 
       // Size Filter

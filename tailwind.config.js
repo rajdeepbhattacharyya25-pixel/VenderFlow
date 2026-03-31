@@ -13,7 +13,7 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                heading: ['"Space Grotesk"', 'var(--font-heading)', 'Playfair Display', 'serif'],
+                heading: ['var(--font-heading)', 'Playfair Display', 'serif'],
                 body: ['var(--font-body)', 'Inter', 'sans-serif'],
             },
             colors: {
@@ -56,6 +56,7 @@ export default {
                 'surface-dark': '#1F2937', // Matches luxury-card
                 'background-dark': '#0F172A', // Deep slate for main bg in dark mode
                 'border-dark': '#374151',
+                'chart-line': 'var(--dashboard-chart-line)',
             },
             borderRadius: {
                 lg: "var(--radius)",

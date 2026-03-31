@@ -19,7 +19,7 @@ export interface AuditResult {
 export function calculateLocalScore(product: {
     name: string;
     description: string;
-    category: string;
+    category: string | string[];
     hasImages: boolean;
     hasVariants: boolean;
     price: number;
@@ -35,7 +35,11 @@ export function calculateLocalScore(product: {
     else if (product.description.length > 20) score += 15;
 
     // 3. Categorization (0-10)
-    if (product.category && product.category !== 'uncategorized') score += 10;
+    const hasCategory = Array.isArray(product.category) 
+        ? product.category.length > 0 && product.category[0] !== 'uncategorized'
+        : product.category && product.category !== 'uncategorized';
+        
+    if (hasCategory) score += 10;
 
     // 4. Visual Impact (0-20)
     if (product.hasImages) score += 20;
@@ -57,7 +61,7 @@ export async function runDeepAudit(
     productData: {
         name: string;
         description: string;
-        category: string;
+        category: string | string[];
         tags: string[];
     }
 ): Promise<AuditResult> {

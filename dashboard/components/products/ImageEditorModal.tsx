@@ -246,7 +246,17 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({
 
                 {/* Rotate */}
                 <div className="studio-slider-compact group">
-                  <RotateCw size={14} className="text-white/20 group-hover:text-cyan-400 transition-colors" />
+                  <button
+                    title="Rotate 90°"
+                    onClick={() => setRotation(r => {
+                      const next = (r + 90) % 360;
+                      // Keep within -180..180 for the slider range
+                      return next > 180 ? next - 360 : next;
+                    })}
+                    className="cursor-pointer active:scale-90 transition-transform"
+                  >
+                    <RotateCw size={14} className="text-white/40 hover:text-cyan-400 transition-colors" />
+                  </button>
                   <input
                     type="range" min={-180} max={180} step={1} value={rotation}
                     onChange={(e) => setRotation(Number(e.target.value))}

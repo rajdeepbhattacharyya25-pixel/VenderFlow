@@ -1,5 +1,5 @@
 import React, { Suspense, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation, Navigate, useParams } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import SellerGuard from './components/admin/SellerGuard';
 import AdminGuard from './components/admin/AdminGuard';
@@ -73,6 +73,12 @@ const PageLoader = () => (
   </div>
 );
 
+// Redirect component for legacy /store/:sellerSlug path
+const NavigateToRootStore = () => {
+  const { sellerSlug, '*': rest } = useParams();
+  return <Navigate to={`/${sellerSlug}${rest ? `/${rest}` : ''}`} replace />;
+};
+
 function App() {
   React.useEffect(() => {
     // Initialize Analytics
@@ -140,14 +146,15 @@ function App() {
               <Route path="/auth-callback" element={<AuthCallback />} />
               <Route path="/staff/login" element={<StaffLogin />} />
 
+              {/* Legacy Storefront Redirects */}
+              <Route path="/store/:sellerSlug/*" element={<NavigateToRootStore />} />
+
               {/* Protected Seller Dashboard Routes */}
               <Route element={<SellerGuard />}>
                 <Route path="/onboarding" element={<Onboarding />} />
                 <Route path="/dashboard/*" element={<DashboardLayout />} />
               </Route>
 
-              {/* Seller Storefront Routes */}
-              <Route path="/store/:sellerSlug/*" element={<SellerStorefront />} />
 
               {/* Preview Environment Route */}
               <Route path="/preview/:previewId/*" element={<PreviewStorefront />} />
@@ -200,6 +207,9 @@ function App() {
               <Route path="/shopify-alternative" element={<AlternativePage competitor="Shopify" />} />
               <Route path="/woocommerce-alternative" element={<AlternativePage competitor="WooCommerce" />} />
               <Route path="/amazon-seller-alternative" element={<AlternativePage competitor="Amazon" />} />
+
+              {/* Seller Storefront Routes (Moved to bottom to avoid conflicts) */}
+              <Route path="/:sellerSlug/*" element={<SellerStorefront />} />
 
               <Route path="*" element={<NotFound />} />
             </Routes>

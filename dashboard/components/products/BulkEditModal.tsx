@@ -1,16 +1,16 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { X, Upload, Tag, Check, AlertCircle } from 'lucide-react';
+import TagInput from './TagInput';
 
 interface BulkEditModalProps {
     isOpen: boolean;
     onClose: () => void;
     selectedIds: string[];
-    onSave: (data: { category?: string; newImageFile?: File }) => Promise<void>;
+    onSave: (data: { category?: string[]; newImageFile?: File }) => Promise<void>;
 }
 
 const BulkEditModal: React.FC<BulkEditModalProps> = ({ isOpen, onClose, selectedIds, onSave }) => {
-    const [category, setCategory] = useState('');
-    const [uploading, setUploading] = useState(false);
+    const [categories, setCategories] = useState<string[]>([]);
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
@@ -33,14 +33,14 @@ const BulkEditModal: React.FC<BulkEditModalProps> = ({ isOpen, onClose, selected
         try {
             setStatus('saving');
             await onSave({
-                category: category || undefined,
+                category: categories.length > 0 ? categories : undefined,
                 newImageFile: imageFile || undefined,
             });
             setStatus('saved');
             setTimeout(() => {
                 setStatus('idle');
                 onClose();
-                setCategory('');
+                setCategories([]);
                 setImageFile(null);
                 setImagePreview(null);
             }, 1000);
@@ -67,16 +67,14 @@ const BulkEditModal: React.FC<BulkEditModalProps> = ({ isOpen, onClose, selected
                     {/* Category Update */}
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-theme-text flex items-center gap-2">
-                            <Tag size={16} /> Category
+                            <Tag size={16} /> Categories
                         </label>
-                        <input
-                            type="text"
-                            value={category}
-                            onChange={(e) => setCategory(e.target.value)}
-                            placeholder="Set common category..."
-                            className="w-full p-3 rounded-xl bg-theme-bg border border-theme-border text-theme-text focus:border-sky-500 focus:ring-1 outline-none"
+                        <TagInput
+                            tags={categories}
+                            onChange={setCategories}
+                            placeholder="Add tags to all selected products..."
                         />
-                        <p className="text-xs text-theme-muted">Leave blank to keep existing categories.</p>
+                        <p className="text-[10px] text-theme-muted">Leave blank to keep existing categories.</p>
                     </div>
 
                     {/* Image Upload */}

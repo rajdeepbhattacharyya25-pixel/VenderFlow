@@ -9,7 +9,7 @@ import { Hero } from '../components/Hero';
 import { Footer } from '../components/Footer';
 import { QuickViewModal } from '../components/QuickViewModal';
 import { BottomNav } from '../components/BottomNav';
-import { Product } from '../types';
+import { Product, StoreSettings, ProductMedia, Address } from '../types';
 import { Wishlist } from '../components/Wishlist';
 import { Cart } from '../components/Cart';
 import { Checkout } from '../components/Checkout';
@@ -20,13 +20,13 @@ import { ScrollableSection } from '../components/ScrollableSection';
 import { ToastContainer } from '../components/Toast';
 import { InfoModal } from '../components/InfoModal';
 import { HeroSkeleton, ScrollableSectionSkeleton } from '../components/Skeleton';
-import { supabase } from '../lib/supabase';
-import { Seller, loadSellerBySlug, setCurrentSeller, isSellerAccessible, checkStoreMembership, joinStore } from '../lib/seller';
-import { canAddToCart, setCartSeller, getCartSeller, clearCart, getCartItems, saveCartItems } from '../lib/cart';
-import { Store, AlertCircle, AlertTriangle, TrendingUp, Zap, Sparkles, ArrowLeft } from 'lucide-react';
+import { Seller, loadSellerBySlug, setCurrentSeller, isSellerAccessible, joinStore } from '../lib/seller';
+import { canAddToCart, setCartSeller, clearCart, getCartItems, saveCartItems } from '../lib/cart';
+import { Store, AlertCircle, AlertTriangle, ArrowLeft } from 'lucide-react';
 import { clearStoreSession, StoreCustomer, getCurrentStoreCustomer, establishStoreSession } from '../lib/storeAuth';
 import { LoginModal } from '../components/LoginModal';
 import StoreRegister from './StoreRegister';
+import { supabase } from '../lib/supabase';
 
 import { useCartSync } from '../hooks/useCartSync';
 import { useWishlist } from '../hooks/useWishlist';
@@ -91,18 +91,11 @@ const SellerStorefront = () => {
     const [seller, setSeller] = useState<Seller | null>(null);
     const [sellerLoading, setSellerLoading] = useState(true);
     const [sellerError, setSellerError] = useState<string | null>(null);
-
-
-
     // Data state
     const [products, setProducts] = useState<Product[]>([]);
-    const [storeSettings, setStoreSettings] = useState<any>(null);
-    useEffect(() => {
-        if (storeSettings) console.log("Debugging Store Settings:", storeSettings);
-    }, [storeSettings]);
+    const [storeSettings, setStoreSettings] = useState<StoreSettings | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [maintenanceMode, setMaintenanceMode] = useState(false);
-    const [isSearching, setIsSearching] = useState(false);
     const [allProducts, setAllProducts] = useState<Product[]>([]);
 
     useEffect(() => {
@@ -110,7 +103,7 @@ const SellerStorefront = () => {
             const { data: settings } = await supabase
                 .from('public_platform_settings')
                 .select('maintenance_mode')
-                .single();
+                .maybeSingle();
 
             console.log("Seller Storefront Maintenance Check:", settings);
             if (settings?.maintenance_mode) {
@@ -169,39 +162,53 @@ const SellerStorefront = () => {
     const [cartItems, setCartItems] = useState<{ product: Product, size: string, quantity: number }[]>([]);
     const [isCartLoaded, setIsCartLoaded] = useState(false);
 
-    // Load cart items when seller is available
+    // Load cart items when seller is available and products are loaded
     useEffect(() => {
-        if (seller && !isCartLoaded) {
+        if (seller && !isCartLoaded && !isLoading && allProducts.length > 0) {
             const saved = getCartItems();
             console.log("Loading cart for seller:", seller.id, "Saved:", saved);
 
             if (saved && saved.length > 0) {
-                // Check if cart belongs to this seller or if we should allow migration/clearing
-                // For now, strict check:
+                // Check if cart belongs to this seller
                 if (saved[0].sellerId === seller.id) {
-                    const loadedItems = saved.map(item => ({
-                        product: {
-                            id: item.productId,
+                    // Filter out items that are no longer published/accessible
+                    const validSaved = saved.filter(item => 
+                        allProducts.some(p => p.id === item.productId)
+                    );
+
+                    const loadedItems = validSaved.map(item => {
+                        const fullProduct = allProducts.find(p => p.id === item.productId);
+                        return {
+                            product: fullProduct || { id: item.productId, name: item.name, price: item.price, image: item.image, seller_id: item.sellerId } as Product,
+                            size: item.size,
+                            quantity: item.quantity
+                        };
+                    });
+
+                    setCartItems(loadedItems);
+                    
+                    // If some items were filtered out, update localStorage
+                    if (validSaved.length !== saved.length) {
+                        const flatItems = validSaved.map(item => ({
+                            productId: item.productId,
+                            sellerId: item.sellerId,
                             name: item.name,
                             price: item.price,
-                            image: item.image || '',
-                            seller_id: item.sellerId,
-                            sizes: [item.size],
-                            category: 'Unknown',
-                            rating: 0,
-                            reviews: 0
-                        } as Product,
-                        size: item.size,
-                        quantity: item.quantity
-                    }));
-                    setCartItems(loadedItems);
+                            size: item.size,
+                            quantity: item.quantity,
+                            image: item.image
+                        }));
+                        saveCartItems(flatItems);
+                    }
                 }
             }
             setIsCartLoaded(true);
+        } else if (seller && !isCartLoaded && !isLoading && allProducts.length === 0) {
+            // No products available, just mark cart as loaded
+            setIsCartLoaded(true);
         }
-    }, [seller, isCartLoaded]);
+    }, [seller, isCartLoaded, isLoading, allProducts]);
 
-    // Persist cart items to localStorage
     // Persist cart items to localStorage
     useEffect(() => {
         if (!isCartLoaded || !seller) return;
@@ -220,6 +227,16 @@ const SellerStorefront = () => {
 
     const [checkoutItems, setCheckoutItems] = useState<{ product: Product, size: string, quantity: number }[]>([]);
     const [toasts, setToasts] = useState<{ id: number, message: string }[]>([]);
+    
+    const removeToast = (id: number) => {
+        setToasts(prev => prev.filter(t => t.id !== id));
+    };
+
+    const showToast = (message: string) => {
+        const id = Date.now();
+        setToasts(prev => [...prev, { id, message }]);
+        setTimeout(() => removeToast(id), 3000);
+    };
 
     // Store Membership State
     const [isMember, setIsMember] = useState<boolean>(false);
@@ -308,18 +325,19 @@ const SellerStorefront = () => {
 
                 // Check seller auth for preview mode
                 let isAuthorizedSeller = false;
-                if (isPreviewMode) {
-                    const { data: { user } } = await supabase.auth.getUser();
-                    if (user && user.id === seller.id) {
-                        isAuthorizedSeller = true;
-                        setCanViewDrafts(true);
-                    }
+                const { data: { user }, error } = await supabase.auth.getUser();
+                if (error) {
+                    supabase.auth.signOut();
+                }
+                if (isPreviewMode && user && user.id === seller.id) {
+                    isAuthorizedSeller = true;
+                    setCanViewDrafts(true);
                 }
 
                 // Load products for this seller
                 let productQuery = supabase
                     .from('products')
-                    .select('*, product_media(file_url, is_primary), product_variants(*)')
+                    .select('*, product_media(file_url, is_primary, sort_order, media_type), product_variants(*)')
                     .eq('seller_id', seller.id);
 
                 // Only allow viewing drafts if it's the authenticated seller in preview mode
@@ -329,30 +347,94 @@ const SellerStorefront = () => {
 
                 const { data: productsData } = await productQuery;
 
-                const mappedProducts = (productsData || []).map((p: any) => {
-                    const images = p.product_media?.map((m: any) => m.file_url) || [];
-                    const sizes = p.product_variants?.length > 0
-                        ? p.product_variants.map((v: any) => v.variant_name)
+                // Strip demo/ghost products regardless of auth state.
+                // Deduplicate by id — prevents the same product appearing twice
+                // if the seller accidentally created duplicates.
+                const seenIds = new Set<string>();
+                const cleanProducts = (productsData || []).filter((p: Product) => {
+                    if (seenIds.has(p.id)) return false;
+                    seenIds.add(p.id);
+
+                    const name = (p.name || '').toLowerCase().trim();
+                    const hasNoMedia = !p.product_media?.length && !p.image && (!p.images || p.images.length === 0);
+                    const isDraftName = !name || name === 'new product' || name === 'demo' || name === 'test' || name === 'demo product' || name.includes('demo');
+                    
+                    const isGhostProduct = (
+                        isDraftName &&
+                        Number(p.price) <= 0 &&
+                        hasNoMedia
+                    );
+
+                    return !isGhostProduct;
+                });
+
+                const mappedProducts = cleanProducts.map((p: Product) => {
+                    // Sort media: primary first, then by sort_order
+                    const rawMedia: ProductMedia[] = p.product_media || [];
+                    const sortedMedia = [...rawMedia].sort((a, b) => {
+                        if (a.is_primary && !b.is_primary) return -1;
+                        if (!a.is_primary && b.is_primary) return 1;
+                        return (a.sort_order ?? 0) - (b.sort_order ?? 0);
+                    });
+
+                    const primaryMedia = sortedMedia.find(m => m.is_primary && m.media_type !== 'video');
+                    const firstImageMedia = sortedMedia.find(m => m.media_type !== 'video');
+
+                    // Fallback order: Primary from product_media -> First from product_media -> p.image -> p.images[0] -> placeholder
+                    const primaryImageUrl = primaryMedia?.file_url ??
+                        firstImageMedia?.file_url ??
+                        p.image ??
+                        (Array.isArray(p.images) && p.images[0]) ??
+                        'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=400';
+
+                    // Use product_media if available, otherwise fallback to legacy images array
+                    const images = sortedMedia.length > 0
+                        ? sortedMedia.filter((m: { media_type: string; file_url: string }) => m.media_type !== 'video').map((m: { file_url: string }) => m.file_url)
+                        : (Array.isArray(p.images) && p.images.length > 0 ? p.images : (p.image ? [p.image] : []));
+
+                    const sizes = (p.product_variants || []).length > 0
+                        ? p.product_variants!.map((v: { variant_name: string }) => v.variant_name)
                         : ['Standard'];
+
                     const hasDiscount = p.discount_price && Number(p.discount_price) > 0;
                     return {
                         ...p,
                         seller_id: seller.id,
-                        image: images.length > 0 ? images[0] : 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=400',
+                        image: primaryImageUrl,
                         images: images,
                         variants: p.product_variants || [],
                         sizes: sizes,
+                        category: (() => {
+                            // Support both 'category' and 'categories' fields
+                            const raw = p.category || (p as any).categories || (p as any).product_categories;
+                            
+                            // 1. If it's already an array, use it
+                            if (Array.isArray(raw)) return raw.filter(Boolean);
+                            
+                            // 2. If it's a string, check if it's a JSON-encoded array (e.g. '["cat1", "cat2"]')
+                            if (typeof raw === 'string' && raw.trim().startsWith('[')) {
+                                try {
+                                    const parsed = JSON.parse(raw);
+                                    if (Array.isArray(parsed)) return parsed.filter(Boolean);
+                                } catch (e) {
+                                    // Not valid JSON, fall through to single string handling
+                                }
+                            }
+                            
+                            // 3. Fallback to single non-empty string
+                            if (typeof raw === 'string' && raw.trim().length > 0) return [raw.trim()];
+                            
+                            return [];
+                        })(),
                         rating: p.rating || 4.5,
                         reviews: p.reviews || 0,
                         price: hasDiscount ? Number(p.discount_price) : Number(p.price),
-                        originalPrice: hasDiscount ? Number(p.price) : undefined
+                        original_price: hasDiscount ? Number(p.price) : undefined
                     };
                 });
 
                 setAllProducts(mappedProducts);
                 setProducts(mappedProducts);
-                setRecommendedProducts([...mappedProducts].sort(() => 0.5 - Math.random()).slice(0, 4));
-                setPopularProducts([...mappedProducts].sort(() => 0.5 - Math.random()).slice(0, 4));
 
                 // Load store settings
                 const { data: settingsData } = await supabase
@@ -364,6 +446,10 @@ const SellerStorefront = () => {
                 if (settingsData) {
                     setStoreSettings(settingsData);
                 }
+
+                // Set recommended and popular products
+                setRecommendedProducts(mappedProducts.filter(p => p.featured).slice(0, 8));
+                setPopularProducts(mappedProducts.filter(p => p.is_bestseller).slice(0, 8));
             } catch (error) {
                 console.error('Error loading store data:', error);
             } finally {
@@ -382,7 +468,7 @@ const SellerStorefront = () => {
                 filter: `seller_id=eq.${seller.id}`
             }, (payload) => {
                 if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
-                    setStoreSettings(payload.new);
+                    setStoreSettings(payload.new as StoreSettings);
                 }
             })
             .on('postgres_changes', {
@@ -394,12 +480,21 @@ const SellerStorefront = () => {
                 // Refresh products when anything changes
                 loadData();
             })
+            .on('broadcast', { event: 'appearance_update' }, ({ payload }) => {
+                if (payload?.settings) {
+                    setStoreSettings(prev => ({ ...prev, ...payload.settings }));
+                }
+            })
+            .on('broadcast', { event: 'product_update' }, () => {
+                // Refresh product data when a product change is broadcast
+                loadData();
+            })
             .subscribe();
 
         return () => {
             supabase.removeChannel(settingsChannel);
         };
-    }, [seller]);
+    }, [seller, isPreviewMode]);
 
     // Track storefront page view (for seller dashboard Store Traffic KPI)
     useEffect(() => {
@@ -432,33 +527,36 @@ const SellerStorefront = () => {
     }, [seller, isPreviewMode]);
 
     // Apply Theme Styles
-    const themeStyles = useMemo(() => {
+    const themeStyles: React.CSSProperties = useMemo(() => {
         if (!storeSettings?.theme_config) return {};
         const { colors, fonts, borderRadius } = storeSettings.theme_config;
 
-        // In dark mode, we largely override the user's custom text/bg colors to ensure readability
-        // unless we want to support "custom dark themes" later.
-        // For now, force standard dark mode colors which are handled by Tailwind's dark: classes
-        // but we still pass fonts and radius.
+        const isOldDefault = (font?: string) => {
+            if (!font) return true;
+            const normalized = font.toLowerCase().replace(/['"]/g, '').trim();
+            const defaults = ['space grotesk', 'spacegrotesk', 'default', 'inter', 'sans-serif', 'system-ui', 'arial', 'helvetica'];
+            return defaults.includes(normalized);
+        };
 
         return {
             '--primary': colors.primary,
             '--secondary': colors.secondary,
-            '--bg-color': isDarkMode ? '#0a0a0a' : colors.background,
-            '--text-color': isDarkMode ? '#ffffff' : colors.text,
-            '--heading-font': fonts.heading,
-            '--body-font': fonts.body,
+            '--background': isDarkMode ? '#0a0a0a' : colors.background,
+            '--foreground': isDarkMode ? '#ffffff' : colors.text,
+            '--font-heading': !isOldDefault(fonts.heading) ? fonts.heading : "'Playfair Display', serif",
+            '--font-body': fonts.body || "'Inter', sans-serif",
             '--radius': borderRadius,
         } as React.CSSProperties;
     }, [storeSettings, isDarkMode]);
 
     // Update document title when storeSettings loads (prioritizes dashboard settings)
+    const displayName = useMemo(() => storeSettings?.store_name || seller?.store_name || 'Store', [storeSettings?.store_name, seller?.store_name]);
+
     useEffect(() => {
-        const displayName = storeSettings?.store_name || seller?.store_name;
         if (displayName) {
-            document.title = `${displayName} - Modern Apparel`;
+            document.title = displayName;
         }
-    }, [storeSettings?.store_name, seller?.store_name]);
+    }, [displayName]);
 
     // Dynamic Favicon - Update to seller's logo
     useEffect(() => {
@@ -503,10 +601,6 @@ const SellerStorefront = () => {
         const syncSession = async () => {
             const { data: { user } } = await supabase.auth.getUser();
             if (user && user.email) {
-                // If user is authenticated with Supabase, try to establish store session
-                // This handles both existing customers and auto-joining if implemented server-side
-                // Current implementation of establishStoreSession will verify user and set cookie if customer exists
-
                 try {
                     // Check if customer exists first to decide on auto-joining
                     const { data: customer } = await supabase
@@ -525,7 +619,7 @@ const SellerStorefront = () => {
                         // AUTO-JOIN: Authenticated user but not a store customer yet.
                         // Automatically register/link them to this store.
                         try {
-                            const { data: newCustomer, error: joinError } = await supabase
+                            const { data: newCustomer } = await supabase
                                 .from('store_customers')
                                 .insert({
                                     seller_id: seller.id,
@@ -557,7 +651,8 @@ const SellerStorefront = () => {
         };
 
         syncSession();
-    }, [seller, storeCustomer]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [seller?.id, seller?.slug, storeCustomer?.id, storeCustomer]);
 
     // Hydrate customer name if missing
     useEffect(() => {
@@ -587,9 +682,9 @@ const SellerStorefront = () => {
                                 display_name: realName || prev.display_name,
                                 metadata: {
                                     ...prev.metadata,
-                                    first_name: firstName || prev.metadata?.first_name
+                                    first_name: firstName || (prev.metadata as Record<string, unknown>)?.first_name as string
                                 }
-                            }) : null);
+                            } as StoreCustomer) : null);
                         }
                     }
                 }).finally(() => {
@@ -603,7 +698,7 @@ const SellerStorefront = () => {
         } else {
             setIsNameHydrating(false);
         }
-    }, [storeCustomer?.id]);
+    }, [storeCustomer]);
 
     // Sync currentView with URL path changes
     useEffect(() => {
@@ -632,33 +727,34 @@ const SellerStorefront = () => {
     const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
 
     const uniqueCategories = useMemo(() => {
-        const cats = products.map(p => p.category).filter((c): c is string => !!c);
-        const uniqueLower: string[] = Array.from(new Set(cats.map(c => c.toLowerCase())));
-        return uniqueLower.map(c => c.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '));
-    }, [products]);
-    const showToast = (message: string) => {
-        const id = Date.now();
-        setToasts(prev => [...prev, { id, message }]);
-    };
-
-    const removeToast = (id: number) => {
-        setToasts(prev => prev.filter(t => t.id !== id));
-    };
+        // Use allProducts preferrentially, fall back to products if allProducts is empty but products isn't
+        const source = allProducts.length > 0 ? allProducts : (products.length > 0 ? products : []);
+        
+        const cats = source.flatMap(p => {
+            const raw = p.category;
+            // The mapping logic in loadData already ensures this is an array or empty, 
+            // but we'll be extra careful here.
+            if (Array.isArray(raw)) return raw;
+            if (typeof raw === 'string' && (raw as string).trim().length > 0) return [(raw as string).trim()];
+            return [];
+        }).filter(Boolean);
+        
+        const uniqueLower: string[] = Array.from(new Set(cats.map(c => String(c).toLowerCase().trim())));
+        const result = uniqueLower
+            .filter(c => c.length > 0)
+            .map(c => c.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '));
+            
+        return result;
+    }, [allProducts, products]);
 
     const handleJoinStore = async () => {
-        if (!seller) return;
+        if (!seller || !storeCustomer) return;
 
-        // If not logged in, redirect to store login
-        if (!storeCustomer) {
-            setCurrentView('storeLogin');
-            return;
-        }
-
-        const { success, error } = await joinStore(seller.id);
+        const { success } = await joinStore(seller.id);
         if (success) {
             setIsMember(true);
             setShowJoinModal(false);
-            showToast(`Welcome to ${seller.store_name}!`);
+            showToast(`Welcome to ${displayName}!`);
 
             // Execute pending action if any
             if (pendingAction) {
@@ -672,55 +768,34 @@ const SellerStorefront = () => {
 
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
-    const handleLogin = () => {
-        setIsLoginModalOpen(true);
-    };
-
     const handleSearch = async (query: string) => {
         if (!query.trim()) {
             setProducts(allProducts);
             return;
         }
 
-        setIsSearching(true);
+        // setIsSearching logic removed as it's not being used for now
         try {
-            // Try Magic Search (AI Semantic Search)
-            const { data, error } = await supabase.functions.invoke('semantic-search', {
-                body: { query, threshold: 0.3 }
+            const { data: searchResults } = await supabase.rpc('search_products', {
+                query_text: query,
+                seller_id_val: seller?.id
             });
 
-            if (data?.products && data.products.length > 0) {
-                // Map DB results to Page Products (handle field naming if different)
-                const mappedResults = data.products.map((p: any) => {
-                    const original = allProducts.find(op => op.id === p.id);
-                    return original || {
-                        ...p,
-                        image: p.image || 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=400',
-                        sizes: ['Standard']
-                    };
-                });
-                handleOpenCollection("Magic Search", mappedResults, `Found matching items for "${query}"`);
+            if (searchResults && searchResults.length > 0) {
+                handleOpenCollection("Search Results", searchResults, `Found matching items for "${query}"`);
             } else {
-                // Fallback to Fuse.js if AI Search returns nothing or fails
+                // Fallback to Fuse.js
                 const fuse = new Fuse(allProducts, {
                     keys: ['name', 'description', 'category'],
                     threshold: 0.4,
-                    includeScore: true,
                 });
                 const filtered = fuse.search(query).map(result => result.item);
-                handleOpenCollection("Search Results", filtered, `Results for "${query}"`);
+                handleOpenCollection("Search Results", filtered);
             }
         } catch (err) {
-            console.error("Magic Search failed:", err);
-            // Fallback to local search
-            const fuse = new Fuse(allProducts, {
-                keys: ['name', 'description', 'category'],
-                threshold: 0.4,
-            });
-            const filtered = fuse.search(query).map(result => result.item);
-            handleOpenCollection("Search Results", filtered);
+            console.error("Search failed:", err);
         } finally {
-            setIsSearching(false);
+            // setIsSearching logic removed
         }
     };
 
@@ -747,7 +822,7 @@ const SellerStorefront = () => {
         if (!seller) return;
 
         // Check cart lock
-        const { allowed, currentSellerId } = canAddToCart(seller.id);
+        const { allowed } = canAddToCart(seller.id);
 
         if (!allowed) {
             // Show conflict modal
@@ -759,12 +834,6 @@ const SellerStorefront = () => {
         // Check membership - allow adding if member, otherwise prompt join
         if (!isMember) {
             setPendingAction(() => () => {
-                // Determine logic: 
-                // Option A: Just add to cart after join.
-                // Option B: Re-call addToCart logic (but be careful of recursion/state).
-                // Simplest: Duplicate the add logic here or cleaner:
-
-                // Let's just do the add logic here directly to ensure it happens
                 setCartSeller(seller.id);
                 setCartItems(prev => {
                     const existing = prev.find(item => item.product.id === product.id && item.size === size);
@@ -792,12 +861,12 @@ const SellerStorefront = () => {
                 return prev.map(item =>
                     item.product.id === product.id && item.size === size
                         ? { ...item, quantity: item.quantity + 1 }
-                        : item
-                );
-            }
-            return [...prev, { product, size, quantity: 1 }];
-        });
-        showToast(`Added ${product.name} to bag`);
+                                : item
+                        );
+                    }
+                    return [...prev, { product, size, quantity: 1 }];
+                });
+                showToast(`Added ${product.name} to bag`);
     };
 
     const handleClearCartAndAdd = () => {
@@ -805,8 +874,6 @@ const SellerStorefront = () => {
 
         clearCart();
         setCartItems([]);
-        setCartSeller(seller.id);
-
         const { product, size } = pendingCartItem;
         setCartItems([{ product, size, quantity: 1 }]);
         showToast(`Cart cleared. Added ${product.name} to bag`);
@@ -853,23 +920,15 @@ const SellerStorefront = () => {
         handleNavigate('checkout');
     };
 
-    const handlePlaceOrder = async (orderedItems: { product: Product, size: string, quantity: number }[], address: any, paymentMethod: string, promotionId?: string, discountAmount?: number): Promise<boolean> => {
+    const handlePlaceOrder = async (orderedItems: { product: Product, size: string, quantity: number }[], address: Address, paymentMethod: string, promotionId?: string, discountAmount?: number): Promise<boolean> => {
         try {
-            console.log("Placing order...", { orderedItems, address, paymentMethod, promotionId, discountAmount });
-
             // 1. Get User
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) {
-                // If using store session but no supabase session (rare but possible with custom auth), try to use storeCustomer
-                // But for RLS we need a real user. 
-                // For now, assume Supabase Check or fallback.
                 alert("Please sign in to place an order.");
                 setIsLoginModalOpen(true);
                 return false;
             }
-
-            // 2. Validate Membership (Optional strictness, but good for consistency)
-            // if (!isMember) ... (Already handled by UI likely, but safety check ok)
 
             // 3. Calculate Totals
             const subtotal = orderedItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
@@ -950,14 +1009,13 @@ const SellerStorefront = () => {
             showToast('Order placed successfully!');
             return true;
 
-        } catch (err: any) {
-            console.error("Handle Place Order Exception:", err);
-            alert(`System Error: ${err.message}`);
+        } catch (err) {
+            const error = err as Error;
+            console.error("Handle Place Order Exception:", error);
+            alert(`System Error: ${error.message}`);
             return false;
         }
     };
-
-
 
     const isWishlisted = (productId: string) => wishlistIds.includes(productId);
 
@@ -967,8 +1025,6 @@ const SellerStorefront = () => {
 
     // Theme Layout Config
     const showHero = storeSettings?.theme_config?.layout?.show_hero !== false; // Default true
-    const showFeatured = storeSettings?.theme_config?.layout?.show_featured !== false; // Default true
-    const showReviews = storeSettings?.theme_config?.layout?.show_reviews !== false; // Default true
 
     const handleNavigate = (view: ViewType) => {
         // If not logged in, redirect to login
@@ -977,16 +1033,18 @@ const SellerStorefront = () => {
             return;
         }
 
-        // Update URL to match view
+        const currentSearch = location.search;
+
+        // Update URL to match view while preserving search parameters (like ?preview=true)
         if (view === 'home') {
-            navigate(`/store/${sellerSlug}`);
+            navigate(`/${sellerSlug}${currentSearch}`);
         } else if (view === 'storeLogin') {
-            navigate(`/store/${sellerSlug}/`);
+            navigate(`/${sellerSlug}/${currentSearch}`);
             setIsLoginModalOpen(true);
         } else if (view === 'storeRegister') {
-            navigate(`/store/${sellerSlug}/register`);
+            navigate(`/${sellerSlug}/register${currentSearch}`);
         } else {
-            navigate(`/store/${sellerSlug}/${view}`);
+            navigate(`/${sellerSlug}/${view}${currentSearch}`);
         }
 
         setCurrentView(view);
@@ -1001,19 +1059,19 @@ const SellerStorefront = () => {
     };
 
     const handleCategoryClick = (category: string) => {
-        const filtered = products.filter(p => p.category?.toLowerCase() === category.toLowerCase());
+        const filtered = allProducts.filter(p => Array.isArray(p.category) ? p.category.some(c => c.toLowerCase() === category.toLowerCase()) : p.category === category);
         handleOpenCollection(category, filtered);
     };
 
     const handleFooterLinkClick = (section: 'shop' | 'company' | 'legal', key: string) => {
         if (section === 'shop') {
             if (key === 'New Arrivals') {
-                handleOpenCollection(key, products);
+                handleOpenCollection(key, allProducts);
             } else if (key === 'Best Sellers') {
                 handleOpenCollection(key, popularProducts);
             } else {
-                // Filter by category (case-insensitive)
-                const filtered = products.filter(p => p.category?.toLowerCase() === key.toLowerCase());
+                // Filter by category from master list (case-insensitive)
+                const filtered = allProducts.filter(p => Array.isArray(p.category) ? p.category.some(c => c.toLowerCase() === key.toLowerCase()) : p.category === key);
                 handleOpenCollection(key, filtered);
             }
         } else {
@@ -1151,6 +1209,7 @@ const SellerStorefront = () => {
                 return (
                     <ViewAll
                         products={currentCategoryProducts.length > 0 ? currentCategoryProducts : products}
+                        allCategories={uniqueCategories}
                         title={currentCategoryTitle}
                         subtitle={currentCategorySubtitle}
                         onQuickView={handleQuickView}
@@ -1184,8 +1243,8 @@ const SellerStorefront = () => {
                                 <HeroSkeleton />
                             ) : showHero && (
                                 <Hero
-                                    onShopCollection={() => handleOpenCollection("All Products", products)}
-                                    settings={storeSettings?.theme_config?.hero || storeSettings?.hero}
+                                    onShopCollection={() => handleOpenCollection("All Products", allProducts)}
+                                    settings={(storeSettings as StoreSettings | null)?.theme_config?.hero || (storeSettings as StoreSettings | null)?.hero}
                                 />
                             )
                         }
@@ -1199,7 +1258,7 @@ const SellerStorefront = () => {
                                         badge="Just Dropped"
                                         badgeColor="text-primary"
                                         products={products}
-                                        onViewAll={() => handleOpenCollection("New Arrivals", products)}
+                                        onViewAll={() => handleOpenCollection("New Arrivals", allProducts)}
                                         onQuickView={handleQuickView}
                                         onToggleWishlist={toggleWishlist}
                                         isWishlisted={isWishlisted}
@@ -1281,7 +1340,7 @@ const SellerStorefront = () => {
                                                 🔥 Best Sellers
                                             </button>
                                             <button
-                                                onClick={() => handleOpenCollection("New Arrivals", products)}
+                                                onClick={() => handleOpenCollection("New Arrivals", allProducts)}
                                                 className="px-6 py-3 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-full text-sm font-semibold text-gray-800 dark:text-gray-200 hover:bg-emerald-50 hover:border-emerald-400 hover:text-emerald-700 dark:hover:bg-emerald-950/30 dark:hover:text-emerald-400 dark:hover:border-emerald-600 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
                                             >
                                                 ✨ New Arrivals
@@ -1290,7 +1349,7 @@ const SellerStorefront = () => {
 
                                         <div className="text-center mt-8">
                                             <button
-                                                onClick={() => handleOpenCollection("All Products", products)}
+                                                onClick={() => handleOpenCollection("All Products", allProducts)}
                                                 className="inline-flex items-center gap-2 px-8 py-3.5 bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white rounded-full font-semibold text-sm shadow-lg shadow-emerald-600/20 hover:shadow-emerald-600/30 transition-all duration-200 hover:-translate-y-0.5"
                                             >
                                                 View All Products
@@ -1349,7 +1408,7 @@ const SellerStorefront = () => {
                     <Navbar
                         onNavigate={(view) => {
                             if (view === 'viewAll') {
-                                handleOpenCollection("All Products", products);
+                                handleOpenCollection("All Products", allProducts);
                             } else {
                                 handleNavigate(view);
                             }
@@ -1362,7 +1421,7 @@ const SellerStorefront = () => {
                         toggleDarkMode={toggleDarkMode}
                         onLogin={() => handleNavigate('storeLogin')}
                         user={storeCustomer}
-                        storeName={storeSettings?.store_name || seller.store_name}
+                        storeName={displayName}
                         storeLogo={storeSettings?.logo_url}
                         categories={uniqueCategories}
                         products={products}
@@ -1380,7 +1439,8 @@ const SellerStorefront = () => {
                 <Footer
                     onLinkClick={handleFooterLinkClick}
                     branding={{
-                        storeName: storeSettings?.store_name || seller?.store_name || "FashionStore",
+                        storeName: displayName,
+                        logoUrl: storeSettings?.logo_url,
                         description: storeSettings?.hero?.description || "Elevating everyday style with premium quality sustainable apparel. Designed for modern life.",
                         socials: storeSettings?.socials
                     }}
@@ -1392,7 +1452,7 @@ const SellerStorefront = () => {
                 <BottomNav
                     onNavigate={(view) => {
                         if (view === 'viewAll') {
-                            handleOpenCollection("All Products", products);
+                            handleOpenCollection("All Products", allProducts);
                         } else {
                             handleNavigate(view);
                         }
@@ -1417,7 +1477,7 @@ const SellerStorefront = () => {
                     <div className="bg-white dark:bg-neutral-900 rounded-2xl p-6 max-w-md w-full shadow-2xl">
                         <Store className="w-12 h-12 text-emerald-500 mx-auto mb-4" />
                         <h3 className="text-lg font-bold text-center text-neutral-900 dark:text-white mb-2">
-                            Join {seller.store_name}
+                            Join {displayName}
                         </h3>
                         <p className="text-neutral-600 dark:text-neutral-400 text-center mb-6">
                             To shop at this store, you need to join as a customer. This helps us provide you with the best service.

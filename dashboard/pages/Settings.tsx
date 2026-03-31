@@ -742,6 +742,24 @@ const Settings = () => {
             localStorage.removeItem(SETTINGS_DRAFT_KEY);
             setShowDraftBanner(false);
             await fetchSettings();
+
+            // Real-time Sync: Broadcast update to storefronts
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.user?.id) {
+                const channel = supabase.channel(`seller:${session.user.id}`);
+                await channel.subscribe(async (status) => {
+                    if (status === 'SUBSCRIBED') {
+                        await channel.send({
+                            type: 'broadcast',
+                            event: 'appearance_update',
+                            payload: { settings: payload }
+                        });
+                        // Clean up channel after broadcast to avoid leaks
+                        setTimeout(() => channel.unsubscribe(), 2000);
+                    }
+                });
+            }
+
             alert('Settings saved successfully!');
         } catch (error) {
             console.error('Error saving settings:', error);

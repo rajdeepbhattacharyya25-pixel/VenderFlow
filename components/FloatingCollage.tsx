@@ -580,7 +580,7 @@ export function FloatingCollage() {
                             </div>
 
                             {/* Title */}
-                            <h3 className="text-lg lg:text-xl font-bold text-white/90 tracking-tight leading-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                            <h3 className="text-lg lg:text-xl font-bold text-white/90 tracking-tight leading-tight font-heading">
                                 {card.title}
                             </h3>
 

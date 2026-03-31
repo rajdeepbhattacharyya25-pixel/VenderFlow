@@ -1,20 +1,15 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import Fuse from 'fuse.js';
 import { supabase } from '../lib/supabase';
-import { TopBar } from '../components/TopBar';
 import { Navbar } from '../components/Navbar';
-import { BenefitsBar } from '../components/BenefitsBar';
+import { TopBar } from '../components/TopBar';
 import { Hero } from '../components/Hero';
-import { Footer } from '../components/Footer';
-import { ProductCard } from '../components/ProductCard';
 import { QuickViewModal } from '../components/QuickViewModal';
-import { BottomNav } from '../components/BottomNav';
-import { Product } from '../types';
-import { Wishlist } from '../components/Wishlist';
+import { Product, StoreSettings, ThemeConfig, Address } from '../types';
 import { Cart } from '../components/Cart';
 import { Checkout } from '../components/Checkout';
 import { ViewAll } from '../components/ViewAll';
+import { Footer } from '../components/Footer';
 import { ScrollableSection } from '../components/ScrollableSection';
 import { Loader2 } from 'lucide-react';
 
@@ -25,24 +20,31 @@ const PreviewStorefront = () => {
     const navigate = useNavigate();
 
     const [products, setProducts] = useState<Product[]>([]);
-    const [storeSettings, setStoreSettings] = useState<any>(null);
-    const [previewData, setPreviewData] = useState<any>(null);
+    const [storeSettings, setStoreSettings] = useState<StoreSettings | null>(null);
+    const [previewData, setPreviewData] = useState<Record<string, unknown> | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     const [currentView, setCurrentView] = useState<ViewType>('home');
     const [cartItems, setCartItems] = useState<{ product: Product, size: string, quantity: number }[]>([]);
     const [checkoutItems, setCheckoutItems] = useState<{ product: Product, size: string, quantity: number }[]>([]);
-    const [wishlistIds, setWishlistIds] = useState<string[]>([]);
+    const [wishlistIds] = useState<string[]>([]);
 
+    const [isDarkMode, setIsDarkMode] = useState(false);
+    const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
-    // Derived lists
-    const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
-    const [popularProducts, setPopularProducts] = useState<Product[]>([]);
-
-    const [isDarkMode, setIsDarkMode] = useState(false);
+    // Categories derived list (Stable with useMemo, moved above early returns)
+    const uniqueCategories = useMemo(() => {
+        const cats = products.flatMap(p => {
+            if (Array.isArray(p.category)) return p.category;
+            if (typeof p.category === 'string') return [p.category];
+            return [];
+        });
+        const uniqueLower = Array.from(new Set(cats.map(c => c.toLowerCase())));
+        return uniqueLower.map(c => c.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')).sort();
+    }, [products]);
 
     useEffect(() => {
         const loadPreview = async () => {
@@ -58,48 +60,110 @@ const PreviewStorefront = () => {
 
                 setPreviewData(data.preview);
                 // The snapshot takes precedence for theme
-                setStoreSettings(data.preview.snapshot || {});
+                setStoreSettings(data.preview.snapshot as StoreSettings || {} as StoreSettings);
 
-                // Map products
-                if (data.products) {
-                    const mappedProducts = data.products.map((p: any) => {
+                // Map products - check both top-level and snapshot-embedded products
+                const rawProducts = data.products || (data.preview?.snapshot as any)?.products || [];
+                
+                if (rawProducts && rawProducts.length > 0) {
+                    const mappedProducts = rawProducts.map((p: any) => {
                         const hasDiscount = p.discount_price && Number(p.discount_price) > 0;
-                        const images = p.product_media?.map((m: any) => m.file_url) || [];
+                        const media = p.product_media || [];
+                        const primaryMedia = media.find(m => m.is_primary && m.media_type !== 'video');
+                        const firstImageMedia = media.find(m => m.media_type !== 'video');
+                        const primaryImageUrl = primaryMedia?.file_url ?? firstImageMedia?.file_url ?? p.image ?? 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=400';
+                        const images = media.filter(m => m.media_type !== 'video').map(m => m.file_url);
+                        
+                        // Robust category handling: ensure it's always an array of strings
+                        let productCategory: string[] = [];
+                        const rawCategory = p.category || (p as any).categories;
+                        if (Array.isArray(rawCategory)) {
+                            productCategory = rawCategory;
+                        } else if (typeof rawCategory === 'string' && rawCategory.length > 0) {
+                            productCategory = [rawCategory];
+                        }
+
                         return {
                             ...p,
-                            image: images.length > 0 ? images[0] : (p.image || 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=400'),
-                            images: images,
-                            media: p.product_media || [],
-                            sizes: p.product_variants?.map((v: any) => v.variant_name) || ['Standard'],
+                            image: primaryImageUrl,
+                            images,
+                            media,
+                            sizes: (p as any).product_variants?.map((v: { variant_name: string }) => v.variant_name) || ['Standard'],
+                            category: productCategory,
+                            rating: p.rating || 4.5,
+                            reviews: p.reviews || 0,
                             price: hasDiscount ? Number(p.discount_price) : Number(p.price),
-                            originalPrice: hasDiscount ? Number(p.price) : undefined
-                        };
+                            original_price: hasDiscount ? Number(p.price) : undefined
+                        } as Product;
                     });
                     setProducts(mappedProducts);
-                    setRecommendedProducts([...mappedProducts].slice(0, 4));
-                    setPopularProducts([...mappedProducts].slice(0, 4));
                 }
 
-            } catch (err: any) {
-                console.error("Preview load error:", err);
-                setError(err.message || "Failed to load preview");
+
+            } catch (err) {
+                const error = err as Error;
+                console.error("Preview load error:", error);
+                setError(error.message || "Failed to load preview");
             } finally {
                 setIsLoading(false);
             }
         };
 
         loadPreview();
+
+        // Real-time synchronization for changes to this preview and seller's live updates
+        if (previewId) {
+            const channel = supabase
+                .channel(`preview_sync_${previewId}`)
+                .on('postgres_changes', {
+                    event: 'UPDATE',
+                    schema: 'public',
+                    table: 'previews',
+                    filter: `id=eq.${previewId}`
+                }, (payload) => {
+                    const newPayload = payload as { new: Record<string, unknown> };
+                    if (newPayload.new) {
+                        setPreviewData(newPayload.new);
+                        setStoreSettings((newPayload.new.snapshot as StoreSettings) || {} as StoreSettings);
+                    }
+                })
+                .on('broadcast', { event: 'appearance_update' }, ({ payload }) => {
+                    if (payload?.settings) {
+                        // For previews, we update the local snapshot temporarily
+                        setStoreSettings(prev => ({ ...prev, ...payload.settings }));
+                    }
+                })
+                .on('broadcast', { event: 'product_update' }, () => {
+                    // Refresh preview data (which includes products) when a product change is broadcast
+                    loadPreview();
+                })
+                .subscribe();
+
+            return () => {
+                supabase.removeChannel(channel);
+            };
+        }
     }, [previewId]);
 
-    // Theme Styles
+    const displayName = useMemo(() => storeSettings?.store_name || "FashionStore", [storeSettings?.store_name]);
+
+    useEffect(() => {
+        if (displayName) {
+            document.title = `[Preview] ${displayName}`;
+        }
+    }, [displayName]);
+
     const themeStyles = useMemo(() => {
-        if (!storeSettings?.theme_config) return {};
-        const { colors, fonts, borderRadius } = storeSettings.theme_config;
+        const config = (storeSettings?.theme_config as ThemeConfig) || {} as ThemeConfig;
+        const colors = config.colors || { primary: '#047857', secondary: '#F3F4F6', background: '#FFFFFF', text: '#1F2937' };
+        const fonts = config.fonts || { heading: 'Inter', body: 'Inter' };
+        const borderRadius = config.borderRadius || '0.625rem';
+        
         return {
             '--primary': colors.primary,
             '--secondary': colors.secondary,
-            '--bg-color': isDarkMode ? '#0a0a0a' : colors.background,
-            '--text-color': isDarkMode ? '#ffffff' : colors.text,
+            '--background': isDarkMode ? '#0a0a0a' : colors.background,
+            '--foreground': isDarkMode ? '#ffffff' : colors.text,
             '--heading-font': fonts.heading,
             '--body-font': fonts.body,
             '--radius': borderRadius,
@@ -126,7 +190,13 @@ const PreviewStorefront = () => {
         setCurrentView('checkout');
     };
 
-    const handlePlaceOrder = async (orderedItems: any, address: any, paymentMethod: string, promotionId?: string, discountAmount?: number) => {
+    const handleCategoryClick = (category: string) => {
+        setSelectedCategory(category);
+        setCurrentView('viewAll');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handlePlaceOrder = async (orderedItems: { product: Product, size: string, quantity: number }[], address: Address, paymentMethod: string, promotionId?: string, _discountAmount?: number) => {
         alert(`Success! Since this is a Preview Environment, no real order was placed. ${promotionId ? 'Promo applied!' : ''}`);
         setCartItems([]);
         setCurrentView('home');
@@ -153,8 +223,14 @@ const PreviewStorefront = () => {
     }
 
     // ViewAll state
-    const currentCategoryProducts = products;
-    const uniqueCategories = Array.from(new Set(products.map(p => p.category).filter(Boolean)));
+
+    const handleFooterLinkClick = (section: string, key: string) => {
+        if (section === 'shop') {
+            handleCategoryClick(key);
+        } else {
+            alert(`Footer link clicked: ${section} > ${key}. This is a preview environment.`);
+        }
+    };
 
     return (
         <div style={themeStyles} className="min-h-screen flex flex-col font-body bg-[var(--color-luxury-bg)]">
@@ -166,8 +242,11 @@ const PreviewStorefront = () => {
             {currentView !== 'checkout' && (
                 <Navbar
                     onSearch={() => { }}
-                    onNavigate={(v) => setCurrentView(v as ViewType)}
-                    onCategoryClick={() => { }}
+                    onNavigate={(v) => {
+                        if (v === 'home') setSelectedCategory(null);
+                        setCurrentView(v as ViewType);
+                    }}
+                    onCategoryClick={handleCategoryClick}
                     wishlistCount={wishlistIds.length}
                     cartCount={cartItems.reduce((acc, i) => acc + i.quantity, 0)}
                     isDarkMode={isDarkMode}
@@ -176,14 +255,17 @@ const PreviewStorefront = () => {
                     onLogin={() => { }}
                     categories={uniqueCategories}
                     isAdmin={false}
-                    storeName={storeSettings?.store_name}
+                    storeName={displayName}
                 />
             )}
 
             <main className="flex-grow">
                 {currentView === 'home' && (
                     <>
-                        <Hero onShopCollection={() => setCurrentView('viewAll')} />
+                        <Hero 
+                            onShopCollection={() => setCurrentView('viewAll')} 
+                            settings={(storeSettings as StoreSettings | null)?.theme_config?.hero || (storeSettings as StoreSettings | null)?.hero}
+                        />
                         <div className="max-w-[1600px] mx-auto px-4 space-y-16 mb-20">
                             <ScrollableSection
                                 title="Preview Selection"
@@ -201,8 +283,8 @@ const PreviewStorefront = () => {
                     <Cart
                         items={cartItems}
                         wishlistProducts={[]}
-                        onRemove={(pid, sz) => setCartItems(prev => prev.filter(i => !(i.product.id === pid && i.size === sz)))}
-                        onUpdateQuantity={(pid, sz, d) => { /* simple quantity logic */ }}
+                        onRemove={(_pid, _sz) => setCartItems(prev => prev.filter(i => !(i.product.id === _pid && i.size === _sz)))}
+                        onUpdateQuantity={(_pid, _sz, _d) => { /* simple quantity logic */ }}
                         onNavigateHome={() => setCurrentView('home')}
                         onNavigateWishlist={() => setCurrentView('wishlist')}
                         onMoveToWishlist={() => { }}
@@ -221,9 +303,13 @@ const PreviewStorefront = () => {
                 )}
                 {currentView === 'viewAll' && (
                     <ViewAll
-                        products={products}
-                        title="All Preview Products"
-                        subtitle=""
+                        products={selectedCategory ? products.filter(p => {
+                            const cats = Array.isArray(p.category) ? p.category : (typeof p.category === 'string' ? [p.category] : []);
+                            return cats.some(c => typeof c === 'string' && c.toLowerCase() === selectedCategory.toLowerCase());
+                        }) : products}
+                        allCategories={uniqueCategories}
+                        title={selectedCategory || "All Preview Products"}
+                        subtitle={selectedCategory ? `Browsing our ${selectedCategory} collection` : ""}
                         onQuickView={(p) => { setSelectedProduct(p); setIsModalOpen(true); }}
                         onToggleWishlist={() => { }}
                         isWishlisted={() => false}
@@ -231,6 +317,19 @@ const PreviewStorefront = () => {
                     />
                 )}
             </main>
+
+            {currentView !== 'checkout' && (
+                <Footer
+                    onLinkClick={handleFooterLinkClick}
+                    branding={{
+                        storeName: displayName,
+                        logoUrl: storeSettings?.logo_url as string,
+                        description: (storeSettings?.theme_config as ThemeConfig)?.hero?.description || (storeSettings as unknown as StoreSettings)?.hero?.description || "Elevating everyday style with premium quality sustainable apparel.",
+                        socials: (storeSettings as unknown as StoreSettings)?.socials
+                    }}
+                    categories={uniqueCategories}
+                />
+            )}
 
             {isModalOpen && selectedProduct && (
                 <QuickViewModal

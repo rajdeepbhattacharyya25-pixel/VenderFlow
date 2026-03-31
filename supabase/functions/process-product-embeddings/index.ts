@@ -72,7 +72,7 @@ serve(async (req) => {
         const [titleVec, descVec, catVec] = await Promise.all([
           generateEmbedding(product.name),
           generateEmbedding(product.description || ""),
-          generateEmbedding(product.category || "")
+          generateEmbedding(Array.isArray(product.category) ? product.category.join(' ') : product.category || "")
         ]);
 
         const { error: updateError } = await supabase

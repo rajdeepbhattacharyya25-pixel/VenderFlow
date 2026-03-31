@@ -11,7 +11,7 @@ const PricingRevealWord = ({ word, i, scrollYProgress }: { word: string, i: numb
 
     return (
         <div className="relative inline-block overflow-hidden py-1 px-1">
-            <span className={`text-2xl sm:text-5xl md:text-6xl font-bold font-orbitron tracking-tighter uppercase m-0 ${isRevenue ? 'text-[#ccff00]' : 'text-white'}`}>
+            <span className={`text-2xl sm:text-5xl md:text-6xl font-bold font-heading tracking-tighter uppercase m-0 ${isRevenue ? 'text-[#ccff00]' : 'text-white'}`}>
                 {word}
             </span>
 
@@ -95,7 +95,7 @@ const PricingCard = ({ plan, index, isAnnual }: { plan: PricingPlan; index: numb
 
             {/* Name + Price */}
             <div className="mb-3 sm:mb-5 relative z-20">
-                <h3 className="text-sm sm:text-xl font-bold font-orbitron uppercase tracking-wide mb-2 text-white/90">{plan.name}</h3>
+                <h3 className="text-sm sm:text-xl font-bold font-heading uppercase tracking-wide mb-2 text-white/90">{plan.name}</h3>
                 <div className="flex items-baseline gap-1">
                     <span className="text-xl sm:text-3xl font-black text-white">₹</span>
                     <AnimatePresence mode="wait">
@@ -123,7 +123,7 @@ const PricingCard = ({ plan, index, isAnnual }: { plan: PricingPlan; index: numb
                 <div className="p-2.5 sm:p-3.5 rounded-xl bg-white/[0.04] border border-white/5">
                     <div className="flex justify-between items-center mb-0.5">
                         <span className="text-[8px] sm:text-[10px] uppercase text-white/40 font-black tracking-widest">Commission</span>
-                        <span className="text-sm sm:text-lg font-bold text-[#ccff00] font-orbitron">{plan.commission}</span>
+                        <span className="text-sm sm:text-lg font-bold text-[#ccff00] font-heading">{plan.commission}</span>
                     </div>
                     <div className="text-[8px] sm:text-[10px] uppercase text-white/60 font-medium tracking-wider leading-tight">{plan.priority}</div>
                 </div>
@@ -145,7 +145,7 @@ const PricingCard = ({ plan, index, isAnnual }: { plan: PricingPlan; index: numb
             <motion.button
                 whileHover={{ scale: 1.02, boxShadow: "0 0 25px rgba(204,255,0,0.4)" }}
                 whileTap={{ scale: 0.97 }}
-                className={`w-full rounded-xl h-11 sm:h-14 text-[10px] sm:text-xs font-orbitron uppercase tracking-widest transition-all duration-300 flex items-center justify-center font-bold relative z-30 ${plan.isPopular ? 'bg-[#ccff00] text-black shadow-[0_0_20px_rgba(204,255,0,0.3)]' : 'bg-white/5 text-white border border-white/10 hover:bg-white/10'}`}
+                className={`w-full rounded-xl h-11 sm:h-14 text-[10px] sm:text-xs font-heading uppercase tracking-widest transition-all duration-300 flex items-center justify-center font-bold relative z-30 ${plan.isPopular ? 'bg-[#ccff00] text-black shadow-[0_0_20px_rgba(204,255,0,0.3)]' : 'bg-white/5 text-white border border-white/10 hover:bg-white/10'}`}
             >
                 {plan.buttonText}
             </motion.button>
@@ -239,7 +239,7 @@ export const PricingSection = () => {
                         viewport={{ once: true }}
                         className="inline-block px-3 py-1 mb-2 sm:mb-4 rounded-full border border-[#ccff00]/20 bg-[#ccff00]/5 backdrop-blur-sm"
                     >
-                        <span className="text-[9px] sm:text-[10px] uppercase tracking-[0.2em] text-[#ccff00] font-bold font-orbitron">Pricing Plans</span>
+                        <span className="text-[9px] sm:text-[10px] uppercase tracking-[0.2em] text-[#ccff00] font-bold font-heading">Pricing Plans</span>
                     </motion.div>
 
                     <div ref={headerRef} className="mb-3 sm:mb-6 flex flex-wrap items-baseline justify-center gap-x-3 gap-y-0">

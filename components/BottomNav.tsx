@@ -32,12 +32,11 @@ export const BottomNav: React.FC<BottomNavProps> = ({
 
   return (
     <nav
-      className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-neutral-950/95 backdrop-blur-lg border-t border-gray-200 dark:border-neutral-800 transition-colors"
-      style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+      className="md:hidden fixed bottom-0 left-0 right-0 z-50 transition-colors bg-white/95 dark:bg-emerald-950/95 backdrop-blur-md safe-bottom-fixed border-t border-emerald-100 dark:border-emerald-900/30 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]"
       role="tablist"
       aria-label="Main navigation"
     >
-      <div className="flex items-stretch justify-around px-1">
+      <div className="flex items-stretch justify-around px-1 h-16">
         {tabs.map(({ id, label, Icon }) => {
           const isActive = activeTab === id;
           const badge = getBadge(id);
@@ -53,37 +52,37 @@ export const BottomNav: React.FC<BottomNavProps> = ({
               onTouchStart={() => setPressedTab(id)}
               onTouchEnd={() => setPressedTab(null)}
               className={`
-                relative flex flex-col items-center justify-center gap-0.5
-                min-w-[56px] py-2 px-1 rounded-xl
-                transition-all duration-150 ease-out
-                ${isPressed ? 'scale-90' : 'scale-100'}
+                relative flex flex-col items-center justify-center gap-1
+                min-w-[56px] px-1 rounded-xl
+                transition-all duration-200 cubic-bezier(0.175, 0.885, 0.32, 1.275)
+                ${isPressed ? 'scale-90 opacity-70' : 'scale-100 opacity-100'}
                 ${isActive
                   ? 'text-emerald-600 dark:text-emerald-400'
-                  : 'text-gray-400 dark:text-gray-500 active:text-gray-600 dark:active:text-gray-300'
+                  : 'text-emerald-900/60 dark:text-emerald-100/60'
                 }
               `}
-              style={{ minHeight: '56px', WebkitTapHighlightColor: 'transparent' }}
+              style={{ WebkitTapHighlightColor: 'transparent' }}
             >
               {/* Active indicator bar */}
               {isActive && (
-                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-5 h-0.5 bg-[#ccff00] rounded-full" />
+                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-4 h-1 bg-emerald-500 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.5)] animate-in slide-in-from-top-1 duration-300" />
               )}
 
               {/* Icon with badge */}
-              <span className="relative">
+              <div className="relative">
                 <Icon
-                  className={`w-[22px] h-[22px] transition-all duration-150 ${isActive ? 'stroke-[2.5] text-[#ccff00]' : 'stroke-[1.8]'}`}
-                  fill={isActive && id === 'wishlist' ? 'currentColor' : 'none'}
+                  className={`w-5 h-5 transition-transform duration-300 ${isActive ? 'scale-110' : 'scale-100'}`}
+                  strokeWidth={isActive ? 2.5 : 2}
                 />
                 {badge > 0 && (
-                  <span className="absolute -top-1.5 -right-2.5 min-w-[16px] h-[16px] flex items-center justify-center bg-[#ccff00] text-black text-[9px] font-bold rounded-full px-1 border-2 border-white dark:border-neutral-950 animate-in zoom-in duration-200">
-                    {badge > 99 ? '99+' : badge}
+                  <span className="absolute -top-1.5 -right-2 min-w-[14px] h-[14px] flex items-center justify-center bg-rose-500 text-white text-[8px] font-black rounded-full border border-white dark:border-neutral-950 animate-in zoom-in duration-300">
+                    {badge > 9 ? '9+' : badge}
                   </span>
                 )}
-              </span>
+              </div>
 
               {/* Label */}
-              <span className={`text-[10px] leading-tight font-medium ${isActive ? 'font-semibold' : ''}`}>
+              <span className="text-[9px] uppercase tracking-wider font-black opacity-100">
                 {label}
               </span>
             </button>

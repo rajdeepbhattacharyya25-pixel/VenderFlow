@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { Edit2, Trash2 } from 'lucide-react';
 import { Product } from '../../types';
-import { MoreVertical, Edit2, Trash2, Copy, BarChart2 } from 'lucide-react';
 
 interface ProductTableProps {
     products: Product[];
@@ -8,6 +8,7 @@ interface ProductTableProps {
     onSelect: (id: string, selected: boolean) => void;
     onSelectAll: (selected: boolean) => void;
     onEdit: (product: Product) => void;
+    onDelete: (id: string) => void;
 }
 
 const ProductTable: React.FC<ProductTableProps> = ({
@@ -15,7 +16,8 @@ const ProductTable: React.FC<ProductTableProps> = ({
     selectedIds,
     onSelect,
     onSelectAll,
-    onEdit
+    onEdit,
+    onDelete
 }) => {
     const allSelected = products.length > 0 && selectedIds.length === products.length;
 
@@ -82,7 +84,9 @@ const ProductTable: React.FC<ProductTableProps> = ({
                                             >
                                                 {product.name}
                                             </div>
-                                            <div className="text-xs text-muted">{product.category || 'Uncategorized'}</div>
+                                            <div className="text-xs text-muted">
+                                                {product.category ? (Array.isArray(product.category) ? product.category.join(', ') : product.category) : 'Uncategorized'}
+                                            </div>
                                         </div>
                                     </div>
                                 </td>
@@ -107,9 +111,22 @@ const ProductTable: React.FC<ProductTableProps> = ({
                                     )}
                                 </td>
                                 <td className="p-4 text-right">
-                                    <button className="p-2 text-dashboard-muted hover:text-text rounded-lg hover:bg-bg transition-colors" title="Edit" onClick={() => onEdit(product)}>
-                                        <Edit2 size={18} />
-                                    </button>
+                                    <div className="flex items-center justify-end gap-2">
+                                        <button 
+                                            className="p-2 text-dashboard-muted hover:text-chart-line rounded-lg hover:bg-bg transition-colors" 
+                                            title="Edit" 
+                                            onClick={() => onEdit(product)}
+                                        >
+                                            <Edit2 size={18} />
+                                        </button>
+                                        <button 
+                                            className="p-2 text-dashboard-muted hover:text-red-500 rounded-lg hover:bg-bg transition-colors" 
+                                            title="Delete" 
+                                            onClick={() => onDelete(product.id)}
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         ))}
@@ -152,7 +169,9 @@ const ProductTable: React.FC<ProductTableProps> = ({
                                     </div>
                                     <div>
                                         <div className="font-medium text-text line-clamp-1">{product.name}</div>
-                                        <div className="text-xs text-dashboard-muted">{product.category || 'Uncategorized'}</div>
+                                        <div className="text-xs text-dashboard-muted">
+                                            {product.category ? (Array.isArray(product.category) ? product.category.join(', ') : product.category) : 'Uncategorized'}
+                                        </div>
                                     </div>
                                 </div>
                                 <div className="text-right">
@@ -170,15 +189,28 @@ const ProductTable: React.FC<ProductTableProps> = ({
                                     </span>
                                     <span className="text-xs text-dashboard-muted">Stock: {product.stock_quantity}</span>
                                 </div>
-                                <button
-                                    className="p-1.5 text-dashboard-muted hover:text-text rounded-lg hover:bg-bg transition-colors"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        onEdit(product);
-                                    }}
-                                >
-                                    <Edit2 size={16} />
-                                </button>
+                                <div className="flex items-center gap-1">
+                                    <button
+                                        className="p-1.5 text-dashboard-muted hover:text-chart-line rounded-lg hover:bg-bg transition-colors"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onEdit(product);
+                                        }}
+                                        title="Edit"
+                                    >
+                                        <Edit2 size={16} />
+                                    </button>
+                                    <button
+                                        className="p-1.5 text-dashboard-muted hover:text-red-500 rounded-lg hover:bg-bg transition-colors"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onDelete(product.id);
+                                        }}
+                                        title="Delete"
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>

@@ -1,33 +1,73 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Image as ImageIcon, Plus, Trash, Star, Check, AlertCircle, Command, Video, Link, Upload, ChevronLeft, ChevronRight, Pencil } from 'lucide-react';
+import { 
+    X, 
+    Plus, 
+    Upload, 
+    Link, 
+    Check, 
+    AlertCircle, 
+    Image as ImageIcon,
+    Star,
+    ChevronLeft,
+    ChevronRight,
+    Pencil,
+    Video,
+    Trash,
+    Command
+} from 'lucide-react';
 import { Product } from '../../types';
 import { unifiedUpload } from '../../lib/vault';
 import { compressImage } from '../../lib/imageUtils';
-import { ProductMedia } from '../../types';
 import ImageEditorModal from './ImageEditorModal';
-import { AIContentHelper } from '../AIContentHelper';
 import { SellerSuccessAI } from './SellerSuccessAI';
-import { AuditResult } from '../../lib/success-ai';
+import TagInput from './TagInput';
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    useSensor,
+    useSensors,
+    DragEndEvent,
+    TouchSensor,
+    MouseSensor
+} from '@dnd-kit/core';
+import {
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    useSortable,
+    horizontalListSortingStrategy
+} from '@dnd-kit/sortable';
+import { motion, AnimatePresence } from 'framer-motion';
+
+import { CSS } from '@dnd-kit/utilities';
+// Removed unused imports: Seller, loadSellerBySlug, etc.
+
+interface SortableImage {
+    id: string;
+    url: string;
+}
 
 const PRODUCT_DRAFT_KEY = (productId: string) => `vf_product_draft_${productId}`;
 
 interface ProductModalProps {
     isOpen: boolean;
-    onClose: () => void;
+    onClose: () => Promise<void> | void;
     product?: Product | null;
-    onSave?: (product: Partial<Product>) => Promise<void>;
+    existingCategories: string[];
+    onSave?: (product: Partial<Product>) => Promise<void> | void;
 }
 
 interface ProductFormData {
     name: string;
     description: string;
-    category: string;
+    category: string[];
     is_active: boolean;
     status: 'draft' | 'active' | 'pending' | 'rejected';
-    images: string[];
+    images: SortableImage[];
     videoUrl: string | null;
-    variantImages: Record<string, string>; // variant name to image URL
+    variantImages: Record<string, string>;
     mainImageIndex: number;
     hasVariants: boolean;
     variants: Array<{ id?: string; option: string; value: string; price?: number; stock?: number }>;
@@ -39,10 +79,17 @@ interface ProductFormData {
     allowOutOfStockOrders: boolean;
 }
 
+interface MediaItem {
+    type: 'image' | 'video';
+    src: string;
+    index: number;
+    id: string;
+}
+
 const defaultFormData: ProductFormData = {
     name: '',
     description: '',
-    category: '',
+    category: [],
     is_active: true,
     status: 'draft',
     images: [],
@@ -59,155 +106,131 @@ const defaultFormData: ProductFormData = {
     allowOutOfStockOrders: false,
 };
 
-// Generate URL slug from title
-const generateSlug = (title: string): string => {
-    return title
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)/g, '');
+interface SortableThumbnailProps {
+    id: string;
+    idx: number;
+    src: string;
+    type?: 'image' | 'video';
+    isActive: boolean;
+    isMain: boolean;
+    onClick: () => void;
+}
+
+const SortableThumbnail = ({ id, src, type = 'image', isActive, isMain, onClick }: SortableThumbnailProps) => {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging
+    } = useSortable({ id });
+
+    return (
+        <div
+            ref={setNodeRef}
+            style={{
+                transform: CSS.Transform.toString(transform),
+                transition,
+            }}
+            {...attributes}
+            {...listeners}
+            onClick={onClick}
+            title={isMain ? "Main image (draggable)" : "Click to view or drag to reorder"}
+            className={`relative w-14 h-14 rounded-lg overflow-hidden border-2 flex-shrink-0 cursor-grab active:cursor-grabbing transition-all ${
+                isActive
+                    ? 'border-sky-500 ring-2 ring-sky-500/20 scale-105'
+                    : 'border-gray-200 dark:border-slate-600 hover:border-gray-300 dark:hover:border-slate-500'
+            } ${isDragging ? 'shadow-xl z-50 opacity-50' : 'z-1 opacity-100'}`}
+        >
+            {type === 'image' ? (
+                <img src={src} alt="" className="w-full h-full object-cover" />
+            ) : (
+                <div className="w-full h-full bg-black flex items-center justify-center">
+                    <Video size={16} className="text-white" />
+                </div>
+            )}
+            {isMain && (
+                <div className="absolute top-0.5 right-0.5 bg-sky-500 text-white rounded-full p-0.5 shadow-sm">
+                    <Star size={8} fill="currentColor" />
+                </div>
+            )}
+        </div>
+    );
 };
 
-const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, onSave }) => {
+const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, existingCategories, onSave }) => {
     const [activeSection, setActiveSection] = useState('basic');
     const [formData, setFormData] = useState<ProductFormData>(defaultFormData);
-    const [uploading, setUploading] = useState(false);
-    const [uploadStatus, setUploadStatus] = useState('');
-    const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
-    const [hasChanges, setHasChanges] = useState(false);
-    const [errors, setErrors] = useState<Record<string, string>>({});
-    const [showDraftBanner, setShowDraftBanner] = useState(false);
-
-
     const videoInputRef = useRef<HTMLInputElement>(null);
-
-    // Image URL input state
-    const [imageUrlInput, setImageUrlInput] = useState('');
-    const [imageUrlPreviewValid, setImageUrlPreviewValid] = useState<boolean | null>(null);
-
-    // Image Editor state
     const [editorOpen, setEditorOpen] = useState(false);
     const [editorImageSrc, setEditorImageSrc] = useState('');
     const imgbbFileInputRef = useRef<HTMLInputElement>(null);
     const [activePreviewIndex, setActivePreviewIndex] = useState(0);
     const [editingImageIndex, setEditingImageIndex] = useState<number | null>(null);
-
-    // Video URL input state
     const [videoUrlInput, setVideoUrlInput] = useState('');
     const [videoUrlPreviewValid, setVideoUrlPreviewValid] = useState<boolean | null>(null);
+    const [uploading, setUploading] = useState(false);
+    const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+    const [errors, setErrors] = useState<Record<string, string>>({});
+    const [hasChanges, setHasChanges] = useState(false);
 
-    // Custom Category Management
-    const [availableCategories, setAvailableCategories] = useState<string[]>([
-        'Clothing', 'Accessories', 'Home', 'Beauty'
-    ]);
-    const [isAddingNewCategory, setIsAddingNewCategory] = useState(false);
-    const [newCategoryName, setNewCategoryName] = useState('');
+    const sensors = useSensors(
+        useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
+        useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
+        useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+    );
 
-    // Keyboard Shortcuts
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (!isOpen) return;
+    const allMedia = useMemo<MediaItem[]>(() => [
+        ...formData.images.map((img, i) => ({ type: 'image' as const, src: img.url, index: i, id: img.id })),
+        ...(formData.videoUrl ? [{ type: 'video' as const, src: formData.videoUrl, index: -1, id: 'video-main' } as MediaItem] : [])
+    ], [formData.images, formData.videoUrl]);
 
-            // Esc to close
-            if (e.key === 'Escape') {
-                onClose();
-            }
+    const handleDragEnd = useCallback((event: DragEndEvent) => {
+        const { active, over } = event;
+        if (over && active.id !== over.id) {
+            setFormData(prev => {
+                const oldIndex = allMedia.findIndex(m => m.id === active.id);
+                const newIndex = allMedia.findIndex(m => m.id === over.id);
 
-            // Ctrl + Enter to save
-            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-                e.preventDefault();
-                handleSave();
-            }
+                if (oldIndex === -1 || newIndex === -1) return prev;
 
-            // Alt + 1-5 for tabs
-            if (e.altKey && e.key >= '1' && e.key <= '5') {
-                e.preventDefault();
-                const sectionMap: Record<string, string> = {
-                    '1': 'basic',
-                    '2': 'photos',
-                    '3': 'variants',
-                    '4': 'pricing',
-                    '5': 'stock',
-                    '6': 'success'
-                };
-                setActiveSection(sectionMap[e.key]);
-            }
+                const newAllMedia = arrayMove(allMedia, oldIndex, newIndex);
+                
+                // Separate back into images and video
+                const newImages = newAllMedia
+                    .filter(m => m.type === 'image')
+                    .map(m => ({ id: m.id, url: m.src }));
+                
+                const videoItem = newAllMedia.find(m => m.type === 'video');
+                const newVideoUrl = videoItem ? videoItem.src : null;
 
-
-        };
-
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [isOpen, activeSection, formData, onClose]);
-
-    // Initialize form with product data
-    useEffect(() => {
-        if (product) {
-
-            // Extract media info
-            const media = product.media || [];
-            const images = media.map(m => m.file_url);
-            const video = null;
-            const variantImages: Record<string, string> = {};
-
-            setFormData({
-                name: product.name || '',
-                description: product.description || '',
-                category: product.category || '',
-                is_active: product.is_active ?? true,
-                status: product.status || 'draft',
-                images: images.length > 0 ? images : (product.images || []),
-                videoUrl: video ? video.file_url : null,
-                variantImages: variantImages,
-                mainImageIndex: 0,
-                hasVariants: product.has_variants ?? false,
-                variants: product.variants ? product.variants.map((v: any) => {
-                    const parts = v.variant_name.split(': ');
-                    return {
-                        id: v.id,
-                        option: parts.length > 1 ? parts[0] : 'Size',
-                        value: parts.length > 1 ? parts[1] : v.variant_name,
-                        price: v.price_override || undefined,
-                        stock: v.stock_quantity || 0
-                    };
-                }) : [],
-                price: product.price || 0,
-                discountPrice: product.discount_price ?? null,
-                trackStock: true, // Will be fetched from product_stock if needed, default true
-                stockQuantity: 0,
-                lowStockThreshold: 5,
-                allowOutOfStockOrders: false,
-            });
-
-            // If product has a category not in our list, add it
-            if (product.category && !availableCategories.some(c => c.toLowerCase() === product.category?.toLowerCase())) {
-                setAvailableCategories(prev => [...prev, product.category!]);
-            }
-        } else {
-            setFormData(defaultFormData);
-        }
-        setHasChanges(false);
-        setSaveStatus('idle');
-        setShowDraftBanner(false);
-        // Check for a saved draft for this product
-        if (product?.id) {
-            const raw = localStorage.getItem(PRODUCT_DRAFT_KEY(product.id));
-            if (raw) {
-                try {
-                    const draft = JSON.parse(raw);
-                    if (draft.savedAt && Date.now() - draft.savedAt < 24 * 60 * 60 * 1000) {
-                        setShowDraftBanner(true);
-                    } else {
-                        localStorage.removeItem(PRODUCT_DRAFT_KEY(product.id));
+                // Update main image index if necessary
+                let newMainIndex = prev.mainImageIndex;
+                const oldImageItem = allMedia[oldIndex] as MediaItem;
+                if (oldImageItem && oldImageItem.type === 'image') {
+                    const oldImageIndex = prev.images.findIndex(img => img.id === oldImageItem.id);
+                    if (prev.mainImageIndex === oldImageIndex) {
+                        // The main image itself was moved
+                        const newImageIndex = newImages.findIndex(img => img.id === oldImageItem.id);
+                        newMainIndex = newImageIndex;
                     }
-                } catch { localStorage.removeItem(PRODUCT_DRAFT_KEY(product.id)); }
-            }
-        }
-    }, [product, isOpen]);
+                }
 
-    const updateField = <K extends keyof ProductFormData>(field: K, value: ProductFormData[K]) => {
+                setHasChanges(true);
+                return { 
+                    ...prev, 
+                    images: newImages, 
+                    videoUrl: newVideoUrl,
+                    mainImageIndex: newMainIndex 
+                };
+            });
+        }
+    }, [allMedia]);
+
+    const updateField = useCallback(<K extends keyof ProductFormData>(field: K, value: ProductFormData[K]) => {
         setFormData(prev => ({ ...prev, [field]: value }));
         setHasChanges(true);
-        // Clear error when field is updated
         if (errors[field]) {
             setErrors(prev => {
                 const newErrors = { ...prev };
@@ -215,50 +238,18 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
                 return newErrors;
             });
         }
-    };
+    }, [errors]);
 
-    // Auto-save draft to localStorage when form has unsaved changes
-    useEffect(() => {
-        if (!hasChanges || !product?.id) return;
-        const timer = setTimeout(() => {
-            const draftData = {
-                formData: {
-                    name: formData.name,
-                    description: formData.description,
-                    category: formData.category,
-                    is_active: formData.is_active,
-                    status: formData.status,
-                    hasVariants: formData.hasVariants,
-                    variants: formData.variants,
-                    price: formData.price,
-                    discountPrice: formData.discountPrice,
-                    trackStock: formData.trackStock,
-                    stockQuantity: formData.stockQuantity,
-                    lowStockThreshold: formData.lowStockThreshold,
-                    allowOutOfStockOrders: formData.allowOutOfStockOrders,
-                },
-                savedAt: Date.now(),
-            };
-            localStorage.setItem(PRODUCT_DRAFT_KEY(product.id), JSON.stringify(draftData));
-        }, 500);
-        return () => clearTimeout(timer);
-    }, [formData, hasChanges, product?.id]);
-
-    const validate = (): boolean => {
+    const validate = useCallback((): boolean => {
         const newErrors: Record<string, string> = {};
-        if (!formData.name.trim()) {
-            newErrors.name = 'Product name is required';
-        }
-        if (formData.price <= 0) {
-            newErrors.price = 'Please enter a valid price';
-        }
+        if (!formData.name.trim()) newErrors.name = 'Product name is required';
+        if (formData.price <= 0) newErrors.price = 'Please enter a valid price';
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
-    };
+    }, [formData.name, formData.price]);
 
-    const handleSave = async () => {
+    const handleSave = useCallback(async () => {
         if (!validate()) return;
-
         setSaveStatus('saving');
         try {
             const productData: Partial<Product> = {
@@ -270,6 +261,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
                 is_active: formData.is_active,
                 status: formData.status,
                 has_variants: formData.hasVariants,
+                images: formData.images.map(img => img.url),
                 variants: formData.variants.map(v => ({
                     id: v.id,
                     product_id: product?.id || '',
@@ -279,146 +271,177 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
                     created_at: new Date().toISOString()
                 }))
             };
-
-            // Stock data will be handled by trigger or separate update
-            // if we need to pass stock info to onSave, we might need to adjust Product type
-            // or pass it as a separate object. For now sticking to Product type.
-
-            if (onSave) {
-                await onSave(productData);
-            }
-
+            if (onSave) await onSave(productData);
             setSaveStatus('saved');
             setHasChanges(false);
             if (product?.id) localStorage.removeItem(PRODUCT_DRAFT_KEY(product.id));
-            setShowDraftBanner(false);
-            setTimeout(() => {
-                setSaveStatus('idle');
-            }, 2000);
-        } catch (error) {
+            setTimeout(() => setSaveStatus('idle'), 2000);
+        } catch (err: unknown) {
             setSaveStatus('error');
-            console.error('Save failed:', error);
+            const errorMessage = err instanceof Error ? err.message : 'Unknown error during save';
+            console.error("Product save error:", errorMessage);
         }
-    };
+    }, [validate, formData, product, onSave]);
 
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (!isOpen) return;
+            if (e.key === 'Escape') onClose();
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); handleSave(); }
+            if (e.altKey && e.key >= '1' && e.key <= '6') {
+                e.preventDefault();
+                const sectionMap: Record<string, string> = { '1': 'basic', '2': 'photos', '3': 'variants', '4': 'pricing', '5': 'stock', '6': 'success' };
+                setActiveSection(sectionMap[e.key]);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isOpen, onClose, handleSave]);
 
+    useEffect(() => {
+        if (product) {
+            const media = product.media || [];
+            const imagesList = media.filter(m => m.media_type === 'image').map(m => m.file_url);
+            const videoUrl = media.find(m => m.media_type === 'video')?.file_url || null;
+            const variantImages: Record<string, string> = {};
+            media.forEach(m => { if (m.variant_value) variantImages[m.variant_value] = m.file_url; });
+
+            const rawImages = imagesList.length > 0 ? imagesList : (product.images || []);
+            const sortableImages: SortableImage[] = rawImages.map((url, i) => ({
+                id: `img-${i}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                url
+            }));
+
+            const initialCategory = Array.isArray(product.category) 
+                ? product.category 
+                : (product.category ? [product.category] : []);
+
+            setFormData({
+                ...defaultFormData,
+                name: product.name || '',
+                description: product.description || '',
+                category: initialCategory,
+                is_active: product.is_active ?? true,
+                status: product.status || 'draft',
+                images: sortableImages,
+                videoUrl: videoUrl,
+                variantImages: variantImages,
+                mainImageIndex: 0,
+                hasVariants: product.has_variants ?? false,
+                variants: product.variants ? product.variants.map((v: { id?: string; variant_name: string; price_override?: number; stock_quantity?: number }) => ({
+                    id: v.id,
+                    option: v.variant_name.split(': ')[0] || 'Size',
+                    value: v.variant_name.split(': ')[1] || v.variant_name,
+                    price: v.price_override || undefined,
+                    stock: v.stock_quantity || 0
+                })) : [],
+                price: product.price || 0,
+                discountPrice: product.discount_price ?? null,
+                trackStock: true,
+                stockQuantity: 0,
+                lowStockThreshold: 5,
+                allowOutOfStockOrders: false,
+            });
+        } else {
+            setFormData(defaultFormData);
+        }
+        setHasChanges(false);
+        setSaveStatus('idle');
+    }, [product, isOpen]);
 
     const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files || e.target.files.length === 0) return;
         const file = e.target.files[0];
-
-        // File size check (8MB max)
         const MAX_VIDEO_MB = 8;
         if (file.size > MAX_VIDEO_MB * 1024 * 1024) {
-            alert(`Video file too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Max size is ${MAX_VIDEO_MB}MB.`);
-            if (e.target) e.target.value = '';
+            alert(`Video file too large. Max size is ${MAX_VIDEO_MB}MB.`);
+            e.target.value = '';
             return;
         }
-
         const video = document.createElement('video');
         video.preload = 'metadata';
-
         video.onloadedmetadata = async () => {
             window.URL.revokeObjectURL(video.src);
             if (video.duration > 30) {
                 alert('Video must be 30 seconds or less.');
-                if (e.target) e.target.value = '';
+                e.target.value = '';
                 return;
             }
-
             try {
                 setUploading(true);
-                setUploadStatus('Uploading video via Vault...');
-                const productId = product?.id || 'temp-new-product';
-                const result = await unifiedUpload({
-                    file,
-                    productId,
-                    isPrimary: false,
-                    mediaType: 'video',
-                });
-
+                const result = await unifiedUpload({ file, productId: product?.id || 'temp', isPrimary: false, mediaType: 'video' });
                 updateField('videoUrl', result.url);
-            } catch (err: any) {
-                console.error('Video upload failed', err);
-                alert(err.message || 'Video upload failed');
-            } finally {
-                setUploading(false);
-                setUploadStatus('');
-                if (e.target) e.target.value = '';
+            } catch (err: unknown) { 
+                const error = err as { message?: string };
+                alert(error.message || 'Video upload failed'); 
             }
+            finally { setUploading(false); e.target.value = ''; }
         };
         video.src = URL.createObjectURL(file);
     };
 
-    const handleVariantImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, variantValue: string) => {
-        if (!e.target.files || e.target.files.length === 0) return;
-        try {
-            const originalFile = e.target.files[0];
-            setUploading(true);
-            setUploadStatus(`Optimizing image for ${variantValue}...`);
-
-            const { file: compressedFile } = await compressImage(originalFile);
-            setUploadStatus('Uploading via Vault...');
-
-            const productId = product?.id || 'temp-new-product';
-            const result = await unifiedUpload({
-                file: compressedFile,
-                productId,
-                isPrimary: false,
-                mediaType: 'image',
-                variantValue,
-            });
-
-            const newVariantImages = { ...formData.variantImages, [variantValue]: result.url };
-            updateField('variantImages', newVariantImages);
-        } catch (err: any) {
-            alert(err.message || 'Upload failed');
-        } finally {
-            setUploading(false);
-            setUploadStatus('');
-            if (e.target) e.target.value = '';
-        }
-    };
-
     const removeImage = (index: number) => {
+        const removedWasMain = index === formData.mainImageIndex;
         const newImages = formData.images.filter((_, i) => i !== index);
         updateField('images', newImages);
-        if (formData.mainImageIndex >= newImages.length) {
-            updateField('mainImageIndex', Math.max(0, newImages.length - 1));
-        }
+        if (newImages.length === 0) updateField('mainImageIndex', 0);
+        else if (removedWasMain) updateField('mainImageIndex', 0);
+        else if (index < formData.mainImageIndex) updateField('mainImageIndex', formData.mainImageIndex - 1);
     };
 
     const removeVideo = () => updateField('videoUrl', null);
 
-    const addImageByUrl = () => {
-        const url = imageUrlInput.trim();
-        if (!url) return;
-        try {
-            new URL(url);
-        } catch {
-            return;
-        }
-        updateField('images', [...formData.images, url]);
-        setImageUrlInput('');
-        setImageUrlPreviewValid(null);
-    };
-
     const setMainImage = (index: number) => {
-        updateField('mainImageIndex', index);
+        setFormData(prev => {
+            const newImages = [...prev.images];
+            // Move item at index to front (index 0)
+            const [mainImg] = newImages.splice(index, 1);
+            newImages.unshift(mainImg);
+            
+            setHasChanges(true);
+            return {
+                ...prev,
+                images: newImages,
+                mainImageIndex: 0
+            };
+        });
+        setActivePreviewIndex(0);
     };
 
     const addVariant = () => {
-        updateField('variants', [...formData.variants, { option: 'Size', value: '', price: undefined, stock: undefined }]);
+        updateField('variants', [...formData.variants, { option: 'Size', value: '', price: undefined, stock: 0 }]);
     };
 
     const removeVariant = (index: number) => {
         updateField('variants', formData.variants.filter((_, i) => i !== index));
     };
 
-    const updateVariant = (index: number, field: string, value: any) => {
+    const updateVariant = (index: number, field: string, value: string | number | undefined) => {
         const newVariants = [...formData.variants];
         newVariants[index] = { ...newVariants[index], [field]: value };
         updateField('variants', newVariants);
+    };
+
+    const handleVariantImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, variantValue: string) => {
+        if (!e.target.files || e.target.files.length === 0) return;
+        setUploading(true);
+        try {
+            const { file: compressedFile } = await compressImage(e.target.files[0]);
+            const result = await unifiedUpload({ 
+                file: compressedFile, 
+                productId: product?.id || 'temp', 
+                isPrimary: false, 
+                mediaType: 'image',
+                variantValue 
+            });
+            const newVariantImages = { ...formData.variantImages, [variantValue]: result.url };
+            updateField('variantImages', newVariantImages);
+        } catch (err: unknown) {
+            const error = err as { message?: string };
+            alert(error.message || 'Variant image upload failed');
+        } finally {
+            setUploading(false);
+        }
     };
 
     if (!isOpen) return null;
@@ -432,425 +455,128 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
         { id: 'success', label: 'Success AI', shortcut: 'Alt + 6' },
     ];
 
-    const modal = createPortal(
-        <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-[fadeIn_0.2s_ease-out]"
-            onClick={onClose}
-        >
-            <div
-                className="bg-theme-panel rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl border border-theme-border animate-[slideUp_0.3s_ease-out]"
-                onClick={(e) => e.stopPropagation()}
-            >
-                {/* Header */}
+    return (
+        <>
+            {createPortal(
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
+                    <div className="bg-theme-panel rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl border border-theme-border" onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center justify-between p-6 border-b border-theme-border/50">
-                    <h2 className="text-xl font-bold text-theme-text">
-                        {product ? 'Edit Product' : 'Add New Product'}
-                    </h2>
-                    <button
-                        onClick={onClose}
-                        className="p-2 text-theme-muted hover:text-red-500 rounded-lg hover:bg-red-500/10 transition-colors"
-                        title="Close Modal"
-                    >
-                        <X size={20} />
-                    </button>
+                    <h2 className="text-xl font-bold text-theme-text">{product ? 'Edit Product' : 'Add New Product'}</h2>
+                    <button onClick={onClose} className="absolute right-4 top-4 rounded-full p-2 text-white/50 hover:bg-white/10 hover:text-white transition-colors" title="Close"><X size={20} /></button>
                 </div>
-
-                {/* Draft Restore Banner */}
-                {showDraftBanner && product?.id && (
-                    <div className="flex items-center justify-between gap-3 px-6 py-2.5 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-700/40 text-sm">
-                        <span className="text-amber-700 dark:text-amber-400 font-medium flex items-center gap-2">
-                            <span>📝</span> Unsaved draft found from a previous session.
-                        </span>
-                        <div className="flex gap-2 flex-shrink-0">
-                            <button
-                                onClick={() => {
-                                    const raw = localStorage.getItem(PRODUCT_DRAFT_KEY(product.id));
-                                    if (!raw) return;
-                                    try {
-                                        const draft = JSON.parse(raw);
-                                        if (draft.formData) {
-                                            setFormData(prev => ({ ...prev, ...draft.formData }));
-                                            setHasChanges(true);
-                                        }
-                                    } catch { /* ignore */ }
-                                    setShowDraftBanner(false);
-                                }}
-                                className="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-md text-xs transition-colors"
-                            >
-                                Restore
-                            </button>
-                            <button
-                                onClick={() => {
-                                    localStorage.removeItem(PRODUCT_DRAFT_KEY(product.id));
-                                    setShowDraftBanner(false);
-                                }}
-                                className="px-3 py-1 border border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/40 rounded-md text-xs transition-colors"
-                            >
-                                Discard
-                            </button>
-                        </div>
-                    </div>
-                )}
-
-                {/* Body */}
                 <div className="flex-1 flex min-h-0 overflow-hidden">
-                    {/* Sidebar Nav */}
-                    <div className="w-48 border-r border-theme-border/50 p-4 space-y-1 overflow-y-auto bg-theme-bg/50">
+                    <div className="w-48 border-r border-theme-border/50 p-4 space-y-1 overflow-y-auto">
                         {sections.map(section => (
-                            <button
-                                key={section.id}
-                                onClick={() => setActiveSection(section.id)}
-                                className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg text-sm font-medium transition-all group ${activeSection === section.id
-                                    ? 'bg-sky-500/10 text-sky-600 dark:text-sky-400 shadow-sm'
-                                    : 'text-theme-muted hover:text-theme-text hover:bg-theme-bg'
-                                    }`}
+                            <button 
+                                key={section.id} 
+                                onClick={() => setActiveSection(section.id)} 
+                                title={`Switch to ${section.label} (${section.shortcut})`}
+                                className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${activeSection === section.id ? 'bg-sky-500/10 text-sky-600' : 'text-theme-muted hover:bg-theme-border/20'}`}
                             >
                                 <span>{section.label}</span>
-                                <span className={`text-[10px] font-bold px-1 py-0.5 rounded border transition-colors ${activeSection === section.id
-                                    ? 'bg-sky-500/20 border-sky-500/30 text-sky-600'
-                                    : 'bg-theme-bg border-theme-border text-theme-muted group-hover:border-theme-muted'
-                                    }`}>
-                                    {section.shortcut && section.shortcut.includes('Alt + ') ? '⌥' + section.shortcut.split('Alt + ')[1] : section.shortcut}
-                                </span>
                             </button>
                         ))}
                     </div>
-
-                    {/* Form Content */}
                     <div className="flex-1 p-6 overflow-y-auto">
-                        {/* BASIC INFO */}
                         {activeSection === 'basic' && (
                             <div className="space-y-6 max-w-xl animate-[fadeIn_0.2s_ease-out]">
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-theme-text">
+                                    <label htmlFor="productName" className="text-sm font-medium text-theme-text flex items-center gap-1">
                                         Product Name <span className="text-red-500">*</span>
                                     </label>
                                     <input
+                                        id="productName"
                                         type="text"
                                         value={formData.name}
                                         onChange={(e) => updateField('name', e.target.value)}
+                                        placeholder="e.g. Premium Wireless Headphones"
+                                        title="Enter product name"
                                         className={`w-full p-3 rounded-xl bg-theme-bg border ${errors.name ? 'border-red-500' : 'border-theme-border'} text-theme-text focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 outline-none transition-all`}
-                                        placeholder="e.g. Cotton T-Shirt, Handmade Soap"
                                     />
-                                    {errors.name && (
-                                        <p className="text-red-500 text-sm flex items-center gap-1">
-                                            <AlertCircle size={14} /> {errors.name}
-                                        </p>
-                                    )}
+                                    {errors.name && <p className="text-red-500 text-xs">{errors.name}</p>}
                                 </div>
 
                                 <div className="space-y-2">
-                                    <div className="flex items-center justify-between">
-                                        <label className="text-sm font-medium text-theme-text">Description</label>
-                                        <AIContentHelper
-                                            type="product"
-                                            context={{
-                                                name: formData.name,
-                                                category: formData.category,
-                                                keywords: formData.name // Use name as seed keywords
-                                            }}
-                                            onApply={(data) => {
-                                                updateField('description', data.description);
-                                                if (data.suggestedCategory && !formData.category) {
-                                                    updateField('category', data.suggestedCategory.toLowerCase());
-                                                }
-                                                // If we had a tags field we'd apply data.tags too
-                                            }}
-                                        />
-                                    </div>
+                                    <label htmlFor="productDescription" className="text-sm font-medium text-theme-text">Description</label>
                                     <textarea
+                                        id="productDescription"
                                         value={formData.description}
                                         onChange={(e) => updateField('description', e.target.value)}
-                                        className="w-full h-28 p-3 rounded-xl bg-theme-bg border border-theme-border text-theme-text focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 outline-none resize-none transition-all"
-                                        placeholder="Tell customers about your product..."
+                                        placeholder="Describe your product's key features, materials, and benefits..."
+                                        rows={5}
+                                        className="w-full p-3 rounded-xl bg-theme-bg border border-theme-border text-theme-text focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 outline-none transition-all resize-none"
                                     />
-                                    <p className="text-xs text-theme-muted">Optional - helps customers understand what they're buying</p>
                                 </div>
 
-                                <div className="space-y-2">
-                                    <label htmlFor="category" className="text-sm font-medium text-theme-text">Category</label>
-                                    {!isAddingNewCategory ? (
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-theme-text">Categories</label>
+                                        <TagInput
+                                            tags={formData.category}
+                                            onChange={(tags) => updateField('category', tags)}
+                                            suggestions={existingCategories}
+                                            placeholder="Add categories (e.g. Electronics, Sale)..."
+                                        />
+                                        <p className="text-[10px] text-theme-muted">Press Enter or comma to add multiple categories.</p>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label htmlFor="productStatus" className="text-sm font-medium text-theme-text">Visibility Status</label>
                                         <select
-                                            id="category"
-                                            title="Product category"
-                                            value={formData.category}
-                                            onChange={(e) => {
-                                                if (e.target.value === 'add-new') {
-                                                    setIsAddingNewCategory(true);
-                                                } else {
-                                                    updateField('category', e.target.value);
-                                                }
-                                            }}
-                                            className="w-full p-3 rounded-xl bg-theme-bg border border-theme-border text-theme-text focus:border-sky-500 outline-none transition-all"
+                                            id="productStatus"
+                                            value={formData.status}
+                                            onChange={(e) => updateField('status', e.target.value as ProductFormData['status'])}
+                                            className="w-full p-3 rounded-xl bg-theme-bg border border-theme-border text-theme-text focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 outline-none transition-all"
                                         >
-                                            <option value="">Select a category</option>
-                                            {availableCategories.map(cat => (
-                                                <option key={cat} value={cat.toLowerCase()}>{cat}</option>
-                                            ))}
-                                            <option value="add-new" className="text-sky-500 font-medium font-bold">+ Add New Category...</option>
+                                            <option value="active">Active (Visible)</option>
+                                            <option value="draft">Draft (Hidden)</option>
+                                            <option value="pending">Pending Review</option>
                                         </select>
-                                    ) : (
-                                        <div className="flex flex-col gap-2">
-                                            <div className="flex gap-2">
-                                                <input
-                                                    type="text"
-                                                    value={newCategoryName}
-                                                    onChange={(e) => setNewCategoryName(e.target.value)}
-                                                    placeholder="Enter new category name"
-                                                    className="flex-1 p-3 rounded-xl bg-theme-bg border border-sky-500 text-theme-text focus:ring-2 focus:ring-sky-500/20 outline-none transition-all"
-                                                    autoFocus
-                                                />
-                                                <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                        if (newCategoryName.trim()) {
-                                                            const newCat = newCategoryName.trim();
-                                                            setAvailableCategories(prev => [...prev, newCat]);
-                                                            updateField('category', newCat.toLowerCase());
-                                                            setNewCategoryName('');
-                                                            setIsAddingNewCategory(false);
-                                                        }
-                                                    }}
-                                                    className="px-4 py-2 bg-sky-500 text-white rounded-xl hover:bg-sky-600 transition-colors font-medium"
-                                                >
-                                                    Add
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                        setIsAddingNewCategory(false);
-                                                        setNewCategoryName('');
-                                                    }}
-                                                    className="px-4 py-2 bg-theme-bg text-theme-muted rounded-xl hover:bg-theme-bg/80 transition-colors border border-theme-border"
-                                                >
-                                                    Cancel
-                                                </button>
-                                            </div>
-                                            <p className="text-xs text-sky-500 flex items-center gap-1">
-                                                <Plus size={10} /> Creating a new category for your products
-                                            </p>
-                                        </div>
-                                    )}
+                                    </div>
                                 </div>
 
-                                <div className="space-y-4 p-4 rounded-xl bg-theme-bg/50 border border-theme-border/50">
-                                    <div className="space-y-3">
-                                        <label className="text-sm font-medium text-theme-text">Publishing Status</label>
-                                        <div className="flex gap-3">
-                                            <button
-                                                type="button"
-                                                onClick={() => updateField('status', 'active')}
-                                                className={`flex-1 p-3 rounded-xl border-2 transition-all ${formData.status === 'active'
-                                                    ? 'border-green-500 bg-green-500/10 text-green-600 dark:text-green-400'
-                                                    : 'border-theme-border text-theme-muted hover:border-theme-muted'
-                                                    }`}
-                                            >
-                                                <div className="font-medium flex justify-center items-center gap-2">✓ Live</div>
-                                                <div className="text-xs opacity-70 mt-1 text-center">Visible to public (if active)</div>
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => updateField('status', 'draft')}
-                                                className={`flex-1 p-3 rounded-xl border-2 transition-all ${formData.status === 'draft'
-                                                    ? 'border-yellow-500 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400'
-                                                    : 'border-theme-border text-theme-muted hover:border-theme-muted'
-                                                    }`}
-                                            >
-                                                <div className="font-medium flex justify-center items-center gap-2">Draft</div>
-                                                <div className="text-xs opacity-70 mt-1 text-center">Preview mode only</div>
-                                            </button>
+                                <div className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
+                                    <label className="flex items-center gap-3 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.is_active}
+                                            onChange={(e) => updateField('is_active', e.target.checked)}
+                                            className="w-5 h-5 rounded border-theme-border text-emerald-500 focus:ring-emerald-500"
+                                        />
+                                        <div>
+                                            <span className="font-medium text-theme-text text-sm">Product is ready for sale</span>
+                                            <p className="text-xs text-theme-muted">Turn this off to temporarily hide the product from storefront</p>
                                         </div>
-                                    </div>
-
-                                    <div className="space-y-3 pt-4 border-t border-theme-border/50">
-                                        <label className="text-sm font-medium text-theme-text">Store Visibility</label>
-                                        <div className="flex gap-3">
-                                            <button
-                                                type="button"
-                                                onClick={() => updateField('is_active', true)}
-                                                className={`flex-1 p-3 rounded-xl border-2 transition-all ${formData.is_active === true
-                                                    ? 'border-sky-500 bg-sky-500/10 text-sky-600 dark:text-sky-400'
-                                                    : 'border-theme-border text-theme-muted hover:border-theme-muted'
-                                                    }`}
-                                            >
-                                                <div className="font-medium text-center">Active (Available)</div>
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => updateField('is_active', false)}
-                                                className={`flex-1 p-3 rounded-xl border-2 transition-all ${formData.is_active === false
-                                                    ? 'border-theme-muted bg-theme-muted/10 text-theme-text dark:text-gray-300'
-                                                    : 'border-theme-border text-theme-muted hover:border-theme-muted'
-                                                    }`}
-                                            >
-                                                <div className="font-medium text-center">Inactive (Hidden)</div>
-                                            </button>
-                                        </div>
-                                    </div>
+                                    </label>
                                 </div>
                             </div>
                         )}
 
-                        {/* PHOTOS */}
                         {activeSection === 'photos' && (
-                            <div className="space-y-4 md:space-y-6 animate-[fadeIn_0.2s_ease-out]">
-
-
-                                {/* UPLOAD & EDIT (FREE HOSTING via ImgBB) */}
-                                <div className="pt-1">
-                                    <p className="text-sm font-medium text-theme-text mb-2 flex items-center gap-2 flex-wrap">
-                                        <Upload size={16} className="text-emerald-500" />
-                                        Upload & Edit Image <span className="text-[10px] font-normal px-1.5 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-md border border-emerald-500/20">Free Hosting</span>
-                                    </p>
-                                    <p className="text-xs text-theme-muted mb-3">Crop, resize & rotate → auto-uploaded to free hosting.</p>
-                                    <button
-                                        type="button"
-                                        onClick={() => imgbbFileInputRef.current?.click()}
-                                        disabled={uploading}
-                                        className="w-full p-8 md:p-12 rounded-xl border-2 border-dashed border-emerald-300 dark:border-emerald-700 bg-emerald-50/50 dark:bg-emerald-500/5 hover:border-emerald-500 active:border-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-all flex flex-col items-center justify-center gap-3 group cursor-pointer min-h-[100px]"
-                                    >
-                                        <Upload size={32} className="text-emerald-400 group-hover:text-emerald-500 transition-colors" />
-                                        <span className="font-medium text-sm text-emerald-600 dark:text-emerald-400">Choose Image to Edit & Upload</span>
-                                    </button>
-                                    <input
-                                        ref={imgbbFileInputRef}
-                                        type="file"
-                                        className="hidden"
-                                        accept="image/*"
-                                        multiple
-                                        onChange={async (e) => {
-                                            const files = e.target.files;
-                                            if (!files || files.length === 0) return;
-                                            
-                                            // Handle single file (goes to editor)
-                                            if (files.length === 1) {
-                                                const file = files[0];
-                                                const reader = new FileReader();
-                                                reader.onload = () => {
-                                                    setEditingImageIndex(null); // appending new
-                                                    setEditorImageSrc(reader.result as string);
-                                                    setEditorOpen(true);
-                                                };
-                                                reader.readAsDataURL(file);
-                                                e.target.value = '';
-                                                return;
-                                            }
-                                            
-                                            // Handle multiple files (bulk direct upload)
-                                            setUploading(true);
-                                            setUploadStatus(`Uploading ${files.length} images...`);
-                                            try {
-                                                const uploadedUrls: string[] = [];
-                                                for (let i = 0; i < files.length; i++) {
-                                                    setUploadStatus(`Uploading image ${i + 1} of ${files.length}...`);
-                                                    const { file: compressedFile } = await compressImage(files[i]);
-                                                    
-                                                    // Ensure the file has a proper name/extension to prevent ImgBB 400 Bad Request
-                                                    const safeFileName = files[i].name.replace(/\.[^/.]+$/, "") + ".webp";
-                                                    const finalFile = new File([compressedFile], safeFileName, {
-                                                        type: compressedFile.type || 'image/webp'
-                                                    });
-
-                                                    const productId = product?.id || 'temp-new-product';
-                                                    const result = await unifiedUpload({
-                                                        file: finalFile,
-                                                        productId,
-                                                        isPrimary: formData.images.length === 0 && i === 0,
-                                                        mediaType: 'image'
-                                                    });
-                                                    uploadedUrls.push(result.url);
-                                                }
-                                                updateField('images', [...formData.images, ...uploadedUrls]);
-                                            } catch (err: any) {
-                                                console.error('Bulk upload failed:', err);
-                                                alert(err.message || 'Upload failed for one or more images');
-                                            } finally {
-                                                setUploading(false);
-                                                setUploadStatus('');
-                                                if (e.target) e.target.value = '';
-                                            }
-                                        }}
-                                        title="Select image for editing"
-                                    />
-                                </div>
-
-                                {/* IMAGE URL INPUT */}
-                                <div className="border-t border-theme-border/50 pt-4 md:pt-6 mt-2">
-                                    <p className="text-sm font-medium text-theme-text mb-3 flex items-center gap-2">
-                                        <Link size={16} className="text-sky-500" />
-                                        Add Image via URL
-                                    </p>
-                                    <div className="space-y-3">
-                                        {/* Live Preview Thumbnail */}
-                                        {imageUrlInput.trim() && (
-                                            <div className="w-full h-32 md:h-40 rounded-xl border-2 border-theme-border overflow-hidden bg-theme-bg/50 flex items-center justify-center">
-                                                {imageUrlPreviewValid !== false ? (
-                                                    <img
-                                                        src={imageUrlInput.trim()}
-                                                        alt="URL preview"
-                                                        className="w-full h-full object-contain"
-                                                        onLoad={() => setImageUrlPreviewValid(true)}
-                                                        onError={() => setImageUrlPreviewValid(false)}
-                                                    />
-                                                ) : (
-                                                    <div className="flex flex-col items-center gap-1">
-                                                        <AlertCircle size={24} className="text-red-400" />
-                                                        <span className="text-xs text-red-400">Cannot load image from this URL</span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )}
-                                        <input
-                                            type="url"
-                                            value={imageUrlInput}
-                                            onChange={(e) => {
-                                                setImageUrlInput(e.target.value);
-                                                setImageUrlPreviewValid(null);
-                                            }}
-                                            onKeyDown={(e) => {
-                                                if (e.key === 'Enter' && imageUrlPreviewValid) {
-                                                    e.preventDefault();
-                                                    addImageByUrl();
-                                                }
-                                            }}
-                                            placeholder="https://example.com/product-image.jpg"
-                                            className="w-full p-3.5 md:p-3 rounded-xl bg-theme-bg border border-theme-border text-theme-text focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 outline-none transition-all text-sm"
-                                        />
-                                        <div className="flex items-center gap-3">
-                                            <button
-                                                type="button"
-                                                onClick={addImageByUrl}
-                                                disabled={!imageUrlInput.trim() || imageUrlPreviewValid === false}
-                                                className="px-5 py-2.5 md:py-2 bg-sky-500 text-white rounded-xl md:rounded-lg text-sm font-medium hover:bg-sky-600 active:bg-sky-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center gap-1.5 min-h-[44px]"
-                                            >
-                                                <Plus size={16} />
-                                                Add Image
-                                            </button>
-                                            <span className="text-xs text-theme-muted">
-                                                {imageUrlPreviewValid === true && '✓ Image loaded'}
-                                                {imageUrlPreviewValid === false && 'Could not load image'}
-                                                {imageUrlPreviewValid === null && imageUrlInput.trim() && 'Checking...'}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {uploading && (
-                                    <div className="text-center p-4 bg-sky-500/10 rounded-xl border border-sky-500/20">
-                                        <div className="text-sm font-medium text-sky-600 animate-pulse">{uploadStatus}</div>
-                                    </div>
-                                )}
-
-                                {/* MEDIA PREVIEW — Large Preview + Thumbnail Strip */}
-                                {(formData.images.length > 0 || formData.videoUrl) && (() => {
-                                    const allMedia: Array<{ type: 'image' | 'video'; src: string; index: number }> = [
-                                        ...formData.images.map((img, i) => ({ type: 'image' as const, src: img, index: i })),
-                                        ...(formData.videoUrl ? [{ type: 'video' as const, src: formData.videoUrl, index: -1 }] : []),
-                                    ];
+                            <div className="space-y-4">
+                                <button type="button" onClick={() => imgbbFileInputRef.current?.click()} className="w-full p-8 border-2 border-dashed border-emerald-300 rounded-xl flex flex-col items-center gap-3">
+                                    <Upload size={32} className="text-emerald-400" />
+                                    <span className="text-sm text-emerald-600">Choose Image to Upload</span>
+                                </button>
+                                <input ref={imgbbFileInputRef} type="file" className="hidden" accept="image/*" multiple onChange={async (e) => {
+                                    const files = e.target.files;
+                                    if (!files) return;
+                                    setUploading(true);
+                                    try {
+                                        const uploadedUrls: string[] = [];
+                                        for (let i = 0; i < files.length; i++) {
+                                            const { file: compressedFile } = await compressImage(files[i]);
+                                            const result = await unifiedUpload({ file: compressedFile, productId: product?.id || 'temp', isPrimary: false, mediaType: 'image' });
+                                            uploadedUrls.push(result.url);
+                                        }
+                                        updateField('images', [...formData.images, ...uploadedUrls.map(url => ({ id: Math.random().toString(), url }))]);
+                                    } finally { setUploading(false); }
+                                }} />
+                                {(allMedia.length > 0) && (() => {
                                     const safeIndex = Math.min(activePreviewIndex, allMedia.length - 1);
                                     const active = allMedia[Math.max(0, safeIndex)];
                                     if (!active) return null;
-
+                                    
                                     return (
                                         <div className="space-y-2.5 md:space-y-3">
                                             <p className="text-sm font-medium text-theme-text">
@@ -859,11 +585,32 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
 
                                             {/* Large Active Preview */}
                                             <div className="relative aspect-[4/3] max-h-[260px] md:max-h-[320px] rounded-xl overflow-hidden border-2 border-theme-border bg-theme-bg/50 group">
-                                                {active.type === 'image' ? (
-                                                    <img src={active.src} alt="Product preview" className="w-full h-full object-contain" />
-                                                ) : (
-                                                    <video src={active.src} className="w-full h-full object-contain bg-black" controls playsInline />
-                                                )}
+                                                <AnimatePresence mode="wait">
+                                                    <motion.div
+                                                        key={active.id}
+                                                        initial={{ opacity: 0, x: 20 }}
+                                                        animate={{ opacity: 1, x: 0 }}
+                                                        exit={{ opacity: 0, x: -20 }}
+                                                        transition={{ duration: 0.2 }}
+                                                        className="w-full h-full"
+                                                        drag="x"
+                                                        dragConstraints={{ left: 0, right: 0 }}
+                                                        onDragEnd={(_, info) => {
+                                                            if (info.offset.x > 50) {
+                                                                setActivePreviewIndex(safeIndex > 0 ? safeIndex - 1 : allMedia.length - 1);
+                                                            } else if (info.offset.x < -50) {
+                                                                setActivePreviewIndex(safeIndex < allMedia.length - 1 ? safeIndex + 1 : 0);
+                                                            }
+                                                        }}
+                                                    >
+                                                        {active.type === 'image' ? (
+                                                            <img src={active.src} alt="Product preview" className="w-full h-full object-contain" />
+                                                        ) : (
+                                                            <video src={active.src} className="w-full h-full object-contain bg-black" controls playsInline />
+                                                        )}
+                                                    </motion.div>
+                                                </AnimatePresence>
+
 
                                                 {/* Nav Arrows — always visible on mobile, hover on desktop */}
                                                 {allMedia.length > 1 && (
@@ -939,32 +686,31 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
                                                 </div>
                                             </div>
 
-                                            {/* Thumbnail Strip */}
-                                            <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
-                                                {allMedia.map((item, idx) => (
-                                                    <button
-                                                        key={`${item.type}-${idx}`}
-                                                        onClick={() => setActivePreviewIndex(idx)}
-                                                        className={`relative w-14 h-14 md:w-14 md:h-14 rounded-lg overflow-hidden border-2 flex-shrink-0 transition-all active:scale-95 ${idx === safeIndex
-                                                            ? 'border-sky-500 ring-2 ring-sky-500/20 scale-105'
-                                                            : 'border-gray-200 dark:border-slate-600 hover:border-gray-300 dark:hover:border-slate-500 opacity-70 hover:opacity-100'
-                                                            }`}
-                                                        title={item.type === 'video' ? 'Video' : `Photo ${item.index + 1}`}
+                                            {/* Thumbnail Strip with Drag & Drop */}
+                                            <div className="flex gap-2 overflow-x-auto pb-2 pt-1 -mx-1 px-1 custom-scrollbar">
+                                                <DndContext
+                                                    sensors={sensors}
+                                                    collisionDetection={closestCenter}
+                                                    onDragEnd={handleDragEnd}
+                                                >
+                                                    <SortableContext
+                                                        items={allMedia.map(m => m.id)}
+                                                        strategy={horizontalListSortingStrategy}
                                                     >
-                                                        {item.type === 'image' ? (
-                                                            <img src={item.src} alt={`Product variant ${item.index + 1}`} className="w-full h-full object-cover" />
-                                                        ) : (
-                                                            <div className="w-full h-full bg-black flex items-center justify-center">
-                                                                <Video size={16} className="text-white" />
-                                                            </div>
-                                                        )}
-                                                        {item.type === 'image' && item.index === formData.mainImageIndex && (
-                                                            <div className="absolute top-0.5 left-0.5 w-3.5 h-3.5 bg-sky-500 text-white rounded-sm flex items-center justify-center">
-                                                                <Star size={8} />
-                                                            </div>
-                                                        )}
-                                                    </button>
-                                                ))}
+                                                        {allMedia.map((item, idx) => (
+                                                            <SortableThumbnail
+                                                                key={item.id}
+                                                                id={item.id}
+                                                                idx={idx}
+                                                                src={item.src}
+                                                                type={item.type}
+                                                                isActive={idx === safeIndex}
+                                                                isMain={item.type === 'image' && item.index === formData.mainImageIndex}
+                                                                onClick={() => setActivePreviewIndex(idx)}
+                                                            />
+                                                        ))}
+                                                    </SortableContext>
+                                                </DndContext>
                                             </div>
                                         </div>
                                     );
@@ -1113,7 +859,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
                                                             <ImageIcon size={16} className="group-hover:text-sky-500 transition-colors" />
                                                             <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => handleVariantImageUpload(e, variant.value)} disabled={uploading || !variant.value} title={!variant.value ? "Enter a variant value first" : "Upload variant image"} />
                                                         </div>
-                                                    )/* REPLACED with theme-aware classes */}
+                                                    )}
                                                     <div className="flex-1 grid grid-cols-2 gap-3">
                                                         <select
                                                             title="Variant type"
@@ -1323,7 +1069,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
                                         name: formData.name,
                                         description: formData.description,
                                         category: formData.category,
-                                        images: formData.images,
+                                        images: formData.images.map(img => img.url),
                                         hasVariants: formData.hasVariants,
                                         price: formData.price
                                     }}
@@ -1394,11 +1140,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
             </div>
         </div>,
         document.body
-    );
-
-    return (
-        <>
-            {modal}
+    )}
             <ImageEditorModal
                 isOpen={editorOpen}
                 imageSrc={editorImageSrc}
@@ -1409,11 +1151,17 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
                 }}
                 onComplete={(url) => {
                     if (editingImageIndex !== null) {
-                        const newImages = [...formData.images];
-                        newImages[editingImageIndex] = url;
-                        updateField('images', newImages);
+                        setFormData(prev => {
+                            const newImages = [...prev.images];
+                            newImages[editingImageIndex] = { ...newImages[editingImageIndex], url };
+                            return { ...prev, images: newImages };
+                        });
                     } else {
-                        updateField('images', [...formData.images, url]);
+                        const newImage: SortableImage = {
+                            id: `img-edit-${Date.now()}`,
+                            url
+                        };
+                        updateField('images', [...formData.images, newImage]);
                     }
                     setEditorOpen(false);
                     setEditingImageIndex(null);
@@ -1422,5 +1170,6 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
         </>
     );
 };
+
 
 export default ProductModal;

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Filter, Upload } from 'lucide-react';
+import { Plus, Filter, Upload, Check } from 'lucide-react';
 import ProductTable from '../components/products/ProductTable';
 import ProductSidePanel from '../components/products/ProductSidePanel';
 import ProductModal from '../components/products/ProductModal';
@@ -23,8 +23,14 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
     const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
     const [isBulkEditModalOpen, setIsBulkEditModalOpen] = useState(false);
-    const [showSidePanel, setShowSidePanel] = useState(true);
     const [seller, setSeller] = useState<Seller | null>(null);
+
+    // Filters Dropdown State
+    const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+    const [statusFilter, setStatusFilter] = useState<'all' | 'published' | 'draft'>('all');
+    const [categoryFilters, setCategoryFilters] = useState<string[]>([]);
+    const [stockFilter, setStockFilter] = useState<'all' | 'in_stock' | 'low_stock' | 'out_of_stock'>('all');
+    const [hideDemoProducts, setHideDemoProducts] = useState(true);
 
     // Initial Load
     useEffect(() => {
@@ -57,29 +63,23 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
 
             if (sellerData) setSeller(sellerData as Seller);
 
-            const mappedProducts = (data || [])
-                .filter((p: any) => {
-                    // Filter out "ghost" products: named 'New Product' with no media
-                    // These are products that were initialized but never saved or had images added.
-                    if (p.name === 'New Product' || !p.name) {
-                        const media = p.product_media || [];
-                        if (media.length === 0) return false;
-                    }
-                    return true;
-                })
-                .map((p: any) => {
-                    // Ensure we use the proper media objects
-                    const media = p.product_media || [];
-                    // ...
-                    const images = media.map((m: any) => m.file_url);
-    
-                    // Extract stock
+            // Show ALL products in dashboard — no filtering.
+            // Sellers must be able to see and delete even draft/ghost products.
+            // Ghost filtering happens only on the public storefront.
+            const mappedProducts = (data || []).map((p) => {
+                    const media = (p.product_media || []) as { id: string; file_url: string; is_primary: boolean; sort_order: number; variant_value?: string }[];
+                    const sortedMedia = [...media].sort((a, b) => {
+                        if (a.is_primary && !b.is_primary) return -1;
+                        if (!a.is_primary && b.is_primary) return 1;
+                        return (a.sort_order || 0) - (b.sort_order || 0);
+                    });
+                    const images = sortedMedia.map((m: { file_url: string }) => m.file_url);
                     const stock = p.product_stock?.[0]?.stock_quantity ?? 0;
-    
                     return {
                         ...p,
+                        category: Array.isArray(p.category) ? p.category : (p.category ? [p.category] : []),
                         images: images.length > 0 ? images : ['https://via.placeholder.com/150'],
-                        media: media,
+                        media,
                         stock_quantity: stock,
                         variants: p.product_variants || [],
                         orders: Math.floor(Math.random() * 50),
@@ -87,7 +87,7 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
                     };
                 });
 
-            setProducts(mappedProducts);
+            setProducts(mappedProducts as Product[]);
         } catch (error) {
             console.error('Error fetching products:', error);
         }
@@ -95,28 +95,60 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
 
     // Filter Logic
     useEffect(() => {
-        // Universal ghost filtering: hide products named 'New Product' with no media
-        const baseProducts = products.filter(p => {
-            if (p.name === 'New Product' || !p.name) {
-                const media = p.media || [];
-                if (media.length === 0) return false;
-            }
-            return true;
-        });
+        // Show ALL products in the dashboard — no ghost filtering here.
+        // Sellers need to see and delete every product including drafts.
+        let baseProducts = [...products];
 
-        if (!searchTerm) {
-            setFilteredProducts(baseProducts);
-            return;
+        // 1. Search Filter
+        if (searchTerm) {
+            const lowerSearch = searchTerm.toLowerCase();
+            baseProducts = baseProducts.filter(p =>
+                p.name.toLowerCase().includes(lowerSearch) ||
+                (p.category && p.category.some(c => c.toLowerCase().includes(lowerSearch))) ||
+                p.id.toLowerCase().includes(lowerSearch)
+            );
         }
 
-        const lowerSearch = searchTerm.toLowerCase();
-        const filtered = baseProducts.filter(p =>
-            p.name.toLowerCase().includes(lowerSearch) ||
-            p.category?.toLowerCase().includes(lowerSearch) ||
-            p.id.toLowerCase().includes(lowerSearch)
-        );
-        setFilteredProducts(filtered);
-    }, [searchTerm, products]);
+        // 2. Status Filter
+        if (statusFilter !== 'all') {
+            baseProducts = baseProducts.filter(p => statusFilter === 'published' ? p.is_active : !p.is_active);
+        }
+
+        // 3. Category Filter
+        if (categoryFilters.length > 0) {
+            baseProducts = baseProducts.filter(p => p.category && p.category.some(c => categoryFilters.includes(c)));
+        }
+
+        // 4. Stock Level Filter
+        if (stockFilter !== 'all') {
+            baseProducts = baseProducts.filter(p => {
+                const stock = p.stock_quantity || 0;
+                if (stockFilter === 'out_of_stock') return stock === 0;
+                if (stockFilter === 'low_stock') return stock > 0 && stock <= 5;
+                if (stockFilter === 'in_stock') return stock > 5;
+                return true;
+            });
+        }
+
+        // 5. Demo/Ghost Product Filter
+        if (hideDemoProducts) {
+            baseProducts = baseProducts.filter(p => {
+                const name = (p.name || '').toLowerCase().trim();
+                const isPlaceholder = name === 'new product' || name === 'demo' || name === 'test' || name === 'demo product' || !name;
+                const hasNoPrice = !p.price || Number(p.price) === 0;
+                const hasNoMedia = !p.media || p.media.length === 0;
+                
+                // It's a ghost if it has a default name AND no price AND no media
+                const isGhost = isPlaceholder && hasNoPrice && hasNoMedia;
+                return !isGhost;
+            });
+        }
+
+        setFilteredProducts(baseProducts);
+    }, [searchTerm, products, statusFilter, categoryFilters, stockFilter, hideDemoProducts]);
+
+    // Derived unique categories for the filter UI
+    const uniqueCategories = Array.from(new Set(products.flatMap(p => p.category || []))).filter(Boolean).sort();
 
     const handleSelect = (id: string, selected: boolean) => {
         if (selected) {
@@ -222,6 +254,19 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
                 });
                 fetchProducts();
                 setSelectedIds(selectedIds.filter(sid => sid !== id));
+
+                // Real-time Sync: Broadcast update to storefronts
+                const channel = supabase.channel(`seller:${user.id}`);
+                await channel.subscribe(async (status) => {
+                    if (status === 'SUBSCRIBED') {
+                        await channel.send({
+                            type: 'broadcast',
+                            event: 'product_update',
+                            payload: { productId: id, action: 'delete' }
+                        });
+                        setTimeout(() => channel.unsubscribe(), 2000);
+                    }
+                });
             } else {
                 alert('Failed to delete product');
             }
@@ -275,7 +320,7 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
                 // For simplicity matching the existing flow but safer:
 
                 // Get current variants to find which ones to delete
-                const currentVariantsIds = productData.variants.filter((v: any) => v.id).map((v: any) => v.id);
+                const currentVariantsIds = productData.variants.filter((v: { id?: string }) => v.id).map((v: { id?: string }) => v.id as string);
 
                 if (currentVariantsIds.length > 0) {
                     await supabase
@@ -291,7 +336,7 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
                 }
 
                 if (productData.variants.length > 0) {
-                    const variantsToUpsert = productData.variants.map((v: any) => ({
+                    const variantsToUpsert = productData.variants.map((v: { id?: string; variant_name: string; price_override?: number; stock_quantity?: number }) => ({
                         ...(v.id ? { id: v.id } : {}), // include id for upsert if we have it
                         product_id: productId,
                         variant_name: v.variant_name,
@@ -307,15 +352,59 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
                 }
             }
 
+            // 4. Update Media (Delete existing and batch insert new state for atomicity/consistency)
+            const { error: deleteMediaError } = await supabase
+                .from('product_media')
+                .delete()
+                .eq('product_id', productId);
+
+            if (deleteMediaError) {
+                console.error('Error clearing old media:', deleteMediaError);
+            }
+
+            if (productData.images && productData.images.length > 0) {
+                const mediaBatch = productData.images.map((url, index) => ({
+                    product_id: productId,
+                    file_url: url,
+                    sort_order: index,
+                    is_primary: index === 0,
+                    media_type: 'image'
+                }));
+
+                const { error: insertMediaError } = await supabase
+                    .from('product_media')
+                    .insert(mediaBatch);
+
+                if (insertMediaError) {
+                    console.error('Error inserting new media:', insertMediaError);
+                }
+            }
+
             fetchProducts();
             setIsModalOpen(false);
+
+            // Real-time Sync: Broadcast update to storefronts
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.user?.id) {
+                const channel = supabase.channel(`seller:${session.user.id}`);
+                await channel.subscribe(async (status) => {
+                    if (status === 'SUBSCRIBED') {
+                        await channel.send({
+                            type: 'broadcast',
+                            event: 'product_update',
+                            payload: { productId, action: 'save' }
+                        });
+                        setTimeout(() => channel.unsubscribe(), 2000);
+                    }
+                });
+            }
         } catch (error) {
             console.error('Error saving:', error);
             alert('Failed to save product.');
         }
     };
 
-    const handleBulkEditSave = async ({ category, newImageFile }: { category?: string; newImageFile?: File }) => {
+    const handleBulkEditSave = async ({ category, newImageFile }: { category?: string[]; newImageFile?: File }) => {
         try {
             if (category) {
                 const { error: updateError } = await supabase
@@ -345,9 +434,10 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
 
             fetchProducts();
             setSelectedIds([]);
-        } catch (error: any) {
-            console.error('Bulk edit failed:', error);
-            throw error; // Re-throw to be caught by BulkEditModal
+        } catch (error: unknown) {
+            const err = error as { message?: string };
+            console.error('Bulk edit failed:', err);
+            throw err; // Re-throw to be caught by BulkEditModal
         }
     };
 
@@ -372,7 +462,23 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
 
                         alert('Products deleted successfully');
                         fetchProducts();
+                        const deletedIds = [...selectedIds];
                         setSelectedIds([]);
+
+                        // Real-time Sync: Broadcast bulk update to storefronts
+                        if (user) {
+                            const channel = supabase.channel(`seller:${user.id}`);
+                            await channel.subscribe(async (status) => {
+                                if (status === 'SUBSCRIBED') {
+                                    await channel.send({
+                                        type: 'broadcast',
+                                        event: 'product_update',
+                                        payload: { productIds: deletedIds, action: 'bulk_delete' }
+                                    });
+                                    setTimeout(() => channel.unsubscribe(), 2000);
+                                }
+                            });
+                        }
                     }
                     break;
                 }
@@ -410,7 +516,7 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
                         ...selectedProducts.map(p => [
                             p.id,
                             `"${p.name}"`,
-                            p.category || 'Uncategorized',
+                            p.category && p.category.length > 0 ? `"${p.category.join(', ')}"` : 'Uncategorized',
                             p.price,
                             p.stock_quantity,
                             p.is_active ? 'Published' : 'Draft'
@@ -432,32 +538,129 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
                 default:
                     console.warn('Unknown bulk action:', action);
             }
-        } catch (error: any) {
-            console.error('Bulk action failed:', error);
-            alert('Bulk action failed: ' + error.message);
+        } catch (error: unknown) {
+            const err = error as { message?: string };
+            console.error('Bulk action failed:', err);
+            alert('Bulk action failed: ' + err.message);
         }
     };
 
     return (
         <div className="flex flex-col gap-6 animate-[fadeIn_0.5s_ease-out]">
-
             {/* Main Content (Table) */}
-            <div className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${showSidePanel ? '' : ''}`}>
+            <div className="flex-1 flex flex-col min-w-0 transition-all duration-300">
 
-                {/* Actions Row - Title is in Global Header */}
-                <div className="flex flex-col sm:flex-row justify-end items-start sm:items-center mb-6 gap-4">
+                {/* Actions Row - Title is in Global Header, but we add Product Count here */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                    <div className="flex items-baseline gap-3">
+                        <h2 className="text-2xl font-bold text-text">Products</h2>
+                        <span className="text-lg text-muted">({products.length})</span>
+                    </div>
+
                     <div className="flex items-center gap-3 w-full sm:w-auto">
                         {searchTerm && (
                             <span className="text-xs text-muted italic hidden sm:inline">
                                 Showing results for "{searchTerm}"
                             </span>
                         )}
-                        <button
-                            className="p-2.5 rounded-xl bg-panel border border-muted/20 text-muted hover:text-text hover:border-chart-line transition-all"
-                            title="Filter Products"
-                        >
-                            <Filter size={20} />
-                        </button>
+                        <div className="relative">
+                            <button
+                                onClick={() => setShowFilterDropdown(!showFilterDropdown)}
+                                className={`p-2.5 rounded-xl border transition-all flex items-center gap-2 ${showFilterDropdown || statusFilter !== 'all' || categoryFilters.length > 0 || stockFilter !== 'all' ? 'bg-chart-line/10 border-chart-line text-chart-line shadow-sm' : 'bg-panel border-muted/20 text-muted hover:text-text hover:border-chart-line'}`}
+                                title="Filter Products"
+                            >
+                                <Filter size={20} />
+                                {(statusFilter !== 'all' || categoryFilters.length > 0 || stockFilter !== 'all') && (
+                                    <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-bg"></span>
+                                )}
+                            </button>
+
+                            {/* Dropdown UI */}
+                            {showFilterDropdown && (
+                                <>
+                                    <div className="fixed inset-0 z-40" onClick={() => setShowFilterDropdown(false)} />
+                                    <div className="absolute right-0 top-full mt-2 w-72 bg-panel border border-muted/20 rounded-2xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 p-5 flex flex-col gap-5">
+                                        <div className="flex justify-between items-center pb-3 border-b border-muted/10">
+                                            <h3 className="font-bold text-sm text-text">Filters</h3>
+                                            {(statusFilter !== 'all' || categoryFilters.length > 0 || stockFilter !== 'all') && (
+                                                <button onClick={() => { setStatusFilter('all'); setCategoryFilters([]); setStockFilter('all'); setShowFilterDropdown(false); }} className="text-xs text-red-500 hover:text-red-400 font-medium">Clear All</button>
+                                            )}
+                                        </div>
+
+                                        {/* Status */}
+                                        <div className="flex flex-col gap-2">
+                                            <span className="text-xs font-semibold text-muted uppercase tracking-wider">Status</span>
+                                            <select 
+                                                title="Filter by status"
+                                                value={statusFilter} 
+                                                onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
+                                                className="w-full bg-bg border border-muted/20 rounded-lg p-2.5 text-sm text-text outline-none focus:border-chart-line cursor-pointer"
+                                            >
+                                                <option value="all">All Statuses</option>
+                                                <option value="published">Published</option>
+                                                <option value="draft">Draft</option>
+                                            </select>
+                                        </div>
+
+                                        {/* Stock Level */}
+                                        <div className="flex flex-col gap-2">
+                                            <span className="text-xs font-semibold text-muted uppercase tracking-wider">Stock Level</span>
+                                            <select 
+                                                title="Filter by stock level"
+                                                value={stockFilter} 
+                                                onChange={(e) => setStockFilter(e.target.value as typeof stockFilter)}
+                                                className="w-full bg-bg border border-muted/20 rounded-lg p-2.5 text-sm text-text outline-none focus:border-chart-line cursor-pointer"
+                                            >
+                                                <option value="all">All Levels</option>
+                                                <option value="in_stock">In Stock (&gt;5)</option>
+                                                <option value="low_stock">Low Stock (1-5)</option>
+                                                <option value="out_of_stock">Out of Stock (0)</option>
+                                            </select>
+                                        </div>
+
+                                        {/* Demo Products Checkbox */}
+                                        <div className="flex flex-col gap-2 pt-2 border-t border-muted/10">
+                                            <label className="flex items-center gap-3 p-2 hover:bg-bg/50 rounded-lg cursor-pointer group transition-colors">
+                                                <input 
+                                                    type="checkbox" 
+                                                    className="hidden" 
+                                                    checked={hideDemoProducts}
+                                                    onChange={(e) => setHideDemoProducts(e.target.checked)}
+                                                />
+                                                <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors shadow-sm ${hideDemoProducts ? 'bg-chart-line border-chart-line text-white' : 'bg-bg border-muted/30 group-hover:border-chart-line/50'}`}>
+                                                    {hideDemoProducts && <Check size={12} strokeWidth={3} />}
+                                                </div>
+                                                <span className="text-sm font-medium text-text select-none group-hover:text-chart-line transition-colors text-nowrap">Hide Empty/Demo Products</span>
+                                            </label>
+                                        </div>
+
+                                        {/* Categories */}
+                                        {uniqueCategories.length > 0 && (
+                                            <div className="flex flex-col gap-2">
+                                                <span className="text-xs font-semibold text-muted uppercase tracking-wider">Categories</span>
+                                                <div className="max-h-40 overflow-y-auto pr-1 flex flex-col gap-1 custom-scrollbar">
+                                                    {uniqueCategories.map(cat => (
+                                                        <label key={cat} className="flex items-center gap-3 p-2 hover:bg-bg/50 rounded-lg cursor-pointer group transition-colors">
+                                                            <input type="checkbox" className="hidden" 
+                                                                checked={categoryFilters.includes(cat)}
+                                                                onChange={(e) => {
+                                                                    if (e.target.checked) setCategoryFilters([...categoryFilters, cat]);
+                                                                    else setCategoryFilters(categoryFilters.filter(c => c !== cat));
+                                                                }}
+                                                            />
+                                                            <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors shadow-sm ${categoryFilters.includes(cat) ? 'bg-chart-line border-chart-line text-white' : 'bg-bg border-muted/30 group-hover:border-chart-line/50'}`}>
+                                                                {categoryFilters.includes(cat) && <Check size={12} strokeWidth={3} />}
+                                                            </div>
+                                                            <span className="text-sm text-text select-none text-nowrap truncate group-hover:text-chart-line transition-colors">{cat}</span>
+                                                        </label>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </>
+                            )}
+                        </div>
                         <button
                             onClick={async () => {
                                 if (confirm('This will add sample products to your database using Supabase. Continue?')) {
@@ -466,7 +669,8 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
                                         await seedDatabase();
                                         fetchProducts();
                                         alert('Demo data generated successfully!');
-                                    } catch (e: any) {
+                                    } catch (err: unknown) {
+                                        const e = err as { message?: string };
                                         console.error(e);
                                         alert('Failed to generate data: ' + e.message);
                                     }
@@ -503,6 +707,7 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
                         onSelect={handleSelect}
                         onSelectAll={handleSelectAll}
                         onEdit={handleEdit}
+                        onDelete={handleDelete}
                     />
                 </div>
 
@@ -511,7 +716,8 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
             {/* Right Context Panel (Collapsible ideally, fixed for now) */}
                 <div className="w-[320px] flex-shrink-0 hidden xl:flex flex-col border-l border-muted/10 pl-6">
                     <ProductSidePanel products={products.filter(p => {
-                        if (p.name === 'New Product' || !p.name) {
+                        const name = (p.name || '').toLowerCase();
+                        if (name === 'new product' || !name) {
                             const media = p.media || [];
                             if (media.length === 0) return false;
                         }
@@ -544,6 +750,7 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
                     setEditingProduct(null);
                 }}
                 product={editingProduct}
+                existingCategories={uniqueCategories}
                 onSave={handleSaveProduct}
             />
 

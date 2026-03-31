@@ -405,7 +405,7 @@ export default function LandingPage() {
                                 </Suspense>
                             </div>
 
-                            <h1 className="hero-element font-orbitron font-bold text-[10.5vw] sm:text-7xl md:text-8xl lg:text-[120px] leading-[0.9] tracking-tighter uppercase mb-4 sm:mb-6 flex flex-col">
+                            <h1 className="hero-element font-heading font-bold text-[10.5vw] sm:text-7xl md:text-8xl lg:text-[120px] leading-[0.9] tracking-tighter uppercase mb-4 sm:mb-6 flex flex-col">
                                 {!isMobile ? (
                                     <>
                                         <SplitText

@@ -1,29 +1,28 @@
-# Design System: Multi-Spectral HUD v2
+# Design System: Forest Artisan v1
 **Project ID:** 13761070101029583777
 
 ## 1. Visual Theme & Atmosphere
-**Mood: Tactical Precision, High-Density, Modular Intel.**
-The "Multi-Spectral HUD v2" is a cinematic, industrial-inspired interface designed for advanced monitoring and control. It utilizes a **Modular Window** approach, allowing a flexible but structured layout. Depth is achieved through glassmorphism, tonal layering, and animated atmospheric overlays (hex-grids, data streams). The interface feels like a "Tactical Command Center" from *Iron Man* or *Cyberpunk 2077*, optimized for premium SaaS workflows.
+**Mood: Organic Elegance, premium Artisan, Deep Stability.**
+The "Forest Artisan" design system represents a transition from tactical monitoring to high-end, biological commerce. It utilizes a **Serif-First** approach to evoke trust and heritage, grounded by deep organic tones. The interface feels like a "Boutique Digital Storefront"—minimalist, high-contrast, and focused on product storytelling.
 
-## 2. Multi-Spectral Color Palette & Semantic Roles
-*   **Emerald (#10b981):** SUCCESS / HEALTH. Used for stable system states, cleared tasks, and growth metrics.
-*   **Cyan (#00F0FF):** INTELLIGENCE / DATA. Used for informational streams, analytics, and primary tactical readouts.
-*   **Amber (#FFB800):** WARNING / OPS. Used for pending actions, non-critical alerts, and operational cues.
-*   **Red (#FF0000):** CRITICAL / DANGER. Reserved for security breaches, system failures, and immediate blockers.
-*   **Deep Space (#0B0F19):** Surfaces and glass backgrounds.
+## 2. Core Brand Palette & Semantic Roles
+*   **Forest Dark Green (#093223):** BRAND PRIMARY / AUTHORITY. Used for primary buttons, headers, and landing page grounding.
+*   **Emerald Green (#10b981):** BRAND ACCENT / GROWTH. Used for secondary highlights, success states, and metric trends.
+*   **Almond / Bone (#F5F5DC):** LIGHT MODE BACKGROUND. (Proposed)
+*   **Obsidian / Deep Space (#050505):** DARK MODE BACKGROUND.
 
-## 3. Topography & Data Density
-*   **font-technical (Space Grotesk):** Primary headers and labels. High-tech, geometric authority.
-*   **font-data (JetBrains Mono):** Numerical values and telemetry logs.
-*   **Layered Interactivity:** Use of `hud-hex-grid` and `hud-data-stream` overlays to create an "alive" feeling without distracting from core data.
+## 3. Typography Standards
+*   **Heading (Playfair Display):** All primary headers (h1, h2, h3). High-contrast serif for a premium, editorial feel. 
+    - *Usage*: `.font-heading` or `var(--font-heading)`.
+*   **Body (Inter):** All descriptive text and interface labels. Clean, high-readability sans-serif.
+*   **Data (Monospace):** Numerical values and SKU telemetry.
 
 ## 4. Component Architecture
-*   **Modular Windows:** Every dashboard section is wrapped in a `ModularWindow` component with draggable handles and semantic status markers.
-*   **Glassmorphism:** All containers use `.hud-glass` with backdrop-blur and subtle borders.
-*   **Micro-animations:** Hover glows (`hud-micro-glow`) and scanline triggers for interactive elements.
+*   **Pill Styling:** Primary CTA buttons use `rounded-full` for a modern, approachable silhouette.
+*   **Soft Elevation:** Components use deep, low-opacity shadows (e.g., `shadow-[0_20px_40px_-15px_rgba(9,50,35,0.3)]`) to simulate depth without harsh borders.
+*   **Cinematic Overlays:** Use of the `OfflineOverlay` with physics-based swing mechanisms for unexpected, high-end "moments."
 
 ## 5. Layout Principles
-*   **Semantic Borders:** Use `hud-border-*` utilities to quickly identify the status of a module.
-*   **Asymmetry & Grid:** A balanced mix of wide analytics charts and dense sidebar diagnostics.
-*   **Technical Integrity:** Every button, label, and metric must have a functional "feel"—no generic placeholders.
-
+*   **White Space:** Generous margins to allow products to "breathe."
+*   **Interactive Polishing:** Hover effects should include subtle vertical translations and glow intensifications.
+*   **Consistency:** Avoid hardcoded hex values; always reference `var(--color-brand-*)` or Tailwind theme tokens.

@@ -26,7 +26,7 @@
     justify-content: center;
     background: var(--overlay-bg);
     color: var(--text-primary);
-    font-family: 'Space Grotesk', 'Inter', sans-serif;
+    font-family: var(--font-heading), 'Inter', sans-serif;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.5s ease-in-out;
@@ -340,7 +340,7 @@
 /* --- 404 PAGE PHYSICS ADAPTATIONS --- */
 
 .four-oh-four-target {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-heading), sans-serif;
     /* Matching font-heading */
     font-weight: 700;
     line-height: 1;

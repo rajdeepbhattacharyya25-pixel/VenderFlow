@@ -21,20 +21,32 @@ export interface Seller {
     updated_at: string;
 }
 
+// List of reserved system routes that should not be treated as seller slugs
+export const RESERVED_SLUGS = [
+    '', 'auth-callback', 'staff', 'onboarding', 'dashboard', 'preview',
+    'cart', 'checkout', 'orders', 'account', 'admin', 'apply', 'terms',
+    'privacy-policy', 'payment-policy', 'cookie-policy', 'about', 'blog',
+    'shopify-alternative', 'woocommerce-alternative', 'amazon-seller-alternative',
+    'store' // Added 'store' to reserved to handle redirects cleanly
+];
+
 /**
  * Extract seller slug from the current URL path.
- * Works with path-based routing: /store/:slug
+ * Works with path-based routing: /:slug
  * 
  * @returns The seller slug or null if not on a store page
  */
 export function getSellerSlug(): string | null {
     const host = window.location.hostname;
 
-    // For localhost or Vercel preview/production URLs, resolve from path: /store/:slug
+    // For localhost or Vercel preview/production URLs, resolve from path: /:slug
     if (host.includes('localhost') || host.includes('127.0.0.1') || host.includes('vercel.app')) {
         const parts = window.location.pathname.split('/');
-        // Expected: /store/:slug or /store/:slug/...
-        return parts[1] === 'store' ? parts[2] || null : null;
+        const slug = parts[1];
+
+        if (RESERVED_SLUGS.includes(slug)) return null;
+
+        return slug || null;
     }
 
     // For custom domains (future support)

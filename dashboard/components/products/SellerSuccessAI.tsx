@@ -7,7 +7,7 @@ interface SellerSuccessAIProps {
     product: {
         name: string;
         description: string;
-        category: string;
+        category: string | string[];
         images: string[];
         hasVariants: boolean;
         price: number;
