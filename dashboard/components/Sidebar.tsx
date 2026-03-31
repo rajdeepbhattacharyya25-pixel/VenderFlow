@@ -275,7 +275,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, isMobile, activeTab, setAc
           <div className="mt-auto flex flex-col gap-2 pt-6 border-t border-theme-border/50">
             {sellerSlug && (
               <a
-                href={`/store/${sellerSlug}`}
+                href={`/${sellerSlug}?preview=true`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-3 h-11 rounded-lg transition-all duration-200 w-full group text-theme-muted hover:text-theme-text hover:bg-theme-bg px-3"
@@ -285,7 +285,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, isMobile, activeTab, setAc
                   <AnimatedIcon icon={ShoppingBag} animation="bounce" trigger="hover" size={18} className="flex-shrink-0" />
                   <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-green-500 border-2 border-theme-panel"></div>
                 </div>
-                <span className="text-[12px] font-medium whitespace-nowrap truncate">View Store</span>
+                <span className="text-[12px] font-medium whitespace-nowrap truncate">Preview Live</span>
               </a>
             )}
 

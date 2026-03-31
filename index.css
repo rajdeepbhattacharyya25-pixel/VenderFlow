@@ -137,7 +137,15 @@ body {
   background-color: var(--color-bg);
   color: var(--color-text);
   -webkit-font-smoothing: antialiased;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow-x: hidden;
+}
+
+/* Base Scaling for 320px */
+@media (max-width: 339px) {
+  :root {
+    font-size: 14px;
+  }
 }
 
 .admin-hud-content {
@@ -148,14 +156,12 @@ body {
 }
 
 .font-heading {
-  font-family: 'Space Grotesk', sans-serif !important;
+  font-family: var(--font-heading), 'Playfair Display', serif !important;
   letter-spacing: -0.04em;
   line-height: 1.1;
 }
 
-.font-orbitron {
-  font-family: 'Orbitron', sans-serif !important;
-}
+
 
 /* Respect reduced motion preferences */
 @media (prefers-reduced-motion: reduce) {
@@ -369,7 +375,42 @@ body {
 
 /* Prevent pull-to-refresh on mobile */
 html {
-  overscroll-behavior: none;
+  overscroll-behavior-y: contain;
+}
+
+/* Premium Glass & Motion */
+.glass-morphism {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+.tap-highlight-none {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.safe-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.safe-bottom-fixed {
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem);
+}
+
+.thumb-zone-active {
+  min-height: 48px;
+  padding: 0.75rem;
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
 }
 
 /* Stitch UI Aesthetic Classes */
@@ -416,8 +457,15 @@ html {
 }
 
 @theme inline {
-  --font-heading: "Space Grotesk", sans-serif;
+  --font-heading: "Playfair Display", serif;
   --font-body: "Inter", sans-serif;
+
+  --color-brand-primary: #093223;
+  --color-brand-accent: #10b981;
+  --color-brand-accent-hover: #059669;
+
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -728,7 +776,7 @@ html {
 }
 
 .font-technical {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--font-heading);
 }
 
 .font-data {
@@ -737,7 +785,7 @@ html {
 }
 
 .hud-label {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--font-body);
   text-transform: uppercase;
   letter-spacing: 0.15em;
   font-size: 0.65rem;

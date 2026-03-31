@@ -201,9 +201,13 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
 
             try {
                 // 2. Search Products
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) return;
+
                 const { data: products } = await supabase
                     .from('products')
                     .select('id, name, price')
+                    .eq('seller_id', user.id)
                     .ilike('name', `%${term}%`)
                     .limit(3);
 
@@ -375,13 +379,13 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
                     {/* Preview Store Link */}
                     {sellerSlug && (
                         <a
-                            href={`/store/${sellerSlug}?preview=true`}
+                            href={`/${sellerSlug}?preview=true`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="hidden sm:flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition-colors font-semibold text-xs uppercase tracking-wider border border-emerald-200 dark:border-emerald-500/20"
                         >
                             <ExternalLink size={14} />
-                            View Live
+                            Preview Live
                         </a>
                     )}
 

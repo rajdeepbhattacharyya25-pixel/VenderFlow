@@ -63,6 +63,15 @@ const CheckoutPage = () => {
                     const product = products.find(p => p.id === stored.productId);
                     if (!product) return null;
 
+                    // Ghost product safety check
+                    const name = (product.name || '').toLowerCase().trim();
+                    const hasNoMedia = !product.product_media?.length && !product.image && (!product.images || product.images.length === 0);
+                    const isDraftName = !name || name === 'new product' || name === 'demo' || name === 'test' || name === 'demo product' || name.includes('demo');
+                    
+                    if (isDraftName && Number(product.price) <= 0 && hasNoMedia) {
+                        return null;
+                    }
+
                     const images = product.product_media?.map((m: any) => m.file_url) || [];
 
                     return {
@@ -196,7 +205,7 @@ const CheckoutPage = () => {
     const handleNavigateCart = () => {
         // Go back to the seller's store cart
         if (seller) {
-            navigate(`/store/${seller.slug}`);
+            navigate(`/${seller.slug}`);
         } else {
             navigate('/');
         }
@@ -204,7 +213,7 @@ const CheckoutPage = () => {
 
     const handleNavigateHome = () => {
         if (seller) {
-            navigate(`/store/${seller.slug}`);
+            navigate(`/${seller.slug}`);
         } else {
             navigate('/');
         }

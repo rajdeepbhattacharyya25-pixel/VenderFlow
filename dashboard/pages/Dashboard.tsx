@@ -517,7 +517,7 @@ const Dashboard: React.FC<DashboardProps> = ({ theme, onTabChange, sellerSlug })
                     </button>
                     {sellerSlug && (
                         <a
-                            href={`/store/${sellerSlug}`}
+                            href={`/${sellerSlug}?preview=true`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center gap-3 p-4 bg-theme-panel rounded-2xl border border-theme-border/50 shadow-soft hover:shadow-glow hover:-translate-y-1 transition-all duration-300 group"
@@ -527,7 +527,7 @@ const Dashboard: React.FC<DashboardProps> = ({ theme, onTabChange, sellerSlug })
                             </div>
                             <div className="text-left">
                                 <span className="text-xs text-theme-muted block font-medium">Storefront</span>
-                                <span className="text-sm font-bold text-theme-text">View Live</span>
+                                <span className="text-sm font-bold text-theme-text">Preview Live</span>
                             </div>
                         </a>
                     )}

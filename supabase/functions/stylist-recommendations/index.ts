@@ -32,7 +32,7 @@ serve(async (req) => {
         const supabase = createClient(supabaseUrl, serviceRoleKey);
 
         // 1. Ask Gemini what categories would complement these items
-        const itemNames = cartItems.map((i: Product) => `${i.name} (${i.category})`).join(', ');
+        const itemNames = cartItems.map((i: Product) => `${i.name} (${Array.isArray(i.category) ? i.category.join(', ') : i.category})`).join(', ');
         const prompt = `You are a professional fashion stylist. Given these items in a customer's cart, suggest 2 complementary product categories that would "Complete the Look".
         
         Cart Items: ${itemNames}
@@ -61,7 +61,7 @@ serve(async (req) => {
         const { data: recommendations, error: recError } = await supabase
             .from('products')
             .select('id, name, price, category, image')
-            .in('category', targetCategories.map(c => c.toLowerCase()))
+            .overlaps('category', targetCategories.map(c => c.toLowerCase()))
             .not('id', 'in', `(${cartItems.map((i: any) => i.id).join(',')})`)
             .limit(6);
 

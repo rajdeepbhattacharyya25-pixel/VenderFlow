@@ -11,7 +11,7 @@ interface BulkUploadModalProps {
 interface ParsedProduct {
     name: string;
     description: string;
-    category: string;
+    category: string[];
     price: number;
     discount_price: number | null;
     stock_quantity: number;
@@ -113,10 +113,13 @@ function validateProduct(raw: Record<string, string>, rowIndex: number): ParsedP
     const isActiveStr = (raw.is_active || 'true').trim().toLowerCase();
     const isActive = isActiveStr !== 'false' && isActiveStr !== '0' && isActiveStr !== 'no';
 
+    const categoryRaw = (raw.category || 'Uncategorized').trim();
+    const categoryArray = categoryRaw.split(',').map(c => c.trim().toLowerCase()).filter(Boolean);
+
     return {
         name: name || `Product Row ${rowIndex + 1}`,
         description: (raw.description || '').trim(),
-        category: (raw.category || 'Uncategorized').trim(),
+        category: categoryArray.length > 0 ? categoryArray : ['uncategorized'],
         price: isNaN(price) ? 0 : price,
         discount_price: discountPrice,
         stock_quantity: stock,
@@ -216,8 +219,8 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
 
                 const validated = rawData.map((row, i) => validateProduct(row, i));
                 setProducts(validated);
-            } catch (err: any) {
-                setError(err.message);
+            } catch (err: unknown) {
+                setError(err instanceof Error ? err.message : String(err));
             } finally {
                 setParsing(false);
             }
@@ -354,8 +357,8 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
             if (result.success > 0) {
                 onSuccess();
             }
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : String(err));
         } finally {
             setUploading(false);
         }

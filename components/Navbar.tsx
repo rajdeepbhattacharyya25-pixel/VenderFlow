@@ -120,20 +120,30 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             {/* Notification bell (logged in) */}
             {user && <NotificationBell />}
+
+            {/* Menu button */}
+            <button
+              onClick={() => setIsMenuOpen(true)}
+              className="w-11 h-11 flex items-center justify-center rounded-xl text-gray-600 dark:text-gray-300 active:bg-gray-100 dark:active:bg-neutral-800 transition-colors"
+              aria-label="Menu"
+              title="Open Menu"
+              style={{ WebkitTapHighlightColor: 'transparent' }}
+            >
+              <IconMenu className="w-5 h-5" />
+            </button>
           </div>
         </div>
       </nav>
 
       {/* Mobile Search Overlay */}
       {isSearchOpen && (
-        <div className="md:hidden fixed inset-0 z-[60] bg-white dark:bg-neutral-950 animate-in fade-in duration-200">
+        <div className="md:hidden fixed inset-0 z-[60] bg-white dark:bg-neutral-950 animate-in fade-in slide-in-from-top-4 duration-300 ease-out flex flex-col">
           <div
-            className="flex items-center gap-3 px-4 h-14 border-b border-gray-100 dark:border-neutral-800"
-            style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
+            className="flex items-center gap-3 px-4 h-14 border-b border-gray-100 dark:border-neutral-800 safe-top"
           >
             <button
               onClick={() => setIsSearchOpen(false)}
-              className="w-11 h-11 flex items-center justify-center rounded-xl text-gray-600 dark:text-gray-300 active:bg-gray-100 dark:active:bg-neutral-800 flex-shrink-0"
+              className="w-10 h-10 flex items-center justify-center rounded-xl text-gray-600 dark:text-gray-300 active:bg-gray-100 dark:active:bg-neutral-900 flex-shrink-0 transition-colors"
               style={{ WebkitTapHighlightColor: 'transparent' }}
               title="Close search"
               aria-label="Close search"
@@ -145,25 +155,134 @@ export const Navbar: React.FC<NavbarProps> = ({
                 ref={searchInputRef}
                 type="search"
                 inputMode="search"
-                placeholder="Search products..."
+                placeholder="Find something amazing..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
-                className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30 outline-none text-sm dark:text-gray-100 placeholder:text-gray-400 transition-all"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30 outline-none text-sm dark:text-gray-100 placeholder:text-gray-400 transition-all font-medium"
               />
               <IconSearch className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             </div>
             <button
               onClick={() => handleSearchSubmit()}
-              className="px-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-bold active:scale-95 transition-all flex-shrink-0"
+              className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-bold active:scale-95 transition-all flex-shrink-0 shadow-lg shadow-emerald-600/20"
               style={{ WebkitTapHighlightColor: 'transparent' }}
             >
               Search
             </button>
           </div>
-          {/* Recent searches hint */}
-          <div className="px-6 py-8 text-center text-gray-400 dark:text-gray-500 text-sm">
-            Search for products, categories, or brands
+          <div className="flex-1 overflow-y-auto px-6 py-8">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-4">Popular Categories</h3>
+            <div className="flex flex-wrap gap-2">
+              {categories.slice(0, 6).map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => {
+                    onCategoryClick(cat);
+                    setIsSearchOpen(false);
+                  }}
+                  className="px-4 py-2 rounded-full bg-gray-100 dark:bg-neutral-900 text-sm font-medium text-gray-600 dark:text-gray-300 active:bg-emerald-50 dark:active:bg-emerald-950/30 active:text-emerald-600 dark:active:text-emerald-400 transition-colors"
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile Menu Drawer */}
+      {isMenuOpen && (
+        <div className="md:hidden fixed inset-0 z-[70] flex flex-col animate-in fade-in duration-300">
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setIsMenuOpen(false)}
+          />
+          <div className="relative ml-auto h-full w-[280px] bg-white dark:bg-neutral-950 shadow-2xl flex flex-col animate-in slide-in-from-right duration-300 ease-out border-l border-white/5">
+            <div className="p-4 border-b border-gray-100 dark:border-neutral-800 flex items-center justify-between safe-top">
+              <span className="font-bold text-gray-900 dark:text-white uppercase tracking-widest text-[10px]">Menu</span>
+              <button
+                onClick={() => setIsMenuOpen(false)}
+                className="w-10 h-10 flex items-center justify-center rounded-full active:bg-gray-100 dark:active:bg-neutral-900 transition-colors"
+              >
+                <IconX className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto py-6 flex flex-col gap-8 custom-scrollbar">
+              {/* Account Section */}
+              <div className="px-6">
+                <div className="flex items-center gap-4 p-4 rounded-2xl bg-gray-50 dark:bg-neutral-900/50 border border-gray-100 dark:border-neutral-800">
+                  <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                    <IconUser className="w-6 h-6" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    {user ? (
+                      <>
+                        <h4 className="text-sm font-bold text-gray-900 dark:text-white truncate">My Account</h4>
+                        <button
+                          onClick={() => handleNavClick('account')}
+                          className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 uppercase tracking-wider"
+                        >
+                          View Profile
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <h4 className="text-sm font-bold text-gray-900 dark:text-white truncate">Guest User</h4>
+                        <button
+                          onClick={onLogin}
+                          className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 uppercase tracking-wider"
+                        >
+                          Login Now
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Categories */}
+              <div className="px-6 flex flex-col gap-4">
+                <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 px-2">Store Sections</h3>
+                <div className="grid grid-cols-1 gap-1">
+                  {categories.map(cat => (
+                    <button
+                      key={cat}
+                      onClick={() => handleCategorySelect(cat)}
+                      className="flex items-center justify-between w-full p-4 rounded-xl text-sm font-bold text-gray-700 dark:text-gray-200 active:bg-gray-50 dark:active:bg-neutral-900 transition-all border border-transparent active:border-emerald-500/20"
+                    >
+                      <span>{cat}</span>
+                      <IconChevronDown className="w-4 h-4 -rotate-90 text-gray-300" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Quick Links */}
+              <div className="px-6 flex flex-col gap-4">
+                <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 px-2">Common</h3>
+                <div className="flex flex-col gap-1">
+                  <button onClick={() => handleNavClick('orders')} className="flex items-center gap-3 p-4 text-sm font-bold text-gray-700 dark:text-gray-200 active:bg-gray-50 dark:active:bg-neutral-900 rounded-xl">
+                    <IconShoppingBag className="w-5 h-5 text-emerald-600" />
+                    <span>My Orders</span>
+                  </button>
+                  <button onClick={() => handleNavClick('wishlist')} className="flex items-center gap-3 p-4 text-sm font-bold text-gray-700 dark:text-gray-200 active:bg-gray-50 dark:active:bg-neutral-900 rounded-xl">
+                    <IconHeart className="w-5 h-5 text-rose-500" />
+                    <span>Wishlist</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 safe-bottom">
+              <button
+                onClick={() => handleNavClick('home')}
+                className="w-full py-4 bg-gray-900 dark:bg-white text-white dark:text-black rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl active:scale-95 transition-all"
+              >
+                Continue Shopping
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -182,28 +301,30 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center gap-8 text-sm font-medium text-gray-600 dark:text-gray-300">
-            {/* Category Dropdown */}
-            <div className="relative group">
-              <button className="text-gray-900 dark:text-white hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center gap-1.5 py-2 group font-extrabold tracking-wide text-base">
-                Categories <IconChevronDown className="w-4 h-4 transition-transform duration-300 group-hover:-rotate-180 text-gray-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400" />
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-emerald-600 dark:bg-emerald-400 transition-all duration-300 group-hover:w-full"></span>
-              </button>
+            {/* Category Dropdown — only render when categories exist */}
+            {categories.length > 0 && (
+              <div className="relative group">
+                <button className="text-gray-900 dark:text-white hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center gap-1.5 py-2 group font-extrabold tracking-wide text-base">
+                  Categories <IconChevronDown className="w-4 h-4 transition-transform duration-300 group-hover:-rotate-180 text-gray-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400" />
+                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-emerald-600 dark:bg-emerald-400 transition-all duration-300 group-hover:w-full"></span>
+                </button>
 
-              <div className="absolute top-full left-0 pt-4 w-56 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top-left z-50">
-                <div className="bg-white dark:bg-neutral-900 border border-gray-100 dark:border-neutral-700 rounded-xl shadow-xl overflow-hidden p-2 flex flex-col gap-1">
-                  {categories.map(cat => (
-                    <button
-                      key={cat}
-                      onClick={() => handleCategorySelect(cat)}
-                      className="px-4 py-3 text-sm hover:bg-gray-50 dark:hover:bg-neutral-800 hover:text-emerald-600 dark:hover:text-white rounded-lg transition-colors flex items-center justify-between group/item font-medium text-gray-600 dark:text-gray-300 w-full text-left"
-                    >
-                      {cat}
-                      <IconChevronDown className="w-3 h-3 -rotate-90 opacity-0 group-hover/item:opacity-50 transition-opacity" />
-                    </button>
-                  ))}
+                <div className="absolute top-full left-0 pt-4 w-56 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top-left z-50">
+                  <div className="bg-white dark:bg-neutral-900 border border-gray-100 dark:border-neutral-700 rounded-xl shadow-xl overflow-hidden p-2 flex flex-col gap-1">
+                    {categories.map(cat => (
+                      <button
+                        key={cat}
+                        onClick={() => handleCategorySelect(cat)}
+                        className="px-4 py-3 text-sm hover:bg-gray-50 dark:hover:bg-neutral-800 hover:text-emerald-600 dark:hover:text-white rounded-lg transition-colors flex items-center justify-between group/item font-medium text-gray-600 dark:text-gray-300 w-full text-left"
+                      >
+                        {cat}
+                        <IconChevronDown className="w-3 h-3 -rotate-90 opacity-0 group-hover/item:opacity-50 transition-opacity" />
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
             <button
               onClick={() => handleNavClick('orders')}

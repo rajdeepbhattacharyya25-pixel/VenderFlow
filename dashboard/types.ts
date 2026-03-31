@@ -7,7 +7,7 @@ export interface Product {
   id: string;
   name: string;
   description?: string;
-  category?: string;
+  category?: string[];
   price: number;
   discount_price?: number;
   is_active: boolean;
