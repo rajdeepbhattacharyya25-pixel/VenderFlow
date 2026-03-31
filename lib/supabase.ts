@@ -1,11 +1,39 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Retrieve environment variables with explicit casting
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim();
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim();
 
-if (!supabaseUrl || !supabaseAnonKey) {
-    console.error("Supabase Env Vars Missing. URL:", supabaseUrl, "Key:", supabaseAnonKey ? "Hidden" : "Missing");
-    throw new Error('Missing Supabase environment variables');
+// Robust Validation: Catch missing, empty, or placeholder values
+const isInvalidUrl = (url: string | undefined): boolean => {
+    if (!url) return true;
+    if (url === 'undefined' || url === 'null') return true;
+    if (url.includes('YOUR_SUPABASE_URL')) return true;
+    try {
+        new URL(url);
+        return false;
+    } catch {
+        return true;
+    }
+};
+
+if (isInvalidUrl(supabaseUrl) || !supabaseAnonKey || supabaseAnonKey === 'undefined') {
+    const errorMsg = `[Supabase Error] Invalid configuration. 
+    URL: ${supabaseUrl || 'MISSING'}
+    Key: ${supabaseAnonKey ? 'PRESENT (Masked)' : 'MISSING'}`;
+    
+    console.error(errorMsg);
+    
+    // In production, we throw to prevent silent failures in data-driven components
+    if (import.meta.env.PROD) {
+        throw new Error('Critical: Supabase environment variables are missing or malformed in production.');
+    }
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Ensure we only call createClient with a valid-looking URL to avoid internal library crashes
+const sanitizedUrl = supabaseUrl && !isInvalidUrl(supabaseUrl) 
+    ? supabaseUrl 
+    : 'https://placeholder.supabase.co'; // Fallback to avoid early crash if we want soft failure
+
+export const supabase = createClient(sanitizedUrl, supabaseAnonKey || '');
+
