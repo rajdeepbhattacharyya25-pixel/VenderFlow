@@ -22,6 +22,7 @@ import { compressImage } from '../../lib/imageUtils';
 import ImageEditorModal from './ImageEditorModal';
 import { SellerSuccessAI } from './SellerSuccessAI';
 import TagInput from './TagInput';
+import { logAlert } from '../../lib/notifications';
 import {
     DndContext,
     closestCenter,
@@ -374,6 +375,15 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, e
             } catch (err: any) { 
                 console.error('Video upload error:', err);
                 alert(`Video upload failed: ${err.message || 'Unknown error'}`); 
+                const { data: { user } } = await supabase.auth.getUser();
+                logAlert({
+                    type: 'VIDEO_UPLOAD_FAILED',
+                    severity: 'critical',
+                    title: 'Video Upload Failed',
+                    message: `Product video could not be uploaded. ${err.message || 'Unknown error'}`,
+                    seller_id: user?.id,
+                    metadata: { operation_type: 'video_upload', resource_id: product?.id, error_code: err.code || 'VIDEO_ERROR' }
+                });
             }
             finally { setUploading(false); e.target.value = ''; }
         };
@@ -439,6 +449,15 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, e
         } catch (err: any) {
             console.error('Variant upload error:', err);
             alert(`Variant image upload failed: ${err.message || 'Unknown error'}`);
+            const { data: { user } } = await supabase.auth.getUser();
+            logAlert({
+                type: 'VARIANT_IMAGE_UPLOAD_FAILED',
+                severity: 'critical',
+                title: 'Variant Image Upload Failed',
+                message: `Image for variant "${variantValue}" could not be uploaded. ${err.message || 'Unknown error'}`,
+                seller_id: user?.id,
+                metadata: { operation_type: 'variant_image_upload', resource_id: product?.id, variant_value: variantValue, error_code: err.code || 'VARIANT_IMAGE_ERROR' }
+            });
         } finally {
             setUploading(false);
         }
@@ -577,6 +596,15 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, e
                                             } catch (fileErr: any) {
                                                 console.error(`Error uploading file ${files[i].name}:`, fileErr);
                                                 alert(`Failed to upload ${files[i].name}: ${fileErr.message || 'Unknown error'}`);
+                                                const { data: { user } } = await supabase.auth.getUser();
+                                                logAlert({
+                                                    type: 'IMAGE_UPLOAD_FAILED',
+                                                    severity: 'critical',
+                                                    title: 'Image Upload Failed',
+                                                    message: `Failed to upload product image "${files[i].name}". ${fileErr.message || 'Unknown error'}`,
+                                                    seller_id: user?.id,
+                                                    metadata: { operation_type: 'image_upload', resource_id: product?.id, file_name: files[i].name, error_code: fileErr.code || 'IMAGE_ERROR' }
+                                                });
                                             }
                                         }
                                         if (uploadedUrls.length > 0) {
@@ -589,6 +617,15 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, e
                                     } catch (err: any) {
                                         console.error('Bulk upload error:', err);
                                         alert(`Upload process failed: ${err.message || 'Unknown error'}`);
+                                        const { data: { user } } = await supabase.auth.getUser();
+                                        logAlert({
+                                            type: 'BULK_UPLOAD_FAILED',
+                                            severity: 'critical',
+                                            title: 'Bulk Image Upload Failed',
+                                            message: `The bulk upload process failed. ${err.message || 'Unknown error'}`,
+                                            seller_id: user?.id,
+                                            metadata: { operation_type: 'bulk_image_upload', resource_id: product?.id, error_code: err.code || 'BULK_UPLOAD_ERROR' }
+                                        });
                                     } finally { 
                                         setUploading(false); 
                                         if (imgbbFileInputRef.current) imgbbFileInputRef.current.value = '';

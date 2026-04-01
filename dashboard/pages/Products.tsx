@@ -406,7 +406,7 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
                     const { data: { user: stockUser } } = await supabase.auth.getUser();
                     logAlert({
                         type: 'STOCK_UPDATE_FAILED',
-                        severity: 'warning',
+                        severity: 'critical',
                         title: 'Stock Update Failed',
                         message: `Stock quantity could not be updated for product. ${stockError.message}`,
                         seller_id: stockUser?.id,
@@ -456,7 +456,7 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
                         const { data: { user: varUser } } = await supabase.auth.getUser();
                         logAlert({
                             type: 'VARIANT_UPSERT_FAILED',
-                            severity: 'warning',
+                            severity: 'critical',
                             title: 'Variant Update Failed',
                             message: `Product variants could not be saved. ${variantsError.message}`,
                             seller_id: varUser?.id,
@@ -477,7 +477,7 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
                 const { data: { user: mediaUser } } = await supabase.auth.getUser();
                 logAlert({
                     type: 'MEDIA_CLEAR_FAILED',
-                    severity: 'warning',
+                    severity: 'critical',
                     title: 'Media Cleanup Failed',
                     message: `Old product images could not be cleared. ${deleteMediaError.message}`,
                     seller_id: mediaUser?.id,
@@ -503,7 +503,7 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
                     const { data: { user: imgUser } } = await supabase.auth.getUser();
                     logAlert({
                         type: 'MEDIA_INSERT_FAILED',
-                        severity: 'warning',
+                        severity: 'critical',
                         title: 'Image Upload Failed',
                         message: `New product images could not be saved. ${insertMediaError.message}`,
                         seller_id: imgUser?.id,
@@ -581,7 +581,7 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
                     const { data: { user: bulkUser } } = await supabase.auth.getUser();
                     logAlert({
                         type: 'BULK_MEDIA_INSERT_FAILED',
-                        severity: 'warning',
+                        severity: 'critical',
                         title: 'Bulk Image Upload Failed',
                         message: `Could not attach images to ${selectedIds.length} products. ${dbError.message}`,
                         seller_id: bulkUser?.id,
