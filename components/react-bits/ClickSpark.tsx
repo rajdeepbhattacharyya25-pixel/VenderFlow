@@ -8,6 +8,7 @@ interface ClickSparkProps {
     duration?: number;
     easing?: 'linear' | 'ease-in' | 'ease-out' | 'ease-in-out';
     extraScale?: number;
+    disabled?: boolean;
     children?: React.ReactNode;
 }
 
@@ -26,6 +27,7 @@ const ClickSpark: React.FC<ClickSparkProps> = ({
     duration = 400,
     easing = 'ease-out',
     extraScale = 1.0,
+    disabled = false,
     children
 }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -33,6 +35,7 @@ const ClickSpark: React.FC<ClickSparkProps> = ({
     const startTimeRef = useRef<number | null>(null);
 
     useEffect(() => {
+        if (disabled) return;
         const canvas = canvasRef.current;
         if (!canvas) return;
 
@@ -63,7 +66,7 @@ const ClickSpark: React.FC<ClickSparkProps> = ({
             ro.disconnect();
             clearTimeout(resizeTimeout);
         };
-    }, []);
+    }, [disabled]);
 
     const easeFunc = useCallback(
         (t: number) => {
@@ -82,6 +85,7 @@ const ClickSpark: React.FC<ClickSparkProps> = ({
     );
 
     useEffect(() => {
+        if (disabled) return;
         const canvas = canvasRef.current;
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
@@ -160,7 +164,9 @@ const ClickSpark: React.FC<ClickSparkProps> = ({
             if (animationId !== null) cancelAnimationFrame(animationId);
             if (parent) parent.removeEventListener('click', handleClick);
         };
-    }, [sparkColor, sparkSize, sparkRadius, sparkCount, duration, easeFunc, extraScale]);
+    }, [sparkColor, sparkSize, sparkRadius, sparkCount, duration, easeFunc, extraScale, disabled]);
+
+    if (disabled) return <>{children}</>;
 
     return (
         <div
