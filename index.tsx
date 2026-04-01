@@ -1,5 +1,16 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+
+console.log("[Entry] index.tsx evaluation started...");
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('error', (event) => {
+    console.error("[Fatal Error] Caught at window level:", event.error);
+  });
+  window.addEventListener('unhandledrejection', (event) => {
+    console.error("[Unhandled Promise] Caught at window level:", event.reason);
+  });
+}
 import App from './App';
 import './index.css';
 import { ThemeProvider } from 'next-themes';
