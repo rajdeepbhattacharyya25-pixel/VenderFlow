@@ -115,7 +115,14 @@ const SellerGuard: React.FC = () => {
 
         return () => {
             isMounted = false;
-            subscription.unsubscribe();
+            try {
+                subscription.unsubscribe();
+            } catch (e) {
+                // Ignore AbortErrors and other transient cleanup failures
+                if ((e as Error).name !== 'AbortError') {
+                    console.debug('[SellerGuard] Cleanup warning:', e);
+                }
+            }
         };
     }, [retryCount]);
 

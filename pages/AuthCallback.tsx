@@ -37,11 +37,12 @@ const AuthCallback = () => {
         // final mount, while still preventing the callback from processing twice.
         let processed = false;
 
-        // Global safety timeout — never stay stuck for more than 15s
+        // Global safety timeout — never stay stuck for more than 45s
         const safetyTimeout = setTimeout(() => {
-            console.warn('AuthCallback: global safety timeout reached (15s). Redirecting...');
+            console.warn('AuthCallback: global safety timeout reached (45s). Redirecting...');
+            addLog('Global safety timeout reached. Redirecting to dashboard...');
             navigate('/dashboard', { replace: true });
-        }, 15000);
+        }, 45000);
 
         // Check for error in URL hash immediately
         if (window.location.hash && window.location.hash.includes('error=')) {
@@ -107,9 +108,25 @@ const AuthCallback = () => {
                     processed = true;
 
                     try {
-                        const user = session.user;
-                        addLog(`User found: ${user.email}`);
                         setStatus('Verifying your account...');
+                        addLog(`Event ${event} received. Settling session...`);
+
+                        // Robust session settling to avoid 401 Unauthorized errors
+                        const settleSession = async (retries = 3): Promise<any> => {
+                            for (let i = 0; i < retries; i++) {
+                                const { data: { user }, error } = await supabase.auth.getUser();
+                                if (user && !error) return user;
+                                if (i < retries - 1) {
+                                    addLog(`Session not yet settled (Attempt ${i + 1}). Retrying in 500ms...`);
+                                    await new Promise(r => setTimeout(r, 500));
+                                }
+                            }
+                            throw new Error("Could not verify session after retries. Try refreshing.");
+                        };
+
+                        const user = await withTimeout(settleSession(), 5000, 'Session verification');
+                        addLog(`User verified: ${user.email}`);
+                        setStatus('Synchronizing profile...');
 
                         // Fetch user profile to check role
                         addLog('Fetching profile...');
@@ -155,36 +172,37 @@ const AuthCallback = () => {
                             }
                         }
 
-                        // Check if seller record exists, if not create it (Store Creation Point)
-                        // CRITICAL: only create store if the user is explicitly in a "seller login/onboarding" flow
+                        // Parallelize background tasks (Store check/creation, Session logging, Telegram linking)
+                        addLog('Running background synchronization tasks...');
+                        
+                        const backgroundTasks = [];
+
+                        // Task 1: Store synchronization (If seller flow)
                         let authType = sessionStorage.getItem('auth_type');
                         const isSellerAuth = authType === 'seller' || authType === 'staff';
 
                         if (currentProfile?.role === 'seller' && isSellerAuth) {
-                            addLog('Checking for seller record...');
-                            const { data: seller } = await supabase
-                                .from('sellers')
-                                .select('id, slug, status')
-                                .eq('id', user.id)
-                                .maybeSingle();
+                            backgroundTasks.push((async () => {
+                                addLog('Checking for seller record...');
+                                const { data: seller } = await supabase
+                                    .from('sellers')
+                                    .select('id, slug, status')
+                                    .eq('id', user.id)
+                                    .maybeSingle();
 
-                            if (!seller) {
-                                addLog('Seller record missing and user in seller flow. Creating store...');
-                                try {
+                                if (!seller) {
+                                    addLog('Seller record missing. Creating store...');
                                     setStatus('Creating your store...');
 
                                     let clientRequestId = sessionStorage.getItem('seller_creation_request_id');
                                     if (!clientRequestId) {
-                                        clientRequestId = (typeof crypto !== 'undefined' && crypto.randomUUID)
-                                            ? crypto.randomUUID()
-                                            : `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+                                        clientRequestId = crypto.randomUUID();
                                         sessionStorage.setItem('seller_creation_request_id', clientRequestId);
                                     }
 
                                     const storeName = sessionStorage.getItem('pending_store_name') || `${user.email?.split('@')[0]}'s Store`;
                                     const storeSlug = sessionStorage.getItem('pending_store_slug') || user.email?.split('@')[0]?.toLowerCase().replace(/[^a-z0-9]/g, '') || `store-${Math.floor(Math.random() * 1000)}`;
 
-                                    // Try edge function with 8s timeout, fallback to direct insert
                                     try {
                                         const result = await withTimeout(
                                             adminDb.createSeller({
@@ -193,13 +211,12 @@ const AuthCallback = () => {
                                                 client_request_id: clientRequestId,
                                                 utm: JSON.parse(sessionStorage.getItem('utm_params') || '{}')
                                             }),
-                                            8000,
+                                            15000, // Increased timeout for store creation
                                             'create-seller'
                                         );
                                         addLog(result.created ? 'Store created via edge fn' : 'Store already exists');
                                     } catch (edgeFnError: any) {
                                         addLog(`Edge fn failed (${edgeFnError.message}). Using direct DB insert...`);
-                                        // Fallback: direct DB insert
                                         await supabase.from('sellers').upsert({
                                             id: user.id,
                                             store_name: storeName,
@@ -213,49 +230,50 @@ const AuthCallback = () => {
                                     sessionStorage.removeItem('pending_store_slug');
                                     sessionStorage.removeItem('seller_creation_request_id');
                                     sessionStorage.removeItem('utm_params');
-                                } catch (createError: any) {
-                                    console.error('Failed to create store:', createError);
-                                    addLog(`Store creation error: ${createError.message}`);
                                 }
-                            }
+                            })());
                         }
 
-                        // Log the session for OAuth logins (non-blocking with 5s timeout)
-                        try {
-                            const sessionResult = await withTimeout(
-                                supabase.functions.invoke('log-session', {
-                                    body: { device_info: navigator.userAgent }
-                                }),
-                                5000,
-                                'log-session'
-                            );
-                            if (sessionResult?.data?.session_id) {
-                                localStorage.setItem('current_session_id', sessionResult.data.session_id);
-                            }
-                        } catch (sessionError) {
-                            console.error('log-session skipped:', sessionError);
-                        }
-
-                        // Check for pending Telegram Link
-                        // Check for pending Telegram Link
-                        const telegramInitData = sessionStorage.getItem('telegram_init_data');
-                        if (telegramInitData && user.id) {
+                        // Task 2: Session Logging
+                        backgroundTasks.push((async () => {
                             try {
-                                setStatus('Linking Telegram account...');
-
-                                const { error } = await supabase.functions.invoke('link-telegram', {
-                                    body: { initData: telegramInitData }
-                                });
-
-                                if (error) throw error;
-
-                                sessionStorage.removeItem('telegram_init_data');
-                                console.log('Telegram account linked successfully via backend');
+                                const sessionResult = await withTimeout(
+                                    supabase.functions.invoke('log-session', {
+                                        body: { device_info: navigator.userAgent }
+                                    }),
+                                    5000,
+                                    'log-session'
+                                );
+                                if (sessionResult?.data?.session_id) {
+                                    localStorage.setItem('current_session_id', sessionResult.data.session_id);
+                                    addLog('Session logged successfully');
+                                }
                             } catch (e) {
-                                console.error('Failed to link Telegram', e);
-                                // We don't block login on this error, just log it
+                                addLog(`Log session skipped: ${e instanceof Error ? e.message : 'Timeout'}`);
                             }
+                        })());
+
+                        // Task 3: Telegram Linking
+                        const telegramInitData = sessionStorage.getItem('telegram_init_data');
+                        if (telegramInitData) {
+                            backgroundTasks.push((async () => {
+                                try {
+                                    addLog('Linking Telegram account...');
+                                    const { error } = await supabase.functions.invoke('link-telegram', {
+                                        body: { initData: telegramInitData }
+                                    });
+                                    if (error) throw error;
+                                    sessionStorage.removeItem('telegram_init_data');
+                                    addLog('Telegram linked successfully');
+                                } catch (e) {
+                                    addLog(`Telegram linking failed: ${e instanceof Error ? e.message : 'Unknown'}`);
+                                }
+                            })());
                         }
+
+                        // Wait for critical background tasks to complete
+                        // We use allSettled so that failures in optional tasks don't block login
+                        await Promise.allSettled(backgroundTasks);
 
                         // Get stored metadata for store-specific logins
                         const storedRedirect = sessionStorage.getItem('auth_redirect');

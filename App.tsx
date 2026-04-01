@@ -146,7 +146,11 @@ function App() {
         }
 
         return () => {
-          authListener.subscription.unsubscribe();
+          try {
+            authListener.subscription.unsubscribe();
+          } catch {
+            // Silently handle cleanup aborts
+          }
         };
     }, []);
 
