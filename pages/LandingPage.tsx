@@ -13,7 +13,6 @@ const BlurText = React.lazy(() => import('../components/react-bits/BlurText'));
 const StarBorder = React.lazy(() => import('../components/react-bits/StarBorder'));
 import ClickSpark from '../components/react-bits/ClickSpark';
 
-const LiquidEther = React.lazy(() => import('../components/react-bits/LiquidEther'));
 const Shuffle = React.lazy(() => import('../components/react-bits/Shuffle'));
 const DecryptedText = React.lazy(() => import('../components/react-bits/DecryptedText'));
 const RotatingText = React.lazy(() => import('../components/react-bits/RotatingText'));
@@ -52,7 +51,6 @@ export default function LandingPage() {
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
     const [loginMode, setLoginMode] = useState<'customer' | 'seller'>('customer');
     const [isContactModalOpen, setIsContactModalOpen] = useState(false);
-    const [showEffect, setShowEffect] = useState(false);
     const [showMobileSticky, setShowMobileSticky] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
     const { setTheme } = useTheme();
@@ -83,13 +81,6 @@ export default function LandingPage() {
             img.src = src;
         });
     }, []);
-
-    // Delay heavy visual effects to prioritize LCP
-    useEffect(() => {
-        const delay = isMobile ? 500 : 1200; 
-        const timer = setTimeout(() => setShowEffect(true), delay);
-        return () => clearTimeout(timer);
-    }, [isMobile]);
 
     // Local Lenis initialization
     useEffect(() => {
@@ -521,31 +512,9 @@ export default function LandingPage() {
 
                     {/* Mobile-Optimized CTA */}
                     <section className="py-16 sm:py-24 px-4 border-t border-white/10 relative overflow-hidden group">
-                        <div className="absolute inset-0 z-0 transition-opacity duration-1000 pointer-events-none">
-                            <div className="w-full h-full relative pointer-events-auto opacity-80 block">
-                                <Suspense fallback={<div className="w-full h-full bg-[#ccff00]/5" />}>
-                                    {showEffect && (
-                                        <LiquidEther
-                                            colors={['#ccff00', '#00ff88', '#88ff44']}
-                                            mouseForce={isMobile ? 5 : 8}
-                                            cursorSize={isMobile ? 80 : 130}
-                                            isViscous
-                                            viscous={isMobile ? 35 : 50}
-                                            iterationsViscous={isMobile ? 16 : 32}
-                                            iterationsPoisson={isMobile ? 16 : 32}
-                                            dt={0.014}
-                                            resolution={isMobile ? 0.35 : 0.5}
-                                            isBounce={false}
-                                            autoDemo
-                                            autoSpeed={isMobile ? 0.08 : 0.15}
-                                            autoIntensity={isMobile ? 0.5 : 0.7}
-                                            takeoverDuration={0.4}
-                                            autoResumeDelay={2000}
-                                            autoRampDuration={2.5}
-                                        />
-                                    )}
-                                </Suspense>
-                            </div>
+                        <div className="absolute inset-0 z-0 opacity-40 pointer-events-none">
+                            {/* Static high-performance replacement for LiquidEther */}
+                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(204,255,0,0.08),transparent_70%)]" />
                         </div>
                         <div className="max-w-4xl mx-auto text-center relative z-10 flex flex-col items-center">
                             <div className="text-3xl sm:text-5xl md:text-6xl font-heading font-bold uppercase leading-[0.9] tracking-tighter mb-6 flex items-center justify-center gap-3">
