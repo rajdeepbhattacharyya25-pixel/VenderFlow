@@ -1,6 +1,7 @@
 import React, { Suspense, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation, Navigate, useParams } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
+import { Analytics } from '@vercel/analytics/react';
 import SellerGuard from './components/admin/SellerGuard';
 import AdminGuard from './components/admin/AdminGuard';
 import CustomerAuthGuard from './components/CustomerAuthGuard';
@@ -234,6 +235,7 @@ function App() {
             </Routes>
           </div>
         </Suspense>
+        <Analytics />
       </BrowserRouter>
     </ErrorBoundary>
   );
