@@ -61,7 +61,10 @@ export default function LandingPage() {
 
     // Initial Mobile Detection
     useEffect(() => {
-        const checkMobile = () => setIsMobile(window.innerWidth < 768);
+        const checkMobile = () => {
+            const mobile = window.innerWidth < 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            setIsMobile(mobile);
+        };
         checkMobile();
         window.addEventListener('resize', checkMobile);
         return () => window.removeEventListener('resize', checkMobile);
@@ -81,14 +84,18 @@ export default function LandingPage() {
         });
     }, []);
 
-    // Delay heavy visual effects
+    // Delay heavy visual effects to prioritize LCP
     useEffect(() => {
-        const timer = setTimeout(() => setShowEffect(true), 1000); // reduced from 4s for faster layout stability
+        const delay = isMobile ? 500 : 1200; 
+        const timer = setTimeout(() => setShowEffect(true), delay);
         return () => clearTimeout(timer);
-    }, []);
+    }, [isMobile]);
 
     // Local Lenis initialization
     useEffect(() => {
+        // Disable Lenis on touch devices/mobile for native performance
+        if (isMobile) return;
+
         const lenis = new Lenis({
             duration: 1.2,
             easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
@@ -106,7 +113,7 @@ export default function LandingPage() {
         return () => {
             lenis.destroy();
         };
-    }, []);
+    }, [isMobile]);
 
     const { scrollYProgress } = useScroll({
         target: containerRef,
@@ -177,7 +184,7 @@ export default function LandingPage() {
                 trigger: ".hero-section",
                 start: "top top",
                 end: "+=150%",
-                scrub: 2,
+                scrub: isMobile ? 0.5 : 1.2, // Reduced scrub for snappier mobile response
                 pin: true,
             }
         });
@@ -211,7 +218,7 @@ export default function LandingPage() {
                         trigger: feature,
                         start: "top 85%",
                         end: "top 50%",
-                        scrub: 1.5
+                        scrub: isMobile ? false : 1 // Faster feedback
                     }
                 }
             );
@@ -274,7 +281,7 @@ export default function LandingPage() {
                 )}
             </AnimatePresence>
 
-            <ClickSpark sparkColor='#ccff00' sparkSize={10} sparkRadius={15} sparkCount={8} duration={400}>
+            <ClickSpark sparkColor='#ccff00' sparkSize={10} sparkRadius={15} sparkCount={8} duration={400} disabled={isMobile}>
                 <div ref={containerRef} className="bg-[#050505] min-h-screen text-white font-body overflow-x-clip selection:bg-[#ccff00] selection:text-black">
                     {/* Fixed Anchor Logo */}
                     <div
@@ -471,7 +478,7 @@ export default function LandingPage() {
 
 
                     {/* Floating Collage Section */}
-                    <Suspense fallback={<div className="h-screen" />}>
+                    <Suspense fallback={<div className="h-[80vh] bg-[#050505]" />}>
                         <FloatingCollage />
                     </Suspense>
 
@@ -483,7 +490,7 @@ export default function LandingPage() {
                             <DemoVideo isMobile={isMobile} />
                         </div>
                     </Suspense>
-                    <Suspense fallback={<div className="h-screen" />}>
+                    <Suspense fallback={<div className="h-[80vh] bg-[#050505]" />}>
                         <Ecosystem isMobile={isMobile} />
                     </Suspense>
 
