@@ -27,7 +27,7 @@ export default defineConfig(({ mode }) => {
       // })
     ],
     build: {
-      sourcemap: false, 
+      sourcemap: true, 
       minify: 'esbuild'
     },
     define: {
