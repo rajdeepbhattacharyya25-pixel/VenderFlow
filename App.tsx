@@ -81,19 +81,34 @@ const NavigateToRootStore = () => {
 
 function App() {
   React.useEffect(() => {
-    // Phase 2: Enhanced Diagnostics - High Visibility Logging
-    if (typeof window !== 'undefined') {
-        const checkEnv = (key: string) => !!import.meta.env[key];
+    // Health Check & Runtime Diagnostics
+    const checkHealth = () => {
         const status = {
-            supabase_url: checkEnv('VITE_SUPABASE_URL'),
-            supabase_key: checkEnv('VITE_SUPABASE_ANON_KEY'),
-            posthog_key: checkEnv('VITE_POSTHOG_API_KEY') || checkEnv('VITE_NEXT_PUBLIC_POSTHOG_KEY'),
+            supabase_url: !!import.meta.env.VITE_SUPABASE_URL,
+            supabase_key: !!import.meta.env.VITE_SUPABASE_ANON_KEY,
+            posthog_key: !!import.meta.env.VITE_POSTHOG_API_KEY,
             mode: import.meta.env.MODE,
             prod: import.meta.env.PROD
         };
+
+        // Aggressive logging for production debugging
         console.log("[Health] Environment Status:", status);
-        (window as any).APP_HEALTH = status;
-    }
+
+        if (!status.supabase_url || !status.supabase_key) {
+            console.error("[Health] CRITICAL: Supabase environment variables are missing! The app will not function correctly.");
+        }
+        
+        // Verify if supabase client is actually proxied or crashed
+        try {
+            // Accessing a property on the proxy to trigger initialization check
+            const isAuthAvailable = !!supabase.auth;
+            console.log("[Health] Supabase Client check:", isAuthAvailable ? "Connected" : "Not connected");
+        } catch (err) {
+            console.error("[Health] Supabase Client is broken:", (err as Error).message);
+        }
+    };
+
+    checkHealth();
 
     // Initialize Analytics
     const POSTHOG_KEY = import.meta.env.VITE_POSTHOG_API_KEY || import.meta.env.VITE_NEXT_PUBLIC_POSTHOG_KEY;
