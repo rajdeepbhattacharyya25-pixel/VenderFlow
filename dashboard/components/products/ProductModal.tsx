@@ -22,7 +22,8 @@ import { compressImage } from '../../lib/imageUtils';
 import ImageEditorModal from './ImageEditorModal';
 import { SellerSuccessAI } from './SellerSuccessAI';
 import TagInput from './TagInput';
-import { logAlert } from '../../lib/notifications';
+import { logAlert } from '../../../lib/notifications';
+import { supabase } from '../../../lib/supabase';
 import {
     DndContext,
     closestCenter,
