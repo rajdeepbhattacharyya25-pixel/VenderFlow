@@ -4,11 +4,9 @@ import { Toaster } from 'react-hot-toast';
 import SellerGuard from './components/admin/SellerGuard';
 import AdminGuard from './components/admin/AdminGuard';
 import CustomerAuthGuard from './components/CustomerAuthGuard';
-import TelegramInitializer from './components/TelegramInitializer';
 import OfflineOverlay from './components/OfflineOverlay';
 import ErrorBoundary from './components/ErrorBoundary';
 import CookieConsent from './components/CookieConsent';
-import { initTelegramApp } from './lib/telegram';
 import { capturePage, initPostHog, identify, optOut } from './lib/analytics';
 import { supabase } from './lib/supabase';
 
@@ -80,35 +78,26 @@ const NavigateToRootStore = () => {
 };
 
 function App() {
-  React.useEffect(() => {
-    // Health Check & Runtime Diagnostics
-    const checkHealth = () => {
-        const status = {
-            supabase_url: !!import.meta.env.VITE_SUPABASE_URL,
-            supabase_key: !!import.meta.env.VITE_SUPABASE_ANON_KEY,
-            posthog_key: !!import.meta.env.VITE_POSTHOG_API_KEY,
-            mode: import.meta.env.MODE,
-            prod: import.meta.env.PROD
+    // Health Check & Runtime Diagnostics (Silent but Resilient)
+    React.useEffect(() => {
+        const checkHealth = () => {
+            const hasSupabaseUrl = !!import.meta.env.VITE_SUPABASE_URL;
+            const hasSupabaseKey = !!import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+            if (!hasSupabaseUrl || !hasSupabaseKey) {
+                console.error("[Health] CRITICAL: Supabase environment variables are missing! The app will not function correctly.");
+            }
+            
+            try {
+                // Trigger initialization check on the Supabase Lazy Proxy
+                void supabase.auth;
+            } catch (err) {
+                console.error("[Health] Supabase Client is broken:", (err as Error).message);
+            }
         };
 
-        // Aggressive logging for production debugging
-        console.log("[Health] Environment Status:", status);
-
-        if (!status.supabase_url || !status.supabase_key) {
-            console.error("[Health] CRITICAL: Supabase environment variables are missing! The app will not function correctly.");
-        }
-        
-        // Verify if supabase client is actually proxied or crashed
-        try {
-            // Accessing a property on the proxy to trigger initialization check
-            const isAuthAvailable = !!supabase.auth;
-            console.log("[Health] Supabase Client check:", isAuthAvailable ? "Connected" : "Not connected");
-        } catch (err) {
-            console.error("[Health] Supabase Client is broken:", (err as Error).message);
-        }
-    };
-
-    checkHealth();
+        checkHealth();
+    }, []);
 
     // Initialize Analytics
     const POSTHOG_KEY = import.meta.env.VITE_POSTHOG_API_KEY || import.meta.env.VITE_NEXT_PUBLIC_POSTHOG_KEY;
@@ -121,46 +110,45 @@ function App() {
     }
 
     // Subscribe to Auth changes to identify users
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session?.user) {
-        // Run asynchronously without holding the auth lock
-        void (async () => {
-          try {
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('role')
-              .eq('id', session.user.id)
-              .maybeSingle();
+    React.useEffect(() => {
+        const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+          if (session?.user) {
+            // Run asynchronously without holding the auth lock
+            void (async () => {
+              try {
+                const { data: profile } = await supabase
+                  .from('profiles')
+                  .select('role')
+                  .eq('id', session.user.id)
+                  .maybeSingle();
 
-            identify(session.user.id, {
-              email: session.user.email ? 'REDACTED' : undefined,
-              role: profile?.role || 'vendor',
-              plan: 'free' // Default for analytics if not fetched from sellers
-            });
-          } catch (e) {
-            const error = e as Error;
-            console.error("Profile identification failed:", error.message);
+                identify(session.user.id, {
+                  email: session.user.email ? 'REDACTED' : undefined,
+                  role: profile?.role || 'vendor',
+                  plan: 'free' // Default for analytics if not fetched from sellers
+                });
+              } catch (e) {
+                const error = e as Error;
+                console.error("Profile identification failed:", error.message);
+              }
+            })();
+          } else if (event === 'SIGNED_OUT') {
+            optOut(); // Or posthog.reset() to clear anonymous ID linkage
           }
-        })();
-      } else if (event === 'SIGNED_OUT') {
-        optOut(); // Or posthog.reset() to clear anonymous ID linkage
-      }
-    });
-
-    // initTelegramApp();
-
-    // Register Service Worker for Push Notifications
-    if ('serviceWorker' in navigator && import.meta.env.DEV) {
-      navigator.serviceWorker.register('/sw.js')
-        .catch(error => {
-          console.error('Service Worker registration failed:', error);
         });
-    }
 
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
-  }, []);
+        // Register Service Worker for Push Notifications (In DEV)
+        if ('serviceWorker' in navigator && import.meta.env.DEV) {
+          navigator.serviceWorker.register('/sw.js')
+            .catch(error => {
+              console.error('Service Worker registration failed:', error);
+            });
+        }
+
+        return () => {
+          authListener.subscription.unsubscribe();
+        };
+    }, []);
 
   return (
     <ErrorBoundary>
