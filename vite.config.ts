@@ -28,7 +28,8 @@ export default defineConfig(({ mode }) => {
     ],
     build: {
       sourcemap: true, 
-      minify: 'esbuild'
+      minify: 'esbuild',
+      chunkSizeWarningLimit: 1000
     },
     define: {
       // Allow process.env for legacy support if needed, but prefer import.meta.env
