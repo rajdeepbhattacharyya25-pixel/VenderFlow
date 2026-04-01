@@ -81,6 +81,20 @@ const NavigateToRootStore = () => {
 
 function App() {
   React.useEffect(() => {
+    // Phase 2: Enhanced Diagnostics - High Visibility Logging
+    if (typeof window !== 'undefined') {
+        const checkEnv = (key: string) => !!import.meta.env[key];
+        const status = {
+            supabase_url: checkEnv('VITE_SUPABASE_URL'),
+            supabase_key: checkEnv('VITE_SUPABASE_ANON_KEY'),
+            posthog_key: checkEnv('VITE_POSTHOG_API_KEY') || checkEnv('VITE_NEXT_PUBLIC_POSTHOG_KEY'),
+            mode: import.meta.env.MODE,
+            prod: import.meta.env.PROD
+        };
+        console.log("[Health] Environment Status:", status);
+        (window as any).APP_HEALTH = status;
+    }
+
     // Initialize Analytics
     const POSTHOG_KEY = import.meta.env.VITE_POSTHOG_API_KEY || import.meta.env.VITE_NEXT_PUBLIC_POSTHOG_KEY;
     const POSTHOG_HOST = import.meta.env.VITE_POSTHOG_HOST || 'https://app.posthog.com';

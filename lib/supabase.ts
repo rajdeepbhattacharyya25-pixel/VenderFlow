@@ -18,16 +18,18 @@ const isInvalidUrl = (url: string | undefined): boolean => {
 };
 
 if (isInvalidUrl(supabaseUrl) || !supabaseAnonKey || supabaseAnonKey === 'undefined') {
-    const errorMsg = `[Supabase Error] Invalid configuration. 
+    const errorMsg = `[Supabase Error] Invalid configuration detected in ${import.meta.env.MODE}. 
     URL: ${supabaseUrl || 'MISSING'}
     Key: ${supabaseAnonKey ? 'PRESENT (Masked)' : 'MISSING'}`;
     
     console.error(errorMsg);
     
-    // In production, we throw to prevent silent failures in data-driven components
-    if (import.meta.env.PROD) {
-        throw new Error('Critical: Supabase environment variables are missing or malformed in production.');
+    if (typeof window !== 'undefined') {
+        (window as any).SUPABASE_CONFIG_ERROR = errorMsg;
     }
+
+    // In production, we log loudly but don't THROW here, to let the app evaluation continue
+    // Component level checks or the ErrorBoundary in App.tsx will handle the failure.
 }
 
 // Ensure we only call createClient with a valid-looking URL to avoid internal library crashes
