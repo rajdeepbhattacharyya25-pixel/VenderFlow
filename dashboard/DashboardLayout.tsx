@@ -19,7 +19,7 @@ import { useSystemAlertListener, SystemAlert } from '../hooks/useSystemAlert';
 
 import { AlertCircle, Megaphone, X, Database, ShieldAlert, AlertTriangle } from 'lucide-react';
 import { Events } from '../lib/analytics';
-import ErrorBoundary from '../components/ErrorBoundary';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 function App() {
   const { isBackupRunning, backupProgress, backupMessage, backupStatus } = useAutoBackup(true); // Enable auto-backup on dashboard load

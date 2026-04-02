@@ -24,7 +24,7 @@ import { SellerSuccessAI } from './SellerSuccessAI';
 import TagInput from './TagInput';
 import { logAlert } from '../../../lib/notifications';
 import { supabase } from '../../../lib/supabase';
-import ErrorBoundary from '../../../../components/ErrorBoundary';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import LiveCameraModal from './LiveCameraModal';
 import { Camera } from 'lucide-react';
 import {
