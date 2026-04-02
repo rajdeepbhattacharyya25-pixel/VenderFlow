@@ -1,7 +1,4 @@
-import { supabase } from './supabase';
-
-// Base URL for Edge Functions (update this when deploying)
-const EDGE_FUNCTIONS_URL = import.meta.env.VITE_SUPABASE_URL + '/functions/v1';
+import { supabase, secureInvoke } from './supabase';
 
 interface InviteSellerData {
     email: string;
@@ -39,12 +36,23 @@ export interface Notification {
     created_at: string;
 }
 
-/**
- * Get the current user's auth token for API calls
- */
-async function getAuthToken(): Promise<string | null> {
-    const { data: { session } } = await supabase.auth.getSession();
-    return session?.access_token || null;
+interface SellerWithStats {
+    id: string;
+    store_name: string;
+    slug: string;
+    plan: string;
+    status: string;
+    is_active: boolean;
+    created_at: string;
+    profiles: {
+        full_name: string | null;
+        avatar_url: string | null;
+    };
+    stats: {
+        productCount: number;
+        imageCount: number;
+        orderCount: number;
+    };
 }
 
 /**
@@ -52,28 +60,16 @@ async function getAuthToken(): Promise<string | null> {
  */
 export async function inviteSeller(data: InviteSellerData): Promise<ApiResponse<{ sellerId: string }>> {
     try {
-        const token = await getAuthToken();
-        if (!token) {
-            return { success: false, error: 'Not authenticated' };
-        }
-
-        const response = await fetch(`${EDGE_FUNCTIONS_URL}/invite-seller`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            },
-            body: JSON.stringify(data),
+        const { data: result, error } = await secureInvoke('invite-seller', {
+            body: data,
         });
 
-        const result = await response.json();
-
-        if (!response.ok) {
-            return { success: false, error: result.error || 'Failed to invite seller' };
+        if (error) {
+            return { success: false, error: error.message || 'Failed to invite seller' };
         }
 
-        return { success: true, data: result };
-    } catch (error) {
+        return { success: true, data: result as { sellerId: string } };
+    } catch (error: unknown) {
         console.error('Error inviting seller:', error);
         return { success: false, error: 'Network error' };
     }
@@ -84,28 +80,16 @@ export async function inviteSeller(data: InviteSellerData): Promise<ApiResponse<
  */
 export async function changeSellerStatus(data: ChangeSellerStatusData): Promise<ApiResponse<void>> {
     try {
-        const token = await getAuthToken();
-        if (!token) {
-            return { success: false, error: 'Not authenticated' };
-        }
-
-        const response = await fetch(`${EDGE_FUNCTIONS_URL}/seller-status`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            },
-            body: JSON.stringify(data),
+        const { error } = await secureInvoke('seller-status', {
+            body: data,
         });
 
-        const result = await response.json();
-
-        if (!response.ok) {
-            return { success: false, error: result.error || 'Failed to update seller status' };
+        if (error) {
+            return { success: false, error: error.message || 'Failed to update seller status' };
         }
 
         return { success: true };
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('Error changing seller status:', error);
         return { success: false, error: 'Network error' };
     }
@@ -114,35 +98,19 @@ export async function changeSellerStatus(data: ChangeSellerStatusData): Promise<
 /**
  * List sellers with pagination and filters
  */
-export async function listSellers(params: ListSellersParams = {}): Promise<ApiResponse<{ sellers: any[], total: number }>> {
+export async function listSellers(params: ListSellersParams = {}): Promise<ApiResponse<{ sellers: unknown[], total: number }>> {
     try {
-        const token = await getAuthToken();
-        if (!token) {
-            return { success: false, error: 'Not authenticated' };
-        }
-
-        const queryParams = new URLSearchParams();
-        if (params.page) queryParams.set('page', params.page.toString());
-        if (params.limit) queryParams.set('limit', params.limit.toString());
-        if (params.search) queryParams.set('search', params.search);
-        if (params.status) queryParams.set('status', params.status);
-        if (params.plan) queryParams.set('plan', params.plan);
-
-        const response = await fetch(`${EDGE_FUNCTIONS_URL}/list-sellers?${queryParams}`, {
+        const { data, error } = await secureInvoke('list-sellers', {
             method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-            },
+            queryParams: params as Record<string, string>,
         });
 
-        const result = await response.json();
-
-        if (!response.ok) {
-            return { success: false, error: result.error || 'Failed to list sellers' };
+        if (error) {
+            return { success: false, error: error.message || 'Failed to list sellers' };
         }
 
-        return { success: true, data: result };
-    } catch (error) {
+        return { success: true, data: data as { sellers: unknown[], total: number } };
+    } catch (error: unknown) {
         console.error('Error listing sellers:', error);
         return { success: false, error: 'Network error' };
     }
@@ -156,14 +124,12 @@ export const adminDb = {
     /**
      * List sellers directly from database
      */
-    async listSellers(params: ListSellersParams = {}) {
-        const { page = 1, limit = 25, search, status, plan } = params;
+    async listSellers(params: ListSellersParams = {}): Promise<{ sellers: SellerWithStats[], total: number }> {
+        const { search, status, plan } = params;
 
         try {
             // Use RPC to fetch sellers with pre-calculated stats (bypassing RLS)
             const { data, error } = await supabase.rpc('get_sellers_with_stats', {
-                page,
-                limit_val: limit,
                 search_term: search || null,
                 status_filter: status || null,
                 plan_filter: plan || null
@@ -180,9 +146,21 @@ export const adminDb = {
 
             const { count } = await countQuery;
 
+            interface SellerRpcRow {
+                id: string;
+                store_name: string;
+                slug: string;
+                plan: string;
+                status: string;
+                is_active: boolean;
+                created_at: string;
+                product_count: number;
+                image_count: number;
+                order_count: number;
+            }
+
             // Map RPC result to expected format
-            // RPC no longer returns profiles data (full_name, avatar_url) due to schema mismatch
-            const sellersWithStats = (data || []).map((row: any) => ({
+            const sellersWithStats: SellerWithStats[] = ((data as unknown as SellerRpcRow[]) || []).map((row) => ({
                 id: row.id,
                 store_name: row.store_name,
                 slug: row.slug,
@@ -191,8 +169,8 @@ export const adminDb = {
                 is_active: row.is_active,
                 created_at: row.created_at,
                 profiles: {
-                    full_name: null, // Not available in RPC
-                    avatar_url: null // Not available in RPC
+                    full_name: null,
+                    avatar_url: null
                 },
                 stats: {
                     productCount: row.product_count,
@@ -212,7 +190,7 @@ export const adminDb = {
     /**
      * Update seller status directly in database
      */
-    async updateSellerStatus(sellerId: string, status: 'active' | 'suspended') {
+    async updateSellerStatus(sellerId: string, status: 'active' | 'suspended'): Promise<boolean> {
         const { error } = await supabase
             .from('sellers')
             .update({
@@ -299,33 +277,21 @@ export const adminDb = {
      */
     async reviewApplication(applicationId: string, action: 'approve' | 'reject') {
         try {
-            const token = await getAuthToken();
-            if (!token) {
-                return { success: false, error: 'Not authenticated' };
-            }
-
-            const response = await fetch(`${EDGE_FUNCTIONS_URL}/review-application`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
+            const { data, error } = await secureInvoke('review-application', {
+                body: {
                     application_id: applicationId,
                     action: action
-                })
+                }
             });
 
-            const result = await response.json();
-
-            if (!response.ok) {
-                return { success: false, error: result.error || `Failed to ${action} application` };
+            if (error) {
+                return { success: false, error: error.message || `Failed to ${action} application` };
             }
 
-            return { success: true, data: result };
-        } catch (error: any) {
+            return { success: true, data: data };
+        } catch (error: unknown) {
             console.error(`Error processing application ${action}:`, error);
-            return { success: false, error: error.message || 'Network error' };
+            return { success: false, error: error instanceof Error ? error.message : 'Network error' };
         }
     },
 
@@ -345,7 +311,7 @@ export const adminDb = {
                 .select('total')
                 .neq('status', 'cancelled');
 
-            const totalRevenue = revenueData?.reduce((acc, order) => acc + (order.total || 0), 0) || 0;
+            const totalRevenue = (revenueData as { total: number }[] || [])?.reduce((acc, order) => acc + (order.total || 0), 0) || 0;
 
             // 3. Active Orders (pending + processing)
             const { count: activeOrders } = await supabase
@@ -370,7 +336,7 @@ export const adminDb = {
                 .lt('created_at', thirtyDaysAgo.toISOString());
 
             // Calculate percentage changes
-            const sellerChange = priorSellers && priorSellers > 0
+            const sellerChange = (priorSellers && priorSellers > 0)
                 ? Math.round(((recentSellers || 0) - priorSellers) / priorSellers * 100)
                 : (recentSellers || 0) > 0 ? 100 : 0;
 
@@ -404,7 +370,7 @@ export const adminDb = {
             try {
                 const { data: advMetrics } = await supabase.rpc('get_advanced_health_metrics');
                 if (advMetrics) {
-                    advancedHealth = advMetrics as any;
+                    advancedHealth = advMetrics as typeof advancedHealth;
                 }
             } catch (rpcError) {
                 console.error("Failed to fetch advanced health metrics:", rpcError);
@@ -465,8 +431,8 @@ export const adminDb = {
             let databaseSize = 'Unknown';
             try {
                 const { data: dbMetrics } = await supabase.rpc('get_system_metrics');
-                if (dbMetrics && (dbMetrics as any).database_size) {
-                    databaseSize = (dbMetrics as any).database_size;
+                if (dbMetrics && (dbMetrics as { database_size?: string }).database_size) {
+                    databaseSize = (dbMetrics as { database_size: string }).database_size;
                 }
             } catch (rpcError) {
                 console.error("Failed to fetch DB metrics:", rpcError);
@@ -477,9 +443,9 @@ export const adminDb = {
                 .from('seller_wallets')
                 .select('available_balance, reserve_balance, negative_balance');
 
-            const totalAvailable = walletData?.reduce((acc, w) => acc + (w.available_balance || 0), 0) || 0;
-            const totalReserves = walletData?.reduce((acc, w) => acc + (w.reserve_balance || 0), 0) || 0;
-            const totalNegative = walletData?.reduce((acc, w) => acc + (w.negative_balance || 0), 0) || 0;
+            const totalAvailable = (walletData as { available_balance: number }[] || [])?.reduce((acc, w) => acc + (w.available_balance || 0), 0) || 0;
+            const totalReserves = (walletData as { reserve_balance: number }[] || [])?.reduce((acc, w) => acc + (w.reserve_balance || 0), 0) || 0;
+            const totalNegative = (walletData as { negative_balance: number }[] || [])?.reduce((acc, w) => acc + (w.negative_balance || 0), 0) || 0;
 
             // Calculate trends for orders and revenue
             const { data: recentOrderData } = await supabase
@@ -495,10 +461,10 @@ export const adminDb = {
                 .gte('created_at', sixtyDaysAgo.toISOString())
                 .lt('created_at', thirtyDaysAgo.toISOString());
 
-            const recentRevenue = recentOrderData?.reduce((acc, order) => acc + (order.total || 0), 0) || 0;
-            const priorRevenue = priorOrderData?.reduce((acc, order) => acc + (order.total || 0), 0) || 0;
-            const recentOrderCount = recentOrderData?.length || 0;
-            const priorOrderCount = priorOrderData?.length || 0;
+            const recentRevenue = (recentOrderData as { total: number }[] || [])?.reduce((acc, order) => acc + (order.total || 0), 0) || 0;
+            const priorRevenue = (priorOrderData as { total: number }[] || [])?.reduce((acc, order) => acc + (order.total || 0), 0) || 0;
+            const recentOrderCount = (recentOrderData as unknown[])?.length || 0;
+            const priorOrderCount = (priorOrderData as unknown[])?.length || 0;
 
             const revenueChange = priorRevenue > 0
                 ? Math.round((recentRevenue - priorRevenue) / priorRevenue * 100)
@@ -589,7 +555,7 @@ export const adminDb = {
 
             // Map to activity format
             return (data || []).map(log => {
-                const actorName = (log.profiles as any)?.full_name || 'System';
+                const actorName = (log.profiles as unknown as { full_name: string })?.full_name || 'System';
                 let detail = '';
                 let status = 'success';
 
@@ -607,7 +573,7 @@ export const adminDb = {
                         status = 'warning';
                         break;
                     case 'order_created':
-                        detail = `processed a ₹${(log.metadata as any)?.total || 0} order`;
+                        detail = `processed a ₹${(log.metadata as { total?: number })?.total || 0} order`;
                         status = 'success';
                         break;
                     case 'product_created':
@@ -787,7 +753,7 @@ export const adminDb = {
      */
     async exportReport(type: 'sellers' | 'orders' | 'all' = 'all') {
         try {
-            const report: { sellers?: any[]; orders?: any[] } = {};
+            const report: { sellers?: unknown[]; orders?: unknown[] } = {};
 
             if (type === 'sellers' || type === 'all') {
                 const { data: sellers } = await supabase
@@ -842,7 +808,7 @@ export const adminDb = {
             const now = new Date();
             const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-            orders.forEach((order: any) => {
+            orders.forEach((order) => {
                 const date = new Date(order.created_at);
                 const total = order.total || 0;
 
@@ -1095,8 +1061,8 @@ export const adminDb = {
      * Creates a new seller store via Edge Function.
      * This is the single source of truth for store creation.
      */
-    async createSeller(details: { store_name: string; slug: string; client_request_id?: string; utm?: any }) {
-        const { data, error } = await supabase.functions.invoke('create-seller', {
+    async createSeller(details: { store_name: string; slug: string; client_request_id?: string; utm?: Record<string, unknown> }) {
+        const { data, error } = await secureInvoke('create-seller', {
             body: details
         });
 
@@ -1170,7 +1136,7 @@ export const adminDb = {
 
             if (error && error.code !== 'PGRST116') throw error;
 
-            let discrepancies: any[] = [];
+            let discrepancies: unknown[] = [];
             if (latestRun) {
                 const { data: discs } = await supabase
                     .from('reconciliation_discrepancies')
@@ -1340,7 +1306,7 @@ export const adminDb = {
      * Analyze a dispute using AI
      */
     async analyzeDispute(disputeId: string) {
-        const { data, error } = await supabase.functions.invoke('analyze-dispute', {
+        const { data, error } = await secureInvoke('analyze-dispute', {
             body: { dispute_id: disputeId }
         });
 

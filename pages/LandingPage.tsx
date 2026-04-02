@@ -300,9 +300,9 @@ export default function LandingPage() {
                     </div>
 
                     {/* Minimalist Nav (Actions only on right) */}
-                    <header className="fixed top-0 w-full z-[100] px-3 sm:px-8 py-4 sm:py-6 pointer-events-none">
-                        <div className="max-w-[1600px] mx-auto flex items-center justify-end pointer-events-auto">
-                            <div className="flex gap-3 sm:gap-6 items-center">
+                    <header className="fixed top-0 w-full z-[100] px-3 sm:px-8 py-2 sm:py-6 pointer-events-none">
+                        <div className="max-w-[1600px] mx-auto flex items-start justify-end pointer-events-auto">
+                            <div className="flex flex-col sm:flex-row gap-0 sm:gap-6 items-end sm:items-center">
                                 {/* Desktop only secondary links */}
                                 <button
                                     onClick={() => {
@@ -315,37 +315,32 @@ export default function LandingPage() {
                                 </button>
 
                                 <motion.button
-                                    whileTap={{ scale: 0.95 }}
+                                    whileTap={isMobile ? {} : { scale: 0.95 }}
                                     onClick={() => handleLogin(user ? 'customer' : 'seller')}
-                                    className="nav-item text-xs sm:text-base font-bold cursor-pointer text-white/70 hover:text-[#ccff00] transition-colors flex items-center justify-center gap-1.5 sm:gap-2 p-2 sm:p-2 -mr-2 sm:mr-0 min-h-[40px] sm:min-h-[44px]"
+                                    className="nav-item text-[11px] sm:text-base font-extrabold cursor-pointer text-white/70 hover:text-[#ccff00] transition-colors flex items-center justify-center gap-1.5 sm:gap-2 p-1 sm:p-2 -mr-1 sm:mr-0 min-h-0 sm:min-h-[44px]"
                                     title={user ? "Go to Dashboard" : "Seller Login"}
                                 >
-                                    <Suspense fallback={<span>{user ? "Dashboard" : "Seller Login"}</span>}>
-                                        <Shuffle
-                                            text={user ? "Dashboard" : "Seller Login"}
-                                            shuffleDirection="right"
-                                            duration={0.3}
-                                            animationMode="none"
-                                            shuffleTimes={1}
-                                            ease="power3.out"
-                                            stagger={0.04}
-                                            threshold={0.1}
-                                            triggerOnce={false}
-                                            triggerOnHover={true}
-                                            respectReducedMotion={true}
-                                            loop={false}
-                                            loopDelay={0}
-                                            className="m-0 p-0 inline-block pointer-events-none"
-                                            tag="span"
-                                        />
-                                    </Suspense>
+                                    {user ? "Dashboard" : isMobile ? "SELLER LOGIN" : "Seller Login"}
                                     {user && <div className="w-1.5 h-1.5 bg-[#ccff00] rounded-full animate-pulse shadow-[0_0_8px_#ccff00]" />}
                                 </motion.button>
 
                                 {/* Hide Apply on mobile header - it's in BottomNav or Hero */}
-                                <div className="hidden sm:block">
-                                    <MagneticButton onClick={handleApplyToSell} className="nav-item !h-10 !p-0 overflow-hidden w-[96px] !bg-transparent rounded-[22px]">
+                                <div className="mt-[-2px] sm:mt-0">
+                                    <MagneticButton 
+                                        onClick={handleApplyToSell} 
+                                        className="nav-item !h-7 sm:!h-10 !p-0 overflow-hidden w-[68px] sm:w-[96px] !bg-transparent rounded-[22px]"
+                                        disabled={isMobile}
+                                    >
                                         <Suspense fallback={<div className="bg-[#ccff00]/20 w-full h-full rounded-[22px]" />}>
+                                        {isMobile ? (
+                                            <div className="w-full h-full rounded-[22px] p-[1px] bg-[#ccff00]/10 border border-[#ccff00]/20">
+                                                <div className="bg-[#070707] w-full h-full rounded-[20px] flex items-center justify-center border border-white/5">
+                                                    <span className="text-[#ccff00] text-[10px] font-black uppercase tracking-tighter">
+                                                        Apply
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        ) : (
                                             <StarBorder
                                                 as="div"
                                                 color="#ccff00"
@@ -355,15 +350,16 @@ export default function LandingPage() {
                                                 innerClassName="w-full h-full p-[4px] pointer-events-none"
                                             >
                                                 <div className="bg-[#070707] w-full h-full rounded-[18px] flex items-center justify-center border border-white/5 shadow-inner">
-                                                    <motion.span
-                                                        animate={{ opacity: [0.5, 1, 0.5], scale: [0.97, 1.02, 0.97] }}
-                                                        transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-                                                        className="text-[#ccff00] text-[15px] font-black uppercase tracking-wider"
-                                                    >
-                                                        Apply
-                                                    </motion.span>
+                                                        <motion.span
+                                                            animate={{ opacity: [0.5, 1, 0.5], scale: [0.97, 1.02, 0.97] }}
+                                                            transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+                                                            className="text-[#ccff00] text-[15px] font-black uppercase tracking-wider"
+                                                        >
+                                                            Apply
+                                                        </motion.span>
                                                 </div>
                                             </StarBorder>
+                                        )}
                                         </Suspense>
                                     </MagneticButton>
                                 </div>

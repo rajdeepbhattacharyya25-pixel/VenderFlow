@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, secureInvoke } from '../lib/supabase';
 import { IconSparkles, IconStar, IconCheck } from './Icons';
 
 interface ReviewSummary {
@@ -22,7 +22,7 @@ export const ReviewSummaries: React.FC<ReviewSummariesProps> = ({ productId }) =
       setIsLoading(true);
       setError(null);
       try {
-        const { data, error: funcError } = await supabase.functions.invoke('review-summarizer', {
+        const { data, error: funcError } = await secureInvoke('review-summarizer', {
           body: { productId }
         });
 

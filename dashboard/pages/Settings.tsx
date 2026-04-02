@@ -7,7 +7,7 @@ import {
     Users, Activity, Zap, CreditCard as BillingIcon, ChevronRight,
     Search, Bell as NotificationIcon, Truck, Plus, RefreshCw, Check, Send, AlertCircle, Info, Clock, LogOut, ExternalLink, Eye
 } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import { supabase, secureInvoke } from '../../lib/supabase';
 import { TwoFactorSetup } from '../../components/TwoFactorSetup';
 import { TelegramSettings } from '../components/TelegramSettings';
 import { SharedAccessPanel } from '../components/SharedAccessPanel';
@@ -334,7 +334,7 @@ const Settings = () => {
 
         // 2. Check API (Edge Functions)
         // We call a function, even if it returns 403/401 it means infrastructure is UP
-        const { error: fnError } = await supabase.functions.invoke('seller-status');
+        const { error: fnError } = await secureInvoke('seller-status');
         // If error is network error, then down. If error is 4xx/5xx from function logic, it's UP but maybe logic error.
         // Supabase client 'error' usually means invocation failed (network) or function threw error.
         // We'll treat 'Response' as healthy infrastructure.

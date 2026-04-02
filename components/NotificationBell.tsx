@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { IconBell, IconX } from './Icons';
-import { supabase } from '../lib/supabase';
+import { supabase, secureInvoke } from '../lib/supabase';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import { AlertItem, AlertAction } from './AlertItem';
 
@@ -125,7 +125,7 @@ export const NotificationBell: React.FC = () => {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) return;
 
-            await supabase.functions.invoke('send-push', {
+            await secureInvoke('send-push', {
                 body: {
                     record: {
                         user_id: user.id,

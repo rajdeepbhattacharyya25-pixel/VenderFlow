@@ -24,6 +24,8 @@ import { SellerSuccessAI } from './SellerSuccessAI';
 import TagInput from './TagInput';
 import { logAlert } from '../../../lib/notifications';
 import { supabase } from '../../../lib/supabase';
+import LiveCameraModal from './LiveCameraModal';
+import { Camera } from 'lucide-react';
 import {
     DndContext,
     closestCenter,
@@ -176,6 +178,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, e
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [hasChanges, setHasChanges] = useState(false);
+    const [showCamera, setShowCamera] = useState(false);
 
     const sensors = useSensors(
         useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
@@ -373,17 +376,18 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, e
                 setUploading(true);
                 const result = await unifiedUpload({ file, productId: product?.id || 'temp', isPrimary: false, mediaType: 'video' });
                 updateField('videoUrl', result.url);
-            } catch (err: any) { 
+            } catch (err: unknown) { 
                 console.error('Video upload error:', err);
-                alert(`Video upload failed: ${err.message || 'Unknown error'}`); 
+                const errorObj = err as { message?: string, code?: string };
+                alert(`Video upload failed: ${errorObj.message || 'Unknown error'}`); 
                 const { data: { user } } = await supabase.auth.getUser();
                 logAlert({
                     type: 'VIDEO_UPLOAD_FAILED',
                     severity: 'critical',
                     title: 'Video Upload Failed',
-                    message: `Product video could not be uploaded. ${err.message || 'Unknown error'}`,
+                    message: `Product video could not be uploaded. ${errorObj.message || 'Unknown error'}`,
                     seller_id: user?.id,
-                    metadata: { operation_type: 'video_upload', resource_id: product?.id, error_code: err.code || 'VIDEO_ERROR' }
+                    metadata: { operation_type: 'video_upload', resource_id: product?.id, error_code: errorObj.code || 'VIDEO_ERROR' }
                 });
             }
             finally { setUploading(false); e.target.value = ''; }
@@ -447,17 +451,18 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, e
             });
             const newVariantImages = { ...formData.variantImages, [variantValue]: result.url };
             updateField('variantImages', newVariantImages);
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('Variant upload error:', err);
-            alert(`Variant image upload failed: ${err.message || 'Unknown error'}`);
+            const errorObj = err as { message?: string, code?: string };
+            alert(`Variant image upload failed: ${errorObj.message || 'Unknown error'}`);
             const { data: { user } } = await supabase.auth.getUser();
             logAlert({
                 type: 'VARIANT_IMAGE_UPLOAD_FAILED',
                 severity: 'critical',
                 title: 'Variant Image Upload Failed',
-                message: `Image for variant "${variantValue}" could not be uploaded. ${err.message || 'Unknown error'}`,
+                message: `Image for variant "${variantValue}" could not be uploaded. ${errorObj.message || 'Unknown error'}`,
                 seller_id: user?.id,
-                metadata: { operation_type: 'variant_image_upload', resource_id: product?.id, variant_value: variantValue, error_code: err.code || 'VARIANT_IMAGE_ERROR' }
+                metadata: { operation_type: 'variant_image_upload', resource_id: product?.id, variant_value: variantValue, error_code: errorObj.code || 'VARIANT_IMAGE_ERROR' }
             });
         } finally {
             setUploading(false);
@@ -574,10 +579,24 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, e
 
                         {activeSection === 'photos' && (
                             <div className="space-y-4">
-                                <button type="button" onClick={() => imgbbFileInputRef.current?.click()} className="w-full p-8 border-2 border-dashed border-emerald-300 rounded-xl flex flex-col items-center gap-3">
-                                    <Upload size={32} className="text-emerald-400" />
-                                    <span className="text-sm text-emerald-600">Choose Image to Upload</span>
-                                </button>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <button 
+                                        type="button" 
+                                        onClick={() => imgbbFileInputRef.current?.click()} 
+                                        className="p-6 border-2 border-dashed border-emerald-500/30 rounded-xl flex flex-col items-center gap-2 hover:bg-emerald-500/5 hover:border-emerald-500/50 transition-all group"
+                                    >
+                                        <Upload size={28} className="text-emerald-500/60 group-hover:text-emerald-500" />
+                                        <span className="text-sm font-semibold text-emerald-500/70 group-hover:text-emerald-500">Upload Image</span>
+                                    </button>
+                                    <button 
+                                        type="button" 
+                                        onClick={() => setShowCamera(true)} 
+                                        className="p-6 border-2 border-dashed border-sky-500/30 rounded-xl flex flex-col items-center gap-2 hover:bg-sky-500/5 hover:border-sky-500/50 transition-all group"
+                                    >
+                                        <Camera size={28} className="text-sky-500/60 group-hover:text-sky-500" />
+                                        <span className="text-sm font-semibold text-sky-500/70 group-hover:text-sky-500 uppercase tracking-widest font-mono">Take Photo</span>
+                                    </button>
+                                </div>
                                  <input ref={imgbbFileInputRef} type="file" className="hidden" accept="image/*" multiple onChange={async (e) => {
                                     const files = e.target.files;
                                     if (!files) return;
@@ -594,17 +613,18 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, e
                                                     mediaType: 'image' 
                                                 });
                                                 uploadedUrls.push(result.url);
-                                            } catch (fileErr: any) {
+                                             } catch (fileErr: unknown) {
                                                 console.error(`Error uploading file ${files[i].name}:`, fileErr);
-                                                alert(`Failed to upload ${files[i].name}: ${fileErr.message || 'Unknown error'}`);
+                                                const fileErrObj = fileErr as { message?: string, code?: string };
+                                                alert(`Failed to upload ${files[i].name}: ${fileErrObj.message || 'Unknown error'}`);
                                                 const { data: { user } } = await supabase.auth.getUser();
                                                 logAlert({
                                                     type: 'IMAGE_UPLOAD_FAILED',
                                                     severity: 'critical',
                                                     title: 'Image Upload Failed',
-                                                    message: `Failed to upload product image "${files[i].name}". ${fileErr.message || 'Unknown error'}`,
+                                                    message: `Failed to upload product image "${files[i].name}". ${fileErrObj.message || 'Unknown error'}`,
                                                     seller_id: user?.id,
-                                                    metadata: { operation_type: 'image_upload', resource_id: product?.id, file_name: files[i].name, error_code: fileErr.code || 'IMAGE_ERROR' }
+                                                    metadata: { operation_type: 'image_upload', resource_id: product?.id, file_name: files[i].name, error_code: fileErrObj.code || 'IMAGE_ERROR' }
                                                 });
                                             }
                                         }
@@ -615,17 +635,18 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, e
                                             }));
                                             updateField('images', [...formData.images, ...newImages]);
                                         }
-                                    } catch (err: any) {
+                                    } catch (err: unknown) {
                                         console.error('Bulk upload error:', err);
-                                        alert(`Upload process failed: ${err.message || 'Unknown error'}`);
+                                        const errorObj = err as { message?: string, code?: string };
+                                        alert(`Upload process failed: ${errorObj.message || 'Unknown error'}`);
                                         const { data: { user } } = await supabase.auth.getUser();
                                         logAlert({
                                             type: 'BULK_UPLOAD_FAILED',
                                             severity: 'critical',
                                             title: 'Bulk Image Upload Failed',
-                                            message: `The bulk upload process failed. ${err.message || 'Unknown error'}`,
+                                            message: `The bulk upload process failed. ${errorObj.message || 'Unknown error'}`,
                                             seller_id: user?.id,
-                                            metadata: { operation_type: 'bulk_image_upload', resource_id: product?.id, error_code: err.code || 'BULK_UPLOAD_ERROR' }
+                                            metadata: { operation_type: 'bulk_image_upload', resource_id: product?.id, error_code: errorObj.code || 'BULK_UPLOAD_ERROR' }
                                         });
                                     } finally { 
                                         setUploading(false); 
@@ -1225,6 +1246,16 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, e
                     }
                     setEditorOpen(false);
                     setEditingImageIndex(null);
+                }}
+            />
+
+            <LiveCameraModal 
+                isOpen={showCamera}
+                onClose={() => setShowCamera(false)}
+                onCapture={(dataUrl) => {
+                    setEditorImageSrc(dataUrl);
+                    setEditingImageIndex(null); // New image
+                    setEditorOpen(true);
                 }}
             />
         </>

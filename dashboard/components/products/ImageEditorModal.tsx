@@ -22,6 +22,8 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { unifiedUpload } from '../../lib/vault';
+import { logAlert } from '../../../lib/notifications';
+import { supabase } from '../../../lib/supabase';
 
 interface ImageEditorModalProps {
     isOpen: boolean;
@@ -140,11 +142,22 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({
                 mediaType: 'image',
             });
             onComplete(result.url);
+            if ('vibrate' in navigator) navigator.vibrate([10, 30, 10]); // Success pattern
             handleClose();
         } catch (err: unknown) {
-            const e = err as { message?: string };
+            const e = err as { message?: string, code?: string };
             console.error('Editor failed:', err);
             setError(e.message || 'Upload failed');
+            
+            const { data: { user } } = await supabase.auth.getUser();
+            logAlert({
+                type: 'EDITOR_UPLOAD_FAILED',
+                severity: 'critical',
+                title: 'Editor Upload Failed',
+                message: `Studio editor failed to upload product image. ${e.message || 'Unknown error'}`,
+                seller_id: user?.id,
+                metadata: { operation_type: 'editor_upload', resource_id: productId, error_code: e.code || 'EDITOR_ERROR' }
+            });
         } finally {
             setUploading(false);
             setUploadStatus('');
@@ -168,6 +181,7 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({
         }
         setZoom(1);
         setRotation(0);
+        if ('vibrate' in navigator) navigator.vibrate(20);
     };
 
     const nudgeZoom = (delta: number) =>
@@ -182,7 +196,7 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({
         <div className="fixed inset-0 z-[60] flex flex-col bg-black overflow-hidden editor-touch-container">
 
             {/* ── Header ─────────────────────────────────────────── */}
-            <div className="shrink-0 h-14 flex items-center justify-between px-4 sm:px-8 border-b border-white/5 bg-black/80 backdrop-blur-sm z-[70]">
+            <div className="shrink-0 h-[calc(3.5rem+env(safe-area-inset-top))] pt-safe flex items-center justify-between px-4 sm:px-8 border-b border-white/5 bg-black/80 backdrop-blur-sm z-[70]">
                 <div className="flex items-center gap-3">
                     <span className="text-[10px] font-black tracking-[0.25em] uppercase text-white/25">
                         Studio Editor
@@ -253,8 +267,11 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({
                         return (
                             <button
                                 key={opt.label}
-                                onClick={() => handleAspectChange(opt.value)}
-                                className={`shrink-0 flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold border transition-all active:scale-95 min-h-[44px] ${
+                                onClick={() => {
+                                    handleAspectChange(opt.value);
+                                    if ('vibrate' in navigator) navigator.vibrate(5);
+                                }}
+                                className={`shrink-0 flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold border transition-all active:scale-95 min-h-[48px] ${
                                     isActive
                                         ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-400'
                                         : 'bg-white/5 border-white/10 text-white/40 hover:text-white hover:border-white/20'

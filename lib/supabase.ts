@@ -52,12 +52,26 @@ function getSupabase() {
 export const supabase = new Proxy({} as SupabaseClient, {
     get: (_, prop) => {
         const instance = getSupabase();
-        return (instance as any)[prop];
+        return (instance as unknown as Record<string | symbol, unknown>)[prop];
     },
     // Handle function calls if the proxy itself is called (though unlikely for supabase client)
     apply: (target, thisArg, argumentsList) => {
         const instance = getSupabase();
-        return (instance as any).apply(thisArg, argumentsList);
+        return (instance as unknown as (...args: unknown[]) => unknown).apply(thisArg, argumentsList);
     }
 });
 
+/**
+ * Wrapper for invoking Edge Functions that require the DISPATCHER_SECRET.
+ * Use this for anonymous/system calls that don't have a user session.
+ */
+export const secureInvoke = async (functionName: string, options: { headers?: Record<string, string>; body?: unknown; [key: string]: unknown } = {}) => {
+    const { headers = {}, ...rest } = options;
+    return supabase.functions.invoke(functionName, {
+        ...rest,
+        headers: {
+            ...headers,
+            'X-Dispatcher-Secret': import.meta.env.VITE_DISPATCHER_SECRET || '',
+        }
+    });
+};

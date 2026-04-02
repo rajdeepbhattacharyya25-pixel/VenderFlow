@@ -1,19 +1,19 @@
-import { supabase } from './supabase';
+import { supabase, secureInvoke } from './supabase';
 
 type NotificationType = 'BACKUP_SUCCESS' | 'BACKUP_FAILED' | 'NEW_MESSAGE' | 'SYSTEM_ALERT' | 'NEW_SELLER_APPLICATION';
 
 interface NotificationPayload {
     type: NotificationType;
     message: string;
-    data?: any;
+    data?: unknown;
 }
 
 export const notifyAdmin = async (payload: NotificationPayload) => {
     try {
         console.log("🔔 Sending Telegram Notification:", payload.type);
 
-        const { data, error } = await supabase.functions.invoke('notify-admin', {
-            body: payload
+        const { error } = await secureInvoke('notify-admin', {
+            body: payload,
         });
 
         if (error) throw error;
@@ -34,10 +34,10 @@ export interface LogAlertParams {
   title: string;
   message: string;
   seller_id?: string | null;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   action?: {
     type: string;
-    payload: Record<string, any>;
+    payload: Record<string, unknown>;
   } | null;
 }
 
@@ -66,6 +66,13 @@ export const logAlert = async ({
     ];
     const fingerprint = fingerprintParts.join(':');
 
+    const breadcrumbs = typeof window !== 'undefined' ? {
+        href: window.location.href,
+        userAgent: navigator.userAgent,
+        referrer: document.referrer,
+        timestamp: new Date().toISOString(),
+    } : {};
+    
     // 2. Call the create_system_alert RPC
     // This RPC handles severity-based throttling and DB trigger for dispatcher
     const { data, error } = await supabase.rpc('create_system_alert', {
@@ -74,7 +81,7 @@ export const logAlert = async ({
       p_title: title,
       p_message: message,
       p_seller_id: seller_id,
-      p_metadata: metadata,
+      p_metadata: { ...metadata, ...breadcrumbs },
       p_fingerprint: fingerprint,
       p_action_type: action?.type,
       p_action_payload: action?.payload
@@ -85,11 +92,11 @@ export const logAlert = async ({
       
       // FALLBACK: If RPC fails, try standard notifyAdmin for critical issues
       if (severity === 'critical') {
-        const { data: fallbackData, error: fallbackError } = await supabase.functions.invoke('notify-admin', {
+        const { error: fallbackError } = await secureInvoke('notify-admin', {
           body: {
             type: 'SYSTEM_ALERT',
             message: `[FALLBACK ALERT] ${message}`,
-            data: { severity, title, type, seller_id, metadata, error }
+            data: { severity, title, type, seller_id, metadata: { ...metadata }, error }
           }
         });
         if (fallbackError) console.error("❌ Fallback notifyAdmin failed:", fallbackError);
@@ -99,7 +106,7 @@ export const logAlert = async ({
 
     console.log(`✅ System Alert Processed [${severity}]: ${title}`);
     return { data, error: null };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("❌ Unexpected error logging alert:", err);
     return { data: null, error: err };
   }

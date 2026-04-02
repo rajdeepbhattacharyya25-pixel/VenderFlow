@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Mail, User, Store, Tag, Loader2, CheckCircle, AlertTriangle, Link as LinkIcon } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import { supabase, secureInvoke } from '../../lib/supabase';
 
 interface InviteFormData {
     email: string;
@@ -97,7 +97,7 @@ const AdminInvites: React.FC = () => {
         setLoading(true);
 
         try {
-            const { data, error } = await supabase.functions.invoke('invite-seller', {
+            const { data, error } = await secureInvoke('invite-seller', {
                 body: {
                     email: formData.email,
                     store_name: formData.store_name,

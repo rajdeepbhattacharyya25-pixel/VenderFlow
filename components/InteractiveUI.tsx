@@ -1,8 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, useMotionValue, useSpring, useTransform, useInView, animate } from 'framer-motion';
-import { ArrowUpRight } from 'lucide-react';
 
-export const MagneticButton = ({ children, className = "", onClick }: { children: React.ReactNode, className?: string, onClick?: () => void }) => {
+export const MagneticButton = ({ children, className = "", onClick, disabled = false }: { children: React.ReactNode, className?: string, onClick?: () => void, disabled?: boolean }) => {
     const ref = useRef<HTMLButtonElement>(null);
     const mouseX = useMotionValue(0);
     const mouseY = useMotionValue(0);
@@ -12,6 +11,7 @@ export const MagneticButton = ({ children, className = "", onClick }: { children
     const y = useSpring(mouseY, springConfig);
 
     const handleMouseMove = (e: React.MouseEvent) => {
+        if (disabled) return;
         const rect = ref.current?.getBoundingClientRect();
         if (rect) {
             const distanceX = e.clientX - (rect.left + rect.width / 2);
@@ -32,24 +32,26 @@ export const MagneticButton = ({ children, className = "", onClick }: { children
             ref={ref}
             onMouseMove={handleMouseMove}
             onMouseLeave={resetPosition}
-            onClick={onClick}
-            style={{ x, y }}
-            whileTap={{ scale: 0.95 }}
+            onClick={disabled ? undefined : onClick}
+            style={{ x: disabled ? 0 : x, y: disabled ? 0 : y }}
+            whileTap={disabled ? {} : { scale: 0.95 }}
             className={`relative h-14 sm:h-16 px-6 sm:px-8 flex items-center justify-center bg-[#CCFF00] text-black font-black text-sm sm:text-base uppercase tracking-wider border-0 transition-shadow duration-300 hover:shadow-[0_0_30px_rgba(204,255,0,0.4)] touch-manipulation cursor-pointer overflow-hidden ${className}`}
         >
             <span className="relative z-10 flex items-center gap-2">
                 {children}
             </span>
             {/* High-contrast neon orange glow on active/hover */}
-            <motion.div
-                className="absolute inset-0 bg-[#FF4D00] opacity-0 hover:opacity-100 transition-opacity pointer-events-none duration-300"
-                initial={false}
-            />
+            {!disabled && (
+                <motion.div
+                    className="absolute inset-0 bg-[#FF4D00] opacity-0 hover:opacity-100 transition-opacity pointer-events-none duration-300"
+                    initial={false}
+                />
+            )}
         </motion.button>
     );
 };
 
-export const GlassFeatureCard = ({ title, subtitle, icon: Icon, className = "" }: { title: React.ReactNode, subtitle: React.ReactNode, icon: any, className?: string }) => {
+export const GlassFeatureCard = ({ title, subtitle, icon: Icon, className = "" }: { title: React.ReactNode, subtitle: React.ReactNode, icon: React.ElementType, className?: string }) => {
     const [isHovered, setIsHovered] = useState(false);
 
     return (
@@ -117,7 +119,7 @@ export const GlassFeatureCard = ({ title, subtitle, icon: Icon, className = "" }
     );
 };
 
-export const StatCard = ({ value, label, prefix = "", suffix = "", sublabel = "", icon: Icon, className = "" }: { value: number, label: string, prefix?: string, suffix?: string, sublabel?: string, icon?: any, className?: string }) => {
+export const StatCard = ({ value, label, prefix = "", suffix = "", sublabel = "", icon: Icon, className = "" }: { value: number, label: string, prefix?: string, suffix?: string, sublabel?: string, icon?: React.ElementType, className?: string }) => {
     const cardRef = useRef<HTMLDivElement>(null);
     const isInView = useInView(cardRef, { once: true, margin: "-100px" });
 

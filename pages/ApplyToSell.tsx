@@ -153,7 +153,7 @@ function FloatingInput({ label, icon: Icon, required, error, ...props }: {
                 placeholder=" "
                 className="peer w-full text-base outline-none placeholder-transparent"
                 style={{
-                    padding: '28px 16px 10px 44px',
+                    padding: '32px 16px 10px 44px',
                     borderRadius: '2px', // Sharp
                     background: THEME.inputBg,
                     border: `1px solid ${error ? '#ef4444' : focused ? THEME.inputFocus : THEME.inputBorder}`,
@@ -172,8 +172,8 @@ function FloatingInput({ label, icon: Icon, required, error, ...props }: {
                     left: '44px',
                     ...(isFloating
                         ? {
-                            top: '10px',
-                            fontSize: '10px',
+                            top: '8px',
+                            fontSize: '9px',
                             fontWeight: 900,
                             letterSpacing: '0.2em',
                             textTransform: 'uppercase' as const,
@@ -221,15 +221,15 @@ function FloatingSelect({ label, icon: Icon, required, children, error, ...props
                 required={required}
                 onFocus={(e) => { setFocused(true); props.onFocus?.(e); }}
                 onBlur={(e) => { setFocused(false); props.onBlur?.(e); }}
-                className="peer w-full text-base appearance-none cursor-pointer outline-none"
+                className="peer w-full text-base appearance-none cursor-pointer outline-none transition-all"
                 style={{
-                    padding: '28px 40px 10px 44px',
+                    padding: '32px 40px 10px 44px',
                     borderRadius: '2px', // Sharp
                     background: THEME.inputBg,
                     border: `1px solid ${error ? '#ef4444' : focused ? THEME.inputFocus : THEME.inputBorder}`,
-                    color: hasValue ? THEME.text : THEME.textDim,
+                    color: hasValue ? THEME.text : 'rgba(255,255,255,0.4)',
                     transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-                    minHeight: '60px'
+                    minHeight: '64px'
                 }}
             >
                 {children}
@@ -240,8 +240,8 @@ function FloatingSelect({ label, icon: Icon, required, children, error, ...props
                     left: '44px',
                     ...(isFloating
                         ? {
-                            top: '10px',
-                            fontSize: '10px',
+                            top: '8px',
+                            fontSize: '9px',
                             fontWeight: 900,
                             letterSpacing: '0.2em',
                             textTransform: 'uppercase' as const,
@@ -445,10 +445,15 @@ export default function ApplyToSell() {
                 throw error;
             }
 
-            notifyAdmin({
+            // 3. Notify Admin (Awaited for reliability)
+            console.log("📨 Notifying admin of new application...");
+            await notifyAdmin({
                 type: 'NEW_SELLER_APPLICATION',
                 message: `New application: ${formData.business_name}`,
-                data: formData
+                data: {
+                    ...formData,
+                    submitted_at: new Date().toISOString()
+                }
             });
 
             Events.applicationSubmitted({ category: formData.category });

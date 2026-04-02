@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { supabase, secureInvoke } from '../lib/supabase';
 import { adminDb } from '../lib/admin-api';
-import { Events } from '../lib/analytics';
-// import { createStoreSession } from '../lib/storeAuth'; // Removed
 
 import { Loader2 } from 'lucide-react';
 
@@ -112,7 +110,7 @@ const AuthCallback = () => {
                         addLog(`Event ${event} received. Settling session...`);
 
                         // Robust session settling to avoid 401 Unauthorized errors
-                        const settleSession = async (retries = 3): Promise<any> => {
+                        const settleSession = async (retries = 3): Promise<import('@supabase/supabase-js').User> => {
                             for (let i = 0; i < retries; i++) {
                                 const { data: { user }, error } = await supabase.auth.getUser();
                                 if (user && !error) return user;
@@ -161,12 +159,12 @@ const AuthCallback = () => {
                                 if (createError) throw createError;
 
                                 currentProfile = newProfile;
-                                currentProfile = newProfile;
                                 addLog("Profile created successfully");
-                            } catch (err) {
+                            } catch (err: unknown) {
                                 console.error("Failed to create profile:", err);
                                 setStatus('Account setup failed. Please contact support.');
-                                addLog(`Error creating profile: ${err.message || JSON.stringify(err)}`);
+                                const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+                                addLog(`Error creating profile: ${errorMsg}`);
                                 // Don't redirect immediately so user sees the error
                                 return;
                             }
@@ -204,19 +202,20 @@ const AuthCallback = () => {
                                     const storeSlug = sessionStorage.getItem('pending_store_slug') || user.email?.split('@')[0]?.toLowerCase().replace(/[^a-z0-9]/g, '') || `store-${Math.floor(Math.random() * 1000)}`;
 
                                     try {
-                                        const result = await withTimeout(
+                                        const result = (await withTimeout(
                                             adminDb.createSeller({
                                                 store_name: storeName,
                                                 slug: storeSlug,
                                                 client_request_id: clientRequestId,
                                                 utm: JSON.parse(sessionStorage.getItem('utm_params') || '{}')
                                             }),
-                                            15000, // Increased timeout for store creation
+                                            15000,
                                             'create-seller'
-                                        );
+                                        )) as { created: boolean };
                                         addLog(result.created ? 'Store created via edge fn' : 'Store already exists');
-                                    } catch (edgeFnError: any) {
-                                        addLog(`Edge fn failed (${edgeFnError.message}). Using direct DB insert...`);
+                                    } catch (edgeFnError: unknown) {
+                                        const errorMsg = edgeFnError instanceof Error ? edgeFnError.message : 'Unknown error';
+                                        addLog(`Edge fn failed (${errorMsg}). Using direct DB insert...`);
                                         await supabase.from('sellers').upsert({
                                             id: user.id,
                                             store_name: storeName,
@@ -234,18 +233,18 @@ const AuthCallback = () => {
                             })());
                         }
 
-                        // Task 2: Session Logging
                         backgroundTasks.push((async () => {
                             try {
-                                const sessionResult = await withTimeout(
-                                    supabase.functions.invoke('log-session', {
+                                const { data: result } = (await withTimeout(
+                                    secureInvoke('log-session', {
                                         body: { device_info: navigator.userAgent }
                                     }),
                                     5000,
                                     'log-session'
-                                );
-                                if (sessionResult?.data?.session_id) {
-                                    localStorage.setItem('current_session_id', sessionResult.data.session_id);
+                                )) as { data: { session_id?: string } };
+                                
+                                if (result?.session_id) {
+                                    localStorage.setItem('current_session_id', result.session_id);
                                     addLog('Session logged successfully');
                                 }
                             } catch (e) {
@@ -259,7 +258,7 @@ const AuthCallback = () => {
                             backgroundTasks.push((async () => {
                                 try {
                                     addLog('Linking Telegram account...');
-                                    const { error } = await supabase.functions.invoke('link-telegram', {
+                                    const { error } = await secureInvoke('link-telegram', {
                                         body: { initData: telegramInitData }
                                     });
                                     if (error) throw error;
@@ -350,7 +349,21 @@ const AuthCallback = () => {
                                     }
                                 } else {
                                     // Link existing record AND update profile data if missing or from Google
-                                    const updates: any = { user_id: user.id };
+                                    const updates: { 
+                                        user_id: string; 
+                                        display_name?: string; 
+                                        avatar_url?: string;
+                                        metadata: Record<string, unknown>;
+                                    } = { 
+                                        user_id: user.id,
+                                        metadata: {
+                                            ...(customer.metadata as Record<string, unknown> || {}),
+                                            source: 'google',
+                                            first_name: (metadata as Record<string, unknown>).given_name || (customer.metadata as Record<string, unknown>)?.first_name,
+                                            last_name: (metadata as Record<string, unknown>).family_name || (customer.metadata as Record<string, unknown>)?.last_name,
+                                            last_login: new Date().toISOString()
+                                        }
+                                    };
 
                                     if (googleName && (!customer.display_name || customer.display_name === customer.email?.split('@')[0])) {
                                         updates.display_name = googleName;
@@ -358,14 +371,6 @@ const AuthCallback = () => {
                                     if (googleAvatar && !customer.avatar_url) {
                                         updates.avatar_url = googleAvatar;
                                     }
-
-                                    updates.metadata = {
-                                        ...customer.metadata,
-                                        source: 'google',
-                                        first_name: metadata.given_name || customer.metadata?.first_name,
-                                        last_name: metadata.family_name || customer.metadata?.last_name,
-                                        last_login: new Date().toISOString()
-                                    };
 
                                     const { data: linkedCustomer } = await supabase
                                         .from('store_customers')
@@ -402,10 +407,11 @@ const AuthCallback = () => {
                             navigate(redirectPath, { replace: true });
                         }, 100);
 
-                    } catch (error: any) {
+                    } catch (error: unknown) {
                         console.error('Auth callback error:', error);
+                        const errorMsg = error instanceof Error ? error.message : 'Unknown error';
                         import('react-hot-toast').then(({ toast }) => {
-                            toast.error(`Auth Callback Error: ${error?.message || 'Unknown error'}`, {
+                            toast.error(`Auth Callback Error: ${errorMsg}`, {
                                 duration: 10000,
                                 style: { background: '#333', color: '#fff' }
                             });

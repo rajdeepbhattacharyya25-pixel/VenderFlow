@@ -11,7 +11,7 @@
  */
 
 import { useEffect, useCallback } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, secureInvoke } from '../lib/supabase';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -107,7 +107,7 @@ async function _notifyAdmin(alert: SystemAlert): Promise<void> {
         // Get current seller context (best-effort — don't block on failure)
         const { data: { user } } = await supabase.auth.getUser();
 
-        await supabase.functions.invoke('notify-admin', {
+        await secureInvoke('notify-admin', {
             body: {
                 type: 'SYSTEM_ERROR',
                 message: alert.message,

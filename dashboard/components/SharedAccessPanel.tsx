@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Users, QrCode, Download, Trash2, Plus, Loader2, Save, X, Eye, EyeOff, Copy, Check } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import { supabase, secureInvoke } from '../../lib/supabase';
 import { QRCodeSVG } from 'qrcode.react';
 
 // Types
@@ -72,7 +72,7 @@ export const SharedAccessPanel = () => {
             if (!store) throw new Error("Store not found");
 
             // 2. Call Edge Function
-            const { data, error } = await supabase.functions.invoke('manage-staff', {
+            const { data, error } = await secureInvoke('manage-staff', {
                 body: {
                     action: 'create',
                     name: newName,
@@ -119,7 +119,7 @@ export const SharedAccessPanel = () => {
             if (!user) return; // Should handle error
             const { data: store } = await supabase.from('sellers').select('id').eq('id', user.id).single();
 
-            const { error } = await supabase.functions.invoke('manage-staff', {
+            const { error } = await secureInvoke('manage-staff', {
                 body: {
                     action: 'delete',
                     staffId: staffId,

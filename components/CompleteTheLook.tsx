@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Product } from '../types';
-import { supabase } from '../lib/supabase';
-import { IconShoppingBag, IconSparkles, IconChevronRight, IconChevronLeft } from './Icons';
+import { secureInvoke } from '../lib/supabase';
+import { IconShoppingBag, IconSparkles } from './Icons';
 
 interface CompleteTheLookProps {
   cartItems: { product: Product; size: string; quantity: number }[];
@@ -30,7 +30,7 @@ export const CompleteTheLook: React.FC<CompleteTheLookProps> = ({
       setIsLoading(true);
       setError(null);
       try {
-        const { data, error: funcError } = await supabase.functions.invoke('stylist-recommendations', {
+        const { data, error: funcError } = await secureInvoke('stylist-recommendations', {
           body: { cartItems }
         });
 
@@ -39,7 +39,7 @@ export const CompleteTheLook: React.FC<CompleteTheLookProps> = ({
         if (data?.recommendations) {
           // Map response IDs to actual product objects from allProducts master list
           const recommendedProducts = data.recommendations
-            .map((rec: any) => allProducts.find(p => p.id === rec.id))
+            .map((rec: { id: string }) => allProducts.find(p => p.id === rec.id))
             .filter((p: Product | undefined): p is Product => !!p);
           
           setRecommendations(recommendedProducts);

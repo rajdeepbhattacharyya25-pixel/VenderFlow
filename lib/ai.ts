@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { supabase, secureInvoke } from './supabase';
 
 export interface SmartSetupResult {
     storeDescription: string;
@@ -13,7 +13,7 @@ export interface AIProductResult {
 }
 
 export async function generateSmartSetup(keywords: string, businessType: string): Promise<SmartSetupResult> {
-    const { data, error } = await supabase.functions.invoke('ai-smart-setup', {
+    const { data, error } = await secureInvoke('ai-smart-setup', {
         body: { type: 'store', keywords, businessType },
     });
 
@@ -26,7 +26,7 @@ export async function generateSmartSetup(keywords: string, businessType: string)
 }
 
 export async function generateProductAI(name: string, keywords: string, category: string): Promise<AIProductResult> {
-    const { data, error } = await supabase.functions.invoke('ai-smart-setup', {
+    const { data, error } = await secureInvoke('ai-smart-setup', {
         body: { type: 'product', name, keywords, category },
     });
 

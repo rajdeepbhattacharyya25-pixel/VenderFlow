@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, secureInvoke } from '../lib/supabase';
 import { Store, Lock, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { OwlOverlay } from './OwlOverlay';
@@ -139,7 +139,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
                 if (data.user) {
                     // Log the session
                     try {
-                        const { data: sessionData } = await supabase.functions.invoke('log-session', {
+                        const { data: sessionData } = await secureInvoke('log-session', {
                             body: { device_info: navigator.userAgent }
                         });
                         if (sessionData?.session_id) {
