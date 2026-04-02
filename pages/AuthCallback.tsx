@@ -79,25 +79,35 @@ const AuthCallback = () => {
                 }
 
                 if (event === 'INITIAL_SESSION' && !session) {
-                    addLog('No session yet in INITIAL_SESSION — waiting for Supabase to parse hash...');
-                    // Give Supabase SDK 5s to parse hash tokens and fire SIGNED_IN
+                    addLog('No session yet in INITIAL_SESSION — checking for hash backup...');
+                    
+                    // Check if we actually have tokens in the URL. If we do, we should wait much longer
+                    // because the SDK is clearly supposed to parse them.
+                    const hasTokens = window.location.hash.includes('access_token=');
+                    const waitTime = hasTokens ? 12000 : 5000;
+                    
+                    addLog(`Starting ${waitTime}ms safety wait (Tokens present: ${hasTokens})...`);
+                    
                     timeoutRef.current = setTimeout(async () => {
                         if (redirectScheduledRef.current) return;
 
+                        addLog('Safety wait finished. Checking getSession secondary source...');
                         const { data } = await supabase.auth.getSession();
                         if (!data.session) {
-                            addLog('Session still not found after 5s — redirecting home.');
+                            addLog(`Session still not found after ${waitTime}ms — directing to login.`);
                             redirectScheduledRef.current = true;
                             import('react-hot-toast').then(({ toast }) => {
-                                toast.error('Login timed out. If this keeps happening, check that cookies and local storage are not blocked in your browser.', {
+                                toast.error('Login timed out. Please check that cookies and local storage are enabled.', {
                                     duration: 10000,
                                 });
                             });
                             navigate('/', { replace: true });
                         } else {
-                            addLog(`Session recovered via fallback getSession: ${data.session.user.email}`);
+                            addLog(`Session recovered via secondary check: ${data.session.user.email}`);
+                            // We don't need to do anything else; the SIGNED_IN event will likely 
+                            // fire or we've already handled the state change logic.
                         }
-                    }, 5000);
+                    }, waitTime);
                 }
 
                 if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user) {
@@ -109,21 +119,39 @@ const AuthCallback = () => {
                         setStatus('Verifying your account...');
                         addLog(`Event ${event} received. Settling session...`);
 
-                        // Robust session settling to avoid 401 Unauthorized errors
-                        const settleSession = async (retries = 3): Promise<import('@supabase/supabase-js').User> => {
+                        // Robust session settling to avoid 401 Unauthorized errors.
+                        // Sometimes the auth event fires before the internal client headers are updated.
+                        const settleSession = async (retries = 4): Promise<import('@supabase/supabase-js').User> => {
+                            // Initial small delay to let the event loop finish propagating the session
+                            await new Promise(r => setTimeout(r, 200));
+                            
                             for (let i = 0; i < retries; i++) {
-                                const { data: { user }, error } = await supabase.auth.getUser();
-                                if (user && !error) return user;
+                                try {
+                                    addLog(`Verifying session (Attempt ${i + 1}/${retries})...`);
+                                    const { data: { user }, error } = await supabase.auth.getUser();
+                                    
+                                    if (user && !error) {
+                                        // Final check: ensures the session is also readable via getSession
+                                        const { data: { session: currentSession } } = await supabase.auth.getSession();
+                                        if (currentSession) return user;
+                                    }
+                                    
+                                    if (error) addLog(`Verification error: ${error.message}`);
+                                } catch (e) {
+                                    addLog(`Verification catch: ${e instanceof Error ? e.message : 'Unknown'}`);
+                                }
+
                                 if (i < retries - 1) {
-                                    addLog(`Session not yet settled (Attempt ${i + 1}). Retrying in 500ms...`);
-                                    await new Promise(r => setTimeout(r, 500));
+                                    const delay = 500 * (i + 1);
+                                    addLog(`Retrying in ${delay}ms...`);
+                                    await new Promise(r => setTimeout(r, delay));
                                 }
                             }
-                            throw new Error("Could not verify session after retries. Try refreshing.");
+                            throw new Error("Could not verify session. Please try logging in again.");
                         };
 
-                        const user = await withTimeout(settleSession(), 5000, 'Session verification');
-                        addLog(`User verified: ${user.email}`);
+                        const user = await withTimeout(settleSession(), 10000, 'Session verification');
+                        addLog(`User fully verified: ${user.email}`);
                         setStatus('Synchronizing profile...');
 
                         // Fetch user profile to check role
