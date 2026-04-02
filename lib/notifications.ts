@@ -41,6 +41,11 @@ export interface LogAlertParams {
   } | null;
 }
 
+interface SentryInterface {
+  addBreadcrumb: (breadcrumb: Record<string, unknown>) => void;
+  captureException: (error: unknown, context?: Record<string, unknown>) => void;
+}
+
 /**
  * Centrally log a system alert with severity-based throttling and automatic dispatching.
  * This is the primary entry point for business-level error management.
@@ -55,7 +60,26 @@ export const logAlert = async ({
   action = null
 }: LogAlertParams) => {
   try {
-    // 1. Generate fingerprint: ensure reliable deduplication
+    // 1. Sentry Integration: Add breadcrumb for visibility
+    const Sentry = (window as unknown as { Sentry: SentryInterface }).Sentry;
+    if (Sentry) {
+      Sentry.addBreadcrumb({
+        category: 'auth',
+        message: `System Alert: ${title}`,
+        level: severity === 'critical' || severity === 'emergency' ? 'error' : 'info',
+        data: { type, severity, seller_id, ...metadata }
+      });
+
+      // Capture exception for warning and above
+      if (severity === 'critical' || severity === 'emergency' || severity === 'warning') {
+        Sentry.captureException(new Error(`[${severity.toUpperCase()}] ${title}: ${message}`), {
+          tags: { alert_type: type, severity },
+          extra: { metadata, seller_id, title }
+        });
+      }
+    }
+
+    // 2. Generate fingerprint: ensure reliable deduplication
     // Stable identifier derived from structured metadata if available
     const fingerprintParts = [
       type,
@@ -73,7 +97,7 @@ export const logAlert = async ({
         timestamp: new Date().toISOString(),
     } : {};
     
-    // 2. Call the create_system_alert RPC
+    // 3. Call the create_system_alert RPC
     // This RPC handles severity-based throttling and DB trigger for dispatcher
     const { data, error } = await supabase.rpc('create_system_alert', {
       p_alert_type: type,
@@ -90,6 +114,13 @@ export const logAlert = async ({
     if (error) {
       console.error("❌ Failed to create system alert (RPC):", error);
       
+      if (Sentry) {
+        Sentry.captureException(error, {
+          tags: { context: 'logAlert_rpc_failure' },
+          extra: { p_title: title, p_message: message }
+        });
+      }
+
       // FALLBACK: If RPC fails, try standard notifyAdmin for critical issues
       if (severity === 'critical') {
         const { error: fallbackError } = await secureInvoke('notify-admin', {
@@ -108,6 +139,8 @@ export const logAlert = async ({
     return { data, error: null };
   } catch (err: unknown) {
     console.error("❌ Unexpected error logging alert:", err);
+    const Sentry = (window as unknown as { Sentry: SentryInterface }).Sentry;
+    if (Sentry) Sentry.captureException(err);
     return { data: null, error: err };
   }
 };

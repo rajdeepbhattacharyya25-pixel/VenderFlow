@@ -35,6 +35,17 @@ const handler = async (req: Request) => {
 
     console.log(`Alert received: ${alert_type} (${severity}) - ${title}`);
 
+    // Track every alert in Sentry
+    Sentry.captureMessage(`System Alert: ${title} (${severity})`, {
+      level: severity === 'emergency' ? 'fatal' : (severity === 'critical' ? 'error' : severity),
+      extra: {
+        alert_id,
+        alert_type,
+        message,
+        metadata
+      }
+    });
+
     // Determine targets
     const isCritical = severity === 'critical' || severity === 'emergency';
     const hasSeller = !!seller_id;

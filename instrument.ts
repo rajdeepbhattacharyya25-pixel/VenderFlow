@@ -1,6 +1,13 @@
+interface SentryWindow extends Window {
+  SENTRY_INITIALIZED?: boolean;
+  Sentry?: typeof import("@sentry/react");
+  SENTRY_STATUS?: object;
+}
+
 export const initSentry = async () => {
-  if ((window as any).SENTRY_INITIALIZED) return;
-  (window as any).SENTRY_INITIALIZED = true;
+  const win = window as unknown as SentryWindow;
+  if (win.SENTRY_INITIALIZED) return;
+  win.SENTRY_INITIALIZED = true;
   
   const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN;
   if (!SENTRY_DSN) {
@@ -36,10 +43,10 @@ export const initSentry = async () => {
   });
 
   // Export Sentry to window for the error handlers to use
-  (window as unknown as { Sentry: typeof Sentry }).Sentry = Sentry;
+  win.Sentry = Sentry;
 
   // Debug helper to verify status in production console
-  (window as unknown as { SENTRY_STATUS: object }).SENTRY_STATUS = {
+  win.SENTRY_STATUS = {
       initialized: true,
       dsn_exists: !!SENTRY_DSN,
       env: import.meta.env.MODE,

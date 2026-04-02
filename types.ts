@@ -19,7 +19,7 @@ export interface Product {
     images?: string[];
     media?: ProductMedia[];
     product_media?: ProductMedia[];
-    product_variants?: any[];
+    product_variants?: Record<string, unknown>[];
     description?: string;
     badge?: {
         text: string;

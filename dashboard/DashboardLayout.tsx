@@ -19,6 +19,7 @@ import { useSystemAlertListener, SystemAlert } from '../hooks/useSystemAlert';
 
 import { AlertCircle, Megaphone, X, Database, ShieldAlert, AlertTriangle } from 'lucide-react';
 import { Events } from '../lib/analytics';
+import ErrorBoundary from '../components/ErrorBoundary';
 
 function App() {
   const { isBackupRunning, backupProgress, backupMessage, backupStatus } = useAutoBackup(true); // Enable auto-backup on dashboard load
@@ -459,7 +460,12 @@ function App() {
             </div>
           )}
 
-          {renderContent()}
+          <ErrorBoundary 
+            title="Dashboard Component Error" 
+            message="This section of the dashboard failed to load. The error has been reported to the admin."
+          >
+            {renderContent()}
+          </ErrorBoundary>
         </main>
       </div>
     </div>

@@ -24,6 +24,7 @@ import { SellerSuccessAI } from './SellerSuccessAI';
 import TagInput from './TagInput';
 import { logAlert } from '../../../lib/notifications';
 import { supabase } from '../../../lib/supabase';
+import ErrorBoundary from '../../../../components/ErrorBoundary';
 import LiveCameraModal from './LiveCameraModal';
 import { Camera } from 'lucide-react';
 import {
@@ -482,7 +483,8 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, e
 
     return (
         <>
-            {createPortal(
+            <ErrorBoundary title="Product Editor Error" message="Something went wrong while managing this product. Please try again or contact support.">
+                {createPortal(
                 <div className="fixed inset-0 z-50 flex items-center justify-center sm:p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
                     <div className="bg-theme-panel sm:rounded-2xl w-full h-full sm:h-auto sm:max-w-4xl sm:max-h-[90vh] flex flex-col shadow-2xl border border-theme-border" onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center justify-between p-4 sm:p-6 border-b border-theme-border/50 shrink-0">
@@ -1258,6 +1260,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, e
                     setEditorOpen(true);
                 }}
             />
+            </ErrorBoundary>
         </>
     );
 };
