@@ -1,6 +1,7 @@
 $vars = @{
     "VITE_SUPABASE_URL" = "https://gqwgvhxcssooxbmwgiwt.supabase.co"
-    "VITE_SUPABASE_ANON_KEY" = "[SECRET]"
+    "VITE_SUPABASE_ANON_KEY" = "sb_publishable_541nyiJYSE4KzqH88snw0w_i5ru8-dI"
+    "VITE_DISPATCHER_SECRET" = "vf_disp_8k2m9p_q4z8"
     "VITE_GOOGLE_CLIENT_ID" = "952595241784-3q6eeqbiesufm3p2mug4jplo462l66bn.apps.googleusercontent.com"
     "VITE_GOOGLE_API_KEY" = "[SECRET]"
     "TELEGRAM_BOT_TOKEN" = "8200605396:AAHiBrmO2FbmaWitwtXmraRy1frcObjPjJg"

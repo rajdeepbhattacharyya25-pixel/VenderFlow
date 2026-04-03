@@ -29,6 +29,11 @@ const AuthCallback = () => {
     const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
+        // Diagnostic Logging
+        const origin = window.location.origin;
+        addLog(`Environment: ${origin}`);
+        addLog(`Protocol: ${window.location.protocol}`);
+        
         // `processed` is local to this effect run. In React StrictMode the effect
         // runs twice (mount → cleanup → remount). Using a closure-local flag instead
         // of a ref guard ensures onAuthStateChange is always subscribed on the

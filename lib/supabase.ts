@@ -63,15 +63,38 @@ export const supabase = new Proxy({} as SupabaseClient, {
 
 /**
  * Wrapper for invoking Edge Functions that require the DISPATCHER_SECRET.
- * Use this for anonymous/system calls that don't have a user session.
+ * Includes a retry mechanism for 401 errors specifically to handle session settling.
  */
 export const secureInvoke = async (functionName: string, options: { headers?: Record<string, string>; body?: unknown; [key: string]: unknown } = {}) => {
     const { headers = {}, ...rest } = options;
-    return supabase.functions.invoke(functionName, {
-        ...rest,
-        headers: {
-            ...headers,
-            'X-Dispatcher-Secret': import.meta.env.VITE_DISPATCHER_SECRET || '',
+    const maxRetries = 2;
+    let lastError = null;
+
+    for (let i = 0; i <= maxRetries; i++) {
+        try {
+            const result = await supabase.functions.invoke(functionName, {
+                ...rest,
+                headers: {
+                    ...headers,
+                    'X-Dispatcher-Secret': import.meta.env.VITE_DISPATCHER_SECRET || '',
+                }
+            });
+
+            // If we get a 401, it might be the session settling. Retry if it's not the last attempt.
+            if (result.error && (result.error as { status?: number }).status === 401 && i < maxRetries) {
+                const delay = 300 * (i + 1);
+                console.warn(`[Supabase] secureInvoke 401 for ${functionName}, retrying in ${delay}ms... (Attempt ${i + 1}/${maxRetries})`);
+                await new Promise(r => setTimeout(r, delay));
+                continue;
+            }
+
+            return result;
+        } catch (err) {
+            lastError = err;
+            if (i < maxRetries) {
+                await new Promise(r => setTimeout(r, 300));
+            }
         }
-    });
+    }
+    throw lastError || new Error(`Failed to invoke ${functionName} after ${maxRetries} retries`);
 };
