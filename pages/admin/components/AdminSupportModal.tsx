@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { adminDb } from '../../../lib/admin-api';
 import { supabase } from '../../../lib/supabase';
 import { RealtimeChannel } from '@supabase/supabase-js';
@@ -62,16 +62,48 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
         'video/mp4', 'video/webm', 'video/quicktime'
     ];
 
+    const scrollToBottom = useCallback(() => {
+        setTimeout(() => {
+            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+    }, []);
+
+    const fetchMessages = useCallback(async (ticketId: string) => {
+        const result = await adminDb.getTicketMessages(ticketId);
+        if (result.success && result.messages) {
+            setMessages(result.messages);
+            scrollToBottom();
+        }
+    }, [scrollToBottom]);
+
+    const fetchTickets = useCallback(async () => {
+        const result = await adminDb.listSupportTickets();
+        if (result.success && result.tickets) {
+            const ticketsWithUnread = await Promise.all(
+                result.tickets.map(async (ticket: any) => {
+                    const { count } = await supabase
+                        .from('support_messages')
+                        .select('*', { count: 'exact', head: true })
+                        .eq('ticket_id', ticket.id)
+                        .eq('sender_role', 'seller')
+                        .eq('is_read', false);
+                    return { ...ticket, unread_count: count || 0 };
+                })
+            );
+            setTickets(ticketsWithUnread);
+        }
+        setLoading(false);
+    }, []);
+
     useEffect(() => {
         fetchTickets();
-    }, []);
+    }, [fetchTickets]);
 
     useEffect(() => {
         if (selectedTicket) {
             fetchMessages(selectedTicket.id);
             adminDb.markTicketMessagesAsRead(selectedTicket.id);
 
-            // Clear unread count for this ticket in local state
             setTickets(prev => prev.map(t =>
                 t.id === selectedTicket.id ? { ...t, unread_count: 0 } : t
             ));
@@ -84,9 +116,9 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
                     config: { presence: { key: 'admin' } },
                 })
                 .on('presence', { event: 'sync' }, () => {
-                    const state = channel.presenceState();
+                    const state = channel.presenceState<{ role: string; isTyping: boolean; ticketId: string }>();
                     const opponentTyping = Object.values(state).some(
-                        (presences: any) => presences.some((p: any) => p.role === 'seller' && p.isTyping)
+                        (presences) => presences.some((p) => p.role === 'seller' && p.isTyping && p.ticketId === selectedTicket.id)
                     );
                     setIsTyping(opponentTyping);
                 })
@@ -99,6 +131,9 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
                     const newMessage = payload.new as Message;
                     if (newMessage.sender_role === 'seller') {
                         adminDb.markTicketMessagesAsRead(selectedTicket.id);
+                        if ('vibrate' in navigator) {
+                            navigator.vibrate([20, 30, 20]);
+                        }
                     }
                     setMessages(prev => {
                         if (prev.some(msg => msg.id === newMessage.id)) return prev;
@@ -117,7 +152,7 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
                 })
                 .subscribe(async (status) => {
                     if (status === 'SUBSCRIBED') {
-                        await channel.track({ role: 'admin', isTyping: false });
+                        await channel.track({ role: 'admin', isTyping: false, ticketId: selectedTicket.id });
                     }
                 });
 
@@ -127,14 +162,14 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
                 channel.unsubscribe();
             };
         }
-    }, [selectedTicket]);
+    }, [selectedTicket, fetchMessages, scrollToBottom]);
 
     const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
         setReply(e.target.value);
 
-        if (!localTyping && typingChannel) {
+        if (!localTyping && typingChannel && selectedTicket) {
             setLocalTyping(true);
-            typingChannel.track({ role: 'admin', isTyping: true });
+            typingChannel.track({ role: 'admin', isTyping: true, ticketId: selectedTicket.id });
         }
 
         if (typingTimeoutRef.current) {
@@ -142,39 +177,11 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
         }
 
         typingTimeoutRef.current = setTimeout(() => {
-            if (typingChannel) {
-                typingChannel.track({ role: 'admin', isTyping: false });
+            if (typingChannel && selectedTicket) {
+                typingChannel.track({ role: 'admin', isTyping: false, ticketId: selectedTicket.id });
                 setLocalTyping(false);
             }
-        }, 2000);
-    };
-
-    const fetchTickets = async () => {
-        const result = await adminDb.listSupportTickets();
-        if (result.success && result.tickets) {
-            // Fetch unread counts for each ticket
-            const ticketsWithUnread = await Promise.all(
-                result.tickets.map(async (ticket: Ticket) => {
-                    const { count } = await supabase
-                        .from('support_messages')
-                        .select('*', { count: 'exact', head: true })
-                        .eq('ticket_id', ticket.id)
-                        .eq('sender_role', 'seller')
-                        .eq('is_read', false);
-                    return { ...ticket, unread_count: count || 0 };
-                })
-            );
-            setTickets(ticketsWithUnread);
-        }
-        setLoading(false);
-    };
-
-    const fetchMessages = async (ticketId: string) => {
-        const result = await adminDb.getTicketMessages(ticketId);
-        if (result.success && result.messages) {
-            setMessages(result.messages);
-            scrollToBottom();
-        }
+        }, 3000);
     };
 
     const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -215,9 +222,9 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
                 type: file.type,
                 size: file.size
             });
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error uploading file:', error);
-            alert('Failed to upload file. Please try again.');
+            alert(`Upload failed: ${error.message || JSON.stringify(error)}`);
         } finally {
             setUploading(false);
             if (fileInputRef.current) {
@@ -242,15 +249,16 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
                 type: attachment.type
             } : undefined
         );
+
         if (result.success) {
             setReply('');
             setAttachment(null);
 
-            if (typingChannel) {
-                typingChannel.track({ role: 'admin', isTyping: false });
+            if (typingChannel && selectedTicket) {
+                typingChannel.track({ role: 'admin', isTyping: false, ticketId: selectedTicket.id });
                 setLocalTyping(false);
             }
-            // Update the ticket's updated_at in the list to move it to top
+
             setTickets(prev => {
                 const updated = prev.map(t =>
                     t.id === selectedTicket.id
@@ -280,12 +288,6 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
         }
     };
 
-    const scrollToBottom = () => {
-        setTimeout(() => {
-            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-        }, 100);
-    };
-
     const formatDate = (dateStr: string) => {
         return new Date(dateStr).toLocaleDateString('en-GB');
     };
@@ -313,6 +315,12 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
         return <FileText size={16} />;
     };
 
+    const [rotation, setRotation] = useState<number>(0);
+
+    const handleRotate = () => {
+        setRotation(prev => (prev + 90) % 360);
+    };
+
     const renderAttachment = (msg: Message) => {
         if (!msg.attachment_url) return null;
 
@@ -322,15 +330,28 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
         const isPdf = type === 'application/pdf';
 
         return (
-            <div className="mt-2">
+            <div className="mt-2 text-white">
                 {isImage && (
-                    <a href={msg.attachment_url} target="_blank" rel="noopener noreferrer">
-                        <img
-                            src={msg.attachment_url}
-                            alt={msg.attachment_name || 'Attachment'}
-                            className="max-w-full max-h-48 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                        />
-                    </a>
+                    <div className="relative group">
+                        <a href={msg.attachment_url} target="_blank" rel="noopener noreferrer">
+                            <img
+                                src={msg.attachment_url}
+                                alt={msg.attachment_name || 'Attachment'}
+                                className="max-w-full max-h-48 rounded-lg cursor-pointer hover:opacity-90 transition-all duration-300"
+                                style={{ transform: `rotate(${rotation}deg)` }}
+                            />
+                        </a>
+                        <button
+                            onClick={(e) => {
+                                e.preventDefault();
+                                handleRotate();
+                            }}
+                            className="absolute top-2 right-2 p-1.5 bg-black/50 hover:bg-black/70 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                            title="Rotate 90°"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path></svg>
+                        </button>
+                    </div>
                 )}
                 {isVideo && (
                     <video
@@ -351,7 +372,7 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
                         <Download size={16} className="ml-auto" />
                     </a>
                 )}
-                {!isImage && !isVideo && !isPdf && msg.attachment_url && (
+                {!isImage && !isVideo && !isPdf && (
                     <a
                         href={msg.attachment_url}
                         target="_blank"
@@ -372,30 +393,23 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
             className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
             onClick={onClose}
         >
-            {/* Hidden File Input */}
             <input
                 type="file"
                 ref={fileInputRef}
                 onChange={handleFileSelect}
                 accept="image/*,application/pdf,video/*"
                 className="hidden"
-                aria-label="Attach file"
             />
 
             <div
                 className="bg-neutral-100 dark:bg-neutral-900 rounded-3xl w-full max-w-5xl h-[85vh] shadow-2xl flex overflow-hidden border border-neutral-200 dark:border-neutral-800"
                 onClick={(e) => e.stopPropagation()}
             >
-                {/* Sidebar - Ticket List */}
+                {/* Sidebar */}
                 <div className={`${selectedTicket ? 'hidden md:flex' : 'flex'} w-full md:w-80 flex-col bg-white dark:bg-neutral-900 border-r border-neutral-200 dark:border-neutral-800`}>
                     <div className="p-5 border-b border-neutral-200 dark:border-neutral-800 flex justify-between items-center">
                         <h2 className="text-xl font-bold text-neutral-900 dark:text-white">Support Tickets</h2>
-                        <button
-                            onClick={onClose}
-                            className="md:hidden p-2 hover:bg-neutral-200 dark:hover:bg-neutral-800 rounded-lg text-neutral-500"
-                            title="Close"
-                            aria-label="Close support panel"
-                        >
+                        <button onClick={onClose} className="md:hidden p-2 hover:bg-neutral-200 dark:hover:bg-neutral-800 rounded-lg text-neutral-500">
                             <X size={20} />
                         </button>
                     </div>
@@ -406,12 +420,9 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
                             <div className="text-neutral-700 dark:text-neutral-400 text-center py-8">No tickets found.</div>
                         ) : (
                             <>
-                                {/* Recent Chats (Top 2) */}
                                 {tickets.length > 0 && (
                                     <div>
-                                        <h3 className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-2 px-2">
-                                            Recent Chats
-                                        </h3>
+                                        <h3 className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-2 px-2">Recent Chats</h3>
                                         <div className="space-y-2">
                                             {tickets.slice(0, 2).map(ticket => (
                                                 <button
@@ -425,7 +436,7 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
                                                     <h3 className="font-semibold text-neutral-900 dark:text-white mb-1 truncate flex items-center gap-2">
                                                         {ticket.subject}
                                                         {(ticket.unread_count ?? 0) > 0 && (
-                                                            <span className="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse shrink-0" title={`${ticket.unread_count} unread`} />
+                                                            <span className="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse shrink-0" />
                                                         )}
                                                     </h3>
                                                     <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-2 truncate">{ticket.seller?.store_name || 'Unknown Seller'}</p>
@@ -440,13 +451,9 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
                                         </div>
                                     </div>
                                 )}
-
-                                {/* Past Conversations (Rest) */}
                                 {tickets.length > 2 && (
                                     <div>
-                                        <h3 className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-2 px-2 mt-4">
-                                            Past Conversations
-                                        </h3>
+                                        <h3 className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-2 px-2 mt-4">Past Conversations</h3>
                                         <div className="space-y-2">
                                             {tickets.slice(2).map(ticket => (
                                                 <button
@@ -460,7 +467,7 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
                                                     <h3 className="font-semibold text-neutral-900 dark:text-white mb-1 truncate flex items-center gap-2">
                                                         {ticket.subject}
                                                         {(ticket.unread_count ?? 0) > 0 && (
-                                                            <span className="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse shrink-0" title={`${ticket.unread_count} unread`} />
+                                                            <span className="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse shrink-0" />
                                                         )}
                                                     </h3>
                                                     <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-2 truncate">{ticket.seller?.store_name || 'Unknown Seller'}</p>
@@ -468,9 +475,7 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
                                                         <span className={`px-2.5 py-1 rounded text-xs font-bold uppercase ${getStatusColor(ticket.status)}`}>
                                                             {ticket.status}
                                                         </span>
-                                                        <span className="text-xs text-neutral-500 dark:text-neutral-500 font-mono">
-                                                            {formatDateTime(ticket.updated_at)}
-                                                        </span>
+                                                        <span className="text-xs text-neutral-500 dark:text-neutral-500 font-mono">{formatDateTime(ticket.updated_at)}</span>
                                                     </div>
                                                 </button>
                                             ))}
@@ -482,31 +487,20 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
                     </div>
                 </div>
 
-                {/* Main Content - Chat */}
+                {/* Main Content */}
                 <div className={`${!selectedTicket ? 'hidden md:flex' : 'flex'} flex-1 flex-col bg-neutral-50 dark:bg-neutral-950 relative`}>
-                    {/* Close Button */}
                     <button
                         onClick={onClose}
                         className="absolute top-4 right-4 z-10 p-2 bg-white dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded-full shadow-md text-neutral-500 transition-colors hidden md:flex"
-                        title="Close"
-                        aria-label="Close support panel"
                     >
                         <X size={20} />
                     </button>
 
                     {selectedTicket ? (
                         <>
-                            {/* Chat Header */}
                             <div className="p-5 pr-16 border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <button
-                                        onClick={() => setSelectedTicket(null)}
-                                        className="md:hidden p-2 hover:bg-neutral-200 dark:hover:bg-neutral-800 rounded-lg text-neutral-500"
-                                        title="Back"
-                                        aria-label="Back to ticket list"
-                                    >
-                                        ←
-                                    </button>
+                                    <button onClick={() => setSelectedTicket(null)} className="md:hidden p-2 hover:bg-neutral-200 dark:hover:bg-neutral-800 rounded-lg text-neutral-500">←</button>
                                     <div>
                                         <p className="text-sm text-emerald-600 dark:text-emerald-400 font-medium">{selectedTicket.seller?.store_name || 'Unknown Seller'}</p>
                                         <h2 className="text-xl font-bold text-neutral-900 dark:text-white">{selectedTicket.subject}</h2>
@@ -517,11 +511,16 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
                                         <button
                                             onClick={closeTicket}
                                             className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-neutral-200 dark:bg-neutral-800 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-300 rounded-lg text-xs font-medium transition-colors shadow-sm"
-                                            title="Close this ticket"
                                         >
                                             <CheckCircle size={14} className="text-emerald-500" />
                                             Close Ticket
                                         </button>
+                                    )}
+                                    {selectedTicket.status === 'open' && (
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
+                                            <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">Online</span>
+                                        </div>
                                     )}
                                     <div className="flex items-center gap-1.5 text-neutral-500">
                                         <Clock size={16} />
@@ -533,20 +532,17 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
                                 </div>
                             </div>
 
-                            {/* Messages Area */}
                             <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 bg-white dark:bg-neutral-950 relative">
                                 {messages.map((msg, idx) => {
                                     const isAdmin = msg.sender_role === 'admin';
                                     const showLabel = idx === 0 || messages[idx - 1].sender_role !== msg.sender_role;
                                     const sellerName = selectedTicket.seller?.store_name || 'Seller';
-
                                     const currentMsgDate = new Date(msg.created_at).toDateString();
                                     const prevMsgDate = idx > 0 ? new Date(messages[idx - 1].created_at).toDateString() : null;
                                     const showDateSeparator = currentMsgDate !== prevMsgDate;
 
                                     return (
                                         <React.Fragment key={msg.id || idx}>
-                                            {/* Date Grouping Separator */}
                                             {showDateSeparator && (
                                                 <div className="flex justify-center my-6">
                                                     <span className="px-3 py-1 bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 text-xs font-medium rounded-full shadow-sm">
@@ -556,13 +552,10 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
                                                     </span>
                                                 </div>
                                             )}
-
                                             <div className={`flex flex-col ${isAdmin ? 'items-end' : 'items-start'}`}>
-                                                {/* Sender Label */}
                                                 {showLabel && (
                                                     <div className={`flex items-center gap-2 mb-2 ${isAdmin ? 'flex-row-reverse' : ''}`}>
-                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${isAdmin ? 'bg-emerald-600 text-white' : 'bg-neutral-300 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300'
-                                                            }`}>
+                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${isAdmin ? 'bg-emerald-600 text-white' : 'bg-neutral-300 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300'}`}>
                                                             {isAdmin ? 'A' : sellerName.charAt(0).toUpperCase()}
                                                         </div>
                                                         <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
@@ -570,8 +563,6 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
                                                         </span>
                                                     </div>
                                                 )}
-
-                                                {/* Message Bubble */}
                                                 <div className={`max-w-[85%] md:max-w-[70%] ${isAdmin ? 'ml-auto' : 'mr-auto'}`}>
                                                     <div className={`px-4 py-3 shadow-sm ${isAdmin
                                                         ? 'bg-emerald-600 text-white rounded-2xl rounded-tr-sm'
@@ -582,14 +573,9 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
                                                         )}
                                                         {renderAttachment(msg)}
                                                     </div>
-                                                    {/* Read Receipt */}
                                                     {isAdmin && (
                                                         <div className="flex justify-end mt-1 px-1">
-                                                            {msg.is_read ? (
-                                                                <CheckCheck size={14} className="text-emerald-500" aria-label="Read" />
-                                                            ) : (
-                                                                <Check size={14} className="text-neutral-400" aria-label="Delivered" />
-                                                            )}
+                                                            {msg.is_read ? <CheckCheck size={14} className="text-emerald-500" /> : <Check size={14} className="text-neutral-400" />}
                                                         </div>
                                                     )}
                                                 </div>
@@ -598,7 +584,6 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
                                     );
                                 })}
 
-                                {/* Typing Indicator */}
                                 {isTyping && (
                                     <div className="flex items-start">
                                         <div className="w-8 h-8 rounded-full bg-neutral-300 dark:bg-neutral-700 flex items-center justify-center text-xs font-bold text-neutral-600 dark:text-neutral-300 mr-2 shrink-0">
@@ -613,38 +598,24 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
                                         </div>
                                     </div>
                                 )}
-
                                 <div ref={messagesEndRef} className="h-2" />
                             </div>
 
-                            {/* Attachment Preview */}
                             {attachment && (
                                 <div className="px-4 py-2 bg-neutral-100 dark:bg-neutral-800 border-t border-neutral-200 dark:border-neutral-700">
                                     <div className="flex items-center gap-3 p-2 bg-white dark:bg-neutral-900 rounded-lg">
-                                        <div className="text-emerald-600 dark:text-emerald-400">
-                                            {getFileIcon(attachment.type)}
-                                        </div>
-                                        <span className="text-sm text-neutral-700 dark:text-neutral-300 truncate flex-1">
-                                            {attachment.name}
-                                        </span>
-                                        <button
-                                            onClick={removeAttachment}
-                                            className="p-1 hover:bg-neutral-200 dark:hover:bg-neutral-800 rounded text-neutral-500"
-                                            title="Remove"
-                                        >
+                                        <div className="text-emerald-600 dark:text-emerald-400">{getFileIcon(attachment.type)}</div>
+                                        <span className="text-sm text-neutral-700 dark:text-neutral-300 truncate flex-1">{attachment.name}</span>
+                                        <button onClick={removeAttachment} className="p-1 hover:bg-neutral-200 dark:hover:bg-neutral-800 rounded text-neutral-500">
                                             <X size={16} />
                                         </button>
                                     </div>
                                 </div>
                             )}
 
-                            {/* Input Area */}
                             <div className="p-4 border-t border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
                                 <form
-                                    onSubmit={(e) => {
-                                        e.preventDefault();
-                                        sendReply();
-                                    }}
+                                    onSubmit={(e) => { e.preventDefault(); sendReply(); }}
                                     className="flex items-center gap-3 bg-neutral-100 dark:bg-neutral-800 p-2 pl-4 rounded-full border border-neutral-200 dark:border-neutral-700"
                                 >
                                     <input
@@ -652,7 +623,6 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
                                         value={reply}
                                         onChange={handleInput}
                                         placeholder="Type your message..."
-                                        aria-label="Message input"
                                         className="flex-1 min-w-0 bg-transparent focus:outline-none text-neutral-900 dark:text-white placeholder-neutral-500 py-3 md:py-2 text-[16px] md:text-sm"
                                         autoComplete="off"
                                     />
@@ -661,20 +631,13 @@ const AdminSupportModal: React.FC<AdminSupportModalProps> = ({ onClose }) => {
                                         onClick={() => fileInputRef.current?.click()}
                                         disabled={uploading}
                                         className="p-2 text-neutral-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors disabled:opacity-50"
-                                        title="Attach file (PDF, Image, Video - max 10MB)"
-                                        aria-label="Attach file"
                                     >
-                                        {uploading ? (
-                                            <div className="w-5 h-5 border-2 border-neutral-400 border-t-transparent rounded-full animate-spin" />
-                                        ) : (
-                                            <Paperclip size={20} />
-                                        )}
+                                        {uploading ? <div className="w-5 h-5 border-2 border-neutral-400 border-t-transparent rounded-full animate-spin" /> : <Paperclip size={20} />}
                                     </button>
                                     <button
                                         type="submit"
                                         disabled={!reply.trim() && !attachment}
                                         className="w-10 h-10 flex items-center justify-center bg-emerald-600 hover:bg-emerald-700 text-white rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
-                                        title="Send message"
                                     >
                                         <Send size={18} />
                                     </button>

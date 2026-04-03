@@ -25,7 +25,7 @@ const NotificationCenter: React.FC = () => {
                     schema: 'public',
                     table: 'notifications'
                 },
-                (payload) => {
+                (_payload) => {
                     // Check if notification is for us (global or specific user)
                     // Since we can't easily check user_id match in generic handler without auth context, 
                     // we'll just refresh. Ideally check payload.new.user_id
@@ -123,7 +123,9 @@ const NotificationCenter: React.FC = () => {
             >
                 <Bell size={20} />
                 {unreadCount > 0 && (
-                    <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-neutral-900 animate-pulse"></span>
+                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[9px] font-black flex items-center justify-center rounded-full border-2 border-neutral-900 shadow-lg animate-in zoom-in duration-300">
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
                 )}
             </button>
 

@@ -12,7 +12,7 @@ interface LiveCameraModalProps {
 const LiveCameraModal: React.FC<LiveCameraModalProps> = ({ isOpen, onClose, onCapture }) => {
     const videoRef = useRef<HTMLVideoElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const [stream, setStream] = useState<MediaStream | null>(null);
+    const streamRef = useRef<MediaStream | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [showGrid, setShowGrid] = useState(true);
     const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
@@ -20,11 +20,11 @@ const LiveCameraModal: React.FC<LiveCameraModalProps> = ({ isOpen, onClose, onCa
     const [isFlash, setIsFlash] = useState(false);
 
     const stopCamera = useCallback(() => {
-        if (stream) {
-            stream.getTracks().forEach(track => track.stop());
-            setStream(null);
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
+            streamRef.current = null;
         }
-    }, [stream]);
+    }, []);
 
     const startCamera = useCallback(async () => {
         setIsInitializing(true);
@@ -43,7 +43,7 @@ const LiveCameraModal: React.FC<LiveCameraModalProps> = ({ isOpen, onClose, onCa
             };
 
             const newStream = await navigator.mediaDevices.getUserMedia(constraints);
-            setStream(newStream);
+            streamRef.current = newStream;
             if (videoRef.current) {
                 videoRef.current.srcObject = newStream;
             }
@@ -162,29 +162,39 @@ const LiveCameraModal: React.FC<LiveCameraModalProps> = ({ isOpen, onClose, onCa
                 {/* Camera Viewport */}
                 <div className="relative w-full aspect-square max-w-[500px] flex items-center justify-center overflow-hidden bg-zinc-900 border-y border-white/5">
                     {isInitializing && (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black z-20">
+                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/95 backdrop-blur-xl z-30">
                             <motion.div 
-                                animate={{ opacity: [0.3, 0.6, 0.3] }}
-                                transition={{ duration: 1.5, repeat: Infinity }}
-                                className="w-16 h-16 rounded-2xl border-2 border-sky-500/50 flex items-center justify-center"
+                                animate={{ 
+                                    opacity: [0.4, 1, 0.4],
+                                    scale: [0.95, 1.05, 0.95],
+                                    rotate: [0, 5, -5, 0]
+                                }}
+                                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                                className="w-20 h-20 rounded-3xl border-2 border-sky-500/30 flex items-center justify-center bg-sky-500/5 shadow-[0_0_50px_-12px_rgba(14,165,233,0.3)]"
                             >
-                                <Zap size={32} className="text-sky-500" />
+                                <Zap size={36} className="text-sky-500" />
                             </motion.div>
-                            <p className="mt-4 text-sky-500/60 text-xs font-black tracking-widest uppercase">Initializing Studio</p>
+                            <div className="mt-6 flex flex-col items-center gap-2">
+                                <p className="text-sky-500 text-[10px] font-black tracking-[0.3em] uppercase">VenderFlow Studio</p>
+                                <p className="text-white/40 text-[9px] font-medium uppercase tracking-widest">Optimizing Lens...</p>
+                            </div>
                         </div>
                     )}
 
                     {error ? (
-                        <div className="p-8 text-center space-y-4">
-                            <div className="w-16 h-16 mx-auto rounded-full bg-red-500/10 flex items-center justify-center">
-                                <AlertCircle size={32} className="text-red-500" />
+                        <div className="p-10 text-center space-y-6 animate-in fade-in zoom-in-95 duration-500">
+                            <div className="w-20 h-20 mx-auto rounded-3xl bg-red-500/5 border border-red-500/20 flex items-center justify-center shadow-[0_0_40px_-10px_rgba(239,68,68,0.2)]">
+                                <AlertCircle size={36} className="text-red-500" />
                             </div>
-                            <p className="text-white font-medium">{error}</p>
+                            <div className="space-y-2">
+                                <p className="text-white font-bold text-lg">System Alert</p>
+                                <p className="text-white/60 text-sm max-w-[240px] mx-auto leading-relaxed">{error}</p>
+                            </div>
                             <button 
                                 onClick={startCamera}
-                                className="px-6 py-2 bg-white/10 text-white rounded-xl hover:bg-white/20 transition-all font-bold"
+                                className="w-full max-w-[200px] py-4 bg-white text-black rounded-2xl hover:bg-zinc-200 transition-all font-black text-xs uppercase tracking-widest shadow-xl active:scale-95"
                             >
-                                Try Again
+                                System Reset
                             </button>
                         </div>
                     ) : (
@@ -240,43 +250,43 @@ const LiveCameraModal: React.FC<LiveCameraModalProps> = ({ isOpen, onClose, onCa
                                     />
                                 )}
                             </AnimatePresence>
+
+                            {/* Floating Controls Inside Square Viewport */}
+                            <div className="absolute bottom-4 left-0 right-0 flex flex-col items-center justify-center gap-4 z-40 bg-gradient-to-t from-black/60 to-transparent pt-8 pb-2">
+                                <div className="flex items-center gap-10 shrink-0">
+                                    <div className="flex flex-col items-center opacity-40 group">
+                                        <Smartphone size={18} className="text-white mb-1 group-hover:text-primary transition-colors" />
+                                        <span className="text-[9px] font-bold uppercase tracking-tighter text-white/50">Raw View</span>
+                                    </div>
+                                    
+                                    <button 
+                                        onClick={handleCapture}
+                                        disabled={isInitializing || !!error}
+                                        title="Capture Photo"
+                                        aria-label="Capture Photo"
+                                        className={`group relative w-22 h-22 rounded-full flex items-center justify-center transition-all duration-500 ${isInitializing || !!error ? 'opacity-20 grayscale cursor-not-allowed scale-90' : 'active:scale-90 hover:scale-105'}`}
+                                    >
+                                        <div className="absolute inset-0 rounded-full border-[5px] border-white/20 group-hover:border-white/40 group-hover:scale-110 transition-all duration-500"></div>
+                                        <div className="w-18 h-18 rounded-full bg-white flex items-center justify-center shadow-[0_0_50px_-15px_white] group-hover:shadow-[0_0_70px_-10px_white] transition-all duration-500">
+                                            <Camera size={36} className="text-black" />
+                                        </div>
+                                    </button>
+
+                                    <div className="flex flex-col items-center text-sky-500 animate-pulse">
+                                        <Zap size={18} className="mb-1" />
+                                        <span className="text-[9px] font-black uppercase tracking-[0.2em]">Studio</span>
+                                    </div>
+                                </div>
+                                
+                                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/40 border border-white/10 backdrop-blur-md">
+                                    <Shield size={12} className="text-emerald-400" />
+                                    <span className="text-[9px] text-white/60 font-medium tracking-wide">Secure Capture</span>
+                                </div>
+                            </div>
                         </>
                     )}
                 </div>
 
-                {/* Bottom Controls */}
-                <div className="absolute bottom-0 left-0 right-0 pb-safe h-[calc(10rem+env(safe-area-inset-bottom))] flex flex-col items-center justify-center gap-6 bg-gradient-to-t from-black/80 to-transparent">
-                    <div className="flex items-center gap-12 mb-4 shrink-0">
-                        <div className="flex flex-col items-center opacity-40">
-                            <Smartphone size={20} className="text-white mb-1" />
-                            <span className="text-[10px] font-bold uppercase tracking-tighter">Mobile View</span>
-                        </div>
-                        
-                        <button 
-                            onClick={handleCapture}
-                            disabled={isInitializing || !!error}
-                            title="Capture Photo"
-                            aria-label="Capture Photo"
-                            className={`group relative w-24 h-24 rounded-full flex items-center justify-center transition-all ${isInitializing || !!error ? 'opacity-20 grayscale cursor-not-allowed' : 'active:scale-90 scale-110'}`}
-                        >
-                            <div className="absolute inset-0 rounded-full border-4 border-white/30 group-hover:border-white/50 transition-all"></div>
-                            <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center shadow-2xl">
-                                <Camera size={40} className="text-black" />
-                            </div>
-                        </button>
-...
-
-                        <div className="flex flex-col items-center text-sky-500">
-                            <Zap size={20} className="mb-1" />
-                            <span className="text-[10px] font-bold uppercase tracking-tighter">1:1 Snap</span>
-                        </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
-                        <Shield size={14} className="text-emerald-400" />
-                        <span className="text-[10px] text-white/50 font-medium tracking-wide">Camera access is used only to capture product images</span>
-                    </div>
-                </div>
 
                 <canvas ref={canvasRef} className="hidden" />
             </motion.div>

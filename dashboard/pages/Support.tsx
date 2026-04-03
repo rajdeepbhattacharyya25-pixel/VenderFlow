@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Send, Plus, MessageSquare, Paperclip, Clock, X, FileText, Image, Video, Download, Check, CheckCheck } from 'lucide-react';
 import { RealtimeChannel } from '@supabase/supabase-js';
@@ -63,120 +63,24 @@ const Support: React.FC = () => {
         'video/mp4', 'video/webm', 'video/quicktime'
     ];
 
-    useEffect(() => {
-        fetchTickets();
-        fetchSellerName();
-    }, []);
 
-    useEffect(() => {
-        if (selectedTicket) {
-            fetchMessages(selectedTicket.id);
-
-            // Mark unread admin messages as read initially
-            markMessagesAsRead(selectedTicket.id);
-
-            const channelName = `ticket-${selectedTicket.id}`;
-            const filterString = `ticket_id=eq.${selectedTicket.id}`;
-
-            const channel = supabase
-                .channel(channelName, {
-                    config: { presence: { key: 'seller' } },
-                })
-                .on('presence', { event: 'sync' }, () => {
-                    const state = channel.presenceState();
-                    const opponentTyping = Object.values(state).some(
-                        (presences: any) => presences.some((p: any) => p.role === 'admin' && p.isTyping)
-                    );
-                    setIsTyping(opponentTyping);
-                })
-                .on('postgres_changes', {
-                    event: 'INSERT',
-                    schema: 'public',
-                    table: 'support_messages',
-                    filter: filterString
-                }, (payload) => {
-                    const newMessage = payload.new as Message;
-                    if (newMessage.sender_role === 'admin') {
-                        markMessagesAsRead(selectedTicket.id);
-                    }
-                    setMessages(prev => {
-                        if (prev.some(msg => msg.id === newMessage.id)) return prev;
-                        return [...prev, newMessage];
-                    });
-                    scrollToBottom();
-                })
-                .on('postgres_changes', {
-                    event: 'UPDATE',
-                    schema: 'public',
-                    table: 'support_messages',
-                    filter: filterString
-                }, (payload) => {
-                    const updatedMessage = payload.new as Message;
-                    setMessages(prev => prev.map(msg => msg.id === updatedMessage.id ? updatedMessage : msg));
-                })
-                .subscribe(async (status) => {
-                    if (status === 'SUBSCRIBED') {
-                        await channel.track({ role: 'seller', isTyping: false });
-                    }
-                });
-
-            setTypingChannel(channel);
-
-            return () => {
-                channel.unsubscribe();
-            };
-        }
-    }, [selectedTicket]);
-
-    const markMessagesAsRead = async (ticketId: string) => {
+    const fetchMessages = useCallback(async (ticketId: string) => {
         try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
-
-            await supabase
+            const { data, error } = await supabase
                 .from('support_messages')
-                .update({ is_read: true })
+                .select('*')
                 .eq('ticket_id', ticketId)
-                .eq('sender_role', 'admin')
-                .eq('is_read', false);
+                .order('created_at', { ascending: true });
+
+            if (error) throw error;
+            setMessages(data || []);
+            scrollToBottom();
         } catch (error) {
-            console.error('Error marking messages as read:', error);
+            console.error('Error fetching messages:', error);
+        } finally {
+            setLoading(false);
         }
-    };
-
-    const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setNewMessage(e.target.value);
-
-        if (!localTyping && typingChannel) {
-            setLocalTyping(true);
-            typingChannel.track({ role: 'seller', isTyping: true });
-        }
-
-        if (typingTimeoutRef.current) {
-            clearTimeout(typingTimeoutRef.current);
-        }
-
-        typingTimeoutRef.current = setTimeout(() => {
-            if (typingChannel) {
-                typingChannel.track({ role: 'seller', isTyping: false });
-                setLocalTyping(false);
-            }
-        }, 2000);
-    };
-
-    const fetchSellerName = async () => {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-            const { data } = await supabase
-                .from('sellers')
-                .select('store_name')
-                .eq('id', user.id)
-                .single();
-            if (data?.store_name) {
-                setSellerName(data.store_name);
-            }
-        }
-    };
+    }, []);
 
     const fetchTickets = async () => {
         try {
@@ -198,19 +102,124 @@ const Support: React.FC = () => {
         }
     };
 
-    const fetchMessages = async (ticketId: string) => {
-        const { data, error } = await supabase
-            .from('support_messages')
-            .select('*')
-            .eq('ticket_id', ticketId)
-            .order('created_at', { ascending: true });
-
-        if (error) {
-            console.error('Error fetching messages:', error);
-            return;
+    const fetchSellerName = async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+            const { data } = await supabase
+                .from('sellers')
+                .select('store_name')
+                .eq('id', user.id)
+                .single();
+            if (data?.store_name) {
+                setSellerName(data.store_name);
+            }
         }
-        setMessages(data || []);
-        scrollToBottom();
+    };
+
+    useEffect(() => {
+        fetchTickets();
+        fetchSellerName();
+    }, []);
+
+    useEffect(() => {
+        if (selectedTicket) {
+            fetchMessages(selectedTicket.id);
+
+            // Mark unread admin messages as read initially
+            markMessagesAsRead(selectedTicket.id);
+
+            const channelName = `ticket-${selectedTicket.id}`;
+            const filterString = `ticket_id=eq.${selectedTicket.id}`;
+
+
+            const channel = supabase
+                .channel(channelName, {
+                    config: { presence: { key: 'seller' } },
+                })
+                .on('presence', { event: 'sync' }, () => {
+                    const state = channel.presenceState<{ role: string; isTyping: boolean; ticketId: string }>();
+                    const opponentTyping = Object.values(state).some(
+                        (presences) => presences.some((p) => p.role === 'admin' && p.isTyping && p.ticketId === selectedTicket.id)
+                    );
+                    setIsTyping(opponentTyping);
+                })
+                .on('postgres_changes', {
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: 'support_messages',
+                    filter: filterString
+                }, (payload) => {
+                    const newMessage = payload.new as Message;
+                    if (newMessage.sender_role === 'admin') {
+                        markMessagesAsRead(selectedTicket.id);
+                        // Dual-pulse mobile haptics for new message
+                        if ('vibrate' in navigator) {
+                            navigator.vibrate([20, 30, 20]);
+                        }
+                    }
+                    setMessages(prev => {
+                        if (prev.some(msg => msg.id === newMessage.id)) return prev;
+                        return [...prev, newMessage];
+                    });
+                    scrollToBottom();
+                })
+                .on('postgres_changes', {
+                    event: 'UPDATE',
+                    schema: 'public',
+                    table: 'support_messages',
+                    filter: filterString
+                }, (payload) => {
+                    const updatedMessage = payload.new as Message;
+                    setMessages(prev => prev.map(msg => msg.id === updatedMessage.id ? updatedMessage : msg));
+                })
+                .subscribe(async (status) => {
+                    if (status === 'SUBSCRIBED') {
+                        await channel.track({ role: 'seller', isTyping: false, ticketId: selectedTicket.id });
+                    }
+                });
+
+            setTypingChannel(channel);
+
+            return () => {
+                channel.unsubscribe();
+            };
+        }
+    }, [selectedTicket, fetchMessages]);
+
+    const markMessagesAsRead = async (ticketId: string) => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            await supabase
+                .from('support_messages')
+                .update({ is_read: true })
+                .eq('ticket_id', ticketId)
+                .eq('sender_role', 'admin')
+                .eq('is_read', false);
+        } catch (error) {
+            console.error('Error marking messages as read:', error);
+        }
+    };
+
+    const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setNewMessage(e.target.value);
+
+        if (!localTyping && typingChannel && selectedTicket) {
+            setLocalTyping(true);
+            typingChannel.track({ role: 'seller', isTyping: true, ticketId: selectedTicket.id });
+        }
+
+        if (typingTimeoutRef.current) {
+            clearTimeout(typingTimeoutRef.current);
+        }
+
+        typingTimeoutRef.current = setTimeout(() => {
+            if (typingChannel && selectedTicket) {
+                typingChannel.track({ role: 'seller', isTyping: false, ticketId: selectedTicket.id });
+                setLocalTyping(false);
+            }
+        }, 3000);
     };
 
     const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -355,9 +364,10 @@ const Support: React.FC = () => {
                 typingChannel.track({ role: 'seller', isTyping: false });
                 setLocalTyping(false);
             }
-        } catch (error: any) {
+        } catch (error) {
             console.error('Error sending message:', error);
-            alert(`Failed to send message: ${error.message || JSON.stringify(error)}`);
+            const errMsg = error instanceof Error ? error.message : JSON.stringify(error);
+            alert(`Failed to send message: ${errMsg}`);
         }
     };
 
@@ -394,6 +404,12 @@ const Support: React.FC = () => {
         return <FileText size={16} />;
     };
 
+    const [rotation, setRotation] = useState<number>(0);
+
+    const handleRotate = () => {
+        setRotation(prev => (prev + 90) % 360);
+    };
+
     const renderAttachment = (msg: Message) => {
         if (!msg.attachment_url) return null;
 
@@ -405,13 +421,26 @@ const Support: React.FC = () => {
         return (
             <div className="mt-2">
                 {isImage && (
-                    <a href={msg.attachment_url} target="_blank" rel="noopener noreferrer">
-                        <img
-                            src={msg.attachment_url}
-                            alt={msg.attachment_name || 'Attachment'}
-                            className="max-w-full max-h-48 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                        />
-                    </a>
+                    <div className="relative group">
+                        <a href={msg.attachment_url} target="_blank" rel="noopener noreferrer">
+                            <img
+                                src={msg.attachment_url}
+                                alt={msg.attachment_name || 'Attachment'}
+                                className="max-w-full max-h-48 rounded-lg cursor-pointer hover:opacity-90 transition-all duration-300"
+                                style={{ transform: `rotate(${rotation}deg)` }}
+                            />
+                        </a>
+                        <button
+                            onClick={(e) => {
+                                e.preventDefault();
+                                handleRotate();
+                            }}
+                            className="absolute top-2 right-2 p-1.5 bg-black/50 hover:bg-black/70 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                            title="Rotate 90°"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path></svg>
+                        </button>
+                    </div>
                 )}
                 {isVideo && (
                     <video
@@ -649,13 +678,19 @@ const Support: React.FC = () => {
                                     <Clock size={16} />
                                     <span className="text-sm">{formatDate(selectedTicket.created_at)}</span>
                                 </div>
-                                <span className={clsx(
-                                    "px-3 py-1 rounded-full text-xs font-bold uppercase",
-                                    getStatusColor(selectedTicket.status)
-                                )}>
-                                    {selectedTicket.status}
-                                </span>
-                            </div>
+                                    {selectedTicket.status === 'open' && (
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)]" title="Live Connection Active" />
+                                            <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">Online</span>
+                                        </div>
+                                    )}
+                                    <span className={clsx(
+                                        "px-3 py-1 rounded-full text-xs font-bold uppercase",
+                                        getStatusColor(selectedTicket.status)
+                                    )}>
+                                        {selectedTicket.status}
+                                    </span>
+                                </div>
                         </div>
 
                         {/* Messages Area */}

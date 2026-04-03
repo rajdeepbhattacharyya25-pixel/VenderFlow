@@ -89,8 +89,9 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
                 });
 
             setProducts(mappedProducts as Product[]);
-        } catch (error: any) {
-            console.error('Error fetching products:', error);
+        } catch (error: unknown) {
+            const err = error as Error;
+            console.error('Error fetching products:', err);
             const { data: { user } } = await supabase.auth.getUser();
             logAlert({
                 type: 'PRODUCT_FETCH_FAILED',
@@ -281,7 +282,8 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
                 });
             }
         } catch (error: any) {
-            console.error('Error creating product:', error);
+            const err = error as Error;
+            console.error('Error creating product:', err);
             logAlert({
                 type: 'PRODUCT_CREATE_FAILED',
                 severity: 'critical',
@@ -531,7 +533,8 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
                 });
             }
         } catch (error: any) {
-            console.error('Error saving:', error);
+            const err = error as Error;
+            console.error('Error saving:', err);
             const { data: { user: saveUser } } = await supabase.auth.getUser();
             logAlert({
                 type: 'PRODUCT_SAVE_FAILED',
@@ -593,7 +596,8 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
             fetchProducts();
             setSelectedIds([]);
         } catch (error: any) {
-            console.error('Bulk edit failed:', error);
+            const err = error as Error;
+            console.error('Bulk edit failed:', err);
             const { data: { user: editUser } } = await supabase.auth.getUser();
             logAlert({
                 type: 'BULK_EDIT_FAILED',
@@ -721,7 +725,8 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
                     console.warn('Unknown bulk action:', action);
             }
         } catch (error: any) {
-            console.error('Bulk action failed:', error);
+            const err = error as Error;
+            console.error('Bulk action failed:', err);
             const { data: { user: actionUser } } = await supabase.auth.getUser();
             logAlert({
                 type: 'BULK_ACTION_FAILED',
@@ -747,7 +752,7 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                     <div className="flex items-baseline gap-3">
                         <h2 className="text-2xl font-bold text-text">Products</h2>
-                        <span className="text-lg text-muted">({products.length})</span>
+                        <span className="text-lg text-muted">({filteredProducts.length})</span>
                     </div>
 
                     <div className="flex items-center gap-3 w-full sm:w-auto">

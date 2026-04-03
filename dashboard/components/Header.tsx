@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Search, Bell, Sun, Moon, Menu, ShoppingBag, AlertCircle, User, Package, Settings as SettingsIcon, ChevronRight, FileText, MessageSquare, ExternalLink, X } from 'lucide-react';
 import { Theme } from '../types';
 import { supabase } from '../../lib/supabase';
 import { AnimatedIcon } from '../../components/AnimatedIcon';
+import { useClickOutside } from '../hooks/useClickOutside';
 
 interface HeaderProps {
     theme: Theme;
@@ -47,15 +48,32 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
 
     const [toastNotification, setToastNotification] = useState<Notification | null>(null);
 
+    // Refs for click-outside
+    const searchRef = useRef<HTMLDivElement>(null);
+    const notificationsRef = useRef<HTMLDivElement>(null);
+
+    // Click outside handlers
+    useClickOutside(searchRef, () => setSearchFocused(false));
+    useClickOutside(notificationsRef, () => setShowNotifications(false));
+
+    // Escape key support
+    useEffect(() => {
+        const handleEsc = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                setSearchFocused(false);
+                setShowNotifications(false);
+            }
+        };
+        window.addEventListener('keydown', handleEsc);
+        return () => window.removeEventListener('keydown', handleEsc);
+    }, []);
+
     // Fetch notifications
     useEffect(() => {
         let mounted = true;
-        let currentUserId = '';
-
         const fetchNotifications = async () => {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user || !mounted) return;
-            currentUserId = user.id;
 
             const { data, error } = await supabase
                 .from('notifications')
@@ -71,7 +89,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
         };
 
         // Subscribe to new notifications
-        let channel: any;
+        let channel: { unsubscribe: () => void } | null = null;
         
         const setupSubscription = async () => {
             const { data: { user } } = await supabase.auth.getUser();
@@ -321,7 +339,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
 
             <div className="flex items-center gap-4 lg:gap-8">
                 {/* Global Search */}
-                <div className="relative z-50">
+                <div className="relative z-50" ref={searchRef}>
                     <div
                         className={`
                         hidden sm:flex items-center bg-theme-bg/50 border border-theme-border/10 rounded-2xl px-4 py-2.5 transition-all duration-300 ease-out
@@ -336,7 +354,6 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
                             onChange={(e) => onSearchChange(e.target.value)}
                             className="bg-transparent border-none outline-none text-sm text-theme-text placeholder-theme-muted/60 w-full ml-3 font-medium"
                             onFocus={() => setSearchFocused(true)}
-                            onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
                         />
                         {isSearching && <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin ml-2"></div>}
                     </div>
@@ -414,7 +431,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
                     </button>
 
                     {/* Notifications */}
-                    <div className="relative z-50">
+                    <div className="relative z-50" ref={notificationsRef}>
                         <button
                             onClick={() => setShowNotifications(!showNotifications)}
                             className={`relative p-2.5 rounded-2xl hover:bg-theme-bg border border-transparent hover:border-theme-border/10 transition-all text-theme-text group ${showNotifications ? 'bg-theme-bg border-theme-border/20' : ''}`}
@@ -422,17 +439,14 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
                         >
                             <AnimatedIcon icon={Bell} animation="shake" trigger="hover" size={20} iconClassName="group-hover:scale-110 transition-transform" />
                             {unreadCount > 0 && (
-                                <span className="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-theme-panel animate-pulse shadow-sm"></span>
+                                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[9px] font-black flex items-center justify-center rounded-full border-2 border-theme-panel shadow-lg animate-in zoom-in duration-300">
+                                    {unreadCount > 99 ? '99+' : unreadCount}
+                                </span>
                             )}
                         </button>
 
                         {showNotifications && (
-                            <>
-                                <div
-                                    className="fixed inset-0 z-[60] bg-black/15 backdrop-blur-[2px]"
-                                    onClick={() => setShowNotifications(false)}
-                                />
-                                <div className="absolute right-0 mt-4 w-96 max-w-[calc(100vw-2rem)] bg-theme-panel border border-theme-border/50 rounded-3xl shadow-2xl z-[70] overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+                            <div className="absolute right-0 mt-4 w-96 max-w-[calc(100vw-2rem)] bg-theme-panel border border-theme-border/50 rounded-3xl shadow-2xl z-[70] overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
                                     <div className="p-5 border-b border-theme-border/20 flex justify-between items-center bg-theme-bg/80">
                                         <h4 className="font-bold text-sm tracking-tight text-theme-text">
                                             Notifications
@@ -492,7 +506,6 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, isMobile, onMenuCli
                                         </button>
                                     </div>
                                 </div>
-                            </>
                         )}
                     </div>
 
