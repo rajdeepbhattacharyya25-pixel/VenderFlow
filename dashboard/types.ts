@@ -11,6 +11,7 @@ export interface Product {
   price: number;
   discount_price?: number;
   is_active: boolean;
+  seller_id?: string;
   has_variants: boolean;
   status?: 'active' | 'pending' | 'rejected' | 'draft';
   created_at: string;

@@ -12,6 +12,13 @@ import { Seller } from '../../lib/seller';
 import { Events } from '../../lib/analytics';
 import { logAlert } from '../../lib/notifications';
 
+interface SupabaseError {
+    message: string;
+    code?: string;
+    details?: string;
+    hint?: string;
+}
+
 interface ProductsProps {
     searchTerm?: string;
 }
@@ -90,19 +97,23 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
 
             setProducts(mappedProducts as Product[]);
         } catch (error: unknown) {
-            const err = error as Error;
+            const err = error as SupabaseError;
             console.error('Error fetching products:', err);
+            
+            if (err?.code === 'PGRST116') {
+                setProducts([]);
+            }
             const { data: { user } } = await supabase.auth.getUser();
             logAlert({
                 type: 'PRODUCT_FETCH_FAILED',
-                severity: 'warning',
+                severity: 'critical',
                 title: 'Failed to Load Products',
-                message: `Could not retrieve your product catalog. ${error?.message || 'Unknown error'}`,
+                message: `Could not retrieve your product catalog. ${err?.message || 'Unknown error'}`,
                 seller_id: user?.id,
                 metadata: {
                     operation_type: 'product_fetch',
-                    error_code: error?.code || 'FETCH_ERROR'
-                }
+                    error_code: err?.code || 'FETCH_ERROR',
+                },
             });
         }
     };
@@ -281,19 +292,19 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
                     price: 0
                 });
             }
-        } catch (error: any) {
-            const err = error as Error;
+        } catch (error: unknown) {
+            const err = error as SupabaseError;
             console.error('Error creating product:', err);
             logAlert({
                 type: 'PRODUCT_CREATE_FAILED',
                 severity: 'critical',
                 title: 'Product Creation Failed',
-                message: `Failed to initialize new product. ${error?.message || 'Database error'}`,
-                seller_id: user.id,
+                message: `Failed to initialize new product. ${err.message || 'Database error'}`,
+                seller_id: user?.id || '',
                 metadata: {
                     operation_type: 'product_create',
-                    error_code: error?.code || 'INSERT_ERROR'
-                }
+                    error_code: 'INSERT_ERROR',
+                },
             });
         }
     };
@@ -311,7 +322,6 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
                 fetchProducts();
                 setSelectedIds(selectedIds.filter(sid => sid !== id));
 
-                // Real-time Sync: Broadcast update to storefronts
                 const channel = supabase.channel(`seller:${user.id}`);
                 await channel.subscribe(async (status) => {
                     if (status === 'SUBSCRIBED') {
@@ -345,7 +355,6 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
             const productId = editingProduct?.id;
             if (!productId) return;
 
-            // 1. Validation for Publication
             if (productData.is_active && !seller?.razorpay_account_id) {
                 const { data: { user: currentUser } } = await supabase.auth.getUser();
                 logAlert({
@@ -367,7 +376,6 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
                 return;
             }
 
-            // 1. Update Product Table
             const { error: productError } = await supabase
                 .from('products')
                 .update({
@@ -383,7 +391,6 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
 
             if (productError) throw productError;
 
-            // Events Tracking
             if (productData.is_active) {
                 const { data: { user } } = await supabase.auth.getUser();
                 if (user) {
@@ -394,7 +401,6 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
                 }
             }
 
-            // 2. Update Stock
             if (typeof productData.stock_quantity === 'number') {
                 const { error: stockError } = await supabase
                     .from('product_stock')
@@ -417,14 +423,7 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
                 }
             }
 
-            // 3. Update Variants
             if (productData.variants) {
-                // For proper upsert, we should use 'id' if it exists. 
-                // Since this might cause issues if variant IDs are missing from client, 
-                // an alternative is to delete variants NOT in the new list, and upsert the rest.
-                // For simplicity matching the existing flow but safer:
-
-                // Get current variants to find which ones to delete
                 const currentVariantsIds = productData.variants.filter((v: { id?: string }) => v.id).map((v: { id?: string }) => v.id as string);
 
                 if (currentVariantsIds.length > 0) {
@@ -442,7 +441,7 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
 
                 if (productData.variants.length > 0) {
                     const variantsToUpsert = productData.variants.map((v: { id?: string; variant_name: string; price_override?: number; stock_quantity?: number }) => ({
-                        ...(v.id ? { id: v.id } : {}), // include id for upsert if we have it
+                        ...(v.id ? { id: v.id } : {}),
                         product_id: productId,
                         variant_name: v.variant_name,
                         price_override: v.price_override,
@@ -468,7 +467,6 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
                 }
             }
 
-            // 4. Update Media (Delete existing and batch insert new state for atomicity/consistency)
             const { error: deleteMediaError } = await supabase
                 .from('product_media')
                 .delete()
@@ -517,7 +515,6 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
             fetchProducts();
             setIsModalOpen(false);
 
-            // Real-time Sync: Broadcast update to storefronts
             const { data: { session } } = await supabase.auth.getSession();
             if (session?.user?.id) {
                 const channel = supabase.channel(`seller:${session.user.id}`);
@@ -532,7 +529,7 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
                     }
                 });
             }
-        } catch (error: any) {
+        } catch (error) {
             const err = error as Error;
             console.error('Error saving:', err);
             const { data: { user: saveUser } } = await supabase.auth.getUser();
@@ -540,12 +537,12 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
                 type: 'PRODUCT_SAVE_FAILED',
                 severity: 'critical',
                 title: 'Product Save Failed',
-                message: `Failed to save product changes. ${error?.message || 'Unknown error'}`,
-                seller_id: saveUser?.id,
+                message: `Failed to save product changes. ${err.message}`,
+                seller_id: saveUser?.id || '',
                 metadata: {
                     operation_type: 'product_save',
                     resource_id: editingProduct?.id,
-                    error_code: error?.code || 'SAVE_ERROR'
+                    error_code: 'SAVE_ERROR'
                 }
             });
         }
@@ -595,7 +592,7 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
 
             fetchProducts();
             setSelectedIds([]);
-        } catch (error: any) {
+        } catch (error) {
             const err = error as Error;
             console.error('Bulk edit failed:', err);
             const { data: { user: editUser } } = await supabase.auth.getUser();
@@ -603,15 +600,15 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
                 type: 'BULK_EDIT_FAILED',
                 severity: 'critical',
                 title: 'Bulk Edit Failed',
-                message: `Bulk edit operation failed for ${selectedIds.length} products. ${error?.message || 'Unknown error'}`,
+                message: `Bulk edit operation failed for ${selectedIds.length} products. ${err.message}`,
                 seller_id: editUser?.id,
                 metadata: {
                     operation_type: 'bulk_edit',
-                    error_code: error?.code || 'BULK_EDIT_ERROR',
+                    error_code: 'BULK_EDIT_ERROR',
                     affected_count: selectedIds.length
                 }
             });
-            throw error; // Re-throw to be caught by BulkEditModal
+            throw err;
         }
     };
 
@@ -724,19 +721,19 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
                 default:
                     console.warn('Unknown bulk action:', action);
             }
-        } catch (error: any) {
-            const err = error as Error;
+        } catch (error: unknown) {
+            const err = error as Error & { code?: string };
             console.error('Bulk action failed:', err);
             const { data: { user: actionUser } } = await supabase.auth.getUser();
             logAlert({
                 type: 'BULK_ACTION_FAILED',
                 severity: 'critical',
                 title: 'Bulk Action Failed',
-                message: `Bulk ${action} failed for ${selectedIds.length} products. ${error?.message || 'Unknown error'}`,
+                message: `Bulk ${action} failed for ${selectedIds.length} products. ${(error as any)?.message || 'Unknown error'}`,
                 seller_id: actionUser?.id,
                 metadata: {
                     operation_type: `bulk_${action}`,
-                    error_code: error?.code || 'BULK_ACTION_ERROR',
+                    error_code: (error as any)?.code || 'BULK_ACTION_ERROR',
                     affected_count: selectedIds.length
                 }
             });
@@ -766,6 +763,7 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
                                 onClick={() => setShowFilterDropdown(!showFilterDropdown)}
                                 className={`p-2.5 rounded-xl border transition-all flex items-center gap-2 ${showFilterDropdown || statusFilter !== 'all' || categoryFilters.length > 0 || stockFilter !== 'all' ? 'bg-chart-line/10 border-chart-line text-chart-line shadow-sm' : 'bg-panel border-muted/20 text-muted hover:text-text hover:border-chart-line'}`}
                                 title="Filter Products"
+                                aria-pressed={showFilterDropdown}
                             >
                                 <Filter size={20} />
                                 {(statusFilter !== 'all' || categoryFilters.length > 0 || stockFilter !== 'all') && (
@@ -867,10 +865,9 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
                                         await seedDatabase();
                                         fetchProducts();
                                         alert('Demo data generated successfully!');
-                                    } catch (err: unknown) {
-                                        const e = err as { message?: string };
-                                        console.error(e);
-                                        alert('Failed to generate data: ' + e.message);
+                                    } catch (error: unknown) {
+                                        const err = error as Error;
+                                        alert('Failed to generate data: ' + (err.message || 'Unknown error'));
                                     }
                                 }
                             }}
@@ -949,6 +946,7 @@ export default function Products({ searchTerm = '' }: ProductsProps) {
                 }}
                 product={editingProduct}
                 existingCategories={uniqueCategories}
+                onRefreshCategories={() => fetchProducts()}
                 onSave={handleSaveProduct}
             />
 

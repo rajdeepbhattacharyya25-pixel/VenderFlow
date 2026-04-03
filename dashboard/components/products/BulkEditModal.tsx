@@ -99,7 +99,7 @@ const BulkEditModal: React.FC<BulkEditModalProps> = ({ isOpen, onClose, selected
                                     <Upload className="mx-auto text-theme-muted" size={24} />
                                     <label className="text-sm text-sky-500 font-medium cursor-pointer hover:underline">
                                         Choose File
-                                        <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+                                        <input type="file" className="hidden" accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif" onChange={handleFileChange} />
                                     </label>
                                     <p className="text-xs text-theme-muted">Image will be added to all selected products.</p>
                                 </div>

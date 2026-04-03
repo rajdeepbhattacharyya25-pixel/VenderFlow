@@ -22,6 +22,7 @@ import { compressImage } from '../../lib/imageUtils';
 import ImageEditorModal from './ImageEditorModal';
 import { SellerSuccessAI } from './SellerSuccessAI';
 import TagInput from './TagInput';
+import { CategoryManagerModal } from './CategoryManagerModal';
 import { logAlert } from '../../../lib/notifications';
 import { supabase } from '../../../lib/supabase';
 import ErrorBoundary from '@/components/ErrorBoundary';
@@ -62,6 +63,7 @@ interface ProductModalProps {
     product?: Product | null;
     existingCategories: string[];
     onSave?: (product: Partial<Product>) => Promise<void> | void;
+    onRefreshCategories?: () => void;
 }
 
 interface ProductFormData {
@@ -164,7 +166,14 @@ const SortableThumbnail = ({ id, src, type = 'image', isActive, isMain, onClick 
     );
 };
 
-const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, existingCategories, onSave }) => {
+const ProductModal: React.FC<ProductModalProps> = ({ 
+    isOpen, 
+    onClose, 
+    product, 
+    existingCategories, 
+    onSave,
+    onRefreshCategories 
+}) => {
     const [activeSection, setActiveSection] = useState('basic');
     const [formData, setFormData] = useState<ProductFormData>(defaultFormData);
     const videoInputRef = useRef<HTMLInputElement>(null);
@@ -180,6 +189,22 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, e
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [hasChanges, setHasChanges] = useState(false);
     const [showCamera, setShowCamera] = useState(false);
+    const [showCategoryManager, setShowCategoryManager] = useState(false);
+    const [isGlobalLoading, setIsGlobalLoading] = useState(false);
+    const [activeSellerId, setActiveSellerId] = useState<string | null>(product?.seller_id || null);
+
+    // Sync activeSellerId with product or user session
+    React.useEffect(() => {
+        if (product?.seller_id) {
+            setActiveSellerId(product.seller_id);
+        } else if (isOpen) {
+            const fetchUser = async () => {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session?.user?.id) setActiveSellerId(session.user.id);
+            };
+            fetchUser();
+        }
+    }, [product?.seller_id, isOpen]);
 
     const sensors = useSensors(
         useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
@@ -542,6 +567,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, e
                                             tags={formData.category}
                                             onChange={(tags) => updateField('category', tags)}
                                             suggestions={existingCategories}
+                                            onManageCategories={() => setShowCategoryManager(true)}
                                             placeholder="Add categories (e.g. Sale)..."
                                         />
                                         <p className="text-[10px] text-theme-muted">Press Enter or comma to add categories.</p>
@@ -599,7 +625,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, e
                                         <span className="text-sm font-semibold text-sky-500/70 group-hover:text-sky-500 uppercase tracking-widest font-mono">Take Photo</span>
                                     </button>
                                 </div>
-                                 <input ref={imgbbFileInputRef} type="file" className="hidden" accept="image/*" multiple onChange={async (e) => {
+                                 <input ref={imgbbFileInputRef} type="file" className="hidden" accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif" multiple onChange={async (e) => {
                                     const files = e.target.files;
                                     if (!files) return;
                                     setUploading(true);
@@ -940,7 +966,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, e
                                                     ) : (
                                                         <div className="relative w-12 h-12 flex flex-col items-center justify-center border border-dashed border-theme-border rounded-lg cursor-pointer hover:border-sky-500 text-theme-muted shrink-0 bg-theme-bg/50 overflow-hidden group">
                                                             <ImageIcon size={16} className="group-hover:text-sky-500 transition-colors" />
-                                                            <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => handleVariantImageUpload(e, variant.value)} disabled={uploading || !variant.value} title={!variant.value ? "Enter a variant value first" : "Upload variant image"} />
+                                                            <input type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => handleVariantImageUpload(e, variant.value)} disabled={uploading || !variant.value} title={!variant.value ? "Enter a variant value first" : "Upload variant image"} />
                                                         </div>
                                                     )}
                                                     <div className="flex-1 grid grid-cols-2 gap-3">
@@ -1260,6 +1286,39 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, e
                     setEditorOpen(true);
                 }}
             />
+
+            <CategoryManagerModal
+                isOpen={showCategoryManager}
+                onClose={() => setShowCategoryManager(false)}
+                categories={existingCategories}
+                sellerId={activeSellerId || ''}
+                onLoadingChange={setIsGlobalLoading}
+                onCategoriesUpdated={() => {
+                    if (onRefreshCategories) onRefreshCategories();
+                }}
+            />
+
+            <AnimatePresence>
+                {isGlobalLoading && (
+                    <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-md flex flex-col items-center justify-center gap-4"
+                    >
+                        <div className="relative">
+                            <div className="w-16 h-16 border-4 border-sky-500/20 border-t-sky-500 rounded-full animate-spin"></div>
+                            <div className="absolute inset-0 flex items-center justify-center">
+                                <span className="w-8 h-8 border-4 border-emerald-500/20 border-b-emerald-500 rounded-full animate-spin-reverse"></span>
+                            </div>
+                        </div>
+                        <div className="bg-theme-panel/80 px-6 py-3 rounded-2xl border border-theme-border shadow-2xl flex flex-col items-center">
+                            <span className="text-theme-text font-bold text-lg tracking-tight">Updating Products...</span>
+                            <span className="text-theme-muted text-xs">Syncing categories across your store</span>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
             </ErrorBoundary>
         </>
     );

@@ -25,6 +25,7 @@ import {
 import { unifiedUpload } from '../../lib/vault';
 import { logAlert } from '../../../lib/notifications';
 import { supabase } from '../../../lib/supabase';
+import { motion } from 'framer-motion';
 
 interface ImageEditorModalProps {
     isOpen: boolean;
@@ -43,13 +44,21 @@ const ASPECT_OPTIONS = [
 ];
 
 function centerAspectCrop(mediaWidth: number, mediaHeight: number, aspect: number | undefined) {
-  return centerCrop(
-    makeAspectCrop(
-      { unit: '%', width: 90 },
-      aspect || 1,
+  if (aspect) {
+    return centerCrop(
+      makeAspectCrop(
+        { unit: '%', width: 90 },
+        aspect,
+        mediaWidth,
+        mediaHeight
+      ),
       mediaWidth,
       mediaHeight
-    ),
+    );
+  }
+  // For free mode, just center a 90% box without an aspect constraint
+  return centerCrop(
+    { unit: '%', width: 90, height: 90 },
     mediaWidth,
     mediaHeight
   );
@@ -66,28 +75,35 @@ async function getCroppedImg(
     const scaleX = image.naturalWidth / image.width;
     const scaleY = image.naturalHeight / image.height;
 
-    canvas.width = pixelCrop.width * scaleX;
-    canvas.height = pixelCrop.height * scaleY;
+    // Swap dimensions if rotated 90 or 270 degrees
+    const normalizedRotation = ((rotation % 360) + 360) % 360;
+    const isSwapped = normalizedRotation === 90 || normalizedRotation === 270;
+    
+    canvas.width = (isSwapped ? pixelCrop.height : pixelCrop.width) * scaleX;
+    canvas.height = (isSwapped ? pixelCrop.width : pixelCrop.height) * scaleX;
 
     ctx.imageSmoothingQuality = 'high';
 
     const rotateRads = rotation * Math.PI / 180;
     ctx.save();
+    
+    // Move to center of the NEW canvas
     ctx.translate(canvas.width / 2, canvas.height / 2);
     ctx.rotate(rotateRads);
-    ctx.translate(-canvas.width / 2, -canvas.height / 2);
-
+    
+    // Draw the image centered around the origin, but only the portion from pixelCrop
     ctx.drawImage(
       image,
       pixelCrop.x * scaleX,
       pixelCrop.y * scaleY,
       pixelCrop.width * scaleX,
       pixelCrop.height * scaleY,
-      0,
-      0,
+      -pixelCrop.width * scaleX / 2,
+      -pixelCrop.height * scaleY / 2,
       pixelCrop.width * scaleX,
       pixelCrop.height * scaleY
     );
+    
     ctx.restore();
 
     return new Promise((resolve, reject) => {
@@ -116,18 +132,30 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({
     const [isAiEnhance, setIsAiEnhance] = useState(false);
 
     const imgRef = useRef<HTMLImageElement>(null);
+    const lastTouchDistance = useRef<number | null>(null);
+    const initialZoomOnPinch = useRef<number>(1);
 
     const onImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
       const { width, height } = e.currentTarget;
-      setCrop(centerAspectCrop(width, height, aspect));
-    }, [aspect]);
+      // Normalizing rotation to handle swaps
+      const normalizedRotation = ((rotation % 360) + 360) % 360;
+      const isSwapped = normalizedRotation === 90 || normalizedRotation === 270;
+      const effectiveAspect = (aspect && isSwapped) ? 1 / aspect : aspect;
+      
+      setCrop(centerAspectCrop(width, height, effectiveAspect));
+    }, [aspect, rotation]);
 
     const handleAspectChange = (newAspect: number | undefined) => {
       setAspect(newAspect);
       if (imgRef.current) {
         const { width, height } = imgRef.current;
-        setCrop(centerAspectCrop(width, height, newAspect));
+        const normalizedRotation = ((rotation % 360) + 360) % 360;
+        const isSwapped = normalizedRotation === 90 || normalizedRotation === 270;
+        const effectiveAspect = (newAspect && isSwapped) ? 1 / newAspect : newAspect;
+        
+        setCrop(centerAspectCrop(width, height, effectiveAspect));
       }
+      if ('vibrate' in navigator) navigator.vibrate(5);
     };
 
     const handleApply = async () => {
@@ -197,6 +225,41 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({
         });
     };
 
+    const adjustZoom = (delta: number) => {
+        setZoom(prev => {
+            const next = Math.max(0.5, Math.min(2, prev + delta));
+            if ('vibrate' in navigator && next !== prev) navigator.vibrate(5);
+            return next;
+        });
+    };
+
+    const handleTouchStart = (e: React.TouchEvent) => {
+        if (e.touches.length === 2) {
+            const dist = Math.hypot(
+                e.touches[0].pageX - e.touches[1].pageX,
+                e.touches[0].pageY - e.touches[1].pageY
+            );
+            lastTouchDistance.current = dist;
+            initialZoomOnPinch.current = zoom;
+        }
+    };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+        if (e.touches.length === 2 && lastTouchDistance.current !== null) {
+            const dist = Math.hypot(
+                e.touches[0].pageX - e.touches[1].pageX,
+                e.touches[0].pageY - e.touches[1].pageY
+            );
+            const scale = dist / lastTouchDistance.current;
+            const newZoom = Math.max(0.5, Math.min(2, initialZoomOnPinch.current * scale));
+            setZoom(newZoom);
+        }
+    };
+
+    const handleTouchEnd = () => {
+        lastTouchDistance.current = null;
+    };
+
     if (!isOpen) return null;
 
     return createPortal(
@@ -244,10 +307,17 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({
                 </div>
             </div>
 
-            {/* ── Workspace ──────────────────────────────────────── */}
-            <div className="flex-1 relative flex items-center justify-center overflow-hidden p-4 sm:p-12">
-                <div
-                    className="relative transition-transform duration-500 cubic-bezier(0.4, 0, 0.2, 1)"
+            <div 
+                className="flex-1 relative flex items-center justify-center overflow-hidden p-4 sm:p-12 touch-none"
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+            >
+                <motion.div
+                    drag={zoom > 1}
+                    dragConstraints={{ left: -500, right: 500, top: -500, bottom: 500 }}
+                    dragElastic={0.1}
+                    className="relative transition-transform duration-200"
                     style={{ transform: `scale(${zoom}) rotate(${rotation}deg)` }}
                 >
                     <ReactCrop
@@ -267,7 +337,7 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({
                             draggable={false}
                         />
                     </ReactCrop>
-                </div>
+                </motion.div>
 
                 {/* Error banner */}
                 {error && (
@@ -285,9 +355,16 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({
                 <div className="px-6 py-4 flex items-center justify-between gap-6 border-b border-white/5">
                     {/* Zoom & Rotate Slider Group */}
                     <div className="flex-1 flex flex-col gap-4">
-                        {/* Zoom Slider */}
+                        {/* Zoom Slider & Precision Controls */}
                         <div className="flex items-center gap-3">
-                            <ZoomOut size={14} className="text-white/20 shrink-0" />
+                            <button
+                                onClick={() => adjustZoom(-0.1)}
+                                className="w-8 h-8 flex items-center justify-center rounded-full bg-white/5 border border-white/5 text-white/40 hover:text-white hover:bg-white/10 active:scale-90 transition-all shrink-0"
+                                aria-label="Zoom out"
+                            >
+                                <ZoomOut size={16} />
+                            </button>
+
                             <div className="flex-1 relative h-8 flex items-center">
                                 <input
                                     type="range"
@@ -295,10 +372,21 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({
                                     value={zoom}
                                     onChange={(e) => setZoom(Number(e.target.value))}
                                     className="w-full h-1 rounded-full appearance-none cursor-pointer accent-cyan-500 bg-white/10"
-                                    aria-label="Zoom"
+                                    aria-label="Zoom scale"
                                 />
+                                {/* Percentage indicator */}
+                                <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-[9px] font-black tracking-widest text-cyan-500 uppercase">
+                                    {(zoom * 100).toFixed(0)}%
+                                </div>
                             </div>
-                            <ZoomIn size={14} className="text-white/20 shrink-0" />
+
+                            <button
+                                onClick={() => adjustZoom(0.1)}
+                                className="w-8 h-8 flex items-center justify-center rounded-full bg-white/5 border border-white/5 text-white/40 hover:text-white hover:bg-white/10 active:scale-90 transition-all shrink-0"
+                                aria-label="Zoom in"
+                            >
+                                <ZoomIn size={16} />
+                            </button>
                         </div>
 
                         {/* Rotation Control: Cycle 90 + Current display */}
@@ -356,7 +444,7 @@ const ImageEditorModal: React.FC<ImageEditorModalProps> = ({
                                     if ('vibrate' in navigator) navigator.vibrate(5);
                                 }}
                                 className={`shrink-0 flex flex-col items-center justify-center gap-1.5 px-5 py-3 rounded-2xl text-xs font-bold border transition-all active:scale-95 min-w-[72px] ${
-                                    isActive
+                                        isActive
                                         ? 'bg-cyan-500 text-black border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.3)]'
                                         : 'bg-white/5 border-white/5 text-white/40 hover:text-white/70 hover:border-white/10'
                                 }`}

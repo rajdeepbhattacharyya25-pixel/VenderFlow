@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { supabase, secureInvoke } from '../lib/supabase';
-import { Store, Lock, X } from 'lucide-react';
+import { Store, Lock, X, Eye, EyeOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { OwlOverlay } from './OwlOverlay';
 import { Turnstile } from '@marsidev/react-turnstile';
+import { checkPasswordLeak, getPasswordStrength } from '../lib/security';
 
 interface LoginModalProps {
     isOpen: boolean;
@@ -21,7 +22,14 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
     const [isSignUp, setIsSignUp] = useState(false);
     const [mode, setMode] = useState<'customer' | 'seller'>(initialMode);
     const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+    const [showPassword, setShowPassword] = useState(false);
     const [viewportWidth, setViewportWidth] = useState(window.innerWidth);
+
+    // Security & Leak Protection State
+    const [leakCount, setLeakCount] = useState<number | null>(null);
+    const [isCheckingLeak, setIsCheckingLeak] = useState(false);
+    const [userAcknowledgedLeak, setUserAcknowledgedLeak] = useState(false);
+    const [passwordStrength, setPasswordStrength] = useState<'weak' | 'moderate' | 'strong'>('weak');
 
     const navigate = useNavigate();
 
@@ -41,8 +49,63 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
             setIsSignUp(false);
             setMode(initialMode);
             setTurnstileToken(null);
+            setShowPassword(false);
+            setLeakCount(null);
+            setIsCheckingLeak(false);
+            setUserAcknowledgedLeak(false);
         }
     }, [isOpen, initialMode]);
+
+    // Password Leak & Strength Logic (Debounced)
+    useEffect(() => {
+        let isCancelled = false;
+
+        if (!password) {
+            setLeakCount(null);
+            setIsCheckingLeak(false);
+            setUserAcknowledgedLeak(false);
+            setPasswordStrength('weak');
+            return;
+        }
+
+        // Reset acknowledgment on each change for security
+        setUserAcknowledgedLeak(false);
+        setPasswordStrength(getPasswordStrength(password));
+
+        const timer = setTimeout(async () => {
+            setIsCheckingLeak(true);
+            try {
+                const count = await checkPasswordLeak(password);
+                if (!isCancelled) {
+                    setLeakCount(count);
+                }
+            } finally {
+                if (!isCancelled) {
+                    setIsCheckingLeak(false);
+                }
+            }
+        }, 800);
+
+        return () => {
+            isCancelled = true;
+            clearTimeout(timer);
+        };
+    }, [password]);
+
+    const handlePasswordBlur = async () => {
+        if (!password || password.length < 3) return;
+        
+        // Final explicit check on blur
+        setIsCheckingLeak(true);
+        try {
+            const count = await checkPasswordLeak(password);
+            setLeakCount(count);
+            // Reset acknowledgment if new results come in (security first)
+            if (count > 0) setUserAcknowledgedLeak(false);
+        } finally {
+            setIsCheckingLeak(false);
+        }
+    };
 
     if (!isOpen) return null;
 
@@ -238,35 +301,84 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
                             </div>
                         )}
 
-                        <form onSubmit={handleEmailAuth} className={`w-full ${viewportWidth < 360 ? 'space-y-2' : 'space-y-3'}`} autoComplete="off">
+                        <form onSubmit={handleEmailAuth} className={`w-full ${viewportWidth < 360 ? 'space-y-2' : 'space-y-3'}`}>
                             <div className={`${viewportWidth < 360 ? 'space-y-2' : 'space-y-3'}`}>
                                 <div className="space-y-1.5">
-                                    <label className="block text-[9px] font-bold text-stone-500 uppercase tracking-[0.3em] ml-1">Email</label>
+                                    <label htmlFor="login-email" className="block text-[9px] font-bold text-stone-500 uppercase tracking-[0.3em] ml-1 cursor-pointer">Email</label>
                                     <input
+                                        id="login-email"
                                         type="email"
                                         value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
+                                        onChange={(e) => setEmail(e.target.value.trim().toLowerCase())}
                                         required
-                                        autoComplete="off"
+                                        autoFocus
+                                        autoComplete="email"
                                         className={`w-full bg-stone-900/50 border border-white/5 rounded-xl ${viewportWidth < 360 ? 'px-3 py-2.5 text-xs' : 'px-4 py-3 text-sm'} text-white placeholder-stone-700 focus:outline-none focus:ring-1 focus:ring-white/20 transition-all font-medium`}
                                         placeholder="Email Address"
                                         inputMode="email"
-                                        autoCapitalize="off"
                                     />
                                 </div>
 
                                 <div className="space-y-1.5">
-                                    <p className="block text-[9px] font-bold text-stone-500 uppercase tracking-[0.3em] ml-1">Password</p>
-                                    <input
-                                        type="password"
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        required
-                                        minLength={6}
-                                        autoComplete="new-password"
-                                        className={`w-full bg-stone-900/50 border border-white/5 rounded-xl ${viewportWidth < 360 ? 'px-3 py-2.5 text-xs' : 'px-4 py-3 text-sm'} text-white placeholder-stone-700 focus:outline-none focus:ring-1 focus:ring-white/20 transition-all font-medium`}
-                                        placeholder="••••••••"
-                                    />
+                                    <label htmlFor="login-password" anonym-key-id="login-password-label" className="block text-[9px] font-bold text-stone-500 uppercase tracking-[0.3em] ml-1 cursor-pointer">Password</label>
+                                    <div className="relative group">
+                                        <input
+                                            id="login-password"
+                                            type={showPassword ? 'text' : 'password'}
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                            onBlur={handlePasswordBlur}
+                                            required
+                                            minLength={6}
+                                            autoComplete={isSignUp ? 'new-password' : 'current-password'}
+                                            className={`w-full bg-stone-900/50 border ${leakCount && leakCount > 0 ? 'border-red-500/50' : 'border-white/5'} rounded-xl ${viewportWidth < 360 ? 'px-3 py-2.5 text-xs' : 'px-4 py-3 text-sm'} text-white placeholder-stone-700 focus:outline-none focus:ring-1 focus:ring-white/20 transition-all font-medium pr-12`}
+                                            placeholder="••••••••"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-stone-500 hover:text-white transition-colors duration-200 z-10"
+                                            aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                        >
+                                            {showPassword ? (
+                                                <EyeOff className="w-4 h-4 sm:w-4.5 sm:h-4.5" strokeWidth={1.5} />
+                                            ) : (
+                                                <Eye className="w-4 h-4 sm:w-4.5 sm:h-4.5" strokeWidth={1.5} />
+                                            )}
+                                        </button>
+                                    </div>
+                                    
+                                    {/* Security & Risk Indicators */}
+                                    <div className="flex items-center gap-2 mt-1 px-1">
+                                        {isCheckingLeak ? (
+                                            <div className="flex items-center gap-1.5 animate-pulse">
+                                                <div className="w-1.5 h-1.5 bg-stone-500 rounded-full"></div>
+                                                <span className="text-[8px] text-stone-500 font-bold uppercase tracking-wider">Checking security...</span>
+                                            </div>
+                                        ) : password ? (
+                                            <>
+                                                {leakCount !== null && leakCount > 0 ? (
+                                                    <div className="flex items-center gap-1.5 px-2 py-0.5 bg-red-950/30 rounded-full border border-red-900/30">
+                                                        <div className="w-1.5 h-1.5 bg-red-500 rounded-full shadow-[0_0_8px_rgba(239,68,68,0.5)]"></div>
+                                                        <span className="text-[8px] text-red-400 font-bold uppercase tracking-wider">Leaked in {leakCount.toLocaleString()} breaches</span>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex items-center gap-1.5 px-2 py-0.5 bg-green-950/30 rounded-full border border-green-900/30">
+                                                        <div className="w-1.5 h-1.5 bg-green-500 rounded-full shadow-[0_0_8px_rgba(34,197,94,0.5)]"></div>
+                                                        <span className="text-[8px] text-green-400 font-bold uppercase tracking-wider">Safe password</span>
+                                                    </div>
+                                                )}
+                                                
+                                                <div className={`px-2 py-0.5 rounded-full border ${
+                                                    passwordStrength === 'strong' ? 'bg-indigo-950/30 border-indigo-900/30 text-indigo-400' :
+                                                    passwordStrength === 'moderate' ? 'bg-amber-950/30 border-amber-900/30 text-amber-400' :
+                                                    'bg-stone-900/30 border-stone-800/30 text-stone-500'
+                                                }`}>
+                                                    <span className="text-[8px] font-bold uppercase tracking-wider">{passwordStrength} strength</span>
+                                                </div>
+                                            </>
+                                        ) : null}
+                                    </div>
                                 </div>
                                 
                                 <div className="flex justify-center">
@@ -284,21 +396,39 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
                                 </div>
                             </div>
 
-                            <button
-                                type="submit"
-                                disabled={isLoading || !turnstileToken}
-                                className={`w-full bg-white text-stone-950 font-bold ${viewportWidth < 360 ? 'py-2.5 text-[9px]' : 'py-3.5 text-[10px]'} rounded-xl hover:bg-stone-200 active:scale-[0.98] transition-all duration-300 disabled:opacity-50 uppercase tracking-[0.4em] shadow-xl shadow-white/5`}
-                                style={{ minHeight: viewportWidth < 360 ? '38px' : '44px', WebkitTapHighlightColor: 'transparent' }}
-                            >
-                                {isLoading ? (
-                                    <div className="flex items-center justify-center gap-3">
-                                        <div className="w-3 h-3 border-2 border-stone-950/20 border-t-stone-950 rounded-full animate-spin"></div>
-                                        <span>Signing in...</span>
-                                    </div>
-                                ) : (
-                                    isSignUp ? 'Register' : 'Authenticate'
-                                )}
-                            </button>
+                            {leakCount !== null && leakCount > 0 && !userAcknowledgedLeak ? (
+                                <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                                    <button
+                                        type="button"
+                                        onClick={() => setPassword('')}
+                                        className={`w-full bg-white text-stone-950 font-bold ${viewportWidth < 360 ? 'py-2.5 text-[9px] min-h-[38px]' : 'py-3.5 text-[10px] min-h-[44px]'} rounded-xl hover:bg-stone-200 active:scale-[0.98] transition-all duration-300 uppercase tracking-[0.4em] shadow-xl shadow-white/5`}
+                                    >
+                                        Use a safer password
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setUserAcknowledgedLeak(true)}
+                                        className={`w-full bg-white/5 text-stone-500 font-bold ${viewportWidth < 360 ? 'py-2 text-[8px]' : 'py-2.5 text-[9px]'} rounded-xl hover:bg-white/10 hover:text-white transition-all uppercase tracking-[0.3em]`}
+                                    >
+                                        I understand, proceed anyway
+                                    </button>
+                                </div>
+                            ) : (
+                                <button
+                                    type="submit"
+                                    disabled={isLoading || !turnstileToken || isCheckingLeak}
+                                    className={`w-full bg-white text-stone-950 font-bold ${viewportWidth < 360 ? 'py-2.5 text-[9px] min-h-[38px]' : 'py-3.5 text-[10px] min-h-[44px]'} rounded-xl hover:bg-stone-200 active:scale-[0.98] transition-all duration-300 disabled:opacity-50 uppercase tracking-[0.4em] shadow-xl shadow-white/5`}
+                                >
+                                    {isLoading ? (
+                                        <div className="flex items-center justify-center gap-3">
+                                            <div className="w-3 h-3 border-2 border-stone-950/20 border-t-stone-950 rounded-full animate-spin"></div>
+                                            <span>Signing in...</span>
+                                        </div>
+                                    ) : (
+                                        isSignUp ? 'Register' : 'Authenticate'
+                                    )}
+                                </button>
+                            )}
                         </form>
 
                         <div className={`w-full relative ${viewportWidth < 360 ? 'my-2' : 'my-4'}`}>
@@ -315,8 +445,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, initial
                         <button
                             onClick={handleGoogleLogin}
                             disabled={isLoading}
-                            className={`w-full flex items-center justify-center gap-4 bg-stone-900/50 border border-white/5 text-white font-bold ${viewportWidth < 360 ? 'py-2.5 text-[9px]' : 'py-3.5 text-[10px]'} rounded-xl hover:bg-stone-800 transition-all active:scale-[0.98] disabled:opacity-50 uppercase tracking-[0.4em]`}
-                            style={{ minHeight: viewportWidth < 360 ? '38px' : '44px' }}
+                            className={`w-full flex items-center justify-center gap-4 bg-stone-900/50 border border-white/5 text-white font-bold ${viewportWidth < 360 ? 'py-2.5 text-[9px] min-h-[38px]' : 'py-3.5 text-[10px] min-h-[44px]'} rounded-xl hover:bg-stone-800 transition-all active:scale-[0.98] disabled:opacity-50 uppercase tracking-[0.4em]`}
                         >
                             <svg className="w-5 h-5" viewBox="0 0 24 24">
                                 <path
