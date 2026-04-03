@@ -26,15 +26,19 @@ foreach ($key in $vars.Keys) {
         Write-Host "  - Syncing $key to $env..."
         
         # 1. First remove the existing variable (ignore errors if it doesn't exist)
-        npx vercel env rm $key $env -y 2>$null
+        npx -y vercel env rm $key $env -y 2>$null
         
-        # 2. Add the variable
-        if ($key -like "VITE_*") {
-            # VITE_* variables: Non-sensitive, value, no rename
-            Write-Output "N", $val, "" | npx vercel env add $key $env
-        } else {
-            # Other variables: value
-            Write-Output $val | npx vercel env add $key $env
+        # 2. Add the variable without trailing newlines
+        # We use [System.IO.File]::WriteAllText to ensure NO newline at the end
+        $tempFile = [System.IO.Path]::GetTempFileName()
+        [System.IO.File]::WriteAllText($tempFile, $val)
+        
+        try {
+            # Add the variable using the --value flag to ensure zero newline issues
+            # We use --yes to skip ALL prompts
+            npx -y vercel env add $key $env --value "$val" --yes
+        } finally {
+            if (Test-Path $tempFile) { Remove-Item $tempFile }
         }
     }
 }
