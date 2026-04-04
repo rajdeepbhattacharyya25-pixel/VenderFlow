@@ -1,8 +1,8 @@
 import fs from 'fs';
 
 async function testPosthog() {
-    const posthogProjectId = '322219';
-    const posthogApiKey = '[SECRET]bBPD';
+    const posthogProjectId = process.env.VITE_POSTHOG_PROJECT_ID;
+    const posthogApiKey = process.env.VITE_POSTHOG_API_KEY;
 
     const queries = [
         "select count() from events where event = '$pageview' and timestamp > now() - interval 7 day",
